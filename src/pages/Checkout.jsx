@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import CoffeeCupAnimation from "@/components/rewards/CoffeeCupAnimation";
 
 export default function Checkout() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [cart, setCart] = useState([]);
   const [successDialog, setSuccessDialog] = useState({ open: false, orderNumber: "" });
+  const [showCupAnimation, setShowCupAnimation] = useState(false);
+  const [animationData, setAnimationData] = useState({ pointsEarned: 0, newTotal: 0 });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -80,18 +83,28 @@ export default function Checkout() {
       });
 
       // Award loyalty points
+      let newPointsBalance = customer?.points_balance || 0;
       if (customer) {
+        newPointsBalance = customer.points_balance + pointsToEarn;
         await base44.entities.Customer.update(customer.id, {
-          points_balance: customer.points_balance + pointsToEarn,
+          points_balance: newPointsBalance,
           total_points_earned: customer.total_points_earned + pointsToEarn
         });
       }
 
-      return orderNumber;
+      return { orderNumber, pointsEarned: pointsToEarn, newTotal: newPointsBalance };
     },
-    onSuccess: (orderNumber) => {
+    onSuccess: (data) => {
       localStorage.removeItem("bean_cart");
-      setSuccessDialog({ open: true, orderNumber });
+      
+      // Show coffee cup animation first
+      setAnimationData({ 
+        pointsEarned: data.pointsEarned, 
+        newTotal: data.newTotal 
+      });
+      setShowCupAnimation(true);
+      setSuccessDialog({ open: false, orderNumber: data.orderNumber });
+      
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     }
   });
@@ -265,6 +278,21 @@ export default function Checkout() {
           </Button>
         </form>
       </div>
+
+      {/* Coffee Cup Animation Dialog */}
+      <Dialog open={showCupAnimation} onOpenChange={() => {}}>
+        <DialogContent className="max-w-sm">
+          <CoffeeCupAnimation
+            pointsEarned={animationData.pointsEarned}
+            currentPoints={animationData.newTotal}
+            pointsNeeded={100}
+            onComplete={() => {
+              setShowCupAnimation(false);
+              setSuccessDialog(prev => ({ ...prev, open: true }));
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Success Dialog */}
       <Dialog open={successDialog.open} onOpenChange={handleSuccessClose}>
