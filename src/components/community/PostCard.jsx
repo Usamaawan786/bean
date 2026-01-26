@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, Flag, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 const postTypeConfig = {
   general: { icon: Coffee, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
@@ -10,11 +11,14 @@ const postTypeConfig = {
   tip: { icon: Lightbulb, color: "text-[#6B5744]", bg: "bg-[#EDE3DF]" }
 };
 
-export default function PostCard({ post, currentUserEmail, onLike }) {
+export default function PostCard({ post, currentUserEmail, onLike, onReport }) {
   const [isLiking, setIsLiking] = useState(false);
+  const [isReporting, setIsReporting] = useState(false);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
   const isLiked = post.liked_by?.includes(currentUserEmail);
+  const hasReported = post.reported_by?.includes(currentUserEmail);
+  const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -23,12 +27,27 @@ export default function PostCard({ post, currentUserEmail, onLike }) {
     setIsLiking(false);
   };
 
+  const handleReport = async () => {
+    if (isReporting || hasReported) return;
+    setIsReporting(true);
+    await onReport(post);
+    setIsReporting(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-3xl bg-white border border-[#E8DED8] p-5 shadow-sm"
+      className={`rounded-3xl bg-white border p-5 shadow-sm ${
+        isFlagged ? "border-orange-300 bg-orange-50/30" : "border-[#E8DED8]"
+      }`}
     >
+      {isFlagged && (
+        <div className="flex items-center gap-2 mb-3 text-orange-600 text-sm">
+          <AlertTriangle className="h-4 w-4" />
+          <span className="font-medium">Under review</span>
+        </div>
+      )}
       <div className="flex items-start gap-3">
         <div className={`rounded-full ${config.bg} p-2.5`}>
           <Icon className={`h-5 w-5 ${config.color}`} />
@@ -62,6 +81,18 @@ export default function PostCard({ post, currentUserEmail, onLike }) {
             >
               <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
               <span>{post.likes_count || 0}</span>
+            </button>
+
+            <button
+              onClick={handleReport}
+              disabled={isReporting || hasReported}
+              className={`flex items-center gap-1.5 text-sm transition-colors ${
+                hasReported ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"
+              }`}
+              title={hasReported ? "Already reported" : "Report post"}
+            >
+              <Flag className={`h-4 w-4 ${hasReported ? "fill-current" : ""}`} />
+              {hasReported && <span className="text-xs">Reported</span>}
             </button>
           </div>
         </div>
