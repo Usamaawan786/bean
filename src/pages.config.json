@@ -1,6 +1,9 @@
 {
   "pages": [
     {"name": "Home", "path": "/", "component": "Home"},
+    {"name": "Shop", "path": "/shop", "component": "Shop"},
+    {"name": "Checkout", "path": "/checkout", "component": "Checkout"},
+    {"name": "Orders", "path": "/orders", "component": "Orders"},
     {"name": "Rewards", "path": "/rewards", "component": "Rewards"},
     {"name": "Community", "path": "/community", "component": "Community"},
     {"name": "FlashDrops", "path": "/flash-drops", "component": "FlashDrops"},
