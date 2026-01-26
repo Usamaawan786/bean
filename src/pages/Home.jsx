@@ -96,7 +96,7 @@ export default function Home() {
               <span>Bean Rewards</span>
             </div>
             <h1 className="text-3xl font-bold">
-              Welcome back, {user?.full_name?.split(" ")[0] || "Coffee Lover"}! ☕
+              Welcome back, {user?.full_name && !user.full_name.includes("@") ? user.full_name.split(" ")[0] : "Coffee Lover"}! ☕
             </h1>
             <p className="text-[#E8DED8] mt-2">
               Your daily dose of rewards awaits
