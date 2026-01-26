@@ -65,31 +65,33 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
       )}
       
       <div className="relative bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white p-6">
-        {isActive && (
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-red-500 px-3 py-1 rounded-full">
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              className="h-2 w-2 rounded-full bg-white"
-            />
-            <span className="text-xs font-bold uppercase">Live</span>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-start gap-4 flex-1 min-w-0">
+            <div className="rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] p-3 flex-shrink-0">
+              <Zap className="h-8 w-8 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-bold">{drop.title}</h3>
+              <p className="text-[#E8DED8] text-sm mt-1">{drop.description}</p>
+            </div>
           </div>
-        )}
-        
-        {isUpcoming && (
-          <div className="absolute top-4 right-4 bg-[#C9B8A6] px-3 py-1 rounded-full">
-            <span className="text-xs font-bold uppercase">Upcoming</span>
-          </div>
-        )}
-        
-        <div className="flex items-start gap-4">
-          <div className="rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] p-3">
-            <Zap className="h-8 w-8 text-white" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold">{drop.title}</h3>
-            <p className="text-[#E8DED8] text-sm mt-1">{drop.description}</p>
-          </div>
+          
+          {isActive && (
+            <div className="flex items-center gap-1.5 bg-red-500 px-3 py-1 rounded-full flex-shrink-0">
+              <motion.div
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="h-2 w-2 rounded-full bg-white"
+              />
+              <span className="text-xs font-bold uppercase">Live</span>
+            </div>
+          )}
+          
+          {isUpcoming && (
+            <div className="bg-[#C9B8A6] px-3 py-1 rounded-full flex-shrink-0">
+              <span className="text-xs font-bold uppercase">Upcoming</span>
+            </div>
+          )}
         </div>
         
         <div className="mt-6 grid grid-cols-2 gap-4">
