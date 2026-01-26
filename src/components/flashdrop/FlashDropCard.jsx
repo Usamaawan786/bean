@@ -66,7 +66,7 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
       
       <div className="relative bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white p-6">
         {isActive && (
-          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-red-500 px-3 py-1 rounded-full shadow-lg z-10">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-red-500 px-3 py-1 rounded-full">
             <motion.div
               animate={{ scale: [1, 1.2, 1] }}
               transition={{ duration: 1, repeat: Infinity }}
@@ -77,12 +77,12 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
         )}
         
         {isUpcoming && (
-          <div className="absolute top-3 right-3 bg-[#C9B8A6] px-3 py-1 rounded-full shadow-lg z-10">
+          <div className="absolute top-4 right-4 bg-[#C9B8A6] px-3 py-1 rounded-full">
             <span className="text-xs font-bold uppercase">Upcoming</span>
           </div>
         )}
         
-        <div className="flex items-start gap-4 pr-20">
+        <div className="flex items-start gap-4">
           <div className="rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] p-3">
             <Zap className="h-8 w-8 text-white" />
           </div>
