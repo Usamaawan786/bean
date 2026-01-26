@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Gift, Users, Zap, ShoppingBag } from "lucide-react";
+import { Home, Gift, Users, Zap, ShoppingBag, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const navItems = [
@@ -8,7 +8,7 @@ const navItems = [
   { name: "Shop", icon: ShoppingBag, page: "Shop" },
   { name: "Drops", icon: Zap, page: "FlashDrops" },
   { name: "Community", icon: Users, page: "Community" },
-  { name: "Rewards", icon: Gift, page: "Rewards" }
+  { name: "Profile", icon: UserCircle, page: "Profile" }
 ];
 
 export default function Layout({ children, currentPageName }) {
