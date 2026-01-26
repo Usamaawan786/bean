@@ -12,14 +12,22 @@ import StatsCard from "@/components/dashboard/StatsCard";
 import TierBadge from "@/components/dashboard/TierBadge";
 import FlashDropCard from "@/components/flashdrop/FlashDropCard";
 import ReferralCard from "@/components/referral/ReferralCard";
+import NameSetup from "@/components/NameSetup";
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [showNameSetup, setShowNameSetup] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
       const u = await base44.auth.me();
+      
+      // Check if user needs to set their name
+      if (!u.full_name || u.full_name.includes("@") || u.full_name.trim() === "") {
+        setShowNameSetup(true);
+      }
+      
       setUser(u);
       
       // Load or create customer profile
@@ -77,6 +85,16 @@ export default function Home() {
 
   const allDrops = [...activeDrops, ...upcomingDrops];
 
+  const handleNameSetupComplete = async () => {
+    const u = await base44.auth.me();
+    setUser(u);
+    setShowNameSetup(false);
+  };
+
+  if (showNameSetup) {
+    return <NameSetup onComplete={handleNameSetupComplete} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F1ED]">
       {/* Hero Section */}
@@ -96,7 +114,7 @@ export default function Home() {
               <span>Bean Rewards</span>
             </div>
             <h1 className="text-3xl font-bold">
-              Welcome back, {user?.full_name && !user.full_name.includes("@") ? user.full_name.split(" ")[0] : "Coffee Lover"}! ☕
+              Welcome back, {user?.full_name?.split(" ")[0]}! ☕
             </h1>
             <p className="text-[#E8DED8] mt-2">
               Your daily dose of rewards awaits
