@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Gift, ArrowLeft, Check, Sparkles } from "lucide-react";
+import { Star, Gift, ArrowLeft, Check, Sparkles, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import RewardCard from "@/components/rewards/RewardCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import TierBenefits, { calculateTier, getTierData } from "@/components/rewards/TierBenefits";
+import TierBadge from "@/components/dashboard/TierBadge";
 
 export default function Rewards() {
   const [user, setUser] = useState(null);
@@ -21,7 +23,18 @@ export default function Rewards() {
       const u = await base44.auth.me();
       setUser(u);
       const customers = await base44.entities.Customer.filter({ created_by: u.email });
-      if (customers.length > 0) setCustomer(customers[0]);
+      if (customers.length > 0) {
+        const customerData = customers[0];
+        
+        // Auto-update tier based on total points
+        const calculatedTier = calculateTier(customerData.total_points_earned || 0);
+        if (calculatedTier !== customerData.tier) {
+          await base44.entities.Customer.update(customerData.id, { tier: calculatedTier });
+          customerData.tier = calculatedTier;
+        }
+        
+        setCustomer(customerData);
+      }
     };
     loadUser();
   }, []);
@@ -82,10 +95,10 @@ export default function Rewards() {
             Back
           </Link>
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold">Rewards</h1>
-              <p className="text-amber-100 text-sm mt-1">Treat yourself!</p>
+              <p className="text-[#E8DED8] text-sm mt-1">Treat yourself!</p>
             </div>
             <div className="bg-white/20 backdrop-blur rounded-2xl px-5 py-3">
               <div className="flex items-center gap-2">
@@ -95,6 +108,14 @@ export default function Rewards() {
               <p className="text-xs text-[#E8DED8]">Available points</p>
             </div>
           </div>
+
+          {/* Tier Badge */}
+          {customer && (
+            <TierBadge 
+              tier={customer.tier || "Bronze"} 
+              totalPoints={customer.total_points_earned || 0} 
+            />
+          )}
         </div>
       </div>
 
@@ -117,8 +138,61 @@ export default function Rewards() {
         </div>
       </div>
 
-      {/* Rewards Grid */}
-      <div className="max-w-lg mx-auto px-5 pb-24">
+      {/* Main Content */}
+      <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-6">
+        {/* Tier Benefits */}
+        {customer && (
+          <TierBenefits tier={customer.tier || "Bronze"} />
+        )}
+
+        {/* Progress to Next Tier */}
+        {customer && getTierData(customer.tier).nextTier && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl border border-[#E8DED8] p-6"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="h-5 w-5 text-[#8B7355]" />
+              <h3 className="font-bold text-[#5C4A3A]">Next Tier Progress</h3>
+            </div>
+            
+            {(() => {
+              const currentTierData = getTierData(customer.tier);
+              const totalPoints = customer.total_points_earned || 0;
+              const pointsNeeded = currentTierData.pointsNeeded;
+              const progress = (totalPoints / pointsNeeded) * 100;
+              const remaining = pointsNeeded - totalPoints;
+              
+              return (
+                <>
+                  <div className="relative h-3 bg-[#F5EBE8] rounded-full overflow-hidden mb-3">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(progress, 100)}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="absolute h-full bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-full"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[#8B7355]">
+                      {totalPoints} / {pointsNeeded} points
+                    </span>
+                    <span className="font-semibold text-[#5C4A3A]">
+                      {remaining} more to {currentTierData.nextTier}
+                    </span>
+                  </div>
+                </>
+              );
+            })()}
+          </motion.div>
+        )}
+
+        {/* Section Title */}
+        <div>
+          <h2 className="text-xl font-bold text-[#5C4A3A] mb-1">Available Rewards</h2>
+          <p className="text-sm text-[#8B7355]">Redeem your points for treats</p>
+        </div>
         {isLoading ? (
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map(i => (

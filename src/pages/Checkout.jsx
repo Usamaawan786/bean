@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import CoffeeCupAnimation from "@/components/rewards/CoffeeCupAnimation";
+import { getTierDiscount } from "@/components/rewards/TierBenefits";
 
 export default function Checkout() {
   const [user, setUser] = useState(null);
@@ -53,7 +54,10 @@ export default function Checkout() {
     }
   }, [navigate]);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const tierDiscount = customer ? getTierDiscount(customer.tier) : 0;
+  const discountAmount = subtotal * tierDiscount;
+  const total = subtotal - discountAmount;
   const pointsToEarn = Math.floor(total * 10); // 10 points per dollar spent
 
   const placeOrderMutation = useMutation({
@@ -160,6 +164,21 @@ export default function Checkout() {
                   <span className="font-semibold text-[#5C4A3A]">${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
+              
+              {tierDiscount > 0 && (
+                <>
+                  <div className="flex items-center justify-between pt-3 border-t border-[#F5EBE8]">
+                    <span className="text-[#8B7355] text-sm">Subtotal</span>
+                    <span className="text-[#5C4A3A] font-medium">${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#8B7355] text-sm">
+                      {customer?.tier} Discount ({(tierDiscount * 100).toFixed(0)}%)
+                    </span>
+                    <span className="text-green-600 font-medium">-${discountAmount.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
               
               <div className="flex items-center justify-between pt-4 border-t-2 border-[#E8DED8]">
                 <span className="font-bold text-[#5C4A3A] text-lg">Total</span>
