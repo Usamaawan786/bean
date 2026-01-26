@@ -96,12 +96,12 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
+    <div className="min-h-screen bg-[#FAF6F2]">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#F7F2ED] via-[#EFE8E0] to-[#E8DED5] overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-[#D4C4B0]/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#C9B8A6]/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-64 h-64 bg-[#D4C8BB]/30 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#C9BDB0]/20 rounded-full blur-3xl" />
         </div>
         
         <div className="relative max-w-lg mx-auto px-5 pt-10 pb-12">
@@ -109,14 +109,14 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex items-center gap-2 text-[#D4C4B0] text-sm font-medium mb-2">
+            <div className="flex items-center gap-2 text-[#B5A593] text-sm font-medium mb-2">
               <Coffee className="h-4 w-4" />
               <span>Bean Rewards</span>
             </div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-3xl font-bold text-[#8B7B6E]">
               Welcome back, {user?.full_name?.split(" ")[0]}! ☕
             </h1>
-            <p className="text-[#E8DED8] mt-2">
+            <p className="text-[#A89985] mt-2">
               Your daily dose of rewards awaits
             </p>
           </motion.div>
@@ -141,9 +141,9 @@ export default function Home() {
 
       {/* Branding Logo - Overlapping Hero */}
       <div className="relative z-10 flex justify-center -mt-10">
-        <div className="bg-white rounded-full p-3 shadow-lg border-4 border-[#F5F1ED]">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
-            <Coffee className="h-7 w-7 text-[#5C4A3A]" />
+        <div className="bg-white rounded-full p-3 shadow-lg border-4 border-[#FAF6F2]">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#F7F2ED] to-[#EFE8E0] flex items-center justify-center border border-[#E8DED5]">
+            <Coffee className="h-7 w-7 text-[#9B8B7E]" />
           </div>
         </div>
       </div>
@@ -166,8 +166,8 @@ export default function Home() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-[#8B7355]" />
-                <h2 className="text-lg font-bold text-[#5C4A3A]">Flash Drops</h2>
+                <Zap className="h-5 w-5 text-[#B5A593]" />
+                <h2 className="text-lg font-bold text-[#8B7B6E]">Flash Drops</h2>
                 {activeDrops.length > 0 && (
                   <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
                     LIVE
@@ -176,11 +176,11 @@ export default function Home() {
               </div>
               <Link 
                 to={createPageUrl("FlashDrops")}
-                className="text-[#8B7355] text-sm font-medium flex items-center gap-1"
+                className="text-[#B5A593] text-sm font-medium flex items-center gap-1"
               >
                 See all <ChevronRight className="h-4 w-4" />
               </Link>
-            </div>
+              </div>
             
             <div className="space-y-4">
               {allDrops.slice(0, 2).map(drop => (
@@ -209,49 +209,49 @@ export default function Home() {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-2xl border border-[#E8DED8] p-5 shadow-sm"
+              className="bg-white rounded-2xl border border-[#E8DED5] p-5 shadow-sm"
             >
-              <div className="rounded-xl bg-[#F5EBE8] p-3 w-fit">
-                <Gift className="h-6 w-6 text-[#8B7355]" />
+              <div className="rounded-xl bg-[#F7F2ED] p-3 w-fit">
+                <Gift className="h-6 w-6 text-[#B5A593]" />
               </div>
-              <h3 className="font-semibold text-[#5C4A3A] mt-3">Rewards</h3>
-              <p className="text-xs text-[#8B7355] mt-1">Redeem your points</p>
+              <h3 className="font-semibold text-[#8B7B6E] mt-3">Rewards</h3>
+              <p className="text-xs text-[#A89985] mt-1">Redeem your points</p>
             </motion.div>
           </Link>
-          
+
           <Link to={createPageUrl("Community")}>
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-2xl border border-[#E8DED8] p-5 shadow-sm"
+              className="bg-white rounded-2xl border border-[#E8DED5] p-5 shadow-sm"
             >
-              <div className="rounded-xl bg-[#EDE3DF] p-3 w-fit">
-                <Users className="h-6 w-6 text-[#8B7355]" />
+              <div className="rounded-xl bg-[#EFE8E0] p-3 w-fit">
+                <Users className="h-6 w-6 text-[#B5A593]" />
               </div>
-              <h3 className="font-semibold text-[#5C4A3A] mt-3">Community</h3>
-              <p className="text-xs text-[#8B7355] mt-1">Join the conversation</p>
+              <h3 className="font-semibold text-[#8B7B6E] mt-3">Community</h3>
+              <p className="text-xs text-[#A89985] mt-1">Join the conversation</p>
             </motion.div>
           </Link>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-3xl border border-[#E8DED8] p-5 shadow-sm">
+        <div className="bg-white rounded-3xl border border-[#E8DED5] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-5 w-5 text-[#8B7355]" />
-            <h3 className="font-semibold text-[#5C4A3A]">Your Progress</h3>
+            <TrendingUp className="h-5 w-5 text-[#B5A593]" />
+            <h3 className="font-semibold text-[#8B7B6E]">Your Progress</h3>
           </div>
           <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-[#F5EBE8]">
-              <span className="text-sm text-[#8B7355]">Total points earned</span>
-              <span className="font-semibold text-[#5C4A3A]">{customer?.total_points_earned || 0} pts</span>
+            <div className="flex items-center justify-between py-2 border-b border-[#F7F2ED]">
+              <span className="text-sm text-[#A89985]">Total points earned</span>
+              <span className="font-semibold text-[#8B7B6E]">{customer?.total_points_earned || 0} pts</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-[#F5EBE8]">
-              <span className="text-sm text-[#8B7355]">Friends referred</span>
-              <span className="font-semibold text-[#5C4A3A]">{customer?.referral_count || 0}</span>
+            <div className="flex items-center justify-between py-2 border-b border-[#F7F2ED]">
+              <span className="text-sm text-[#A89985]">Friends referred</span>
+              <span className="font-semibold text-[#8B7B6E]">{customer?.referral_count || 0}</span>
             </div>
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-[#8B7355]">Current tier</span>
-              <span className="font-semibold text-[#8B7355]">{customer?.tier || "Bronze"}</span>
+              <span className="text-sm text-[#A89985]">Current tier</span>
+              <span className="font-semibold text-[#B5A593]">{customer?.tier || "Bronze"}</span>
             </div>
           </div>
         </div>
