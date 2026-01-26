@@ -22,7 +22,7 @@ export default function Community() {
     loadUser();
   }, []);
 
-  const { data: posts = [], isLoading } = useQuery({
+  const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["community-posts", activeTab],
     queryFn: () => {
       if (activeTab === "all") {
@@ -32,13 +32,42 @@ export default function Community() {
     }
   });
 
+  // Filter out hidden/removed posts for regular users
+  const posts = allPosts.filter(post => 
+    post.moderation_status !== "hidden" && post.moderation_status !== "removed"
+  );
+
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
+      // AI-powered content moderation
+      const moderationResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analyze this community post for inappropriate content including hate speech, spam, profanity, threats, or harassment. 
+
+Post content: "${postData.content}"
+
+Respond with JSON indicating if the content is safe or should be flagged.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            is_safe: { type: "boolean" },
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            reason: { type: "string" }
+          }
+        }
+      });
+
+      const moderationStatus = moderationResult.is_safe ? "approved" : "flagged";
+      const flaggedReason = moderationResult.is_safe ? null : moderationResult.reason;
+
       return base44.entities.CommunityPost.create({
         ...postData,
         author_email: user.email,
+        author_name: user.full_name || user.email.split("@")[0],
         likes_count: 0,
-        liked_by: []
+        liked_by: [],
+        moderation_status: moderationStatus,
+        flagged_reason: flaggedReason,
+        reported_by: []
       });
     },
     onSuccess: () => {
@@ -56,6 +85,23 @@ export default function Community() {
       return base44.entities.CommunityPost.update(post.id, {
         liked_by: newLikedBy,
         likes_count: newLikedBy.length
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    }
+  });
+
+  const reportPostMutation = useMutation({
+    mutationFn: async (post) => {
+      const newReportedBy = [...(post.reported_by || []), user.email];
+      
+      // If 3+ reports, automatically flag for review
+      const shouldFlag = newReportedBy.length >= 3;
+      
+      return base44.entities.CommunityPost.update(post.id, {
+        reported_by: newReportedBy,
+        moderation_status: shouldFlag ? "flagged" : post.moderation_status
       });
     },
     onSuccess: () => {
@@ -84,14 +130,24 @@ export default function Community() {
             Back
           </Link>
           
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-[#EDE3DF] p-3">
-              <Users className="h-6 w-6 text-[#8B7355]" />
+          <div className="flex items-center justify-between flex-1">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-[#EDE3DF] p-3">
+                <Users className="h-6 w-6 text-[#8B7355]" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-[#5C4A3A]">Community</h1>
+                <p className="text-sm text-[#8B7355]">Share your coffee moments</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-[#5C4A3A]">Community</h1>
-              <p className="text-sm text-[#8B7355]">Share your coffee moments</p>
-            </div>
+            
+            {user?.role === "admin" && (
+              <Link to={createPageUrl("Moderation")}>
+                <button className="bg-[#EDE3DF] hover:bg-[#E8DED8] px-4 py-2 rounded-xl text-sm font-medium text-[#5C4A3A] transition-colors">
+                  Moderation
+                </button>
+              </Link>
+            )}
           </div>
         </div>
         
@@ -152,6 +208,7 @@ export default function Community() {
                   post={post}
                   currentUserEmail={user?.email}
                   onLike={likeMutation.mutate}
+                  onReport={reportPostMutation.mutate}
                 />
               </motion.div>
             ))}
