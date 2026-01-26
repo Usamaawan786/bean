@@ -1,0 +1,10 @@
+{
+  "pages": [
+    {"name": "Home", "path": "/", "component": "Home"},
+    {"name": "Rewards", "path": "/rewards", "component": "Rewards"},
+    {"name": "Community", "path": "/community", "component": "Community"},
+    {"name": "FlashDrops", "path": "/flash-drops", "component": "FlashDrops"},
+    {"name": "Referral", "path": "/referral", "component": "Referral"}
+  ],
+  "mainPage": "Home"
+}
