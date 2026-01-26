@@ -109,6 +109,28 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     }
   });
 
+  const reactionMutation = useMutation({
+    mutationFn: async ({ post, emoji }) => {
+      const currentReactions = post.reactions || {};
+      const emojiReactions = currentReactions[emoji] || [];
+      const hasReacted = emojiReactions.includes(user.email);
+      
+      const newEmojiReactions = hasReacted
+        ? emojiReactions.filter(e => e !== user.email)
+        : [...emojiReactions, user.email];
+      
+      return base44.entities.CommunityPost.update(post.id, {
+        reactions: {
+          ...currentReactions,
+          [emoji]: newEmojiReactions
+        }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    }
+  });
+
   const tabs = [
     { id: "all", label: "All", icon: TrendingUp },
     { id: "general", label: "General", icon: Coffee },
@@ -207,8 +229,10 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                 <PostCard
                   post={post}
                   currentUserEmail={user?.email}
+                  currentUser={user}
                   onLike={likeMutation.mutate}
                   onReport={reportPostMutation.mutate}
+                  onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
                 />
               </motion.div>
             ))}
