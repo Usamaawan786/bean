@@ -122,7 +122,7 @@ export default function Home() {
       </div>
 
       {/* Branding Logo - Overlapping Hero */}
-      <div className="relative z-10 flex justify-center -mt-16">
+      <div className="relative z-10 flex justify-center -mt-10">
         <div className="bg-white rounded-full p-4 shadow-lg border-4 border-[#F5F1ED]">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
             <Coffee className="h-10 w-10 text-[#5C4A3A]" />
