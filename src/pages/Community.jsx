@@ -72,25 +72,25 @@ export default function Community() {
   ];
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-[#E8DED8] sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-5 pt-6 pb-4">
           <Link 
             to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-stone-500 text-sm mb-4 hover:text-stone-700 transition-colors"
+            className="inline-flex items-center gap-1 text-[#8B7355] text-sm mb-4 hover:text-[#5C4A3A] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
           
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-violet-100 p-3">
-              <Users className="h-6 w-6 text-violet-600" />
+            <div className="rounded-2xl bg-[#EDE3DF] p-3">
+              <Users className="h-6 w-6 text-[#8B7355]" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-stone-800">Community</h1>
-              <p className="text-sm text-stone-500">Share your coffee moments</p>
+              <h1 className="text-xl font-bold text-[#5C4A3A]">Community</h1>
+              <p className="text-sm text-[#8B7355]">Share your coffee moments</p>
             </div>
           </div>
         </div>
@@ -106,8 +106,8 @@ export default function Community() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                     activeTab === tab.id
-                      ? "bg-violet-600 text-white"
-                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                      ? "bg-[#8B7355] text-white"
+                      : "bg-[#F5EBE8] text-[#6B5744] hover:bg-[#EDE8E3]"
                   }`}
                 >
                   <Icon className="h-4 w-4" />

@@ -4,33 +4,33 @@ import { Crown, Star, Award, Medal } from "lucide-react";
 const tierConfig = {
   Bronze: {
     icon: Medal,
-    gradient: "from-amber-600 to-amber-800",
-    bg: "bg-amber-100",
-    text: "text-amber-800",
+    gradient: "from-[#C9B8A6] to-[#A89684]",
+    bg: "bg-[#F5EBE8]",
+    text: "text-[#8B7355]",
     next: "Silver",
     pointsToNext: 500
   },
   Silver: {
     icon: Award,
-    gradient: "from-slate-400 to-slate-600",
-    bg: "bg-slate-100",
-    text: "text-slate-700",
+    gradient: "from-[#B8AFA4] to-[#9A8F84]",
+    bg: "bg-[#EDE8E3]",
+    text: "text-[#6B5744]",
     next: "Gold",
     pointsToNext: 1500
   },
   Gold: {
     icon: Star,
-    gradient: "from-yellow-400 to-amber-500",
-    bg: "bg-yellow-50",
-    text: "text-yellow-700",
+    gradient: "from-[#D4C4B0] to-[#C9B8A6]",
+    bg: "bg-[#F8F6F4]",
+    text: "text-[#8B7355]",
     next: "Platinum",
     pointsToNext: 3000
   },
   Platinum: {
     icon: Crown,
-    gradient: "from-violet-500 to-purple-700",
-    bg: "bg-violet-50",
-    text: "text-violet-700",
+    gradient: "from-[#8B7355] to-[#6B5744]",
+    bg: "bg-[#EDE3DF]",
+    text: "text-[#5C4A3A]",
     next: null,
     pointsToNext: null
   }
@@ -48,7 +48,7 @@ export default function TierBadge({ tier = "Bronze", totalPoints = 0 }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="rounded-3xl bg-white border border-stone-200 p-6 shadow-sm"
+      className="rounded-3xl bg-white border border-[#E8DED8] p-6 shadow-sm"
     >
       <div className="flex items-center gap-4">
         <div className={`rounded-2xl bg-gradient-to-br ${config.gradient} p-4 shadow-lg`}>
@@ -57,15 +57,15 @@ export default function TierBadge({ tier = "Bronze", totalPoints = 0 }) {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className={`text-xl font-bold ${config.text}`}>{tier}</span>
-            <span className="text-xs text-stone-400">Member</span>
+            <span className="text-xs text-[#C9B8A6]">Member</span>
           </div>
           {config.next && (
             <div className="mt-2">
-              <div className="flex justify-between text-xs text-stone-500 mb-1">
+              <div className="flex justify-between text-xs text-[#8B7355] mb-1">
                 <span>{totalPoints} pts</span>
                 <span>{config.pointsToNext} pts to {config.next}</span>
               </div>
-              <div className="h-2 rounded-full bg-stone-100 overflow-hidden">
+              <div className="h-2 rounded-full bg-[#F5EBE8] overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
@@ -76,7 +76,7 @@ export default function TierBadge({ tier = "Bronze", totalPoints = 0 }) {
             </div>
           )}
           {!config.next && (
-            <p className="text-xs text-stone-500 mt-1">You've reached the highest tier! ✨</p>
+            <p className="text-xs text-[#8B7355] mt-1">You've reached the highest tier! ✨</p>
           )}
         </div>
       </div>

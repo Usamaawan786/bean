@@ -78,12 +78,12 @@ export default function Home() {
   const allDrops = [...activeDrops, ...upcomingDrops];
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F1ED]">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-stone-900 via-stone-800 to-amber-900 text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-64 h-64 bg-[#D4C4B0]/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#C9B8A6]/10 rounded-full blur-3xl" />
         </div>
         
         <div className="relative max-w-lg mx-auto px-5 pt-10 pb-12">
@@ -91,14 +91,14 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <div className="flex items-center gap-2 text-amber-400 text-sm font-medium mb-2">
+            <div className="flex items-center gap-2 text-[#D4C4B0] text-sm font-medium mb-2">
               <Coffee className="h-4 w-4" />
-              <span>BrewCrew Rewards</span>
+              <span>Bean Rewards</span>
             </div>
             <h1 className="text-3xl font-bold">
               Welcome back, {user?.full_name?.split(" ")[0] || "Coffee Lover"}! ☕
             </h1>
-            <p className="text-stone-300 mt-2">
+            <p className="text-[#E8DED8] mt-2">
               Your daily dose of rewards awaits
             </p>
           </motion.div>
@@ -109,7 +109,7 @@ export default function Home() {
               icon={Star} 
               label="Points" 
               value={customer?.points_balance || 0}
-              color="amber"
+              color="brown"
             />
             <StatsCard 
               icon={Gift} 
@@ -123,6 +123,14 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-lg mx-auto px-5 -mt-4 pb-24 space-y-6">
+      {/* Branding Logo */}
+      <div className="flex justify-center -mt-2 mb-4">
+        <div className="bg-white rounded-full p-4 shadow-lg border-4 border-[#F5F1ED]">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
+            <Coffee className="h-10 w-10 text-[#5C4A3A]" />
+          </div>
+        </div>
+      </div>
         {/* Tier Badge */}
         {customer && (
           <TierBadge 
@@ -139,8 +147,8 @@ export default function Home() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-600" />
-                <h2 className="text-lg font-bold text-stone-800">Flash Drops</h2>
+                <Zap className="h-5 w-5 text-[#8B7355]" />
+                <h2 className="text-lg font-bold text-[#5C4A3A]">Flash Drops</h2>
                 {activeDrops.length > 0 && (
                   <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold animate-pulse">
                     LIVE
@@ -149,7 +157,7 @@ export default function Home() {
               </div>
               <Link 
                 to={createPageUrl("FlashDrops")}
-                className="text-amber-600 text-sm font-medium flex items-center gap-1"
+                className="text-[#8B7355] text-sm font-medium flex items-center gap-1"
               >
                 See all <ChevronRight className="h-4 w-4" />
               </Link>
@@ -182,13 +190,13 @@ export default function Home() {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm"
+              className="bg-white rounded-2xl border border-[#E8DED8] p-5 shadow-sm"
             >
-              <div className="rounded-xl bg-amber-50 p-3 w-fit">
-                <Gift className="h-6 w-6 text-amber-600" />
+              <div className="rounded-xl bg-[#F5EBE8] p-3 w-fit">
+                <Gift className="h-6 w-6 text-[#8B7355]" />
               </div>
-              <h3 className="font-semibold text-stone-800 mt-3">Rewards</h3>
-              <p className="text-xs text-stone-500 mt-1">Redeem your points</p>
+              <h3 className="font-semibold text-[#5C4A3A] mt-3">Rewards</h3>
+              <p className="text-xs text-[#8B7355] mt-1">Redeem your points</p>
             </motion.div>
           </Link>
           
@@ -196,35 +204,35 @@ export default function Home() {
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm"
+              className="bg-white rounded-2xl border border-[#E8DED8] p-5 shadow-sm"
             >
-              <div className="rounded-xl bg-violet-50 p-3 w-fit">
-                <Users className="h-6 w-6 text-violet-600" />
+              <div className="rounded-xl bg-[#EDE3DF] p-3 w-fit">
+                <Users className="h-6 w-6 text-[#8B7355]" />
               </div>
-              <h3 className="font-semibold text-stone-800 mt-3">Community</h3>
-              <p className="text-xs text-stone-500 mt-1">Join the conversation</p>
+              <h3 className="font-semibold text-[#5C4A3A] mt-3">Community</h3>
+              <p className="text-xs text-[#8B7355] mt-1">Join the conversation</p>
             </motion.div>
           </Link>
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-3xl border border-stone-200 p-5 shadow-sm">
+        <div className="bg-white rounded-3xl border border-[#E8DED8] p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-5 w-5 text-emerald-600" />
-            <h3 className="font-semibold text-stone-800">Your Progress</h3>
+            <TrendingUp className="h-5 w-5 text-[#8B7355]" />
+            <h3 className="font-semibold text-[#5C4A3A]">Your Progress</h3>
           </div>
           <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-stone-100">
-              <span className="text-sm text-stone-600">Total points earned</span>
-              <span className="font-semibold text-stone-800">{customer?.total_points_earned || 0} pts</span>
+            <div className="flex items-center justify-between py-2 border-b border-[#F5EBE8]">
+              <span className="text-sm text-[#8B7355]">Total points earned</span>
+              <span className="font-semibold text-[#5C4A3A]">{customer?.total_points_earned || 0} pts</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-stone-100">
-              <span className="text-sm text-stone-600">Friends referred</span>
-              <span className="font-semibold text-stone-800">{customer?.referral_count || 0}</span>
+            <div className="flex items-center justify-between py-2 border-b border-[#F5EBE8]">
+              <span className="text-sm text-[#8B7355]">Friends referred</span>
+              <span className="font-semibold text-[#5C4A3A]">{customer?.referral_count || 0}</span>
             </div>
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-stone-600">Current tier</span>
-              <span className="font-semibold text-amber-700">{customer?.tier || "Bronze"}</span>
+              <span className="text-sm text-[#8B7355]">Current tier</span>
+              <span className="font-semibold text-[#8B7355]">{customer?.tier || "Bronze"}</span>
             </div>
           </div>
         </div>

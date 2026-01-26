@@ -4,10 +4,10 @@ import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star } from "lucide-re
 import { format } from "date-fns";
 
 const postTypeConfig = {
-  general: { icon: Coffee, color: "text-amber-600", bg: "bg-amber-50" },
-  review: { icon: Star, color: "text-violet-600", bg: "bg-violet-50" },
-  photo: { icon: Camera, color: "text-rose-600", bg: "bg-rose-50" },
-  tip: { icon: Lightbulb, color: "text-emerald-600", bg: "bg-emerald-50" }
+  general: { icon: Coffee, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
+  review: { icon: Star, color: "text-[#6B5744]", bg: "bg-[#EDE8E3]" },
+  photo: { icon: Camera, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
+  tip: { icon: Lightbulb, color: "text-[#6B5744]", bg: "bg-[#EDE3DF]" }
 };
 
 export default function PostCard({ post, currentUserEmail, onLike }) {
@@ -27,7 +27,7 @@ export default function PostCard({ post, currentUserEmail, onLike }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-3xl bg-white border border-stone-200 p-5 shadow-sm"
+      className="rounded-3xl bg-white border border-[#E8DED8] p-5 shadow-sm"
     >
       <div className="flex items-start gap-3">
         <div className={`rounded-full ${config.bg} p-2.5`}>
@@ -35,12 +35,12 @@ export default function PostCard({ post, currentUserEmail, onLike }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-stone-800">{post.author_name || "Coffee Lover"}</span>
-            <span className="text-xs text-stone-400">
+            <span className="font-semibold text-[#5C4A3A]">{post.author_name || "Coffee Lover"}</span>
+            <span className="text-xs text-[#C9B8A6]">
               {post.created_date && format(new Date(post.created_date), "MMM d, h:mm a")}
             </span>
           </div>
-          <p className="mt-2 text-stone-600 whitespace-pre-wrap">{post.content}</p>
+          <p className="mt-2 text-[#6B5744] whitespace-pre-wrap">{post.content}</p>
           
           {post.image_url && (
             <div className="mt-3 rounded-2xl overflow-hidden">
@@ -57,7 +57,7 @@ export default function PostCard({ post, currentUserEmail, onLike }) {
               onClick={handleLike}
               disabled={isLiking}
               className={`flex items-center gap-1.5 text-sm transition-colors ${
-                isLiked ? "text-rose-500" : "text-stone-400 hover:text-rose-500"
+                isLiked ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"
               }`}
             >
               <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />

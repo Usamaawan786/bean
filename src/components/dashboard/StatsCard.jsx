@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
 
-export default function StatsCard({ icon: Icon, label, value, subtext, color = "amber" }) {
+export default function StatsCard({ icon: Icon, label, value, subtext, color = "brown" }) {
   const colorClasses = {
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
-    green: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    purple: "bg-violet-50 text-violet-700 border-violet-200",
-    rose: "bg-rose-50 text-rose-700 border-rose-200"
+    brown: "bg-[#F5EBE8] text-[#5C4A3A] border-[#E8DED8]",
+    green: "bg-[#EDE8E3] text-[#6B5744] border-[#D4C4B0]",
+    purple: "bg-[#EDE3DF] text-[#6B5744] border-[#D4C4B0]",
+    rose: "bg-[#F5EBE8] text-[#5C4A3A] border-[#E8DED8]"
   };
 
   return (

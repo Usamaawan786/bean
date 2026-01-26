@@ -18,12 +18,12 @@ export default function Layout({ children, currentPageName }) {
   const showNav = true;
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F1ED]">
       {children}
       
       {/* Bottom Navigation */}
       {showNav && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 pb-safe z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8DED8] pb-safe z-50">
           <div className="max-w-lg mx-auto px-2">
             <div className="flex items-center justify-around">
               {navItems.map(item => {
@@ -39,17 +39,17 @@ export default function Layout({ children, currentPageName }) {
                     {isActive && (
                       <motion.div
                         layoutId="nav-indicator"
-                        className="absolute -top-0.5 w-8 h-1 bg-amber-600 rounded-full"
+                        className="absolute -top-0.5 w-8 h-1 bg-[#8B7355] rounded-full"
                       />
                     )}
                     <Icon 
                       className={`h-5 w-5 transition-colors ${
-                        isActive ? "text-amber-600" : "text-stone-400"
+                        isActive ? "text-[#8B7355]" : "text-[#C9B8A6]"
                       }`} 
                     />
                     <span 
                       className={`text-xs mt-1 transition-colors ${
-                        isActive ? "text-amber-600 font-medium" : "text-stone-400"
+                        isActive ? "text-[#8B7355] font-medium" : "text-[#C9B8A6]"
                       }`}
                     >
                       {item.name}

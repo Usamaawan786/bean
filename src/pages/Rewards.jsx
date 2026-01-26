@@ -70,13 +70,13 @@ export default function Rewards() {
     : rewards.filter(r => r.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-amber-600 to-orange-600 text-white">
+      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
         <div className="max-w-lg mx-auto px-5 pt-6 pb-8">
           <Link 
             to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-amber-100 text-sm mb-4 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -89,10 +89,10 @@ export default function Rewards() {
             </div>
             <div className="bg-white/20 backdrop-blur rounded-2xl px-5 py-3">
               <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-amber-200 fill-amber-200" />
+                <Star className="h-5 w-5 text-[#F8F6F4] fill-[#F8F6F4]" />
                 <span className="text-2xl font-bold">{customer?.points_balance || 0}</span>
               </div>
-              <p className="text-xs text-amber-100">Available points</p>
+              <p className="text-xs text-[#E8DED8]">Available points</p>
             </div>
           </div>
         </div>
@@ -107,8 +107,8 @@ export default function Rewards() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
                 selectedCategory === cat
-                  ? "bg-amber-600 text-white"
-                  : "bg-white text-stone-600 border border-stone-200 hover:border-amber-300"
+                  ? "bg-[#8B7355] text-white"
+                  : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0]"
               }`}
             >
               {cat === "all" ? "All Rewards" : cat}
@@ -161,29 +161,29 @@ export default function Rewards() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", bounce: 0.5 }}
-              className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4"
+              className="w-20 h-20 rounded-full bg-[#EDE8E3] flex items-center justify-center mx-auto mb-4"
             >
-              <Check className="h-10 w-10 text-emerald-600" />
+              <Check className="h-10 w-10 text-[#8B7355]" />
             </motion.div>
-            <h3 className="text-xl font-bold text-stone-800">Reward Redeemed!</h3>
-            <p className="text-stone-500 mt-2">
+            <h3 className="text-xl font-bold text-[#5C4A3A]">Reward Redeemed!</h3>
+            <p className="text-[#8B7355] mt-2">
               You've redeemed <strong>{successDialog.reward?.name}</strong>
             </p>
             
-            <div className="mt-6 bg-stone-100 rounded-2xl p-4">
-              <p className="text-xs text-stone-500 mb-1">Your redemption code</p>
-              <code className="text-2xl font-bold text-amber-700 tracking-wider">
+            <div className="mt-6 bg-[#F5EBE8] rounded-2xl p-4">
+              <p className="text-xs text-[#8B7355] mb-1">Your redemption code</p>
+              <code className="text-2xl font-bold text-[#5C4A3A] tracking-wider">
                 {successDialog.code}
               </code>
             </div>
             
-            <p className="text-xs text-stone-400 mt-4">
+            <p className="text-xs text-[#8B7355] mt-4">
               Show this code to our barista to claim your reward
             </p>
             
             <Button 
               onClick={() => setSuccessDialog({ open: false, reward: null, code: "" })}
-              className="w-full mt-6 rounded-xl bg-amber-600 hover:bg-amber-700"
+              className="w-full mt-6 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
             >
               Awesome!
             </Button>

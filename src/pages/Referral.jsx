@@ -62,13 +62,13 @@ export default function Referral() {
   ];
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-violet-600 to-purple-700 text-white">
+      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
         <div className="max-w-lg mx-auto px-5 pt-6 pb-10">
           <Link 
             to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-violet-200 text-sm mb-4 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -80,7 +80,7 @@ export default function Referral() {
             </div>
             <div>
               <h1 className="text-xl font-bold">Refer & Earn</h1>
-              <p className="text-violet-200 text-sm">Share the love, get rewards</p>
+              <p className="text-[#E8DED8] text-sm">Share the love, get rewards</p>
             </div>
           </div>
 
@@ -88,11 +88,11 @@ export default function Referral() {
           <div className="grid grid-cols-2 gap-4 mt-6">
             <div className="bg-white/10 rounded-2xl p-4 text-center">
               <div className="text-3xl font-bold">{customer?.referral_count || 0}</div>
-              <div className="text-xs text-violet-200 mt-1">Friends Referred</div>
+              <div className="text-xs text-[#E8DED8] mt-1">Friends Referred</div>
             </div>
             <div className="bg-white/10 rounded-2xl p-4 text-center">
               <div className="text-3xl font-bold">{(customer?.referral_count || 0) * 100}</div>
-              <div className="text-xs text-violet-200 mt-1">Points Earned</div>
+              <div className="text-xs text-[#E8DED8] mt-1">Points Earned</div>
             </div>
           </div>
         </div>
@@ -104,12 +104,12 @@ export default function Referral() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl border border-stone-200 p-6 shadow-lg"
+          className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-lg"
         >
-          <h3 className="font-semibold text-stone-800 mb-4">Your Referral Code</h3>
+          <h3 className="font-semibold text-[#5C4A3A] mb-4">Your Referral Code</h3>
           
-          <div className="bg-stone-50 rounded-2xl p-4 mb-4">
-            <code className="text-2xl font-bold text-violet-700 tracking-wider block text-center">
+          <div className="bg-[#F5EBE8] rounded-2xl p-4 mb-4">
+            <code className="text-2xl font-bold text-[#5C4A3A] tracking-wider block text-center">
               {customer?.referral_code || "Loading..."}
             </code>
           </div>
@@ -125,7 +125,7 @@ export default function Referral() {
             </Button>
             <Button
               onClick={handleShare}
-              className="flex-1 rounded-xl bg-violet-600 hover:bg-violet-700"
+              className="flex-1 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share
@@ -134,8 +134,8 @@ export default function Referral() {
         </motion.div>
 
         {/* How It Works */}
-        <div className="bg-white rounded-3xl border border-stone-200 p-6">
-          <h3 className="font-semibold text-stone-800 mb-4">How It Works</h3>
+        <div className="bg-white rounded-3xl border border-[#E8DED8] p-6">
+          <h3 className="font-semibold text-[#5C4A3A] mb-4">How It Works</h3>
           <div className="space-y-4">
             {[
               { step: 1, text: "Share your unique code with friends" },
@@ -143,42 +143,42 @@ export default function Referral() {
               { step: 3, text: "You both get 100 bonus points!" }
             ].map(item => (
               <div key={item.step} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center font-bold text-violet-600">
+                <div className="w-8 h-8 rounded-full bg-[#F5EBE8] flex items-center justify-center font-bold text-[#8B7355]">
                   {item.step}
                 </div>
-                <span className="text-stone-600">{item.text}</span>
+                <span className="text-[#6B5744]">{item.text}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Milestones */}
-        <div className="bg-white rounded-3xl border border-stone-200 p-6">
+        <div className="bg-white rounded-3xl border border-[#E8DED8] p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            <h3 className="font-semibold text-stone-800">Milestones</h3>
+            <Trophy className="h-5 w-5 text-[#C9B8A6]" />
+            <h3 className="font-semibold text-[#5C4A3A]">Milestones</h3>
           </div>
           <div className="space-y-3">
             {milestones.map(milestone => (
               <div 
                 key={milestone.count}
                 className={`flex items-center justify-between p-3 rounded-xl ${
-                  milestone.earned ? "bg-emerald-50 border border-emerald-200" : "bg-stone-50"
+                  milestone.earned ? "bg-[#EDE8E3] border border-[#D4C4B0]" : "bg-[#F8F6F4]"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    milestone.earned ? "bg-emerald-500 text-white" : "bg-stone-200 text-stone-500"
+                    milestone.earned ? "bg-[#8B7355] text-white" : "bg-[#E8DED8] text-[#C9B8A6]"
                   }`}>
                     {milestone.earned ? <Check className="h-5 w-5" /> : milestone.count}
                   </div>
                   <div>
-                    <div className="font-medium text-stone-800">{milestone.count} Referrals</div>
-                    <div className="text-xs text-stone-500">{milestone.reward}</div>
+                    <div className="font-medium text-[#5C4A3A]">{milestone.count} Referrals</div>
+                    <div className="text-xs text-[#8B7355]">{milestone.reward}</div>
                   </div>
                 </div>
                 {milestone.earned && (
-                  <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
+                  <span className="text-xs font-medium text-[#8B7355] bg-[#F5EBE8] px-2 py-1 rounded-full">
                     Unlocked!
                   </span>
                 )}
@@ -189,29 +189,29 @@ export default function Referral() {
 
         {/* Referred Friends */}
         {referredCustomers.length > 0 && (
-          <div className="bg-white rounded-3xl border border-stone-200 p-6">
+          <div className="bg-white rounded-3xl border border-[#E8DED8] p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="h-5 w-5 text-violet-500" />
-              <h3 className="font-semibold text-stone-800">Your Referrals</h3>
+              <Users className="h-5 w-5 text-[#8B7355]" />
+              <h3 className="font-semibold text-[#5C4A3A]">Your Referrals</h3>
             </div>
             <div className="space-y-3">
               {referredCustomers.map(c => (
                 <div 
                   key={c.id}
-                  className="flex items-center justify-between py-2 border-b border-stone-100 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-[#F5EBE8] last:border-0"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-[#F5EBE8] flex items-center justify-center text-[#8B7355] font-semibold">
                       {c.created_by?.charAt(0).toUpperCase() || "?"}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-stone-700">{c.created_by}</div>
-                      <div className="text-xs text-stone-400">
+                      <div className="text-sm font-medium text-[#5C4A3A]">{c.created_by}</div>
+                      <div className="text-xs text-[#C9B8A6]">
                         Joined {c.created_date && format(new Date(c.created_date), "MMM d, yyyy")}
                       </div>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-emerald-600">+100 pts</div>
+                  <div className="text-sm font-medium text-[#8B7355]">+100 pts</div>
                 </div>
               ))}
             </div>

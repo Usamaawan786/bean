@@ -45,7 +45,7 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   return (
-    <div className="rounded-3xl bg-white border border-stone-200 p-5 shadow-sm">
+    <div className="rounded-3xl bg-white border border-[#E8DED8] p-5 shadow-sm">
       <div className="flex gap-2 mb-4">
         {postTypes.map(type => {
           const Icon = type.icon;
@@ -56,8 +56,8 @@ export default function PostComposer({ onPost, userName }) {
               onClick={() => setPostType(type.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all ${
                 isActive 
-                  ? "bg-amber-100 text-amber-800" 
-                  : "bg-stone-50 text-stone-500 hover:bg-stone-100"
+                  ? "bg-[#F5EBE8] text-[#5C4A3A]" 
+                  : "bg-[#F8F6F4] text-[#8B7355] hover:bg-[#F5EBE8]"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -71,7 +71,7 @@ export default function PostComposer({ onPost, userName }) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Share your coffee moment..."
-        className="min-h-[100px] border-stone-200 rounded-2xl resize-none focus:ring-amber-500 focus:border-amber-500"
+        className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]"
       />
       
       {imageUrl && (
@@ -79,7 +79,7 @@ export default function PostComposer({ onPost, userName }) {
           <img src={imageUrl} alt="Upload" className="h-24 rounded-xl object-cover" />
           <button
             onClick={() => setImageUrl("")}
-            className="absolute -top-2 -right-2 bg-stone-800 text-white rounded-full p-1"
+            className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1"
           >
             <X className="h-3 w-3" />
           </button>
@@ -94,7 +94,7 @@ export default function PostComposer({ onPost, userName }) {
             onChange={handleImageUpload}
             className="hidden"
           />
-          <div className="flex items-center gap-1.5 text-stone-400 hover:text-amber-600 transition-colors">
+          <div className="flex items-center gap-1.5 text-[#C9B8A6] hover:text-[#8B7355] transition-colors">
             {isUploading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
@@ -107,7 +107,7 @@ export default function PostComposer({ onPost, userName }) {
         <Button
           onClick={handleSubmit}
           disabled={!content.trim() || isPosting}
-          className="rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
+          className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A]"
         >
           {isPosting ? (
             <Loader2 className="h-4 w-4 animate-spin mr-2" />

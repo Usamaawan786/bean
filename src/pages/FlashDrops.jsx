@@ -67,13 +67,13 @@ export default function FlashDrops() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-stone-900 to-stone-800 text-white">
+      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
         <div className="max-w-lg mx-auto px-5 pt-6 pb-8">
           <Link 
             to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-stone-400 text-sm mb-4 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -81,20 +81,20 @@ export default function FlashDrops() {
           
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 p-3">
+              <div className="rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] p-3">
                 <Zap className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h1 className="text-xl font-bold">Flash Drops</h1>
-                <p className="text-stone-400 text-sm">Free coffee, random times!</p>
+                <p className="text-[#E8DED8] text-sm">Free coffee, random times!</p>
               </div>
             </div>
             
             <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
               {notificationsEnabled ? (
-                <BellRing className="h-4 w-4 text-amber-400" />
+                <BellRing className="h-4 w-4 text-[#F8F6F4]" />
               ) : (
-                <Bell className="h-4 w-4 text-stone-400" />
+                <Bell className="h-4 w-4 text-[#D4C4B0]" />
               )}
               <Switch
                 checked={notificationsEnabled}
@@ -107,7 +107,7 @@ export default function FlashDrops() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-4 bg-amber-500/20 text-amber-200 text-sm rounded-xl px-4 py-2"
+              className="mt-4 bg-[#D4C4B0]/20 text-[#F8F6F4] text-sm rounded-xl px-4 py-2"
             >
               🔔 You'll get notified when new drops go live!
             </motion.div>
@@ -143,8 +143,8 @@ export default function FlashDrops() {
         {upcomingDrops.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Clock className="h-5 w-5 text-amber-600" />
-              <h2 className="text-lg font-bold text-stone-800">Coming Soon</h2>
+              <Clock className="h-5 w-5 text-[#8B7355]" />
+              <h2 className="text-lg font-bold text-[#5C4A3A]">Coming Soon</h2>
             </div>
             <div className="space-y-4">
               <AnimatePresence>
@@ -167,8 +167,8 @@ export default function FlashDrops() {
             <div className="w-20 h-20 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4">
               <Zap className="h-10 w-10 text-stone-300" />
             </div>
-            <h3 className="text-lg font-semibold text-stone-700">No drops right now</h3>
-            <p className="text-stone-500 text-sm mt-1">
+            <h3 className="text-lg font-semibold text-[#5C4A3A]">No drops right now</h3>
+            <p className="text-[#8B7355] text-sm mt-1">
               Turn on notifications to be the first to know!
             </p>
           </div>
@@ -177,7 +177,7 @@ export default function FlashDrops() {
         {/* Past Drops */}
         {pastDrops.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-stone-800 mb-4">Recent Drops</h2>
+            <h2 className="text-lg font-bold text-[#5C4A3A] mb-4">Recent Drops</h2>
             <div className="space-y-3">
               {pastDrops.map(drop => (
                 <div 
