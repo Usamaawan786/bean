@@ -121,16 +121,17 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 -mt-4 pb-24 space-y-6">
-      {/* Branding Logo */}
-      <div className="flex justify-center -mt-2 mb-4">
+      {/* Branding Logo - Overlapping Hero */}
+      <div className="relative z-10 flex justify-center -mt-16">
         <div className="bg-white rounded-full p-4 shadow-lg border-4 border-[#F5F1ED]">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
             <Coffee className="h-10 w-10 text-[#5C4A3A]" />
           </div>
         </div>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-lg mx-auto px-5 pt-4 pb-24 space-y-6">
         {/* Tier Badge */}
         {customer && (
           <TierBadge 
