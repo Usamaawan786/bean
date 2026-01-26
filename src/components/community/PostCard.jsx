@@ -68,8 +68,18 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
         </div>
       )}
       <div className="flex items-start gap-3">
-        <div className={`rounded-full ${config.bg} p-2.5`}>
-          <Icon className={`h-5 w-5 ${config.color}`} />
+        <div className="flex-shrink-0">
+          {post.author_profile_picture ? (
+            <img 
+              src={post.author_profile_picture} 
+              alt={post.author_name} 
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className={`rounded-full ${config.bg} p-2.5`}>
+              <Icon className={`h-5 w-5 ${config.color}`} />
+            </div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

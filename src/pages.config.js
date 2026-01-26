@@ -7,6 +7,7 @@ import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
 import Home from './pages/Home';
+import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "Rewards": Rewards,
     "Shop": Shop,
     "Home": Home,
+    "Profile": Profile,
 }
 
 export const pagesConfig = {
