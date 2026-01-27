@@ -9,20 +9,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { qrCodeId } = await req.json();
+    const body = await req.json();
+    const { qrCodeId } = body;
 
     if (!qrCodeId) {
       return Response.json({ error: 'QR code ID is required' }, { status: 400 });
     }
 
-    // Find the sale with this QR code
-    const sales = await base44.entities.StoreSale.filter({ qr_code_id: qrCodeId });
+    // Find the sale with this QR code using service role
+    const sales = await base44.asServiceRole.entities.StoreSale.filter({ qr_code_id: qrCodeId });
 
     if (sales.length === 0) {
       return Response.json({ 
         success: false, 
         error: 'Invalid QR code' 
-      }, { status: 404 });
+      }, { status: 200 });
     }
 
     const sale = sales[0];
@@ -32,7 +33,7 @@ Deno.serve(async (req) => {
       return Response.json({ 
         success: false, 
         error: 'This QR code has already been used' 
-      }, { status: 400 });
+      }, { status: 200 });
     }
 
     // Calculate points: 10 points per 1000 PKR
@@ -45,7 +46,7 @@ Deno.serve(async (req) => {
       return Response.json({ 
         success: false, 
         error: 'Customer profile not found' 
-      }, { status: 404 });
+      }, { status: 200 });
     }
 
     const customer = customers[0];
@@ -56,8 +57,8 @@ Deno.serve(async (req) => {
       total_points_earned: customer.total_points_earned + pointsToAward
     });
 
-    // Mark sale as scanned
-    await base44.entities.StoreSale.update(sale.id, {
+    // Mark sale as scanned using service role
+    await base44.asServiceRole.entities.StoreSale.update(sale.id, {
       is_scanned: true,
       scanned_by: user.email,
       scanned_at: new Date().toISOString(),
@@ -71,9 +72,10 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
+    console.error('Error processing bill scan:', error);
     return Response.json({ 
       success: false, 
-      error: error.message 
-    }, { status: 500 });
+      error: error.message || 'An error occurred' 
+    }, { status: 200 });
   }
 });
