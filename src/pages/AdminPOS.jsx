@@ -33,8 +33,8 @@ export default function AdminPOS() {
   }, []);
 
   const { data: products = [] } = useQuery({
-    queryKey: ["products-admin"],
-    queryFn: () => base44.entities.Product.list(),
+    queryKey: ["store-products-admin"],
+    queryFn: () => base44.entities.StoreProduct.list(),
     enabled: !!user
   });
 
@@ -73,14 +73,33 @@ export default function AdminPOS() {
   const tax = subtotal * 0.17; // 17% Pakistan GST
   const total = subtotal + tax;
 
-  const completeSale = () => {
+  const completeSale = async () => {
+    const billNumber = "INV-" + Date.now().toString().slice(-8);
+    
+    // Save sale to database
+    await base44.entities.StoreSale.create({
+      bill_number: billNumber,
+      customer_name: customerInfo.name || null,
+      customer_phone: customerInfo.phone || null,
+      items: cart.map(item => ({
+        product_id: item.id,
+        product_name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      subtotal,
+      tax,
+      total_amount: total,
+      payment_method: "Cash"
+    });
+
     const bill = {
       items: cart,
       customerInfo,
       subtotal,
       tax,
       total,
-      billNumber: "INV-" + Date.now().toString().slice(-8),
+      billNumber,
       date: new Date().toISOString()
     };
     setGeneratedBill(bill);
@@ -118,7 +137,7 @@ export default function AdminPOS() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Admin POS</h1>
-              <p className="text-[#E8DED8] text-sm">Point of Sale System</p>
+              <p className="text-[#E8DED8] text-sm">In-Store Point of Sale</p>
             </div>
             <Settings className="h-6 w-6" />
           </div>
@@ -264,7 +283,7 @@ export default function AdminPOS() {
           </TabsContent>
 
           <TabsContent value="products">
-            <ProductManager />
+            <ProductManager isStoreProducts={true} />
           </TabsContent>
         </Tabs>
       </div>

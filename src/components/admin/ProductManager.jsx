@@ -12,13 +12,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
-export default function ProductManager() {
+export default function ProductManager({ isStoreProducts = false }) {
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
 
-  const [formData, setFormData] = useState({
+  const defaultFormData = isStoreProducts ? {
+    name: "",
+    description: "",
+    price: "",
+    category: "Hot Coffee",
+    size_options: [],
+    is_available: true,
+    preparation_time: "",
+    image_url: ""
+  } : {
     name: "",
     description: "",
     price: "",
@@ -30,38 +39,42 @@ export default function ProductManager() {
     stock_quantity: "",
     featured: false,
     image_url: ""
-  });
+  };
 
+  const [formData, setFormData] = useState(defaultFormData);
+
+  const entityName = isStoreProducts ? "StoreProduct" : "Product";
+  
   const { data: products = [] } = useQuery({
-    queryKey: ["products-management"],
-    queryFn: () => base44.entities.Product.list()
+    queryKey: [isStoreProducts ? "store-products-management" : "products-management"],
+    queryFn: () => base44.entities[entityName].list()
   });
 
   const createProductMutation = useMutation({
-    mutationFn: (data) => base44.entities.Product.create(data),
+    mutationFn: (data) => base44.entities[entityName].create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products-management"] });
-      queryClient.invalidateQueries({ queryKey: ["products-admin"] });
+      queryClient.invalidateQueries({ queryKey: [isStoreProducts ? "store-products-management" : "products-management"] });
+      queryClient.invalidateQueries({ queryKey: [isStoreProducts ? "store-products-admin" : "products-admin"] });
       toast.success("Product created successfully");
       closeDialog();
     }
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Product.update(id, data),
+    mutationFn: ({ id, data }) => base44.entities[entityName].update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products-management"] });
-      queryClient.invalidateQueries({ queryKey: ["products-admin"] });
+      queryClient.invalidateQueries({ queryKey: [isStoreProducts ? "store-products-management" : "products-management"] });
+      queryClient.invalidateQueries({ queryKey: [isStoreProducts ? "store-products-admin" : "products-admin"] });
       toast.success("Product updated successfully");
       closeDialog();
     }
   });
 
   const deleteProductMutation = useMutation({
-    mutationFn: (id) => base44.entities.Product.delete(id),
+    mutationFn: (id) => base44.entities[entityName].delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products-management"] });
-      queryClient.invalidateQueries({ queryKey: ["products-admin"] });
+      queryClient.invalidateQueries({ queryKey: [isStoreProducts ? "store-products-management" : "products-management"] });
+      queryClient.invalidateQueries({ queryKey: [isStoreProducts ? "store-products-admin" : "products-admin"] });
       toast.success("Product deleted successfully");
     }
   });
@@ -88,19 +101,7 @@ export default function ProductManager() {
       setFormData(product);
     } else {
       setEditingProduct(null);
-      setFormData({
-        name: "",
-        description: "",
-        price: "",
-        category: "Coffee Beans",
-        weight: "",
-        origin: "",
-        roast_level: "Medium",
-        in_stock: true,
-        stock_quantity: "",
-        featured: false,
-        image_url: ""
-      });
+      setFormData(defaultFormData);
     }
     setShowDialog(true);
   };
@@ -112,7 +113,11 @@ export default function ProductManager() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const data = {
+    const data = isStoreProducts ? {
+      ...formData,
+      price: parseFloat(formData.price),
+      preparation_time: formData.preparation_time ? parseInt(formData.preparation_time) : 0
+    } : {
       ...formData,
       price: parseFloat(formData.price),
       stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0
@@ -129,8 +134,12 @@ export default function ProductManager() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-[#5C4A3A]">Product Management</h2>
-          <p className="text-sm text-[#8B7355]">Add and manage products for POS</p>
+          <h2 className="text-xl font-bold text-[#5C4A3A]">
+            {isStoreProducts ? "In-Store Products" : "Shop Products"}
+          </h2>
+          <p className="text-sm text-[#8B7355]">
+            {isStoreProducts ? "Manage physical store menu items" : "Manage e-commerce products"}
+          </p>
         </div>
         <Button
           onClick={() => openDialog()}
@@ -175,7 +184,12 @@ export default function ProductManager() {
               
               <div className="flex items-center gap-2 text-xs text-[#8B7355]">
                 <Package className="h-3 w-3" />
-                <span>{product.in_stock ? `In Stock (${product.stock_quantity || 0})` : "Out of Stock"}</span>
+                <span>
+                  {isStoreProducts 
+                    ? (product.is_available ? "Available" : "Unavailable")
+                    : (product.in_stock ? `In Stock (${product.stock_quantity || 0})` : "Out of Stock")
+                  }
+                </span>
               </div>
 
               <div className="flex gap-2 pt-2">
@@ -249,76 +263,115 @@ export default function ProductManager() {
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label>Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
-                  <SelectTrigger className="border-[#E8DED8]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Coffee Beans">Coffee Beans</SelectItem>
-                    <SelectItem value="Matcha">Matcha</SelectItem>
-                    <SelectItem value="Equipment">Equipment</SelectItem>
-                    <SelectItem value="Merchandise">Merchandise</SelectItem>
-                    <SelectItem value="Gift Sets">Gift Sets</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+{isStoreProducts ? (
+              <>
+                <div>
+                  <Label>Category</Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  >
+                    <SelectTrigger className="border-[#E8DED8]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hot Coffee">Hot Coffee</SelectItem>
+                      <SelectItem value="Cold Coffee">Cold Coffee</SelectItem>
+                      <SelectItem value="Tea">Tea</SelectItem>
+                      <SelectItem value="Juices">Juices</SelectItem>
+                      <SelectItem value="Smoothies">Smoothies</SelectItem>
+                      <SelectItem value="Snacks">Snacks</SelectItem>
+                      <SelectItem value="Pastries">Pastries</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div>
-                <Label>Weight/Size</Label>
-                <Input
-                  value={formData.weight}
-                  onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                  placeholder="e.g., 250g, 1kg"
-                  className="border-[#E8DED8]"
-                />
-              </div>
-            </div>
+                <div>
+                  <Label>Preparation Time (minutes)</Label>
+                  <Input
+                    type="number"
+                    value={formData.preparation_time}
+                    onChange={(e) => setFormData({ ...formData, preparation_time: e.target.value })}
+                    placeholder="e.g., 5"
+                    className="border-[#E8DED8]"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Category</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    >
+                      <SelectTrigger className="border-[#E8DED8]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Coffee Beans">Coffee Beans</SelectItem>
+                        <SelectItem value="Matcha">Matcha</SelectItem>
+                        <SelectItem value="Equipment">Equipment</SelectItem>
+                        <SelectItem value="Merchandise">Merchandise</SelectItem>
+                        <SelectItem value="Gift Sets">Gift Sets</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <Label>Origin</Label>
-                <Input
-                  value={formData.origin}
-                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
-                  placeholder="e.g., Colombia, Ethiopia"
-                  className="border-[#E8DED8]"
-                />
-              </div>
+                  <div>
+                    <Label>Weight/Size</Label>
+                    <Input
+                      value={formData.weight}
+                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                      placeholder="e.g., 250g, 1kg"
+                      className="border-[#E8DED8]"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <Label>Roast Level</Label>
-                <Select
-                  value={formData.roast_level}
-                  onValueChange={(value) => setFormData({ ...formData, roast_level: value })}
-                >
-                  <SelectTrigger className="border-[#E8DED8]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Light">Light</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Dark">Dark</SelectItem>
-                    <SelectItem value="N/A">N/A</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Origin</Label>
+                    <Input
+                      value={formData.origin}
+                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                      placeholder="e.g., Colombia, Ethiopia"
+                      className="border-[#E8DED8]"
+                    />
+                  </div>
 
-            <div>
-              <Label>Stock Quantity</Label>
-              <Input
-                type="number"
-                value={formData.stock_quantity}
-                onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                className="border-[#E8DED8]"
-              />
-            </div>
+                  <div>
+                    <Label>Roast Level</Label>
+                    <Select
+                      value={formData.roast_level}
+                      onValueChange={(value) => setFormData({ ...formData, roast_level: value })}
+                    >
+                      <SelectTrigger className="border-[#E8DED8]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Light">Light</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Dark">Dark</SelectItem>
+                        <SelectItem value="N/A">N/A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Stock Quantity</Label>
+                  <Input
+                    type="number"
+                    value={formData.stock_quantity}
+                    onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+                    className="border-[#E8DED8]"
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <Label>Product Image</Label>
@@ -338,21 +391,33 @@ export default function ProductManager() {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.in_stock}
-                  onCheckedChange={(checked) => setFormData({ ...formData, in_stock: checked })}
-                />
-                <Label>In Stock</Label>
-              </div>
+              {isStoreProducts ? (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={formData.is_available}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_available: checked })}
+                  />
+                  <Label>Available</Label>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={formData.in_stock}
+                      onCheckedChange={(checked) => setFormData({ ...formData, in_stock: checked })}
+                    />
+                    <Label>In Stock</Label>
+                  </div>
 
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.featured}
-                  onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
-                />
-                <Label>Featured</Label>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={formData.featured}
+                      onCheckedChange={(checked) => setFormData({ ...formData, featured: checked })}
+                    />
+                    <Label>Featured</Label>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-2 pt-4">
