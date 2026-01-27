@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { motion } from "framer-motion";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import QRScanner from "@/components/profile/QRScanner";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -16,6 +17,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -71,6 +73,23 @@ export default function Profile() {
       toast.error("Failed to update profile");
     }
     setIsSaving(false);
+  };
+
+  const handleQRScan = async (qrCodeId) => {
+    try {
+      const response = await base44.functions.invoke('processBillScan', { qrCodeId });
+      
+      if (response.data.success) {
+        toast.success(`🎉 ${response.data.points_awarded} points added to your account!`);
+        setShowQRScanner(false);
+        // Reload customer data to show updated points
+        await loadUserData();
+      } else {
+        toast.error(response.data.error || "Failed to process QR code");
+      }
+    } catch (error) {
+      toast.error("Failed to scan QR code");
+    }
   };
 
   if (!user) {
@@ -158,6 +177,15 @@ export default function Profile() {
             </div>
           </div>
         )}
+
+        {/* QR Scanner Button */}
+        <Button
+          onClick={() => setShowQRScanner(true)}
+          className="w-full mb-6 bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] rounded-2xl h-14 text-base"
+        >
+          <QrCode className="h-5 w-5 mr-2" />
+          Scan Bill to Earn Points
+        </Button>
 
         {/* Profile Form */}
         <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm space-y-4">
@@ -252,6 +280,16 @@ export default function Profile() {
           Logout
         </Button>
       </div>
+
+      {/* QR Scanner Modal */}
+      <AnimatePresence>
+        {showQRScanner && (
+          <QRScanner
+            onScan={handleQRScan}
+            onClose={() => setShowQRScanner(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

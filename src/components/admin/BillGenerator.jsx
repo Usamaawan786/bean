@@ -1,13 +1,22 @@
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
+import QRCode from "qrcode";
 
 export default function BillGenerator({ bill, onClose }) {
   const billRef = useRef(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+
+  useEffect(() => {
+    if (bill.qrCodeId) {
+      QRCode.toDataURL(bill.qrCodeId, { width: 200, margin: 1 })
+        .then(url => setQrCodeUrl(url));
+    }
+  }, [bill.qrCodeId]);
 
   const handlePrint = () => {
     window.print();
@@ -144,6 +153,17 @@ export default function BillGenerator({ bill, onClose }) {
               <span>PKR {bill.total.toFixed(2)}</span>
             </div>
           </div>
+
+          {/* QR Code for Rewards */}
+          {qrCodeUrl && (
+            <div className="text-center py-6 border-t border-[#E8DED8]">
+              <p className="text-sm font-semibold text-[#5C4A3A] mb-3">Scan to Earn Rewards</p>
+              <img src={qrCodeUrl} alt="Rewards QR Code" className="w-48 h-48 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
+              <p className="text-xs text-[#8B7355] mt-3">
+                Scan this code in the Bean app to earn {Math.floor(bill.total / 100)} points!
+              </p>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="text-center pt-6 border-t border-[#E8DED8]">

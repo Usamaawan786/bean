@@ -75,9 +75,10 @@ export default function AdminPOS() {
 
   const completeSale = async () => {
     const billNumber = "INV-" + Date.now().toString().slice(-8);
+    const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
     
     // Save sale to database
-    await base44.entities.StoreSale.create({
+    const sale = await base44.entities.StoreSale.create({
       bill_number: billNumber,
       customer_name: customerInfo.name || null,
       customer_phone: customerInfo.phone || null,
@@ -90,7 +91,9 @@ export default function AdminPOS() {
       subtotal,
       tax,
       total_amount: total,
-      payment_method: "Cash"
+      payment_method: "Cash",
+      qr_code_id: qrCodeId,
+      is_scanned: false
     });
 
     const bill = {
@@ -100,6 +103,7 @@ export default function AdminPOS() {
       tax,
       total,
       billNumber,
+      qrCodeId,
       date: new Date().toISOString()
     };
     setGeneratedBill(bill);
