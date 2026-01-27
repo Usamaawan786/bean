@@ -12,7 +12,7 @@ import { format } from "date-fns";
 export default function FlashDrops() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const queryClient = useQueryClient();
 
   useEffect(() => {
