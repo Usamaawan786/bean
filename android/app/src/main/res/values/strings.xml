@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BEAN Coffee</string>
+    <string name="title_activity_main">BEAN Coffee</string>
+    <string name="package_name">com.beancoffee.app</string>
+    <string name="custom_url_scheme">com.beancoffee.app</string>
+</resources>
