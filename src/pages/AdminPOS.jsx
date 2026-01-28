@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ export default function AdminPOS() {
   const [cart, setCart] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [customerInfo, setCustomerInfo] = useState({ name: "", phone: "" });
+  const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [showBill, setShowBill] = useState(false);
   const [generatedBill, setGeneratedBill] = useState(null);
   const queryClient = useQueryClient();
@@ -70,7 +71,8 @@ export default function AdminPOS() {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.17; // 17% Pakistan GST
+  const taxRate = paymentMethod === "Card" ? 0.05 : 0.17; // 5% for Card, 17% for Cash
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
   const completeSale = async () => {
@@ -91,7 +93,7 @@ export default function AdminPOS() {
       subtotal,
       tax,
       total_amount: total,
-      payment_method: "Cash",
+      payment_method: paymentMethod,
       qr_code_id: qrCodeId,
       is_scanned: false
     });
@@ -113,6 +115,7 @@ export default function AdminPOS() {
   const clearCart = () => {
     setCart([]);
     setCustomerInfo({ name: "", phone: "" });
+    setPaymentMethod("Cash");
     setShowBill(false);
     setGeneratedBill(null);
   };
@@ -209,6 +212,40 @@ export default function AdminPOS() {
                   />
                 </div>
 
+                {/* Payment Method */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Payment Method</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("Cash")}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
+                        paymentMethod === "Cash"
+                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      <Banknote className="h-4 w-4" />
+                      <span className="text-sm font-medium">Cash</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("Card")}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
+                        paymentMethod === "Card"
+                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      <span className="text-sm font-medium">Card</span>
+                    </button>
+                  </div>
+                  <p className="text-xs text-[#8B7355] mt-1">
+                    GST: {paymentMethod === "Card" ? "5%" : "17%"}
+                  </p>
+                </div>
+
                 {/* Cart Items */}
                 <div className="space-y-2 max-h-64 overflow-y-auto mb-4">
                   {cart.length === 0 ? (
@@ -255,7 +292,7 @@ export default function AdminPOS() {
                         <span className="text-[#5C4A3A] font-medium">PKR {subtotal.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#8B7355]">GST (17%)</span>
+                        <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "5%" : "17%"})</span>
                         <span className="text-[#5C4A3A] font-medium">PKR {tax.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold border-t border-[#E8DED8] pt-2">
