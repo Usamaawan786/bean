@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import QRScanner from "@/components/profile/QRScanner";
 import PointsAnimation from "@/components/profile/PointsAnimation";
+import ImageCropModal from "@/components/profile/ImageCropModal";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -22,6 +23,7 @@ export default function Profile() {
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [pointsData, setPointsData] = useState({ old: 0, new: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [imageToEdit, setImageToEdit] = useState(null);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -352,6 +354,15 @@ export default function Profile() {
           />
         )}
       </AnimatePresence>
+
+      {/* Image Crop Modal */}
+      {imageToEdit && (
+        <ImageCropModal
+          imageSrc={imageToEdit}
+          onComplete={handleCropComplete}
+          onClose={() => setImageToEdit(null)}
+        />
+      )}
     </div>
   );
 }
