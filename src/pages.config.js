@@ -9,7 +9,6 @@ import Profile from './pages/Profile';
 import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
-import Leaderboard from './pages/Leaderboard';
 import __Layout from './Layout.jsx';
 
 
@@ -25,7 +24,6 @@ export const PAGES = {
     "Referral": Referral,
     "Rewards": Rewards,
     "Shop": Shop,
-    "Leaderboard": Leaderboard,
 }
 
 export const pagesConfig = {

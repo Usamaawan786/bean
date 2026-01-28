@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Gift, ArrowLeft, Check, Sparkles, TrendingUp } from "lucide-react";
+import { Star, Gift, ArrowLeft, Check, Sparkles, TrendingUp, Trophy, Medal, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import RewardCard from "@/components/rewards/RewardCard";
@@ -16,6 +16,7 @@ export default function Rewards() {
   const [customer, setCustomer] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [successDialog, setSuccessDialog] = useState({ open: false, reward: null, code: "" });
+  const [activeTab, setActiveTab] = useState("rewards"); // "rewards" or "leaderboard"
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -43,6 +44,15 @@ export default function Rewards() {
     queryKey: ["rewards"],
     queryFn: () => base44.entities.Reward.filter({ is_active: true })
   });
+
+  const { data: allCustomers = [], isLoading: loadingLeaderboard } = useQuery({
+    queryKey: ["leaderboard"],
+    queryFn: () => base44.entities.Customer.list("-total_points_earned", 50),
+    enabled: activeTab === "leaderboard"
+  });
+
+  const topCustomers = allCustomers.slice(0, 10);
+  const userRank = allCustomers.findIndex(c => c.created_by === user?.email) + 1;
 
   const redeemMutation = useMutation({
     mutationFn: async (reward) => {
@@ -128,27 +138,59 @@ export default function Rewards() {
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="max-w-lg mx-auto px-5 py-4 overflow-x-auto">
-        <div className="flex gap-2">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-                selectedCategory === cat
-                  ? "bg-[#8B7355] text-white"
-                  : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0]"
-              }`}
-            >
-              {cat === "all" ? "All Rewards" : cat}
-            </button>
-          ))}
+      {/* Tab Navigation */}
+      <div className="max-w-lg mx-auto px-5 py-4">
+        <div className="flex gap-2 bg-white rounded-2xl p-1 border border-[#E8DED8]">
+          <button
+            onClick={() => setActiveTab("rewards")}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === "rewards"
+                ? "bg-[#8B7355] text-white shadow-sm"
+                : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
+            }`}
+          >
+            <Gift className="h-4 w-4" />
+            Rewards
+          </button>
+          <button
+            onClick={() => setActiveTab("leaderboard")}
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+              activeTab === "leaderboard"
+                ? "bg-[#8B7355] text-white shadow-sm"
+                : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
+            }`}
+          >
+            <Trophy className="h-4 w-4" />
+            Leaderboard
+          </button>
         </div>
       </div>
 
+      {/* Categories - Only show for rewards tab */}
+      {activeTab === "rewards" && (
+        <div className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto">
+          <div className="flex gap-2">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                  selectedCategory === cat
+                    ? "bg-[#8B7355] text-white"
+                    : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0]"
+                }`}
+              >
+                {cat === "all" ? "All Rewards" : cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-6">
+      <div className="max-w-lg mx-auto px-5 pb-24 space-y-6">
+        {activeTab === "rewards" ? (
+          <>
         {/* Tier Benefits */}
         {customer && (
           <TierBenefits tier={customer.tier || "Bronze"} />
@@ -233,6 +275,149 @@ export default function Rewards() {
               ))}
             </AnimatePresence>
           </div>
+        )}
+        </>
+        ) : (
+          /* Leaderboard Content */
+          <>
+            {/* Your Rank Card */}
+            {customer && userRank > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white rounded-2xl p-5 shadow-lg"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                      <Trophy className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-[#E8DED8]">Your Rank</div>
+                      <div className="text-2xl font-bold">#{userRank}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-[#E8DED8]">Total Points</div>
+                    <div className="text-2xl font-bold">{customer.total_points_earned || 0}</div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Top 3 Podium */}
+            {topCustomers.length >= 3 && (
+              <div>
+                <h3 className="text-sm font-semibold text-[#8B7355] mb-3 px-1">Top 3</h3>
+                <div className="flex items-end justify-center gap-2 mb-6">
+                  {/* 2nd Place */}
+                  <div className="flex-1">
+                    <div className="text-center mb-2">
+                      <div className="w-14 h-14 mx-auto rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center mb-2 border-4 border-white shadow-lg">
+                        <span className="text-xl">🥈</span>
+                      </div>
+                      <div className="text-xs font-semibold text-[#5C4A3A] truncate px-1">
+                        {topCustomers[1].created_by?.split('@')[0]}
+                      </div>
+                      <div className="text-sm font-bold text-[#8B7355]">
+                        {topCustomers[1].total_points_earned || 0}
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-b from-gray-300 to-gray-400 rounded-t-2xl h-20 flex items-center justify-center font-bold text-gray-800 shadow-lg">
+                      2
+                    </div>
+                  </div>
+
+                  {/* 1st Place */}
+                  <div className="flex-1">
+                    <div className="text-center mb-2">
+                      <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mb-2 border-4 border-white shadow-xl relative">
+                        <Crown className="h-6 w-6 text-white absolute -top-5" />
+                        <span className="text-2xl">👑</span>
+                      </div>
+                      <div className="text-xs font-semibold text-[#5C4A3A] truncate px-1">
+                        {topCustomers[0].created_by?.split('@')[0]}
+                      </div>
+                      <div className="text-sm font-bold text-[#8B7355]">
+                        {topCustomers[0].total_points_earned || 0}
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-b from-amber-400 to-yellow-500 rounded-t-2xl h-28 flex items-center justify-center font-bold text-white text-xl shadow-xl">
+                      1
+                    </div>
+                  </div>
+
+                  {/* 3rd Place */}
+                  <div className="flex-1">
+                    <div className="text-center mb-2">
+                      <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center mb-2 border-4 border-white shadow-lg">
+                        <span className="text-lg">🥉</span>
+                      </div>
+                      <div className="text-xs font-semibold text-[#5C4A3A] truncate px-1">
+                        {topCustomers[2].created_by?.split('@')[0]}
+                      </div>
+                      <div className="text-sm font-bold text-[#8B7355]">
+                        {topCustomers[2].total_points_earned || 0}
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-b from-orange-400 to-amber-600 rounded-t-2xl h-16 flex items-center justify-center font-bold text-white shadow-lg">
+                      3
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Rest of Leaderboard */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-[#8B7355] mb-3 px-1">Rankings</h3>
+              {loadingLeaderboard ? (
+                <div className="space-y-2">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="bg-white rounded-2xl h-16 animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                topCustomers.slice(3, 10).map((c, index) => {
+                  const rank = index + 4;
+                  const isCurrentUser = c.created_by === user?.email;
+                  
+                  return (
+                    <motion.div
+                      key={c.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      className={`bg-white rounded-2xl border p-4 flex items-center gap-3 ${
+                        isCurrentUser ? "border-[#8B7355] shadow-md" : "border-[#E8DED8]"
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                        isCurrentUser ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355]"
+                      }`}>
+                        {rank}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-medium truncate ${isCurrentUser ? "text-[#8B7355]" : "text-[#5C4A3A]"}`}>
+                          {c.created_by?.split('@')[0]}{isCurrentUser && " (You)"}
+                        </div>
+                        <div className="text-xs text-[#C9B8A6] flex items-center gap-1">
+                          <Medal className="h-3 w-3" />
+                          {c.tier}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-[#8B7355]">
+                          {c.total_points_earned || 0}
+                        </div>
+                        <div className="text-xs text-[#C9B8A6]">points</div>
+                      </div>
+                    </motion.div>
+                  );
+                })
+              )}
+            </div>
+          </>
         )}
       </div>
 
