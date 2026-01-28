@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     if (sale.is_scanned) {
       return Response.json({ 
         success: false, 
-        error: 'This QR code has already been used' 
+        error: 'This QR code has already been redeemed. Please use a new one.' 
       }, { status: 200 });
     }
 
