@@ -39,7 +39,7 @@ export default function AdminPOS() {
   });
 
   const filteredProducts = products.filter(p => 
-    p.in_stock && p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    p.is_available && p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const addToCart = (product) => {
