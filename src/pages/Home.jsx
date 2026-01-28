@@ -14,6 +14,7 @@ import FlashDropCard from "@/components/flashdrop/FlashDropCard";
 import ReferralCard from "@/components/referral/ReferralCard";
 import NameSetup from "@/components/NameSetup";
 import RewardProgress from "@/components/dashboard/RewardProgress";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -81,6 +82,15 @@ export default function Home() {
         points_balance: prev.points_balance + 25,
         total_points_earned: prev.total_points_earned + 25
       }));
+
+      // Log activity
+      await base44.entities.Activity.create({
+        user_email: user.email,
+        action_type: "flash_drop_claimed",
+        description: `Claimed ${drop.title}`,
+        points_amount: 25,
+        metadata: { drop_id: drop.id }
+      });
     }
   };
 
@@ -240,27 +250,8 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-3xl border border-[#E8DED8] p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-5 w-5 text-[#8B7355]" />
-            <h3 className="font-semibold text-[#5C4A3A]">Your Progress</h3>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2 border-b border-[#F5EBE8]">
-              <span className="text-sm text-[#8B7355]">Total points earned</span>
-              <span className="font-semibold text-[#5C4A3A]">{customer?.total_points_earned || 0} pts</span>
-            </div>
-            <div className="flex items-center justify-between py-2 border-b border-[#F5EBE8]">
-              <span className="text-sm text-[#8B7355]">Friends referred</span>
-              <span className="font-semibold text-[#5C4A3A]">{customer?.referral_count || 0}</span>
-            </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-[#8B7355]">Current tier</span>
-              <span className="font-semibold text-[#8B7355]">{customer?.tier || "Bronze"}</span>
-            </div>
-          </div>
-        </div>
+        {/* Activity Feed */}
+        {user && <ActivityFeed userEmail={user.email} limit={5} />}
       </div>
     </div>
   );
