@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 export default function PointsAnimation({ startValue, endValue, onComplete }) {
   const [displayValue, setDisplayValue] = useState(startValue);
+  const pointsEarned = endValue - startValue;
 
   useEffect(() => {
     const duration = 2000; // 2 seconds
@@ -36,7 +37,7 @@ export default function PointsAnimation({ startValue, endValue, onComplete }) {
       <motion.div
         initial={{ y: 50 }}
         animate={{ y: 0 }}
-        className="bg-white rounded-3xl p-8 text-center shadow-2xl"
+        className="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-sm mx-4"
       >
         <motion.div
           animate={{ 
@@ -51,15 +52,27 @@ export default function PointsAnimation({ startValue, endValue, onComplete }) {
         >
           🎉
         </motion.div>
-        <h2 className="text-2xl font-bold text-[#5C4A3A] mb-2">Points Earned!</h2>
-        <motion.div
-          className="text-6xl font-bold text-[#8B7355]"
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 0.5 }}
-        >
-          {displayValue}
-        </motion.div>
-        <p className="text-[#8B7355] mt-4">Adding points to your balance...</p>
+        <h2 className="text-xl font-bold text-[#5C4A3A] mb-6">Points Earned!</h2>
+        
+        <div className="bg-[#F5EBE8] rounded-2xl p-6 mb-4">
+          <div className="text-sm text-[#8B7355] mb-2">You Earned</div>
+          <motion.div
+            className="text-5xl font-bold text-[#8B7355] mb-4"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 0.5 }}
+          >
+            +{pointsEarned}
+          </motion.div>
+          
+          <div className="border-t border-[#E8DED8] pt-4">
+            <div className="text-sm text-[#8B7355] mb-2">Total Balance</div>
+            <div className="text-3xl font-bold text-[#5C4A3A]">
+              {displayValue}
+            </div>
+          </div>
+        </div>
+        
+        <p className="text-sm text-[#8B7355]">Adding to your account...</p>
       </motion.div>
     </motion.div>
   );
