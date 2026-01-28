@@ -29,17 +29,22 @@ export default function Profile() {
   }, []);
 
   const loadUserData = async () => {
-    const u = await base44.auth.me();
-    setUser(u);
-    setFormData({
-      full_name: u.full_name || "",
-      bio: u.bio || "",
-      profile_picture: u.profile_picture || ""
-    });
+    try {
+      const u = await base44.auth.me();
+      setUser(u);
+      setFormData({
+        full_name: u.full_name || "",
+        bio: u.bio || "",
+        profile_picture: u.profile_picture || ""
+      });
 
-    const customers = await base44.entities.Customer.filter({ created_by: u.email });
-    if (customers.length > 0) {
-      setCustomer(customers[0]);
+      const customers = await base44.entities.Customer.filter({ created_by: u.email });
+      if (customers.length > 0) {
+        setCustomer(customers[0]);
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+      toast.error("Failed to load profile");
     }
   };
 
