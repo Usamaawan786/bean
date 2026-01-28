@@ -285,20 +285,17 @@ export default function Profile() {
 
         {/* Gift Cards Link */}
         <Link to={createPageUrl("GiftCards")}>
-          <div className="bg-gradient-to-br from-rose-400 via-pink-400 to-orange-400 text-white rounded-3xl p-5 mb-6 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow relative overflow-hidden">
-            <div className="absolute top-0 right-0 opacity-20">
-              <Gift className="h-32 w-32" />
-            </div>
-            <div className="flex items-center gap-3 relative z-10">
-              <div className="w-12 h-12 rounded-full bg-white/30 backdrop-blur flex items-center justify-center">
-                <Gift className="h-6 w-6" />
+          <div className="bg-white rounded-3xl border border-[#E8DED8] p-5 mb-6 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#F5EBE8] flex items-center justify-center">
+                <Gift className="h-6 w-6 text-[#8B7355]" />
               </div>
               <div>
-                <div className="font-bold text-lg">Buy Coffee for Someone</div>
-                <div className="text-sm text-white/90">Perfect gift for any occasion</div>
+                <div className="font-semibold text-[#5C4A3A]">Gift Cards</div>
+                <div className="text-sm text-[#8B7355]">Send coffee to friends</div>
               </div>
             </div>
-            <ChevronRight className="h-6 w-6 relative z-10" />
+            <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </div>
         </Link>
 
