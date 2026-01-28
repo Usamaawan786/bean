@@ -79,69 +79,110 @@ export default function Shop() {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED] pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF] pb-24">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-5 pt-6 pb-6">
-          <div className="flex items-center justify-between">
+      <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white sticky top-0 z-20 overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <motion.div
+            animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute top-10 left-5 w-40 h-40 bg-[#D4C4B0]/40 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ x: [0, -40, 0], y: [0, -30, 0] }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-5 right-10 w-48 h-48 bg-[#C9B8A6]/30 rounded-full blur-3xl"
+          />
+        </div>
+        <div className="relative max-w-6xl mx-auto px-5 pt-6 pb-6">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
             <div>
-              <h1 className="text-2xl font-bold">Bean Shop</h1>
+              <h1 className="text-3xl font-bold">Bean Shop</h1>
               <p className="text-[#E8DED8] text-sm mt-1">Premium coffee & accessories</p>
             </div>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setCartOpen(true)}
-              className="relative bg-white/20 backdrop-blur rounded-full p-3 hover:bg-white/30 transition-colors"
+              className="relative bg-white/10 backdrop-blur-lg rounded-full p-4 hover:bg-white/20 transition-colors border border-white/20"
             >
               <ShoppingCart className="h-6 w-6" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#D4C4B0] text-[#5C4A3A] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-400 to-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg"
+                >
                   {cartItemCount}
-                </span>
+                </motion.span>
               )}
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-5 py-6 space-y-8">
         {/* Featured Products */}
         {featuredProducts.length > 0 && (
-          <section>
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <div className="flex items-center gap-2 mb-4">
-              <Star className="h-5 w-5 text-[#8B7355] fill-[#8B7355]" />
+              <motion.div animate={{ rotate: [0, 15, -15, 0] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}>
+                <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+              </motion.div>
               <h2 className="text-xl font-bold text-[#5C4A3A]">Featured Products</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {featuredProducts.slice(0, 4).map((product) => (
-                <ProductCard
+              {featuredProducts.slice(0, 4).map((product, idx) => (
+                <motion.div
                   key={product.id}
-                  product={product}
-                  onAddToCart={handleAddToCart}
-                  onViewDetails={setSelectedProduct}
-                />
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + idx * 0.1 }}
+                >
+                  <ProductCard
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    onViewDetails={setSelectedProduct}
+                  />
+                </motion.div>
               ))}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* Categories */}
-        <div className="overflow-x-auto -mx-5 px-5">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="overflow-x-auto -mx-5 px-5"
+        >
           <div className="flex gap-2 min-w-max">
             {categories.map((cat) => (
-              <button
+              <motion.button
                 key={cat}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-5 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? "bg-[#8B7355] text-white"
-                    : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0]"
+                    ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-lg"
+                    : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0] hover:shadow-md"
                 }`}
               >
                 {cat === "all" ? "All Products" : cat}
-              </button>
+              </motion.button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Products Grid */}
         {isLoading ? (
