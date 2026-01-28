@@ -68,6 +68,15 @@ export default function Rewards() {
         points_balance: newBalance,
         cups_redeemed: newCups
       }));
+
+      // Log activity
+      await base44.entities.Activity.create({
+        user_email: user.email,
+        action_type: "reward_redeemed",
+        description: `Redeemed ${reward.name}`,
+        points_amount: -reward.points_required,
+        metadata: { reward_id: reward.id, redemption_code: code }
+      });
       
       return { code, reward };
     },
