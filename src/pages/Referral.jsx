@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Gift, Users, Copy, Check, Share2, Trophy, Star } from "lucide-react";
+import { ArrowLeft, Gift, Users, Copy, Check, Share2, Trophy, Star, TrendingUp, Target, Award, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,17 @@ export default function Referral() {
     enabled: !!user?.email
   });
 
+  // Get top referrers for leaderboard
+  const { data: topReferrers = [] } = useQuery({
+    queryKey: ['top-referrers'],
+    queryFn: async () => {
+      const allCustomers = await base44.entities.Customer.list('-referral_count', 10);
+      return allCustomers.filter(c => c.referral_count > 0);
+    }
+  });
+
+  const userRank = topReferrers.findIndex(r => r.created_by === user?.email) + 1;
+
   const referralLink = customer?.referral_code 
     ? `${window.location.origin}?ref=${customer.referral_code}`
     : "";
@@ -147,6 +158,95 @@ export default function Referral() {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 -mt-4 pb-24 space-y-6">
+        
+        {/* Analytics Section */}
+        <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingUp className="h-5 w-5 text-[#8B7355]" />
+            <h3 className="font-bold text-[#5C4A3A] text-lg">Your Referral Stats</h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-5">
+            <div className="bg-gradient-to-br from-[#F5EBE8] to-[#EDE3DF] rounded-2xl p-4">
+              <Users className="h-5 w-5 text-[#8B7355] mb-2" />
+              <div className="text-2xl font-bold text-[#5C4A3A]">{customer?.referral_count || 0}</div>
+              <div className="text-xs text-[#8B7355]">Total Referrals</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4">
+              <Target className="h-5 w-5 text-green-600 mb-2" />
+              <div className="text-2xl font-bold text-green-700">{customer?.referral_conversions || 0}</div>
+              <div className="text-xs text-green-600">Conversions</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-4">
+              <Star className="h-5 w-5 text-amber-600 mb-2" />
+              <div className="text-2xl font-bold text-amber-700">{customer?.referral_points_earned || 0}</div>
+              <div className="text-xs text-amber-600">Points Earned</div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-4">
+              <Trophy className="h-5 w-5 text-purple-600 mb-2" />
+              <div className="text-2xl font-bold text-purple-700">#{userRank || "-"}</div>
+              <div className="text-xs text-purple-600">Your Rank</div>
+            </div>
+          </div>
+
+          {customer?.referral_count > 0 && (
+            <div className="bg-[#F5EBE8] rounded-xl p-3 flex items-center gap-3">
+              <Check className="h-5 w-5 text-green-600 flex-shrink-0" />
+              <div className="text-sm text-[#5C4A3A]">
+                <strong>{((customer?.referral_conversions || 0) / customer?.referral_count * 100).toFixed(0)}% conversion rate</strong>
+                {customer?.referral_conversions > 0 && " - Great job! 🎉"}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Top Referrers Leaderboard */}
+        {topReferrers.length > 0 && (
+          <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-5">
+              <Crown className="h-5 w-5 text-amber-500" />
+              <h3 className="font-bold text-[#5C4A3A] text-lg">Top Referrers</h3>
+            </div>
+
+            <div className="space-y-3">
+              {topReferrers.slice(0, 5).map((referrer, index) => {
+                const isCurrentUser = referrer.created_by === user?.email;
+                const medals = ["🥇", "🥈", "🥉"];
+                
+                return (
+                  <motion.div
+                    key={referrer.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex items-center gap-3 p-3 rounded-xl ${
+                      isCurrentUser ? "bg-[#F5EBE8] border-2 border-[#8B7355]" : "bg-[#F5F1ED]"
+                    }`}
+                  >
+                    <div className="text-2xl w-8 flex-shrink-0 text-center">
+                      {medals[index] || `#${index + 1}`}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[#5C4A3A] truncate">
+                        {isCurrentUser ? "You" : `User ${referrer.id.slice(0, 8)}`}
+                      </div>
+                      <div className="text-xs text-[#8B7355]">
+                        {referrer.referral_count} referrals • {referrer.referral_points_earned || 0} points
+                      </div>
+                    </div>
+                    {isCurrentUser && (
+                      <Award className="h-5 w-5 text-[#8B7355]" />
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Share Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
