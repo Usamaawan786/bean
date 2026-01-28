@@ -73,7 +73,12 @@ export default function Profile() {
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, profile_picture: file_url }));
-      toast.success("Image uploaded!");
+      
+      // Auto-save profile picture
+      await base44.auth.updateMe({ profile_picture: file_url });
+      await loadUserData();
+      
+      toast.success("Profile picture updated!");
     } catch (error) {
       toast.error("Failed to upload image");
     }
@@ -172,18 +177,16 @@ export default function Profile() {
               </div>
             )}
           </div>
-          {isEditing && (
-            <label className="absolute bottom-0 right-0 bg-[#8B7355] hover:bg-[#6B5744] text-white p-2.5 rounded-full shadow-lg cursor-pointer transition-colors">
-              <Camera className="h-4 w-4" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                disabled={isUploading}
-              />
-            </label>
-          )}
+          <label className="absolute bottom-0 right-0 bg-[#8B7355] hover:bg-[#6B5744] text-white p-2.5 rounded-full shadow-lg cursor-pointer transition-colors">
+            <Camera className="h-4 w-4" />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+          </label>
           {isUploading && (
             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
               <Loader2 className="h-6 w-6 text-white animate-spin" />
