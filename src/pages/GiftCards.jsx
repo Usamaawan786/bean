@@ -152,47 +152,90 @@ export default function GiftCards() {
   return (
     <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
-        <div className="max-w-lg mx-auto px-5 pt-6 pb-8">
+      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 right-10 w-64 h-64 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-10 left-10 w-96 h-96 bg-white rounded-full blur-3xl" />
+        </div>
+        <div className="max-w-lg mx-auto px-5 pt-6 pb-12 relative z-10">
           <Link 
-            to={createPageUrl("Wallet")}
-            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
+            to={createPageUrl("Profile")}
+            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-6 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
           
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-white/20 p-3">
-              <Gift className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Gift Cards</h1>
-              <p className="text-[#E8DED8] text-sm">Share coffee love</p>
-            </div>
+          <div className="text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4 backdrop-blur"
+            >
+              <Gift className="h-10 w-10" />
+            </motion.div>
+            <h1 className="text-3xl font-bold mb-2">Buy Coffee for Someone Special</h1>
+            <p className="text-[#E8DED8] text-lg">
+              Surprise your friends, family, or loved ones with the gift of great coffee
+            </p>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-6">
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={() => setShowSendDialog(true)}
-            className="h-auto py-6 bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] rounded-2xl flex-col gap-2"
-          >
-            <Send className="h-6 w-6" />
-            <span>Send Gift Card</span>
-          </Button>
-          <Button
-            onClick={() => setShowRedeemDialog(true)}
-            variant="outline"
-            className="h-auto py-6 border-2 border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8] rounded-2xl flex-col gap-2"
-          >
-            <Gift className="h-6 w-6" />
-            <span>Redeem Code</span>
-          </Button>
+      <div className="max-w-lg mx-auto px-5 -mt-6 pb-24 space-y-6">
+        {/* Hero CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-rose-400 via-pink-400 to-orange-400 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 opacity-20">
+            <Gift className="h-48 w-48" />
+          </div>
+          <div className="relative z-10">
+            <h2 className="text-2xl font-bold mb-2">Make Someone's Day ☕</h2>
+            <p className="text-white/90 mb-6">
+              Whether it's your mom, best friend, or that special someone - nothing says "I'm thinking of you" like a warm cup of coffee
+            </p>
+            <Button
+              onClick={() => setShowSendDialog(true)}
+              size="lg"
+              className="w-full bg-white text-pink-600 hover:bg-pink-50 rounded-2xl h-14 text-base font-bold shadow-lg"
+            >
+              <Send className="h-5 w-5 mr-2" />
+              Send a Gift Card Now
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Have a Gift Card? */}
+        <Button
+          onClick={() => setShowRedeemDialog(true)}
+          variant="outline"
+          className="w-full border-2 border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8] rounded-2xl h-12"
+        >
+          <Gift className="h-5 w-5 mr-2" />
+          Have a gift card? Redeem here
+        </Button>
+
+        {/* Why Gift Cards Section */}
+        <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 space-y-4">
+          <h3 className="font-bold text-[#5C4A3A] text-lg">Perfect For:</h3>
+          <div className="space-y-3">
+            {[
+              { emoji: "🎂", text: "Birthdays & Celebrations" },
+              { emoji: "💝", text: "Valentine's Day" },
+              { emoji: "👨‍👩‍👧‍👦", text: "Family & Friends" },
+              { emoji: "🙏", text: "Thank You Gifts" },
+              { emoji: "🎄", text: "Holidays & Special Occasions" }
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <div className="text-2xl">{item.emoji}</div>
+                <div className="text-[#5C4A3A]">{item.text}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Gift Cards List */}
@@ -284,7 +327,10 @@ export default function GiftCards() {
       <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
         <DialogContent className="max-w-sm rounded-3xl">
           <DialogHeader>
-            <DialogTitle>Send Gift Card</DialogTitle>
+            <DialogTitle className="text-center text-xl">
+              <div className="text-3xl mb-2">☕💝</div>
+              Send Coffee Love
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div>
@@ -310,16 +356,16 @@ export default function GiftCards() {
             </div>
 
             <div>
-              <label className="text-sm text-[#5C4A3A] mb-2 block">Recipient Name</label>
+              <label className="text-sm text-[#5C4A3A] mb-2 block">Who's this for?</label>
               <Input
-                placeholder="Their name"
+                placeholder="e.g., Mom, Sarah, Best Friend"
                 value={giftData.recipient_name}
                 onChange={(e) => setGiftData(prev => ({ ...prev, recipient_name: e.target.value }))}
               />
             </div>
 
             <div>
-              <label className="text-sm text-[#5C4A3A] mb-2 block">Recipient Email</label>
+              <label className="text-sm text-[#5C4A3A] mb-2 block">Their Email</label>
               <Input
                 type="email"
                 placeholder="their@email.com"
@@ -329,9 +375,9 @@ export default function GiftCards() {
             </div>
 
             <div>
-              <label className="text-sm text-[#5C4A3A] mb-2 block">Message (Optional)</label>
+              <label className="text-sm text-[#5C4A3A] mb-2 block">Personal Message</label>
               <Textarea
-                placeholder="Add a personal message..."
+                placeholder="e.g., Happy Birthday! Enjoy a coffee on me ☕"
                 value={giftData.message}
                 onChange={(e) => setGiftData(prev => ({ ...prev, message: e.target.value }))}
                 className="h-20"
@@ -341,9 +387,9 @@ export default function GiftCards() {
             <Button
               onClick={handleSendGift}
               disabled={sendGiftMutation.isPending}
-              className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white rounded-xl h-12 font-bold"
             >
-              {sendGiftMutation.isPending ? "Sending..." : "Send Gift Card"}
+              {sendGiftMutation.isPending ? "Sending..." : "🎁 Send Gift Card"}
             </Button>
           </div>
         </DialogContent>
