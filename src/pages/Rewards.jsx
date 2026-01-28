@@ -102,10 +102,22 @@ export default function Rewards() {
     : rewards.filter(r => r.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
-        <div className="max-w-lg mx-auto px-5 pt-6 pb-8">
+      <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-20">
+          <motion.div
+            animate={{ x: [0, 60, 0], y: [0, 40, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute top-10 right-5 w-64 h-64 bg-[#D4C4B0]/40 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ x: [0, -50, 0], y: [0, -30, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-5 left-10 w-56 h-56 bg-[#C9B8A6]/30 rounded-full blur-3xl"
+          />
+        </div>
+        <div className="relative max-w-lg mx-auto px-5 pt-6 pb-8">
           <Link 
             to={createPageUrl("Home")}
             className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
@@ -114,19 +126,28 @@ export default function Rewards() {
             Back
           </Link>
           
-          <div className="flex items-center justify-between mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between mb-6"
+          >
             <div>
-              <h1 className="text-2xl font-bold">Rewards</h1>
+              <h1 className="text-3xl font-bold">Rewards</h1>
               <p className="text-[#E8DED8] text-sm mt-1">Treat yourself!</p>
             </div>
-            <div className="bg-white/20 backdrop-blur rounded-2xl px-5 py-3">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-white/10 backdrop-blur-lg rounded-2xl px-5 py-4 border border-white/20 shadow-lg"
+            >
               <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-[#F8F6F4] fill-[#F8F6F4]" />
+                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
+                  <Star className="h-5 w-5 text-amber-300 fill-amber-300" />
+                </motion.div>
                 <span className="text-2xl font-bold">{customer?.points_balance || 0}</span>
               </div>
               <p className="text-xs text-[#E8DED8]">Available points</p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Tier Badge */}
           {customer && (
@@ -139,52 +160,68 @@ export default function Rewards() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="max-w-lg mx-auto px-5 py-4">
-        <div className="flex gap-2 bg-white rounded-2xl p-1 border border-[#E8DED8]">
-          <button
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="max-w-lg mx-auto px-5 py-4"
+      >
+        <div className="flex gap-2 bg-white rounded-2xl p-1.5 border border-[#E8DED8] shadow-lg">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setActiveTab("rewards")}
             className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === "rewards"
-                ? "bg-[#8B7355] text-white shadow-sm"
+                ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
                 : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
             }`}
           >
             <Gift className="h-4 w-4" />
             Rewards
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => setActiveTab("leaderboard")}
             className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
               activeTab === "leaderboard"
-                ? "bg-[#8B7355] text-white shadow-sm"
+                ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
                 : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
             }`}
           >
             <Trophy className="h-4 w-4" />
             Leaderboard
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Categories - Only show for rewards tab */}
       {activeTab === "rewards" && (
-        <div className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto"
+        >
           <div className="flex gap-2">
-            {categories.map(cat => (
-              <button
+            {categories.map((cat, idx) => (
+              <motion.button
                 key={cat}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-5 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${
                   selectedCategory === cat
-                    ? "bg-[#8B7355] text-white"
-                    : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0]"
+                    ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
+                    : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0] hover:shadow-md"
                 }`}
               >
                 {cat === "all" ? "All Rewards" : cat}
-              </button>
+              </motion.button>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Main Content */}
