@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
   Coffee, Star, Gift, Users, Zap, ChevronRight, 
-  TrendingUp, Award, Bell 
+  TrendingUp, Award, Bell, Trophy 
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TierBadge from "@/components/dashboard/TierBadge";
@@ -235,17 +235,17 @@ export default function Home() {
             </motion.div>
           </Link>
           
-          <Link to={createPageUrl("Community")}>
+          <Link to={createPageUrl("Leaderboard")}>
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="bg-white rounded-2xl border border-[#E8DED8] p-5 shadow-sm"
             >
               <div className="rounded-xl bg-[#EDE3DF] p-3 w-fit">
-                <Users className="h-6 w-6 text-[#8B7355]" />
+                <Trophy className="h-6 w-6 text-[#8B7355]" />
               </div>
-              <h3 className="font-semibold text-[#5C4A3A] mt-3">Community</h3>
-              <p className="text-xs text-[#8B7355] mt-1">Join the conversation</p>
+              <h3 className="font-semibold text-[#5C4A3A] mt-3">Leaderboard</h3>
+              <p className="text-xs text-[#8B7355] mt-1">Top coffee lovers</p>
             </motion.div>
           </Link>
         </div>
