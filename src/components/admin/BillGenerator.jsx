@@ -24,7 +24,12 @@ export default function BillGenerator({ bill, onClose }) {
 
   const handleDownloadPDF = async () => {
     const element = billRef.current;
-    const canvas = await html2canvas(element, { scale: 2 });
+    const canvas = await html2canvas(element, { 
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      windowHeight: element.scrollHeight
+    });
     const imgData = canvas.toDataURL("image/png");
     
     const pdf = new jsPDF({
@@ -34,9 +39,24 @@ export default function BillGenerator({ bill, onClose }) {
     });
 
     const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Add additional pages if content is longer than one page
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+    
     pdf.save(`bill-${bill.billNumber}.pdf`);
   };
 
