@@ -13,6 +13,7 @@ import TierBadge from "@/components/dashboard/TierBadge";
 import FlashDropCard from "@/components/flashdrop/FlashDropCard";
 import ReferralCard from "@/components/referral/ReferralCard";
 import NameSetup from "@/components/NameSetup";
+import RewardProgress from "@/components/dashboard/RewardProgress";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -156,6 +157,11 @@ export default function Home() {
             tier={customer.tier || "Bronze"} 
             totalPoints={customer.total_points_earned || 0} 
           />
+        )}
+
+        {/* Reward Progress */}
+        {customer && (
+          <RewardProgress currentPoints={customer.points_balance || 0} />
         )}
 
         {/* Flash Drops Alert */}
