@@ -1,3 +1,4 @@
+import AdminPOS from './pages/AdminPOS';
 import Checkout from './pages/Checkout';
 import Community from './pages/Community';
 import FlashDrops from './pages/FlashDrops';
@@ -8,11 +9,11 @@ import Profile from './pages/Profile';
 import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
-import AdminPOS from './pages/AdminPOS';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdminPOS": AdminPOS,
     "Checkout": Checkout,
     "Community": Community,
     "FlashDrops": FlashDrops,
@@ -23,7 +24,6 @@ export const PAGES = {
     "Referral": Referral,
     "Rewards": Rewards,
     "Shop": Shop,
-    "AdminPOS": AdminPOS,
 }
 
 export const pagesConfig = {

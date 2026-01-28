@@ -21,6 +21,7 @@ export default function Profile() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showPointsAnimation, setShowPointsAnimation] = useState(false);
   const [pointsData, setPointsData] = useState({ old: 0, new: 0 });
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -32,6 +33,7 @@ export default function Profile() {
   }, []);
 
   const loadUserData = async () => {
+    setIsLoading(true);
     try {
       const u = await base44.auth.me();
       setUser(u);
@@ -41,20 +43,15 @@ export default function Profile() {
         profile_picture: u.profile_picture || ""
       });
 
-      try {
-        const customers = await base44.entities.Customer.filter({ created_by: u.email });
-        if (customers.length > 0) {
-          setCustomer(customers[0]);
-        }
-      } catch (customerError) {
-        console.error("Error loading customer data:", customerError);
-        // Continue without customer data
+      const customers = await base44.entities.Customer.filter({ created_by: u.email });
+      if (customers.length > 0) {
+        setCustomer(customers[0]);
       }
     } catch (error) {
       console.error("Error loading user data:", error);
-      toast.error("Failed to load profile");
-      // Set user to empty object to stop loading
       setUser({});
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -117,10 +114,21 @@ export default function Profile() {
     }
   };
 
-  if (!user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center p-5">
+        <div className="text-center">
+          <p className="text-[#5C4A3A]">Failed to load profile</p>
+          <Button onClick={loadUserData} className="mt-4 bg-[#8B7355]">Retry</Button>
+        </div>
       </div>
     );
   }
