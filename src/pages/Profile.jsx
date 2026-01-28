@@ -88,18 +88,23 @@ export default function Profile() {
   };
 
   const handleQRScan = async (qrCodeId) => {
+    // Close scanner and show animation immediately
+    setShowQRScanner(false);
+    setPointsData({
+      old: customer?.points_balance || 0,
+      new: customer?.points_balance || 0
+    });
+    setShowPointsAnimation(true);
+
     try {
       const response = await base44.functions.invoke('processBillScan', { qrCodeId });
       
       if (response.data.success) {
-        setShowQRScanner(false);
-        
-        // Show animated points counter
+        // Update animation with actual points
         setPointsData({
           old: customer.points_balance,
           new: response.data.new_balance
         });
-        setShowPointsAnimation(true);
         
         // Update customer data after animation completes
         setTimeout(async () => {
@@ -107,9 +112,11 @@ export default function Profile() {
           setShowPointsAnimation(false);
         }, 2500);
       } else {
+        setShowPointsAnimation(false);
         toast.error(response.data.error || "Failed to process QR code");
       }
     } catch (error) {
+      setShowPointsAnimation(false);
       toast.error("Failed to scan QR code");
     }
   };
