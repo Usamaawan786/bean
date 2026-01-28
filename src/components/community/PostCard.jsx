@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, Flag, AlertTriangle } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, Flag, AlertTriangle, Video } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import CommentSection from "./CommentSection";
@@ -9,6 +9,7 @@ const postTypeConfig = {
   general: { icon: Coffee, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
   review: { icon: Star, color: "text-[#6B5744]", bg: "bg-[#EDE8E3]" },
   photo: { icon: Camera, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
+  video: { icon: Video, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
   tip: { icon: Lightbulb, color: "text-[#6B5744]", bg: "bg-[#EDE3DF]" }
 };
 
@@ -96,6 +97,16 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
                 src={post.image_url} 
                 alt="Post attachment"
                 className="w-full max-h-80 object-cover"
+              />
+            </div>
+          )}
+
+          {post.video_url && (
+            <div className="mt-3 rounded-2xl overflow-hidden">
+              <video 
+                src={post.video_url} 
+                controls
+                className="w-full max-h-80"
               />
             </div>
           )}

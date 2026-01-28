@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Coffee, Camera, Lightbulb, Star, Send, Image, X, Loader2 } from "lucide-react";
+import { Coffee, Camera, Lightbulb, Star, Send, Image, X, Loader2, Video } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const postTypes = [
   { id: "general", label: "General", icon: Coffee },
   { id: "review", label: "Review", icon: Star },
   { id: "photo", label: "Photo", icon: Camera },
+  { id: "video", label: "Video", icon: Video },
   { id: "tip", label: "Tip", icon: Lightbulb }
 ];
 
@@ -15,6 +16,7 @@ export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
   const [postType, setPostType] = useState("general");
   const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
@@ -28,6 +30,16 @@ export default function PostComposer({ onPost, userName }) {
     setIsUploading(false);
   };
 
+  const handleVideoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    setVideoUrl(file_url);
+    setIsUploading(false);
+  };
+
   const handleSubmit = async () => {
     if (!content.trim()) return;
     
@@ -36,10 +48,12 @@ export default function PostComposer({ onPost, userName }) {
       content: content.trim(),
       post_type: postType,
       image_url: imageUrl || undefined,
+      video_url: videoUrl || undefined,
       author_name: userName
     });
     setContent("");
     setImageUrl("");
+    setVideoUrl("");
     setPostType("general");
     setIsPosting(false);
   };
@@ -85,24 +99,61 @@ export default function PostComposer({ onPost, userName }) {
           </button>
         </div>
       )}
+
+      {videoUrl && (
+        <div className="mt-3 relative inline-block">
+          <video src={videoUrl} controls className="h-32 rounded-xl" />
+          <button
+            onClick={() => setVideoUrl("")}
+            className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
       
       <div className="mt-4 flex items-center justify-between">
-        <label className="cursor-pointer">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-          />
-          <div className="flex items-center gap-1.5 text-[#C9B8A6] hover:text-[#8B7355] transition-colors">
-            {isUploading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Image className="h-5 w-5" />
-            )}
-            <span className="text-sm">Add photo</span>
-          </div>
-        </label>
+        <div className="flex items-center gap-4">
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={isUploading || videoUrl}
+            />
+            <div className={`flex items-center gap-1.5 transition-colors ${
+              videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
+            }`}>
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Image className="h-5 w-5" />
+              )}
+              <span className="text-sm">Photo</span>
+            </div>
+          </label>
+
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleVideoUpload}
+              className="hidden"
+              disabled={isUploading || imageUrl}
+            />
+            <div className={`flex items-center gap-1.5 transition-colors ${
+              imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
+            }`}>
+              {isUploading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Video className="h-5 w-5" />
+              )}
+              <span className="text-sm">Video</span>
+            </div>
+          </label>
+        </div>
         
         <Button
           onClick={handleSubmit}
