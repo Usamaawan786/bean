@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import ImageCropModal from "@/components/profile/ImageCropModal";
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -61,6 +62,18 @@ export default function Profile() {
           cups_redeemed: 0
         });
         setCustomer(newCustomer);
+      }
+
+      // Get or create wallet
+      const wallets = await base44.entities.Wallet.filter({ created_by: u.email });
+      if (wallets.length > 0) {
+        setWallet(wallets[0]);
+      } else {
+        const newWallet = await base44.entities.Wallet.create({
+          balance: 0,
+          total_topped_up: 0
+        });
+        setWallet(newWallet);
       }
     } catch (error) {
       console.error("Error loading user data:", error);
@@ -242,6 +255,49 @@ export default function Profile() {
           <QrCode className="h-5 w-5 mr-2" />
           Scan Bill to Earn Points
         </Button>
+
+        {/* Wallet Card */}
+        <Link to={createPageUrl("Wallet")}>
+          <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-3xl p-6 mb-6 shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 opacity-20">
+              <Star className="h-32 w-32" />
+            </div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                    <Wallet className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="text-sm opacity-90">Wallet Balance</div>
+                    <div className="text-2xl font-bold">PKR {wallet?.balance || 0}</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-6 w-6 opacity-70" />
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Star className="h-4 w-4 fill-white" />
+                <span className="font-semibold">2x points when paying with wallet</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* Gift Cards Link */}
+        <Link to={createPageUrl("GiftCards")}>
+          <div className="bg-white rounded-3xl border border-[#E8DED8] p-5 mb-6 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#F5EBE8] flex items-center justify-center">
+                <Gift className="h-6 w-6 text-[#8B7355]" />
+              </div>
+              <div>
+                <div className="font-semibold text-[#5C4A3A]">Gift Cards</div>
+                <div className="text-sm text-[#8B7355]">Send coffee to friends</div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
+          </div>
+        </Link>
 
         {/* Profile Form */}
         <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm space-y-4">
