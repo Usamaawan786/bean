@@ -69,9 +69,18 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToEdit(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedFile) => {
+    setImageToEdit(null);
     setIsUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file: croppedFile });
       setFormData(prev => ({ ...prev, profile_picture: file_url }));
       
       // Auto-save profile picture
