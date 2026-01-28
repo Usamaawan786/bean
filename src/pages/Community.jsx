@@ -141,10 +141,17 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
+    <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
       {/* Header */}
-      <div className="bg-white border-b border-[#E8DED8] sticky top-0 z-10">
-        <div className="max-w-lg mx-auto px-5 pt-6 pb-4">
+      <div className="relative bg-gradient-to-br from-white to-[#F5F1ED] border-b border-[#E8DED8] sticky top-0 z-10 shadow-sm">
+        <div className="absolute inset-0 opacity-5">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            className="absolute top-5 right-10 w-32 h-32 bg-[#D4C4B0] rounded-full blur-3xl"
+          />
+        </div>
+        <div className="relative max-w-lg mx-auto px-5 pt-6 pb-4">
           <Link 
             to={createPageUrl("Home")}
             className="inline-flex items-center gap-1 text-[#8B7355] text-sm mb-4 hover:text-[#5C4A3A] transition-colors"
@@ -153,58 +160,81 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
             Back
           </Link>
           
-          <div className="flex items-center justify-between flex-1">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between flex-1"
+          >
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-[#EDE3DF] p-3">
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-3 shadow-md"
+              >
                 <Users className="h-6 w-6 text-[#8B7355]" />
-              </div>
+              </motion.div>
               <div>
-                <h1 className="text-xl font-bold text-[#5C4A3A]">Community</h1>
+                <h1 className="text-2xl font-bold text-[#5C4A3A]">Community</h1>
                 <p className="text-sm text-[#8B7355]">Share your coffee moments</p>
               </div>
             </div>
             
             {user?.role === "admin" && (
               <Link to={createPageUrl("Moderation")}>
-                <button className="bg-[#EDE3DF] hover:bg-[#E8DED8] px-4 py-2 rounded-xl text-sm font-medium text-[#5C4A3A] transition-colors">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-4 py-2 rounded-xl text-sm font-medium text-[#5C4A3A] transition-colors shadow-md"
+                >
                   Moderation
-                </button>
+                </motion.button>
               </Link>
             )}
-          </div>
+          </motion.div>
         </div>
         
         {/* Tabs */}
-        <div className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto"
+        >
           <div className="flex gap-2">
-            {tabs.map(tab => {
+            {tabs.map((tab, idx) => {
               const Icon = tab.icon;
               return (
-                <button
+                <motion.button
                   key={tab.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${
                     activeTab === tab.id
-                      ? "bg-[#8B7355] text-white"
-                      : "bg-[#F5EBE8] text-[#6B5744] hover:bg-[#EDE8E3]"
+                      ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
+                      : "bg-[#F5EBE8] text-[#6B5744] hover:bg-[#EDE8E3] hover:shadow-md"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
                   {tab.label}
-                </button>
+                </motion.button>
               );
             })}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-4">
         {/* Post Composer */}
-        <PostComposer 
-          onPost={createPostMutation.mutate}
-          userName={user?.full_name}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <PostComposer 
+            onPost={createPostMutation.mutate}
+            userName={user?.full_name}
+          />
+        </motion.div>
         
         {/* Posts */}
         {isLoading ? (
