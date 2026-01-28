@@ -37,34 +37,18 @@ export default function Referral() {
       const params = new URLSearchParams(window.location.search);
       const refCode = params.get('ref');
       
-      if (refCode && customers.length === 0) {
+      if (refCode && customers.length > 0) {
         // This is a new user with a referral code
         const referrers = await base44.entities.Customer.filter({ referral_code: refCode });
-        if (referrers.length > 0) {
+        if (referrers.length > 0 && !customers[0].referred_by) {
           const referrer = referrers[0];
           
-          // Update new customer with referrer info
+          // Store referrer info (points awarded on first purchase)
           await base44.entities.Customer.update(customers[0].id, {
             referred_by: referrer.created_by
           });
           
-          // Award points to referrer
-          await base44.entities.Customer.update(referrer.id, {
-            points_balance: referrer.points_balance + 100,
-            total_points_earned: referrer.total_points_earned + 100,
-            referral_count: (referrer.referral_count || 0) + 1
-          });
-
-          // Log activity for referrer
-          await base44.entities.Activity.create({
-            user_email: referrer.created_by,
-            action_type: "referral",
-            description: `Friend joined using your code`,
-            points_amount: 100,
-            metadata: { referred_email: u.email }
-          });
-          
-          toast.success("Referral bonus applied! 🎉");
+          toast.success("Welcome! Scan your first bill to unlock referral bonus! 🎉");
         }
       }
     };
