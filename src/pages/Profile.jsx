@@ -111,12 +111,7 @@ export default function Profile() {
           new: response.data.new_balance
         });
         setShowPointsAnimation(true);
-        
-        // Update customer data after animation completes
-        setTimeout(async () => {
-          await loadUserData();
-          setShowPointsAnimation(false);
-        }, 2500);
+        await loadUserData();
       } else {
         toast.error(response.data.error || "Failed to process QR code");
       }
@@ -341,7 +336,7 @@ export default function Profile() {
           <PointsAnimation
             startValue={pointsData.old}
             endValue={pointsData.new}
-            onComplete={() => {}}
+            onClose={() => setShowPointsAnimation(false)}
           />
         )}
       </AnimatePresence>

@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default function PointsAnimation({ startValue, endValue, onComplete }) {
+export default function PointsAnimation({ startValue, endValue, onClose }) {
   const [displayValue, setDisplayValue] = useState(startValue);
   const pointsEarned = endValue - startValue;
 
@@ -20,12 +22,11 @@ export default function PointsAnimation({ startValue, endValue, onComplete }) {
       } else {
         setDisplayValue(endValue);
         clearInterval(timer);
-        if (onComplete) onComplete();
       }
     }, stepDuration);
 
     return () => clearInterval(timer);
-  }, [startValue, endValue, onComplete]);
+  }, [startValue, endValue]);
 
   return (
     <motion.div
@@ -37,8 +38,14 @@ export default function PointsAnimation({ startValue, endValue, onComplete }) {
       <motion.div
         initial={{ y: 50 }}
         animate={{ y: 0 }}
-        className="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-sm mx-4"
+        className="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-sm mx-4 relative"
       >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 hover:bg-[#F5EBE8] rounded-full transition-colors"
+        >
+          <X className="h-5 w-5 text-[#8B7355]" />
+        </button>
         <motion.div
           animate={{ 
             scale: [1, 1.2, 1],
@@ -72,7 +79,12 @@ export default function PointsAnimation({ startValue, endValue, onComplete }) {
           </div>
         </div>
         
-        <p className="text-sm text-[#8B7355]">Adding to your account...</p>
+        <Button
+          onClick={onClose}
+          className="mt-4 bg-[#8B7355] hover:bg-[#6B5744] rounded-xl w-full"
+        >
+          Got it!
+        </Button>
       </motion.div>
     </motion.div>
   );
