@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
       }, { status: 200 });
     }
 
-    // Calculate points: 10 points per 1000 PKR
-    const pointsToAward = Math.floor(sale.total_amount / 100);
+    // Calculate points based on subtotal (before tax)
+    const pointsToAward = Math.floor(sale.subtotal / 100);
 
     // Get customer record
     const customers = await base44.entities.Customer.filter({ created_by: user.email });

@@ -157,10 +157,10 @@ export default function BillGenerator({ bill, onClose }) {
           {/* QR Code for Rewards */}
           {qrCodeUrl && (
             <div className="text-center py-6 border-t border-[#E8DED8]">
-              <p className="text-sm font-semibold text-[#5C4A3A] mb-3">Scan to Earn Rewards</p>
+              <p className="text-sm font-semibold text-[#5C4A3A] mb-3">Earn Rewards</p>
               <img src={qrCodeUrl} alt="Rewards QR Code" className="w-48 h-48 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
               <p className="text-xs text-[#8B7355] mt-3">
-                Scan this code in the Bean app to earn {Math.floor(bill.total / 100)} points!
+                Scan in the Bean app to add points to your account
               </p>
             </div>
           )}
