@@ -43,9 +43,19 @@ export default function Profile() {
         profile_picture: u.profile_picture || ""
       });
 
+      // Get or create customer record
       const customers = await base44.entities.Customer.filter({ created_by: u.email });
       if (customers.length > 0) {
         setCustomer(customers[0]);
+      } else {
+        // Create customer if doesn't exist
+        const newCustomer = await base44.entities.Customer.create({
+          points_balance: 0,
+          total_points_earned: 0,
+          tier: "Bronze",
+          referral_count: 0
+        });
+        setCustomer(newCustomer);
       }
     } catch (error) {
       console.error("Error loading user data:", error);
