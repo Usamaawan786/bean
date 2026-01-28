@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import QRScanner from "@/components/profile/QRScanner";
+import PointsAnimation from "@/components/profile/PointsAnimation";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -18,6 +19,8 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showPointsAnimation, setShowPointsAnimation] = useState(false);
+  const [pointsData, setPointsData] = useState({ old: 0, new: 0 });
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -92,10 +95,20 @@ export default function Profile() {
       const response = await base44.functions.invoke('processBillScan', { qrCodeId });
       
       if (response.data.success) {
-        toast.success(`🎉 ${response.data.points_awarded} points added to your account!`);
         setShowQRScanner(false);
-        // Reload customer data to show updated points
-        await loadUserData();
+        
+        // Show animated points counter
+        setPointsData({
+          old: customer.points_balance,
+          new: response.data.new_balance
+        });
+        setShowPointsAnimation(true);
+        
+        // Update customer data after animation completes
+        setTimeout(async () => {
+          await loadUserData();
+          setShowPointsAnimation(false);
+        }, 2500);
       } else {
         toast.error(response.data.error || "Failed to process QR code");
       }
@@ -299,6 +312,17 @@ export default function Profile() {
           <QRScanner
             onScan={handleQRScan}
             onClose={() => setShowQRScanner(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Points Animation */}
+      <AnimatePresence>
+        {showPointsAnimation && (
+          <PointsAnimation
+            startValue={pointsData.old}
+            endValue={pointsData.new}
+            onComplete={() => {}}
           />
         )}
       </AnimatePresence>
