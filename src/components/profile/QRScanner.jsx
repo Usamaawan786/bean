@@ -119,7 +119,7 @@ export default function QRScanner({ onScan, onClose }) {
               Point your camera at the QR code on your receipt to earn rewards points!
             </p>
             <p className="text-xs text-[#8B7355] mt-2">
-              Earn 10 points for every PKR 1,000 spent
+              Collect points with every purchase
             </p>
           </div>
         </div>
