@@ -144,6 +144,11 @@ export default function Profile() {
         });
         setShowPointsAnimation(true);
         await loadUserData();
+        
+        // Show referral bonus notification
+        if (response.data.referral_bonus > 0) {
+          toast.success(`🎉 Referral bonus unlocked! +${response.data.referral_bonus} points!`, { duration: 5000 });
+        }
       } else {
         toast.error(response.data.error || "Failed to process QR code");
       }
