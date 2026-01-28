@@ -50,12 +50,15 @@ export default function Profile() {
       if (customers.length > 0) {
         setCustomer(customers[0]);
       } else {
-        // Create customer if doesn't exist
+        // Create customer with welcome bonus and referral code
+        const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
         const newCustomer = await base44.entities.Customer.create({
-          points_balance: 0,
-          total_points_earned: 0,
+          referral_code: refCode,
+          points_balance: 50,
+          total_points_earned: 50,
           tier: "Bronze",
-          referral_count: 0
+          referral_count: 0,
+          cups_redeemed: 0
         });
         setCustomer(newCustomer);
       }
