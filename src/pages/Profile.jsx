@@ -38,13 +38,20 @@ export default function Profile() {
         profile_picture: u.profile_picture || ""
       });
 
-      const customers = await base44.entities.Customer.filter({ created_by: u.email });
-      if (customers.length > 0) {
-        setCustomer(customers[0]);
+      try {
+        const customers = await base44.entities.Customer.filter({ created_by: u.email });
+        if (customers.length > 0) {
+          setCustomer(customers[0]);
+        }
+      } catch (customerError) {
+        console.error("Error loading customer data:", customerError);
+        // Continue without customer data
       }
     } catch (error) {
       console.error("Error loading user data:", error);
       toast.error("Failed to load profile");
+      // Set user to empty object to stop loading
+      setUser({});
     }
   };
 
