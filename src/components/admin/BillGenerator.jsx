@@ -101,9 +101,11 @@ export default function BillGenerator({ bill, onClose }) {
         <div ref={billRef} className="p-8 bg-white">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] mb-4">
-              <span className="text-2xl">☕</span>
-            </div>
+            <img 
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/5ce41afe3_ChatGPTImageJan28202607_27_43AM.png" 
+              alt="Bean Logo" 
+              className="w-32 h-32 mx-auto mb-4 object-contain"
+            />
             <h1 className="text-3xl font-bold text-[#5C4A3A]">Bean Coffee</h1>
             <p className="text-[#8B7355] text-sm">Premium Coffee & Rewards</p>
           </div>
@@ -171,6 +173,10 @@ export default function BillGenerator({ bill, onClose }) {
             <div className="flex justify-between text-2xl font-bold text-[#5C4A3A] pt-4 border-t-2 border-[#E8DED8]">
               <span>Total</span>
               <span>PKR {bill.total.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center text-[#8B7355] pt-3 border-t border-[#E8DED8]">
+              <span className="font-semibold">🎁 Reward Points Earned</span>
+              <span className="text-xl font-bold text-[#8B7355]">{Math.floor(bill.subtotal / 100)} pts</span>
             </div>
           </div>
 
