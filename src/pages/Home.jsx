@@ -97,9 +97,9 @@ export default function Home() {
   const allDrops = [...activeDrops, ...upcomingDrops];
 
   const handleNameSetupComplete = async () => {
-    const u = await base44.auth.me();
-    setUser(u);
     setShowNameSetup(false);
+    // Reload the entire page to refresh all data
+    window.location.reload();
   };
 
   if (showNameSetup) {
