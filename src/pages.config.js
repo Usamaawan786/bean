@@ -47,6 +47,9 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
+import AdminDashboard from './pages/AdminDashboard';
+import AdminExpenses from './pages/AdminExpenses';
+import AdminInventory from './pages/AdminInventory';
 import AdminPOS from './pages/AdminPOS';
 import Checkout from './pages/Checkout';
 import Community from './pages/Community';
@@ -60,13 +63,13 @@ import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
-import AdminExpenses from './pages/AdminExpenses';
-import AdminInventory from './pages/AdminInventory';
-import AdminDashboard from './pages/AdminDashboard';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "AdminDashboard": AdminDashboard,
+    "AdminExpenses": AdminExpenses,
+    "AdminInventory": AdminInventory,
     "AdminPOS": AdminPOS,
     "Checkout": Checkout,
     "Community": Community,
@@ -80,9 +83,6 @@ export const PAGES = {
     "Rewards": Rewards,
     "Shop": Shop,
     "Wallet": Wallet,
-    "AdminExpenses": AdminExpenses,
-    "AdminInventory": AdminInventory,
-    "AdminDashboard": AdminDashboard,
 }
 
 export const pagesConfig = {

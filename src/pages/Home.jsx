@@ -15,6 +15,7 @@ import ReferralCard from "@/components/referral/ReferralCard";
 import NameSetup from "@/components/NameSetup";
 import RewardProgress from "@/components/dashboard/RewardProgress";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -293,6 +294,17 @@ export default function Home() {
             transition={{ delay: 0.8 }}
           >
             <RewardProgress currentPoints={customer.points_balance || 0} />
+          </motion.div>
+        )}
+
+        {/* Personalized AI Offers */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.85 }}
+          >
+            <PersonalizedOffers userEmail={user.email} />
           </motion.div>
         )}
 
