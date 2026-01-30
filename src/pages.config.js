@@ -61,6 +61,7 @@ import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
 import AdminExpenses from './pages/AdminExpenses';
+import AdminInventory from './pages/AdminInventory';
 import __Layout from './Layout.jsx';
 
 
@@ -79,6 +80,7 @@ export const PAGES = {
     "Shop": Shop,
     "Wallet": Wallet,
     "AdminExpenses": AdminExpenses,
+    "AdminInventory": AdminInventory,
 }
 
 export const pagesConfig = {
