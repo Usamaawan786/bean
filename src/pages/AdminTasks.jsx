@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, CheckCircle2, Clock, AlertCircle, Lightbulb, MessageCircle } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle2, Clock, AlertCircle, Lightbulb, MessageCircle, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 const priorityColors = {
   Low: "bg-gray-100 text-gray-700",
@@ -35,6 +36,7 @@ export default function AdminTasks() {
   const [showDialog, setShowDialog] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [activeTab, setActiveTab] = useState("todo");
+  const [aiOffersEnabled, setAiOffersEnabled] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -66,6 +68,53 @@ export default function AdminTasks() {
     queryFn: () => base44.entities.BusinessTask.list("-created_date", 500),
     enabled: !!user
   });
+
+  // Check AI automation status
+  useEffect(() => {
+    const checkAutomation = async () => {
+      if (!user) return;
+      try {
+        const response = await fetch(`${import.meta.env.VITE_BASE44_API_URL}/automations`, {
+          headers: {
+            'Authorization': `Bearer ${await base44.auth.getToken()}`
+          }
+        });
+        const automations = await response.json();
+        const aiAutomation = automations.find(a => a.name === "Daily AI Offer Generation");
+        if (aiAutomation) {
+          setAiOffersEnabled(aiAutomation.is_active);
+        }
+      } catch (error) {
+        console.error("Failed to check automation status", error);
+      }
+    };
+    checkAutomation();
+  }, [user]);
+
+  const toggleAiOffers = async (enabled) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_BASE44_API_URL}/automations`, {
+        headers: {
+          'Authorization': `Bearer ${await base44.auth.getToken()}`
+        }
+      });
+      const automations = await response.json();
+      const aiAutomation = automations.find(a => a.name === "Daily AI Offer Generation");
+      
+      if (aiAutomation) {
+        await fetch(`${import.meta.env.VITE_BASE44_API_URL}/automations/${aiAutomation.id}/toggle`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${await base44.auth.getToken()}`
+          }
+        });
+        setAiOffersEnabled(enabled);
+        toast.success(`AI offers ${enabled ? 'enabled' : 'disabled'}`);
+      }
+    } catch (error) {
+      toast.error("Failed to toggle AI offers");
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.BusinessTask.create(data),
@@ -187,19 +236,38 @@ export default function AdminTasks() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-              <div className="text-2xl font-bold">{taskCounts.todo}</div>
-              <div className="text-xs text-[#E8DED8]">To Do</div>
+          {/* Stats & Controls */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+                <div className="text-2xl font-bold">{taskCounts.todo}</div>
+                <div className="text-xs text-[#E8DED8]">To Do</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+                <div className="text-2xl font-bold">{taskCounts.progress}</div>
+                <div className="text-xs text-[#E8DED8]">In Progress</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+                <div className="text-2xl font-bold">{taskCounts.completed}</div>
+                <div className="text-xs text-[#E8DED8]">Completed</div>
+              </div>
             </div>
+
+            {/* AI Offers Toggle */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-              <div className="text-2xl font-bold">{taskCounts.progress}</div>
-              <div className="text-xs text-[#E8DED8]">In Progress</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-              <div className="text-2xl font-bold">{taskCounts.completed}</div>
-              <div className="text-xs text-[#E8DED8]">Completed</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-amber-300" />
+                  <div>
+                    <div className="text-sm font-medium">AI Personalized Offers</div>
+                    <div className="text-xs text-[#E8DED8]">Daily recommendations for customers</div>
+                  </div>
+                </div>
+                <Switch
+                  checked={aiOffersEnabled}
+                  onCheckedChange={toggleAiOffers}
+                />
+              </div>
             </div>
           </div>
         </div>
