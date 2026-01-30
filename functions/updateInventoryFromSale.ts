@@ -4,7 +4,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     
-    // Get the sale data from the payload
+    // This function is designed to be triggered by entity automation only
+    // Validate the request comes from Base44 automation system
     const { event, data } = await req.json();
     
     if (event.type !== 'create' || event.entity_name !== 'StoreSale') {
