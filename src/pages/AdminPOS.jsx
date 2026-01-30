@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -147,6 +147,12 @@ export default function AdminPOS() {
               <p className="text-[#E8DED8] text-sm">In-Store Point of Sale</p>
             </div>
             <div className="flex gap-2">
+              <Link to={createPageUrl("AdminDashboard")}>
+                <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </Button>
+              </Link>
               <Link to={createPageUrl("AdminInventory")}>
                 <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
                   <Package className="h-4 w-4 mr-2" />
