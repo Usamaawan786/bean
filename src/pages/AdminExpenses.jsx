@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Upload, DollarSign, TrendingDown, Calendar, Filter, Search, Edit2, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Upload, DollarSign, TrendingDown, Calendar, Filter, Search, Edit2, Trash2, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -174,17 +174,28 @@ export default function AdminExpenses() {
               <h1 className="text-3xl font-bold">Expenses</h1>
               <p className="text-[#E8DED8] text-sm mt-1">Track & manage expenses</p>
             </div>
-            <Button
-              onClick={() => {
-                resetForm();
-                setEditingExpense(null);
-                setShowDialog(true);
-              }}
-              className="bg-white text-[#8B7355] hover:bg-[#F5EBE8]"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Expense
-            </Button>
+            <div className="flex gap-2">
+              <a 
+                href={base44.agents.getWhatsAppConnectURL('expense_tracker')}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-colors text-sm font-medium"
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setEditingExpense(null);
+                  setShowDialog(true);
+                }}
+                className="bg-white text-[#8B7355] hover:bg-[#F5EBE8]"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Expense
+              </Button>
+            </div>
           </div>
 
           {/* Stats */}
