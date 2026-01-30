@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, CheckCircle2, Clock, AlertCircle, Lightbulb, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, CheckCircle2, Clock, AlertCircle, Lightbulb, MessageCircle, Sparkles, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,11 @@ export default function AdminTasks() {
         window.location.href = createPageUrl("Home");
         return;
       }
+      // Set default admin_role if not set
+      if (!u.admin_role) {
+        await base44.auth.updateMe({ admin_role: 'employee' });
+        u.admin_role = 'employee';
+      }
       setUser(u);
     };
     loadUser();
@@ -66,6 +71,15 @@ export default function AdminTasks() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["business-tasks"],
     queryFn: () => base44.entities.BusinessTask.list("-created_date", 500),
+    enabled: !!user
+  });
+
+  const { data: adminUsers = [] } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const users = await base44.entities.User.list();
+      return users.filter(u => u.role === 'admin');
+    },
     enabled: !!user
   });
 
@@ -183,6 +197,15 @@ export default function AdminTasks() {
   };
 
   const filteredTasks = tasks.filter(task => {
+    // Role-based filtering
+    if (user?.admin_role === 'employee') {
+      // Employees only see tasks assigned to them or unassigned tasks
+      if (task.assigned_to && task.assigned_to !== user.email) {
+        return false;
+      }
+    }
+    // Managers and Founders see all tasks
+    
     if (activeTab === "todo") return task.status === "To Do" || task.status === "Backlog";
     if (activeTab === "progress") return task.status === "In Progress";
     if (activeTab === "completed") return task.status === "Completed";
@@ -210,9 +233,22 @@ export default function AdminTasks() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold">Business Tasks</h1>
-              <p className="text-[#E8DED8] text-sm mt-1">Ideas, suggestions & to-dos</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-[#E8DED8] text-sm">Ideas, suggestions & to-dos</p>
+                <Badge className="bg-white/20 text-white text-xs">
+                  {user?.admin_role || 'employee'}
+                </Badge>
+              </div>
             </div>
             <div className="flex gap-2">
+              {user?.admin_role === 'founder' && (
+                <Link to={createPageUrl("AdminTeam")}>
+                  <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                    <Users className="h-4 w-4 mr-2" />
+                    Team
+                  </Button>
+                </Link>
+              )}
               <a 
                 href={base44.agents.getWhatsAppConnectURL('business_task_manager')}
                 target="_blank"
@@ -253,22 +289,24 @@ export default function AdminTasks() {
               </div>
             </div>
 
-            {/* AI Offers Toggle */}
-            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-amber-300" />
-                  <div>
-                    <div className="text-sm font-medium">AI Personalized Offers</div>
-                    <div className="text-xs text-[#E8DED8]">Daily recommendations for customers</div>
+            {/* AI Offers Toggle - Founder/Manager only */}
+            {(user?.admin_role === 'founder' || user?.admin_role === 'manager') && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-amber-300" />
+                    <div>
+                      <div className="text-sm font-medium">AI Personalized Offers</div>
+                      <div className="text-xs text-[#E8DED8]">Daily recommendations for customers</div>
+                    </div>
                   </div>
+                  <Switch
+                    checked={aiOffersEnabled}
+                    onCheckedChange={toggleAiOffers}
+                  />
                 </div>
-                <Switch
-                  checked={aiOffersEnabled}
-                  onCheckedChange={toggleAiOffers}
-                />
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -326,6 +364,11 @@ export default function AdminTasks() {
                         <Badge className={`${priorityColors[task.priority]} text-xs`}>
                           {task.priority}
                         </Badge>
+                        {task.assigned_to && (
+                          <Badge variant="outline" className="text-xs bg-blue-50">
+                            👤 {adminUsers.find(u => u.email === task.assigned_to)?.full_name?.split(' ')[0] || 'Assigned'}
+                          </Badge>
+                        )}
                         {task.due_date && (
                           <Badge variant="outline" className="text-xs">
                             Due: {new Date(task.due_date).toLocaleDateString()}
@@ -458,6 +501,25 @@ export default function AdminTasks() {
                 onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
               />
             </div>
+
+            {(user?.admin_role === 'founder' || user?.admin_role === 'manager') && (
+              <div>
+                <Label>Assign To</Label>
+                <Select value={formData.assigned_to} onValueChange={(v) => setFormData(prev => ({ ...prev, assigned_to: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Unassigned" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={null}>Unassigned</SelectItem>
+                    {adminUsers.map(admin => (
+                      <SelectItem key={admin.email} value={admin.email}>
+                        {admin.full_name} ({admin.admin_role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div>
               <Label>Notes</Label>
