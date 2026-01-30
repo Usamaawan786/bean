@@ -272,12 +272,23 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
+        {/* Personalized AI Offers - Premium First */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <PersonalizedOffers userEmail={user.email} />
+          </motion.div>
+        )}
+
         {/* Tier Badge */}
         {customer && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.7 }}
+            transition={{ delay: 0.75 }}
           >
             <TierBadge 
               tier={customer.tier || "Bronze"} 
@@ -294,17 +305,6 @@ export default function Home() {
             transition={{ delay: 0.8 }}
           >
             <RewardProgress currentPoints={customer.points_balance || 0} />
-          </motion.div>
-        )}
-
-        {/* Personalized AI Offers */}
-        {user && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.85 }}
-          >
-            <PersonalizedOffers userEmail={user.email} />
           </motion.div>
         )}
 

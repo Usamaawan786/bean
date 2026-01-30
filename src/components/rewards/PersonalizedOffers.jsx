@@ -68,8 +68,12 @@ export default function PersonalizedOffers({ userEmail }) {
     return `${hoursLeft}h left`;
   };
 
+  // Only show the first (most premium) offer
+  const premiumOffer = offers[0];
+  if (!premiumOffer) return null;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center gap-2">
         <motion.div
           animate={{ rotate: [0, 10, -10, 0] }}
@@ -77,97 +81,58 @@ export default function PersonalizedOffers({ userEmail }) {
         >
           <Sparkles className="h-5 w-5 text-amber-500" />
         </motion.div>
-        <h2 className="text-lg font-bold text-[#5C4A3A]">Just for You</h2>
-        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
-          AI Powered
-        </span>
+        <h2 className="text-lg font-bold text-[#5C4A3A]">Handpicked for You</h2>
       </div>
 
-      <AnimatePresence mode="popLayout">
-        {offers.map((offer, index) => {
-          const Icon = offerIcons[offer.offer_type] || Gift;
-          const gradient = offerColors[offer.offer_type] || offerColors.recommendation;
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        className="relative overflow-hidden rounded-3xl bg-white border-2 border-[#E8DED8] shadow-lg"
+      >
+        {/* Subtle Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F5EBE8] via-transparent to-transparent opacity-30" />
+        
+        <div className="relative p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="font-bold text-[#5C4A3A] text-xl mb-2">{premiumOffer.title}</h3>
+              <p className="text-[#8B7355] text-sm leading-relaxed mb-4">
+                {premiumOffer.description}
+              </p>
+            </div>
+          </div>
 
-          return (
-            <motion.div
-              key={offer.id}
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ delay: index * 0.1 }}
-              className="relative overflow-hidden rounded-3xl bg-white border-2 border-[#E8DED8] shadow-lg"
-            >
-              {/* Gradient Background */}
-              <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-10 rounded-full -mr-16 -mt-16`} />
-              
-              <div className="relative p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${gradient}`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-[#5C4A3A] text-lg">{offer.title}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {offer.discount_percentage > 0 && (
-                          <span className="text-green-600 font-bold text-sm">
-                            {offer.discount_percentage}% OFF
-                          </span>
-                        )}
-                        {offer.points_bonus > 0 && (
-                          <span className="text-amber-600 font-bold text-sm">
-                            +{offer.points_bonus} pts
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 text-[#8B7355] text-xs">
-                    <Clock className="h-3 w-3" />
-                    {getTimeLeft(offer.expiry_date)}
-                  </div>
-                </div>
-
-                <p className="text-[#8B7355] text-sm mb-4 leading-relaxed">
-                  {offer.description}
+          {premiumOffer.product_name && (
+            <div className="bg-gradient-to-r from-[#F5EBE8] to-[#EDE3DF] rounded-2xl p-4 mb-4">
+              <p className="text-xs text-[#8B7355] mb-1 uppercase tracking-wide">Your Next Sip</p>
+              <p className="font-bold text-[#5C4A3A] text-lg">{premiumOffer.product_name}</p>
+              {premiumOffer.points_bonus > 0 && (
+                <p className="text-amber-600 font-semibold text-sm mt-1">
+                  Earn {premiumOffer.points_bonus} bonus points
                 </p>
+              )}
+            </div>
+          )}
 
-                {offer.product_name && (
-                  <div className="bg-[#F5EBE8] rounded-xl p-3 mb-4">
-                    <p className="text-xs text-[#8B7355] mb-1">Recommended Product</p>
-                    <p className="font-semibold text-[#5C4A3A]">{offer.product_name}</p>
-                  </div>
-                )}
+          <Button
+            onClick={() => redeemMutation.mutate(premiumOffer.id)}
+            disabled={redeemMutation.isPending}
+            className="w-full bg-[#8B7355] hover:bg-[#6B5744] text-white rounded-2xl h-12 font-medium"
+          >
+            I'll Try This
+          </Button>
 
-                <Button
-                  onClick={() => redeemMutation.mutate(offer.id)}
-                  disabled={redeemMutation.isPending}
-                  className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 transition-opacity`}
-                >
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  Claim Offer
-                </Button>
-
-                {offer.ai_reasoning && (
-                  <p className="text-xs text-[#C9B8A6] mt-3 italic">
-                    💡 {offer.ai_reasoning}
-                  </p>
-                )}
-              </div>
-
-              {/* Decorative corner badge */}
-              <div className="absolute top-4 right-4">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="w-2 h-2 bg-amber-400 rounded-full"
-                />
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E8DED8]">
+            <p className="text-xs text-[#C9B8A6] italic">
+              {premiumOffer.ai_reasoning}
+            </p>
+            <div className="flex items-center gap-1 text-[#8B7355] text-xs font-medium">
+              <Clock className="h-3 w-3" />
+              {getTimeLeft(premiumOffer.expiry_date)}
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

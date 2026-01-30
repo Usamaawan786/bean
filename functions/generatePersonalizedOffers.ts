@@ -48,72 +48,60 @@ Deno.serve(async (req) => {
       }
       
       // Use AI to generate personalized offers
-      const prompt = `You are an AI assistant for BEAN Coffee creating personalized offers.
+      const prompt = `You are an AI connoisseur for BEAN Coffee creating ONE premium, personalized recommendation.
 
 User Profile:
 - Name: ${userInfo.full_name}
 - Loyalty Tier: ${customer.tier}
 - Points Balance: ${customer.points_balance}
-- Total Points Earned: ${customer.total_points_earned}
-- Cups Redeemed: ${customer.cups_redeemed}
-
-Purchase History (last 10):
-${purchasedProducts.length > 0 ? purchasedProducts.join(', ') : 'No purchase history yet'}
+- Purchase History: ${purchasedProducts.length > 0 ? purchasedProducts.join(', ') : 'New customer - no history'}
 
 Available Products:
 ${products.map(p => `${p.name} (${p.category}) - Rs. ${p.price}`).join('\n')}
 
-Current Date: ${new Date().toLocaleDateString()}
+BRAND GUIDELINES - CRITICAL:
+- We are PREMIUM like Luckin/Starbucks, NOT a discount brand
+- Focus on DISCOVERY and TASTE, not savings
+- Frame as "handpicked for you" / "perfectly matched" / "next to try"
+- Avoid cheap discount language - if discount, call it "early access" or "VIP tasting"
 
-Generate 2-3 personalized offers for this user. Consider:
-1. Products they haven't tried yet (new discovery)
-2. Their loyalty tier and points (reward loyalty)
-3. Time-based offers (morning coffee, afternoon pick-me-up)
-4. Seasonal suggestions
-5. Challenges to increase engagement
+Generate ONE SINGLE premium offer. Priority order:
+1st Priority: RECOMMENDATION - Suggest something new they'd love based on taste profile
+2nd Priority: CHALLENGE - Engage them ("Try 3 cold brews this week")
+3rd Priority: BONUS_POINTS - Reward on specific premium product
+4th Priority: Only if high-tier customer, offer exclusive early access (not "discount")
 
-Return ONLY a JSON array with this structure:
-[
-  {
-    "offer_type": "discount" | "bonus_points" | "free_item" | "challenge" | "recommendation",
-    "title": "Short catchy title",
-    "description": "Engaging description explaining the offer",
-    "product_name": "Specific product name from the list",
-    "product_id": null,
-    "discount_percentage": 10-30 if discount, or 0,
-    "points_bonus": 20-100 if bonus_points type, or 0,
-    "ai_reasoning": "Why you suggested this"
-  }
-]
+Return ONLY this JSON structure (single object, not array):
+{
+  "offer_type": "recommendation" (preferred) | "challenge" | "bonus_points" | "free_item",
+  "title": "Elegant, premium title (e.g., 'Your Next Favorite Awaits')",
+  "description": "Sophisticated copy focusing on taste/experience, not price (e.g., 'Based on your love for rich espressos, our new Single Origin Ethiopian would perfectly complement your palate')",
+  "product_name": "Specific product name from the list",
+  "discount_percentage": 0 (avoid discounts unless VIP early access, max 15%),
+  "points_bonus": 30-50 if bonus_points type,
+  "ai_reasoning": "Brief insight into the pairing logic"
+}
 
-Make offers feel personal, exciting, and actionable.`;
+Make it feel EXCLUSIVE, THOUGHTFUL, and PREMIUM - like a personal barista recommendation.`;
 
       try {
-        const aiResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
+        const offer = await base44.asServiceRole.integrations.Core.InvokeLLM({
           prompt,
           response_json_schema: {
             type: "object",
             properties: {
-              offers: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    offer_type: { type: "string" },
-                    title: { type: "string" },
-                    description: { type: "string" },
-                    product_name: { type: "string" },
-                    discount_percentage: { type: "number" },
-                    points_bonus: { type: "number" },
-                    ai_reasoning: { type: "string" }
-                  }
-                }
-              }
+              offer_type: { type: "string" },
+              title: { type: "string" },
+              description: { type: "string" },
+              product_name: { type: "string" },
+              discount_percentage: { type: "number" },
+              points_bonus: { type: "number" },
+              ai_reasoning: { type: "string" }
             }
           }
         });
 
-        const offers = aiResponse.offers || [];
+        const offers = [offer];
         
         // Create offers in database
         for (const offer of offers) {
