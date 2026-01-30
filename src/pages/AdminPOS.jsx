@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -146,7 +146,20 @@ export default function AdminPOS() {
               <h1 className="text-2xl font-bold">Admin POS</h1>
               <p className="text-[#E8DED8] text-sm">In-Store Point of Sale</p>
             </div>
-            <Settings className="h-6 w-6" />
+            <div className="flex gap-2">
+              <Link to={createPageUrl("AdminInventory")}>
+                <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                  <Package className="h-4 w-4 mr-2" />
+                  Inventory
+                </Button>
+              </Link>
+              <Link to={createPageUrl("AdminExpenses")}>
+                <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                  <TrendingDown className="h-4 w-4 mr-2" />
+                  Expenses
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
