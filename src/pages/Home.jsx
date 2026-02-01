@@ -24,29 +24,33 @@ export default function Home() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const u = await base44.auth.me();
-      
-      // Check if user needs to set their name
-      if (!u.full_name || u.full_name.includes("@") || u.full_name.trim() === "") {
-        setShowNameSetup(true);
-      }
-      
-      setUser(u);
-      
-      // Load or create customer profile
-      const customers = await base44.entities.Customer.filter({ created_by: u.email });
-      if (customers.length > 0) {
-        setCustomer(customers[0]);
-      } else {
-        // Create new customer with referral code
-        const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
-        const newCustomer = await base44.entities.Customer.create({
-          referral_code: refCode,
-          points_balance: 50, // Welcome bonus
-          total_points_earned: 50,
-          tier: "Bronze"
-        });
-        setCustomer(newCustomer);
+      try {
+        const u = await base44.auth.me();
+        
+        // Check if user needs to set their name
+        if (!u.full_name || u.full_name.includes("@") || u.full_name.trim() === "") {
+          setShowNameSetup(true);
+        }
+        
+        setUser(u);
+        
+        // Load or create customer profile in parallel
+        const customers = await base44.entities.Customer.filter({ created_by: u.email });
+        if (customers.length > 0) {
+          setCustomer(customers[0]);
+        } else {
+          // Create new customer with referral code
+          const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+          const newCustomer = await base44.entities.Customer.create({
+            referral_code: refCode,
+            points_balance: 50,
+            total_points_earned: 50,
+            tier: "Bronze"
+          });
+          setCustomer(newCustomer);
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error);
       }
     };
     loadUser();
@@ -55,12 +59,16 @@ export default function Home() {
   const { data: activeDrops = [] } = useQuery({
     queryKey: ["active-drops"],
     queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
-    refetchInterval: 30000
+    refetchInterval: 30000,
+    enabled: !!user && !!customer,
+    staleTime: 30000
   });
 
   const { data: upcomingDrops = [] } = useQuery({
     queryKey: ["upcoming-drops"],
-    queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" })
+    queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
+    enabled: !!user && !!customer,
+    staleTime: 60000
   });
 
   const handleClaimDrop = async (drop) => {

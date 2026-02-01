@@ -51,6 +51,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminExpenses from './pages/AdminExpenses';
 import AdminInventory from './pages/AdminInventory';
 import AdminPOS from './pages/AdminPOS';
+import AdminTasks from './pages/AdminTasks';
+import AdminTeam from './pages/AdminTeam';
 import Checkout from './pages/Checkout';
 import Community from './pages/Community';
 import FlashDrops from './pages/FlashDrops';
@@ -63,8 +65,6 @@ import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
-import AdminTasks from './pages/AdminTasks';
-import AdminTeam from './pages/AdminTeam';
 import __Layout from './Layout.jsx';
 
 
@@ -73,6 +73,8 @@ export const PAGES = {
     "AdminExpenses": AdminExpenses,
     "AdminInventory": AdminInventory,
     "AdminPOS": AdminPOS,
+    "AdminTasks": AdminTasks,
+    "AdminTeam": AdminTeam,
     "Checkout": Checkout,
     "Community": Community,
     "FlashDrops": FlashDrops,
@@ -85,8 +87,6 @@ export const PAGES = {
     "Rewards": Rewards,
     "Shop": Shop,
     "Wallet": Wallet,
-    "AdminTasks": AdminTasks,
-    "AdminTeam": AdminTeam,
 }
 
 export const pagesConfig = {
