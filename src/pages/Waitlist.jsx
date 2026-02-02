@@ -38,6 +38,8 @@ export default function Waitlist() {
       setTotalSignups(147 + signups.length); // Base number + actual signups
     } catch (error) {
       console.error("Failed to load signups");
+      // Keep default number if fetch fails
+      setTotalSignups(147);
     }
   };
 
@@ -46,31 +48,36 @@ export default function Waitlist() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Generate unique referral code
-    const refCode = formData.full_name.split(" ")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+    try {
+      // Generate unique referral code
+      const refCode = formData.full_name.split(" ")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
 
-    // Get current position
-    const signups = await base44.entities.WaitlistSignup.list();
-    const newPosition = signups.length + 1;
+      // Get current position
+      const signups = await base44.entities.WaitlistSignup.list();
+      const newPosition = signups.length + 1;
 
-    await base44.entities.WaitlistSignup.create({
-      ...formData,
-      referral_code: refCode,
-      position: newPosition
-    });
+      await base44.entities.WaitlistSignup.create({
+        ...formData,
+        referral_code: refCode,
+        position: newPosition
+      });
 
-    setPosition(newPosition);
-    setReferralCode(refCode);
-    setSubmitted(true);
-    
-    // Celebration
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+      setPosition(newPosition);
+      setReferralCode(refCode);
+      setSubmitted(true);
+      
+      // Celebration
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
 
-    toast.success("Welcome to the BEAN community! 🎉");
+      toast.success("Welcome to the BEAN community! 🎉");
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
   };
 
   const shareLink = `${window.location.origin}/Waitlist?ref=${referralCode}`;
