@@ -87,6 +87,26 @@ export default function QRScanner({ onScan, onClose }) {
     }
   };
 
+  const handleUploadImageClick = async () => {
+    try {
+      // Request photo library access on iOS
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          if (permission.state === 'denied') {
+            setError("Photo library access denied. Enable it in settings to upload images.");
+            return;
+          }
+        } catch (err) {
+          // Permission check not supported, continue anyway
+        }
+      }
+      fileInputRef.current?.click();
+    } catch (err) {
+      fileInputRef.current?.click();
+    }
+  };
+
   const stopScanning = async () => {
     if (scanner && isScanning) {
       await scanner.stop();
