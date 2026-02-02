@@ -34,11 +34,10 @@ export default function Waitlist() {
 
   const loadTotalSignups = async () => {
     try {
-      const signups = await base44.entities.WaitlistSignup.list();
-      setTotalSignups(147 + signups.length); // Base number + actual signups
+      const response = await base44.functions.invoke('getWaitlistCount', {});
+      setTotalSignups(147 + response.data.count);
     } catch (error) {
       console.error("Failed to load signups");
-      // Keep default number if fetch fails
       setTotalSignups(147);
     }
   };
@@ -49,31 +48,24 @@ export default function Waitlist() {
     e.preventDefault();
 
     try {
-      // Generate unique referral code
-      const refCode = formData.full_name.split(" ")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
-
-      // Get current position
-      const signups = await base44.entities.WaitlistSignup.list();
-      const newPosition = signups.length + 1;
-
-      await base44.entities.WaitlistSignup.create({
-        ...formData,
-        referral_code: refCode,
-        position: newPosition
-      });
-
-      setPosition(newPosition);
-      setReferralCode(refCode);
-      setSubmitted(true);
+      const response = await base44.functions.invoke('joinWaitlist', formData);
       
-      // Celebration
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      if (response.data.success) {
+        setPosition(response.data.position);
+        setReferralCode(response.data.referralCode);
+        setSubmitted(true);
+        
+        // Celebration
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
 
-      toast.success("Welcome to the BEAN community! 🎉");
+        toast.success("Welcome to the BEAN community! 🎉");
+      } else {
+        toast.error(response.data.error || "Something went wrong.");
+      }
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Something went wrong. Please try again.");
