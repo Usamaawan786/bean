@@ -53,7 +53,7 @@ export default function SignupNotification() {
           initial={{ opacity: 0, y: 50, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.9 }}
-          className="fixed bottom-24 left-5 right-5 md:left-auto md:right-8 md:w-80 z-50"
+          className="fixed bottom-16 left-5 right-5 md:left-auto md:right-8 md:w-80 z-50"
         >
           <div className="bg-white rounded-2xl shadow-2xl border-2 border-green-200 p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
