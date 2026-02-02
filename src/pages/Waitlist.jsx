@@ -239,8 +239,8 @@ export default function Waitlist() {
               className="mb-8"
             >
               <img 
-                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/e77f8c4f7_Group1302.png" 
-                alt="BEAN Logo" 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/89b5c937a_Group135.png" 
+                alt="BEAN" 
                 className="h-32 md:h-40 mx-auto"
               />
             </motion.div>
