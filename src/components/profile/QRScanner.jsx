@@ -133,12 +133,36 @@ export default function QRScanner({ onScan, onClose }) {
           />
 
           {!isScanning ? (
-            <Button
-              onClick={startScanning}
-              className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
-            >
-              Start Scanning
-            </Button>
+            <>
+              <Button
+                onClick={startScanning}
+                className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
+              >
+                Start Scanning
+              </Button>
+              
+              {permissionDenied && (
+                <>
+                  <div className="relative">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      className="w-full rounded-xl border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Image Instead
+                    </Button>
+                  </div>
+                </>
+              )}
+            </>
           ) : (
             <Button
               onClick={stopScanning}
@@ -153,9 +177,16 @@ export default function QRScanner({ onScan, onClose }) {
             <p className="text-sm text-[#5C4A3A]">
               Point your camera at the QR code on your receipt to earn rewards points!
             </p>
-            <p className="text-xs text-[#8B7355] mt-2">
-              Collect points with every purchase
-            </p>
+            {permissionDenied && (
+              <p className="text-xs text-[#8B7355] mt-2">
+                Or upload an image from your gallery
+              </p>
+            )}
+            {!permissionDenied && (
+              <p className="text-xs text-[#8B7355] mt-2">
+                Collect points with every purchase
+              </p>
+            )}
           </div>
         </div>
       </motion.div>
