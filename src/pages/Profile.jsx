@@ -83,23 +83,6 @@ export default function Profile() {
     }
   };
 
-  const requestGalleryPermission = async () => {
-    try {
-      // Request photos permission on iOS
-      if (navigator.permissions && navigator.permissions.query) {
-        const permission = await navigator.permissions.query({ name: 'photos' }).catch(() => null);
-        if (permission?.state === 'denied') {
-          toast.error("Photo library access denied. Enable it in settings.");
-          return false;
-        }
-      }
-      return true;
-    } catch (err) {
-      // Permission API not supported, proceed anyway
-      return true;
-    }
-  };
-
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -112,8 +95,21 @@ export default function Profile() {
   };
 
   const handleCameraClick = async () => {
-    const hasPermission = await requestGalleryPermission();
-    if (hasPermission) {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          if (permission.state === 'denied') {
+            toast.error("Photo library access denied. Enable it in settings.");
+            return;
+          }
+        } catch (err) {
+          // Permission check not supported, continue anyway
+        }
+      }
+      document.querySelector('input[accept="image/*"]')?.click();
+    } catch (err) {
+      // Fallback: just open file picker
       document.querySelector('input[accept="image/*"]')?.click();
     }
   };
