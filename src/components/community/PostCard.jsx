@@ -38,9 +38,10 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
     setIsReporting(true);
     try {
       await onReport(post);
+      // Wait a bit to ensure the state updates
+      setTimeout(() => setIsReporting(false), 500);
     } catch (error) {
       console.error("Error reporting post:", error);
-    } finally {
       setIsReporting(false);
     }
   };
