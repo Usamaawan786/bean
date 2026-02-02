@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import SignupNotification from "@/components/waitlist/SignupNotification";
 
-export default function Waitlist() {
+export default function waitlist() {
   const [formData, setFormData] = useState({
     full_name: "",
     email: ""
@@ -18,17 +18,14 @@ export default function Waitlist() {
   const [submitted, setSubmitted] = useState(false);
   const [position, setPosition] = useState(null);
   const [referralCode, setReferralCode] = useState("");
-  const [totalSignups, setTotalSignups] = useState(147); // Starting number for social proof
+  const [totalSignups, setTotalSignups] = useState(147);
 
   useEffect(() => {
-    // Check for referral code in URL
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) {
       setFormData(prev => ({ ...prev, referred_by: ref }));
     }
-
-    // Load total signups (no auth required)
     loadTotalSignups();
   }, []);
 
@@ -42,8 +39,6 @@ export default function Waitlist() {
     }
   };
 
-
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -55,7 +50,6 @@ export default function Waitlist() {
         setReferralCode(response.data.referralCode);
         setSubmitted(true);
         
-        // Celebration
         confetti({
           particleCount: 100,
           spread: 70,
@@ -72,7 +66,7 @@ export default function Waitlist() {
     }
   };
 
-  const shareLink = `${window.location.origin}/Waitlist?ref=${referralCode}`;
+  const shareLink = `${window.location.origin}/waitlist?ref=${referralCode}`;
 
   const copyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
@@ -82,7 +76,6 @@ export default function Waitlist() {
   if (submitted) {
       return (
         <div className="min-h-screen bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white relative overflow-hidden">
-          {/* Animated Background */}
           <div className="absolute inset-0 opacity-20">
             <motion.div
               animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
@@ -149,7 +142,6 @@ export default function Waitlist() {
               </motion.a>
             </motion.div>
 
-          {/* Early Bird Perks */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -197,7 +189,6 @@ export default function Waitlist() {
             </div>
           </motion.div>
 
-          {/* Share Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -236,9 +227,7 @@ export default function Waitlist() {
     <div className="min-h-screen bg-gradient-to-br from-[#F5F1ED] to-[#EBE5DF]">
       <SignupNotification />
 
-      {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
-        {/* Animated Background */}
         <div className="absolute inset-0 opacity-20">
           <motion.div
             animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
@@ -258,7 +247,6 @@ export default function Waitlist() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-3xl mx-auto"
           >
-            {/* Logo */}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -272,7 +260,6 @@ export default function Waitlist() {
               />
             </motion.div>
 
-            {/* Social Proof Badge */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -328,7 +315,6 @@ export default function Waitlist() {
 
       <div className="max-w-6xl mx-auto px-5 py-16">
         <div className="grid md:grid-cols-2 gap-12 items-start">
-          {/* Features Section */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -381,7 +367,6 @@ export default function Waitlist() {
               </div>
             </div>
 
-            {/* Social Platform Feature */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -405,7 +390,6 @@ export default function Waitlist() {
               </div>
             </motion.div>
 
-            {/* Testimonial */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -428,7 +412,6 @@ export default function Waitlist() {
             </motion.div>
           </motion.div>
 
-          {/* Signup Form */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -436,7 +419,6 @@ export default function Waitlist() {
             className="sticky top-8"
           >
             <div className="bg-white rounded-3xl border-2 border-[#E8DED8] shadow-2xl p-8 relative overflow-hidden">
-              {/* Decorative corner */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-transparent rounded-full -mr-16 -mt-16"></div>
               
               <div className="text-center mb-8 relative">
@@ -482,7 +464,6 @@ export default function Waitlist() {
                 </div>
               </form>
 
-              {/* Trust badges */}
               <div className="mt-6 pt-6 border-t border-[#E8DED8] grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-[#5C4A3A]">50+</p>
@@ -499,7 +480,6 @@ export default function Waitlist() {
               </div>
             </div>
 
-            {/* Trust Signals */}
             <div className="mt-6 text-center">
               <div className="flex items-center justify-center gap-4 text-sm text-[#8B7355]">
                 <div className="flex items-center gap-1">
@@ -516,7 +496,6 @@ export default function Waitlist() {
           </motion.div>
         </div>
 
-        {/* Final CTA - Optimized */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -524,7 +503,6 @@ export default function Waitlist() {
           className="mt-16 bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-[#E8DED8]"
         >
           <div className="bg-gradient-to-br from-[#8B7355] via-[#7A6448] to-[#6B5744] text-white px-6 py-8 md:px-12 md:py-12 relative overflow-hidden">
-            {/* Animated coffee beans */}
             <div className="absolute inset-0 opacity-10">
               <motion.div
                 animate={{ rotate: 360 }}
@@ -561,7 +539,6 @@ export default function Waitlist() {
             </div>
           </div>
 
-          {/* Perks Grid */}
           <div className="px-6 py-8 md:px-12 md:py-10">
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               <div className="flex items-start gap-4 bg-amber-50 rounded-2xl p-5">
