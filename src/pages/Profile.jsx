@@ -219,39 +219,18 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Profile Picture - Overlapping */}
+      {/* Profile Picture */}
       <div className="relative z-10 flex justify-center -mt-16">
-        <div className="relative">
-          <div className="w-32 h-32 rounded-full bg-white p-2 shadow-lg">
-            {formData.profile_picture ? (
-              <img 
-                src={formData.profile_picture} 
-                alt="Profile" 
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
-                <User className="h-12 w-12 text-white" />
-              </div>
-            )}
-          </div>
-          <button 
-            onClick={handleCameraClick}
-            disabled={isUploading}
-            className="absolute bottom-0 right-0 bg-[#8B7355] hover:bg-[#6B5744] disabled:opacity-50 text-white p-2.5 rounded-full shadow-lg transition-colors"
-          >
-            <Camera className="h-4 w-4" />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              disabled={isUploading}
+        <div className="w-32 h-32 rounded-full bg-white p-2 shadow-lg">
+          {formData.profile_picture ? (
+            <img 
+              src={formData.profile_picture} 
+              alt="Profile" 
+              className="w-full h-full rounded-full object-cover"
             />
-          </button>
-          {isUploading && (
-            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-              <Loader2 className="h-6 w-6 text-white animate-spin" />
+          ) : (
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
+              <User className="h-12 w-12 text-white" />
             </div>
           )}
         </div>
