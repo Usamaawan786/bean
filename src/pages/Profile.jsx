@@ -83,6 +83,23 @@ export default function Profile() {
     }
   };
 
+  const requestGalleryPermission = async () => {
+    try {
+      // Request photos permission on iOS
+      if (navigator.permissions && navigator.permissions.query) {
+        const permission = await navigator.permissions.query({ name: 'photos' }).catch(() => null);
+        if (permission?.state === 'denied') {
+          toast.error("Photo library access denied. Enable it in settings.");
+          return false;
+        }
+      }
+      return true;
+    } catch (err) {
+      // Permission API not supported, proceed anyway
+      return true;
+    }
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,6 +109,13 @@ export default function Profile() {
       setImageToEdit(reader.result);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCameraClick = async () => {
+    const hasPermission = await requestGalleryPermission();
+    if (hasPermission) {
+      document.querySelector('input[accept="image/*"]')?.click();
+    }
   };
 
   const handleCropComplete = async (croppedFile) => {
