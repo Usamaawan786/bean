@@ -239,7 +239,11 @@ export default function Profile() {
               </div>
             )}
           </div>
-          <label className="absolute bottom-0 right-0 bg-[#8B7355] hover:bg-[#6B5744] text-white p-2.5 rounded-full shadow-lg cursor-pointer transition-colors">
+          <button 
+            onClick={handleCameraClick}
+            disabled={isUploading}
+            className="absolute bottom-0 right-0 bg-[#8B7355] hover:bg-[#6B5744] disabled:opacity-50 text-white p-2.5 rounded-full shadow-lg transition-colors"
+          >
             <Camera className="h-4 w-4" />
             <input
               type="file"
@@ -248,7 +252,7 @@ export default function Profile() {
               className="hidden"
               disabled={isUploading}
             />
-          </label>
+          </button>
           {isUploading && (
             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
               <Loader2 className="h-6 w-6 text-white animate-spin" />
