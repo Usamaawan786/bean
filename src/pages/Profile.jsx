@@ -83,36 +83,7 @@ export default function Profile() {
     }
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImageToEdit(reader.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCameraClick = async () => {
-    try {
-      if (navigator.permissions && navigator.permissions.query) {
-        try {
-          const permission = await navigator.permissions.query({ name: 'camera' });
-          if (permission.state === 'denied') {
-            toast.error("Photo library access denied. Enable it in settings.");
-            return;
-          }
-        } catch (err) {
-          // Permission check not supported, continue anyway
-        }
-      }
-      document.querySelector('input[accept="image/*"]')?.click();
-    } catch (err) {
-      // Fallback: just open file picker
-      document.querySelector('input[accept="image/*"]')?.click();
-    }
-  };
 
   const handleCropComplete = async (croppedFile) => {
     setImageToEdit(null);
