@@ -28,7 +28,7 @@ export default function Waitlist() {
       setFormData(prev => ({ ...prev, referred_by: ref }));
     }
 
-    // Load total signups
+    // Load total signups (no auth required)
     loadTotalSignups();
   }, []);
 
