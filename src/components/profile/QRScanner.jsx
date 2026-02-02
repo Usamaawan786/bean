@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { X, QrCode, CheckCircle, AlertCircle } from "lucide-react";
+import { X, QrCode, CheckCircle, AlertCircle, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
