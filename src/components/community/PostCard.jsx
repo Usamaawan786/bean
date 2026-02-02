@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, Flag, AlertTriangle, Video } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import CommentSection from "./CommentSection";
