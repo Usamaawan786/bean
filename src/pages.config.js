@@ -66,6 +66,7 @@ import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
 import waitlist from './pages/waitlist';
+import Waitlist from './pages/Waitlist';
 import __Layout from './Layout.jsx';
 
 
@@ -89,6 +90,7 @@ export const PAGES = {
     "Shop": Shop,
     "Wallet": Wallet,
     "waitlist": waitlist,
+    "Waitlist": Waitlist,
 }
 
 export const pagesConfig = {
