@@ -15,15 +15,13 @@ const postTypeConfig = {
 
 const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
-export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReport, onReaction }) {
+export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReaction }) {
   const [isLiking, setIsLiking] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
   const isLiked = post.liked_by?.includes(currentUserEmail);
-  const hasReported = post.reported_by?.includes(currentUserEmail);
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
 
   const handleLike = async () => {
