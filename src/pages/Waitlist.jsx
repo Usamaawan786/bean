@@ -12,10 +12,7 @@ import confetti from "canvas-confetti";
 export default function Waitlist() {
   const [formData, setFormData] = useState({
     full_name: "",
-    email: "",
-    phone: "",
-    location: "",
-    interests: []
+    email: ""
   });
   const [submitted, setSubmitted] = useState(false);
   const [position, setPosition] = useState(null);
@@ -43,21 +40,7 @@ export default function Waitlist() {
     }
   };
 
-  const interests = [
-    { id: "events", label: "Community Events", icon: Calendar },
-    { id: "games", label: "Coffee Games", icon: Trophy },
-    { id: "challenges", label: "Brewing Challenges", icon: Sparkles },
-    { id: "tastings", label: "Tasting Sessions", icon: Coffee }
-  ];
 
-  const toggleInterest = (id) => {
-    setFormData(prev => ({
-      ...prev,
-      interests: prev.interests.includes(id)
-        ? prev.interests.filter(i => i !== id)
-        : [...prev.interests, id]
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -265,7 +248,8 @@ export default function Waitlist() {
               transition={{ delay: 0.3 }}
               className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
             >
-              Join Islamabad's<br />Coffee Community
+              Islamabad's First<br />
+              <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">Coffee Lover's Club</span>
             </motion.h1>
 
             <motion.p
@@ -274,8 +258,8 @@ export default function Waitlist() {
               transition={{ delay: 0.4 }}
               className="text-xl md:text-2xl text-[#E8DED8] mb-8"
             >
-              Events. Games. Challenges. Rewards.<br />
-              More than just coffee - it's a lifestyle.
+              Where great coffee meets great people.<br />
+              Exclusive events, challenges, rewards & more.
             </motion.p>
 
             <motion.div
@@ -284,14 +268,17 @@ export default function Waitlist() {
               transition={{ delay: 0.5 }}
               className="flex flex-wrap gap-3 justify-center mb-8"
             >
-              <Badge className="bg-amber-500/20 text-amber-200 px-4 py-2 text-sm border border-amber-400/30">
-                🎁 50 Bonus Points
+              <Badge className="bg-amber-500/20 text-amber-200 px-5 py-2.5 text-base font-semibold border border-amber-400/30">
+                🎁 50 Points Welcome Bonus
               </Badge>
-              <Badge className="bg-green-500/20 text-green-200 px-4 py-2 text-sm border border-green-400/30">
-                💰 20% Off First 3 Orders
+              <Badge className="bg-green-500/20 text-green-200 px-5 py-2.5 text-base font-semibold border border-green-400/30">
+                💰 20% Off Your First 3 Orders
               </Badge>
-              <Badge className="bg-purple-500/20 text-purple-200 px-4 py-2 text-sm border border-purple-400/30">
-                👑 Founding Member Status
+              <Badge className="bg-purple-500/20 text-purple-200 px-5 py-2.5 text-base font-semibold border border-purple-400/30">
+                👑 Founding Member Badge
+              </Badge>
+              <Badge className="bg-blue-500/20 text-blue-200 px-5 py-2.5 text-base font-semibold border border-blue-400/30">
+                ⚡ Priority Event Access
               </Badge>
             </motion.div>
           </motion.div>
@@ -312,42 +299,42 @@ export default function Waitlist() {
               
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Calendar className="h-6 w-6 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Calendar className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#5C4A3A] mb-1">Exclusive Events</h3>
-                    <p className="text-[#8B7355]">Monthly coffee tastings, brewing workshops, and community meetups at secret locations</p>
+                    <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Secret Tasting Events</h3>
+                    <p className="text-[#8B7355]">Monthly exclusive meetups at hidden gem cafes. Try rare beans, meet local roasters, and expand your palate.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#C9B8A6] to-[#B5A593] rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Trophy className="h-6 w-6 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Trophy className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#5C4A3A] mb-1">Coffee Challenges</h3>
-                    <p className="text-[#8B7355]">Compete in brewing competitions, blind tastings, and latte art battles with prizes</p>
+                    <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Brewing Battles</h3>
+                    <p className="text-[#8B7355]">Show off your skills in latte art competitions, blind taste challenges, and coffee trivia with real prizes.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#B5A593] to-[#9D8B7A] rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Gift className="h-6 w-6 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Gift className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#5C4A3A] mb-1">Reward System</h3>
-                    <p className="text-[#8B7355]">Earn points with every purchase, unlock tiers, and get free drinks & exclusive perks</p>
+                    <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Epic Rewards</h3>
+                    <p className="text-[#8B7355]">Every cup counts. Earn points, unlock tiers, get free drinks, early access to new drops, and VIP perks.</p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#9D8B7A] to-[#8B7355] rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <Users className="h-6 w-6 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Users className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#5C4A3A] mb-1">Private Community</h3>
-                    <p className="text-[#8B7355]">Connect with fellow coffee enthusiasts, share reviews, and discover new spots together</p>
+                    <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Your Tribe</h3>
+                    <p className="text-[#8B7355]">Private community of passionate coffee lovers. Share discoveries, organize coffee crawls, make friends.</p>
                   </div>
                 </div>
               </div>
@@ -358,16 +345,21 @@ export default function Waitlist() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="bg-white rounded-3xl border border-[#E8DED8] p-6"
+              className="bg-gradient-to-br from-[#F5EBE8] to-white rounded-3xl border-2 border-[#E8DED8] p-8 shadow-xl"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#8B7355] to-[#6B5744] rounded-full"></div>
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-amber-400 text-xl">★</span>
+                ))}
+              </div>
+              <p className="text-[#5C4A3A] text-lg leading-relaxed mb-4">"This isn't just another coffee app - it's a whole vibe! I've met amazing people, discovered the best cafes in Islamabad, and the challenges are so much fun. Plus the rewards are actually good!"</p>
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-[#8B7355] to-[#6B5744] rounded-full flex items-center justify-center text-white text-xl font-bold">S</div>
                 <div>
-                  <p className="font-semibold text-[#5C4A3A]">Sarah K.</p>
-                  <p className="text-sm text-[#8B7355]">Early Member, F-7</p>
+                  <p className="font-bold text-[#5C4A3A]">Sarah Khan</p>
+                  <p className="text-sm text-[#8B7355]">Founding Member • F-7 Islamabad</p>
                 </div>
               </div>
-              <p className="text-[#5C4A3A] italic">"Best coffee community in Islamabad! The events are amazing and I've discovered so many hidden gem cafes through fellow members. The rewards make it even better!"</p>
             </motion.div>
           </motion.div>
 
@@ -378,89 +370,68 @@ export default function Waitlist() {
             transition={{ delay: 0.7 }}
             className="sticky top-8"
           >
-            <div className="bg-white rounded-3xl border border-[#E8DED8] shadow-2xl p-8">
-              <div className="text-center mb-6">
-                <h3 className="text-2xl font-bold text-[#5C4A3A] mb-2">Join The Waitlist</h3>
-                <p className="text-[#8B7355]">Limited spots for Islamabad coffee lovers</p>
+            <div className="bg-white rounded-3xl border-2 border-[#E8DED8] shadow-2xl p-8 relative overflow-hidden">
+              {/* Decorative corner */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-transparent rounded-full -mr-16 -mt-16"></div>
+              
+              <div className="text-center mb-8 relative">
+                <Badge className="bg-amber-500 text-white px-4 py-1 mb-3">Limited Spots</Badge>
+                <h3 className="text-3xl font-bold text-[#5C4A3A] mb-2">Secure Your Spot</h3>
+                <p className="text-[#8B7355] text-lg">Join the first 500 founding members</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <Label>Full Name *</Label>
+                  <Label className="text-base font-semibold text-[#5C4A3A]">Your Name</Label>
                   <Input
                     value={formData.full_name}
                     onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
                     required
                     placeholder="Ahmed Khan"
-                    className="border-[#E8DED8]"
+                    className="border-2 border-[#E8DED8] focus:border-[#8B7355] h-12 text-base rounded-xl"
                   />
                 </div>
 
                 <div>
-                  <Label>Email *</Label>
+                  <Label className="text-base font-semibold text-[#5C4A3A]">Email Address</Label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     required
                     placeholder="ahmed@example.com"
-                    className="border-[#E8DED8]"
+                    className="border-2 border-[#E8DED8] focus:border-[#8B7355] h-12 text-base rounded-xl"
                   />
-                </div>
-
-                <div>
-                  <Label>Phone</Label>
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="03XX-XXXXXXX"
-                    className="border-[#E8DED8]"
-                  />
-                </div>
-
-                <div>
-                  <Label>Your Area in Islamabad</Label>
-                  <Input
-                    value={formData.location}
-                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="e.g., F-7, Blue Area, Bahria Town"
-                    className="border-[#E8DED8]"
-                  />
-                </div>
-
-                <div>
-                  <Label className="mb-3 block">What interests you? (Select all that apply)</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {interests.map(({ id, label, icon: Icon }) => (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => toggleInterest(id)}
-                        className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                          formData.interests.includes(id)
-                            ? "border-[#8B7355] bg-[#F5EBE8]"
-                            : "border-[#E8DED8] bg-white hover:border-[#C9B8A6]"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 text-[#8B7355]" />
-                        <span className="text-sm text-[#5C4A3A]">{label}</span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] text-white py-6 text-lg rounded-xl"
+                  className="w-full bg-gradient-to-r from-[#8B7355] via-[#7A6448] to-[#6B5744] hover:shadow-2xl hover:scale-[1.02] transition-all text-white py-6 text-lg font-bold rounded-xl"
                 >
-                  Join Waitlist <ArrowRight className="h-5 w-5 ml-2" />
+                  Claim Your Early Bird Perks <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
 
-                <p className="text-xs text-center text-[#8B7355]">
-                  By joining, you agree to receive updates about BEAN Coffee community
-                </p>
+                <div className="flex items-center justify-center gap-2 text-xs text-[#8B7355] pt-2">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <span>Free to join • No credit card required</span>
+                </div>
               </form>
+
+              {/* Trust badges */}
+              <div className="mt-6 pt-6 border-t border-[#E8DED8] grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-[#5C4A3A]">50+</p>
+                  <p className="text-xs text-[#8B7355]">Bonus Points</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[#5C4A3A]">20%</p>
+                  <p className="text-xs text-[#8B7355]">First Orders</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-[#5C4A3A]">VIP</p>
+                  <p className="text-xs text-[#8B7355]">Status</p>
+                </div>
+              </div>
             </div>
 
             {/* Trust Signals */}
@@ -485,15 +456,41 @@ export default function Waitlist() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
-          className="mt-16 text-center bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white rounded-3xl p-12"
+          className="mt-16 text-center bg-gradient-to-br from-[#8B7355] via-[#7A6448] to-[#6B5744] text-white rounded-3xl p-12 md:p-16 shadow-2xl relative overflow-hidden"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Don't Miss Out</h2>
-          <p className="text-xl text-[#E8DED8] mb-6">
-            Early birds get 20% off their first 3 orders + exclusive founding member perks
-          </p>
-          <Badge className="bg-amber-400 text-[#5C4A3A] px-6 py-3 text-lg font-bold">
-            Limited to First 500 Members
-          </Badge>
+          {/* Animated background elements */}
+          <div className="absolute inset-0 opacity-10">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+              className="absolute top-10 right-10 w-32 h-32 border-4 border-white rounded-full"
+            />
+            <motion.div
+              animate={{ rotate: -360 }}
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+              className="absolute bottom-10 left-10 w-24 h-24 border-4 border-white rounded-full"
+            />
+          </div>
+
+          <div className="relative">
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="inline-block"
+            >
+              <Sparkles className="h-16 w-16 text-amber-300 mx-auto mb-6" />
+            </motion.div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">The First 500 Get It All</h2>
+            <p className="text-xl md:text-2xl text-[#E8DED8] mb-8 max-w-2xl mx-auto leading-relaxed">
+              50 bonus points, 20% off first 3 orders, founding member badge, priority event access, and VIP perks for life.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Badge className="bg-amber-400 text-[#5C4A3A] px-8 py-4 text-xl font-bold shadow-xl">
+                {500 - (totalSignups - 147)} Spots Left
+              </Badge>
+              <p className="text-[#E8DED8] text-lg">Don't be #501</p>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
