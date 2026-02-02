@@ -133,7 +133,7 @@ export default function Waitlist() {
                 To complete your registration and secure your perks, you must follow us on Instagram
               </p>
               <motion.a
-                href="http://instagram.com/beanpakistan"
+                href="https://www.instagram.com/beanpakistan?igsh=ZzdtYzg1bnMwcWp2"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05 }}
