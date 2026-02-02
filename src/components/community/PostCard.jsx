@@ -34,7 +34,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
   };
 
   const handleReport = async () => {
-    if (isReporting || hasReported) return;
+    if (isReporting) return;
     setIsReporting(true);
     try {
       await onReport(post);
