@@ -36,8 +36,13 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
   const handleReport = async () => {
     if (isReporting || hasReported) return;
     setIsReporting(true);
-    await onReport(post);
-    setIsReporting(false);
+    try {
+      await onReport(post);
+    } catch (error) {
+      console.error("Error reporting post:", error);
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   const handleReaction = (emoji) => {
