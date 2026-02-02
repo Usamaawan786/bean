@@ -231,6 +231,20 @@ export default function Waitlist() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-3xl mx-auto"
           >
+            {/* Logo */}
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              className="mb-8"
+            >
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/e77f8c4f7_Group1302.png" 
+                alt="BEAN Logo" 
+                className="h-32 md:h-40 mx-auto"
+              />
+            </motion.div>
+
             {/* Social Proof Badge */}
             <motion.div
               initial={{ scale: 0 }}
@@ -451,44 +465,111 @@ export default function Waitlist() {
           </motion.div>
         </div>
 
-        {/* Final CTA */}
+        {/* Final CTA - Optimized */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
-          className="mt-16 text-center bg-gradient-to-br from-[#8B7355] via-[#7A6448] to-[#6B5744] text-white rounded-3xl p-12 md:p-16 shadow-2xl relative overflow-hidden"
+          className="mt-16 bg-white rounded-3xl shadow-2xl overflow-hidden border-2 border-[#E8DED8]"
         >
-          {/* Animated background elements */}
-          <div className="absolute inset-0 opacity-10">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-              className="absolute top-10 right-10 w-32 h-32 border-4 border-white rounded-full"
-            />
-            <motion.div
-              animate={{ rotate: -360 }}
-              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-              className="absolute bottom-10 left-10 w-24 h-24 border-4 border-white rounded-full"
-            />
+          <div className="bg-gradient-to-br from-[#8B7355] via-[#7A6448] to-[#6B5744] text-white px-6 py-8 md:px-12 md:py-12 relative overflow-hidden">
+            {/* Animated coffee beans */}
+            <div className="absolute inset-0 opacity-10">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                className="absolute top-10 right-10 w-20 h-20"
+              >
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/89b5c937a_Group135.png" 
+                  alt="" 
+                  className="w-full h-full opacity-50"
+                />
+              </motion.div>
+              <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                className="absolute bottom-10 left-10 w-16 h-16"
+              >
+                <img 
+                  src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/89b5c937a_Group135.png" 
+                  alt="" 
+                  className="w-full h-full opacity-50"
+                />
+              </motion.div>
+            </div>
+
+            <div className="relative text-center">
+              <Badge className="bg-red-500 text-white px-4 py-2 text-sm font-bold mb-4 shadow-lg animate-pulse">
+                LIMITED TIME OFFER
+              </Badge>
+              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {500 - (totalSignups - 147)} Founding Spots Left</h2>
+              <p className="text-lg md:text-xl text-[#E8DED8]">
+                Lock in your perks before we hit 500 members
+              </p>
+            </div>
           </div>
 
-          <div className="relative">
-            <motion.div
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="inline-block"
-            >
-              <Sparkles className="h-16 w-16 text-amber-300 mx-auto mb-6" />
-            </motion.div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">The First 500 Get It All</h2>
-            <p className="text-xl md:text-2xl text-[#E8DED8] mb-8 max-w-2xl mx-auto leading-relaxed">
-              50 bonus points, 20% off first 3 orders, founding member badge, priority event access, and VIP perks for life.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Badge className="bg-amber-400 text-[#5C4A3A] px-8 py-4 text-xl font-bold shadow-xl">
-                {500 - (totalSignups - 147)} Spots Left
-              </Badge>
-              <p className="text-[#E8DED8] text-lg">Don't be #501</p>
+          {/* Perks Grid */}
+          <div className="px-6 py-8 md:px-12 md:py-10">
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="flex items-start gap-4 bg-amber-50 rounded-2xl p-5">
+                <div className="w-12 h-12 bg-amber-400 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Gift className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">50 Bonus Points</h3>
+                  <p className="text-sm text-[#8B7355]">Start earning rewards immediately</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 bg-green-50 rounded-2xl p-5">
+                <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">20% Off First 3 Orders</h3>
+                  <p className="text-sm text-[#8B7355]">Save big on your first visits</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 bg-purple-50 rounded-2xl p-5">
+                <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Trophy className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Founding Member Badge</h3>
+                  <p className="text-sm text-[#8B7355]">Exclusive status forever</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 bg-blue-50 rounded-2xl p-5">
+                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Priority Event Access</h3>
+                  <p className="text-sm text-[#8B7355]">First to know, first to go</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-[#8B7355] text-lg mb-6">
+                <strong className="text-[#5C4A3A]">Worth PKR 5,000+</strong> • Free for early birds
+              </p>
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Button 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:shadow-2xl text-white px-12 py-6 text-lg font-bold rounded-2xl"
+                >
+                  Secure My Spot Now <ArrowRight className="h-5 w-5 ml-2" />
+                </Button>
+              </motion.div>
+              <p className="text-sm text-[#8B7355] mt-4">⚡ Spots filling fast • No credit card required</p>
             </div>
           </div>
         </motion.div>
