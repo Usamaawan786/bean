@@ -65,7 +65,7 @@ import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
 import Wallet from './pages/Wallet';
-import Waitlist from './pages/Waitlist';
+import waitlist from './pages/waitlist';
 import __Layout from './Layout.jsx';
 
 
@@ -88,7 +88,7 @@ export const PAGES = {
     "Rewards": Rewards,
     "Shop": Shop,
     "Wallet": Wallet,
-    "Waitlist": Waitlist,
+    "waitlist": waitlist,
 }
 
 export const pagesConfig = {

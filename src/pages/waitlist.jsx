@@ -73,7 +73,7 @@ export default function Waitlist() {
     toast.success("Welcome to the BEAN community! 🎉");
   };
 
-  const shareLink = `${window.location.origin}/Waitlist?ref=${referralCode}`;
+  const shareLink = `${window.location.origin}/waitlist?ref=${referralCode}`;
 
   const copyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
