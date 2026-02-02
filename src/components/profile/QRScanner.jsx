@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 
 export default function QRScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [scanner, setScanner] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   useEffect(() => {
     const qrScanner = new Html5Qrcode("qr-reader");
