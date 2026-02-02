@@ -29,6 +29,7 @@ export default function QRScanner({ onScan, onClose }) {
     try {
       setIsScanning(true);
       setError("");
+      setPermissionDenied(false);
 
       // Request camera permissions explicitly (important for iOS)
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -36,11 +37,11 @@ export default function QRScanner({ onScan, onClose }) {
           await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         } catch (permissionErr) {
           if (permissionErr.name === "NotAllowedError") {
-            setError("Camera permission was denied. Enable it in settings to use QR scanner.");
+            setError("Camera permission was denied. Enable it in settings or upload an image instead.");
+            setPermissionDenied(true);
             setIsScanning(false);
             return;
           }
-          // Continue anyway - some devices may allow html5-qrcode without explicit permission
         }
       }
 
@@ -66,9 +67,23 @@ export default function QRScanner({ onScan, onClose }) {
       const errorMsg = err?.message || "";
       // Only show meaningful errors
       if (errorMsg.includes("Permission") || errorMsg.includes("NotAllowedError")) {
-        setError("Camera permission required. Please enable camera access in settings.");
+        setError("Camera permission required. Enable it in settings or upload an image instead.");
+        setPermissionDenied(true);
       }
       setIsScanning(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !scanner) return;
+
+    try {
+      setError("");
+      const decodedText = await scanner.scanFile(file, true);
+      onScan(decodedText);
+    } catch (err) {
+      setError("No QR code found in the image. Please try another image.");
     }
   };
 
