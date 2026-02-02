@@ -95,14 +95,17 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   const reportPostMutation = useMutation({
     mutationFn: async (post) => {
-      const newReportedBy = [...(post.reported_by || []), user.email];
+      const hasReported = post.reported_by?.includes(user.email);
+      const newReportedBy = hasReported
+        ? post.reported_by.filter(e => e !== user.email)
+        : [...(post.reported_by || []), user.email];
       
-      // If 3+ reports, automatically flag for review
+      // If 3+ reports, flag for review. If below 3, unflag
       const shouldFlag = newReportedBy.length >= 3;
       
       return base44.entities.CommunityPost.update(post.id, {
         reported_by: newReportedBy,
-        moderation_status: shouldFlag ? "flagged" : post.moderation_status
+        moderation_status: shouldFlag ? "flagged" : (newReportedBy.length === 0 ? "approved" : post.moderation_status)
       });
     },
     onSuccess: () => {
