@@ -21,6 +21,8 @@ export default function ImageCropModal({ imageSrc, onComplete, onClose }) {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
+      if (!ctx || !croppedAreaPixels) return null;
+
       const maxSize = 1024;
       canvas.width = maxSize;
       canvas.height = maxSize;
@@ -53,6 +55,10 @@ export default function ImageCropModal({ imageSrc, onComplete, onClose }) {
   };
 
   const handleSave = async () => {
+    if (!croppedAreaPixels) {
+      console.error("No crop area selected");
+      return;
+    }
     const croppedBlob = await createCroppedImage();
     if (croppedBlob) {
       const file = new File([croppedBlob], "profile-picture.jpg", { type: "image/jpeg" });
