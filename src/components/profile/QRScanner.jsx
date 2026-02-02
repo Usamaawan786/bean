@@ -170,9 +170,10 @@ export default function QRScanner({ onScan, onClose }) {
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="hidden"
+                      capture={true}
                     />
                     <Button
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={handleUploadImageClick}
                       variant="outline"
                       className="w-full rounded-xl border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
                     >
