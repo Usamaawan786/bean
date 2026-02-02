@@ -197,11 +197,11 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
 
             <button
               onClick={handleReport}
-              disabled={isReporting || hasReported}
+              disabled={isReporting}
               className={`flex items-center gap-1.5 text-sm transition-colors ml-auto ${
-                hasReported ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"
+                hasReported ? "text-[#D9534F]" : "text-[#C9B8A6] hover:text-[#8B7355]"
               }`}
-              title={hasReported ? "Already reported" : "Report post"}
+              title={hasReported ? "Click to remove report" : "Report post"}
             >
               <Flag className={`h-4 w-4 ${hasReported ? "fill-current" : ""}`} />
             </button>
