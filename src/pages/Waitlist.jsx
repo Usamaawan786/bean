@@ -354,11 +354,35 @@ export default function Waitlist() {
               </div>
             </div>
 
+            {/* Social Platform Feature */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.75 }}
+              className="bg-white rounded-3xl border-2 border-[#E8DED8] p-8 shadow-lg"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#5C4A3A]">Coffee Social Hub</h3>
+              </div>
+              <p className="text-[#8B7355] mb-4 leading-relaxed">
+                Connect with fellow coffee enthusiasts! Share your coffee moments, follow your favorite creators, discover new recipes, learn brewing techniques, and engage with a vibrant community of coffee lovers.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge className="bg-pink-100 text-pink-700 border-pink-200">📸 Share Posts</Badge>
+                <Badge className="bg-blue-100 text-blue-700 border-blue-200">💬 Comment & Like</Badge>
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">👥 Follow Creators</Badge>
+                <Badge className="bg-amber-100 text-amber-700 border-amber-200">📚 Learn Recipes</Badge>
+              </div>
+            </motion.div>
+
             {/* Testimonial */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.85 }}
               className="bg-gradient-to-br from-[#F5EBE8] to-white rounded-3xl border-2 border-[#E8DED8] p-8 shadow-xl"
             >
               <div className="flex gap-1 mb-4">
