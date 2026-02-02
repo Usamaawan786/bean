@@ -47,7 +47,11 @@ export default function QRScanner({ onScan, onClose }) {
         }
       );
     } catch (err) {
-      setError("Camera access denied or not available");
+      const errorMsg = err?.message || "Camera access denied or not available";
+      // Only show permission-related errors, not all camera errors
+      if (errorMsg.includes("Permission") || errorMsg.includes("NotAllowedError")) {
+        setError("Camera permission required. Please enable camera access in settings.");
+      }
       setIsScanning(false);
     }
   };
