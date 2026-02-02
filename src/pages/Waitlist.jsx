@@ -304,7 +304,7 @@ export default function Waitlist() {
                   </div>
                   <div>
                     <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Secret Tasting Events</h3>
-                    <p className="text-[#8B7355]">Monthly exclusive meetups at hidden gem cafes. Try rare beans, meet local roasters, and expand your palate.</p>
+                    <p className="text-[#8B7355]">Monthly exclusive meetups at BEAN. Try rare beans, meet fellow coffee lovers, and expand your palate.</p>
                   </div>
                 </div>
 
@@ -334,7 +334,7 @@ export default function Waitlist() {
                   </div>
                   <div>
                     <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">Your Tribe</h3>
-                    <p className="text-[#8B7355]">Private community of passionate coffee lovers. Share discoveries, organize coffee crawls, make friends.</p>
+                    <p className="text-[#8B7355]">Private community of passionate coffee lovers. Share experiences, organize hangouts at BEAN, make friends.</p>
                   </div>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function Waitlist() {
                   <span key={i} className="text-amber-400 text-xl">★</span>
                 ))}
               </div>
-              <p className="text-[#5C4A3A] text-lg leading-relaxed mb-4">"This isn't just another coffee app - it's a whole vibe! I've met amazing people, discovered the best cafes in Islamabad, and the challenges are so much fun. Plus the rewards are actually good!"</p>
+              <p className="text-[#5C4A3A] text-lg leading-relaxed mb-4">"This isn't just another coffee shop - it's a whole vibe! I've met amazing people, the events are incredible, and the challenges are so much fun. Plus the rewards are actually good!"</p>
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 bg-gradient-to-br from-[#8B7355] to-[#6B5744] rounded-full flex items-center justify-center text-white text-xl font-bold">S</div>
                 <div>
