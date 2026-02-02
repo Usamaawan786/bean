@@ -241,7 +241,7 @@ export default function Waitlist() {
               <img 
                 src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/89b5c937a_Group135.png" 
                 alt="BEAN" 
-                className="h-32 md:h-40 mx-auto"
+                className="h-16 md:h-20 mx-auto"
               />
             </motion.div>
 
