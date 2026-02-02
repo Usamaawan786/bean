@@ -578,7 +578,7 @@ export default function Waitlist() {
               </div>
             </div>
 
-            <div className="text-center">
+            <div className="text-center flex flex-col items-center">
               <p className="text-[#8B7355] text-lg mb-6">
                 <strong className="text-[#5C4A3A]">Worth PKR 5,000+</strong> • Free for early birds
               </p>
