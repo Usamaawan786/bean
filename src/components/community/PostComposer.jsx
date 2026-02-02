@@ -21,10 +21,32 @@ export default function PostComposer({ onPost, userName }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
+  const requestMediaPermission = async () => {
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'camera' });
+          if (permission.state === 'denied') {
+            toast.error("Photo/video access denied. Enable it in settings.");
+            return false;
+          }
+        } catch (err) {
+          // Permission check not supported, continue anyway
+        }
+      }
+      return true;
+    } catch (err) {
+      return true;
+    }
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    const hasPermission = await requestMediaPermission();
+    if (!hasPermission) return;
+
     setIsUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setImageUrl(file_url);
@@ -35,6 +57,9 @@ export default function PostComposer({ onPost, userName }) {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    const hasPermission = await requestMediaPermission();
+    if (!hasPermission) return;
+
     setIsUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setVideoUrl(file_url);
