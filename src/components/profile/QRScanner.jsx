@@ -28,6 +28,20 @@ export default function QRScanner({ onScan, onClose }) {
       setIsScanning(true);
       setError("");
 
+      // Request camera permissions explicitly (important for iOS)
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        } catch (permissionErr) {
+          if (permissionErr.name === "NotAllowedError") {
+            setError("Camera permission was denied. Enable it in settings to use QR scanner.");
+            setIsScanning(false);
+            return;
+          }
+          // Continue anyway - some devices may allow html5-qrcode without explicit permission
+        }
+      }
+
       await scanner.start(
         { facingMode: "environment" },
         {
@@ -47,8 +61,8 @@ export default function QRScanner({ onScan, onClose }) {
         }
       );
     } catch (err) {
-      const errorMsg = err?.message || "Camera access denied or not available";
-      // Only show permission-related errors, not all camera errors
+      const errorMsg = err?.message || "";
+      // Only show meaningful errors
       if (errorMsg.includes("Permission") || errorMsg.includes("NotAllowedError")) {
         setError("Camera permission required. Please enable camera access in settings.");
       }
