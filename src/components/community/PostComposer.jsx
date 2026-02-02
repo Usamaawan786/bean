@@ -147,6 +147,7 @@ export default function PostComposer({ onPost, userName }) {
               onChange={handleImageUpload}
               className="hidden"
               disabled={isUploading || videoUrl}
+              id="photo-input"
             />
             <div className={`flex items-center gap-1.5 transition-colors ${
               videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
