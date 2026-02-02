@@ -165,12 +165,18 @@ export default function Profile() {
     );
   }
 
-  if (!user) {
+  if (!user || !user.email) {
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center p-5">
         <div className="text-center">
-          <p className="text-[#5C4A3A]">Failed to load profile</p>
-          <Button onClick={loadUserData} className="mt-4 bg-[#8B7355]">Retry</Button>
+          <h2 className="text-xl font-bold text-[#5C4A3A] mb-4">You're logged out</h2>
+          <p className="text-[#8B7355] mb-6">Log back in to access your profile</p>
+          <Button 
+            onClick={() => base44.auth.redirectToLogin(createPageUrl("Profile"))}
+            className="bg-[#8B7355] hover:bg-[#6B5744]"
+          >
+            Log In
+          </Button>
         </div>
       </div>
     );
