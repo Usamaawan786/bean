@@ -273,7 +273,7 @@ export default function Waitlist() {
               className="text-xl md:text-2xl text-[#E8DED8] mb-8"
             >
               Where great coffee meets great people.<br />
-              Exclusive events, challenges, rewards & more.
+              <strong>Exclusive events, challenges, rewards & more.</strong>
             </motion.p>
 
             <motion.div
