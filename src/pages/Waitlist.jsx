@@ -563,7 +563,10 @@ export default function Waitlist() {
                 transition={{ duration: 2, repeat: Infinity }}
               >
                 <Button 
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  onClick={() => {
+                    const signupForm = document.querySelector('form');
+                    signupForm?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
                   className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:shadow-2xl text-white px-12 py-6 text-lg font-bold rounded-2xl"
                 >
                   Secure My Spot Now <ArrowRight className="h-5 w-5 ml-2" />
