@@ -1,21 +1,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Coffee, Camera, Lightbulb, Star, Send, Image, X, Loader2, Video } from "lucide-react";
+import { Send, Image, X, Loader2, Video } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
-const postTypes = [
-  { id: "general", label: "General", icon: Coffee },
-  { id: "review", label: "Review", icon: Star },
-  { id: "photo", label: "Photo", icon: Camera },
-  { id: "video", label: "Video", icon: Video },
-  { id: "tip", label: "Tip", icon: Lightbulb }
-];
-
 export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
-  const [postType, setPostType] = useState("general");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
