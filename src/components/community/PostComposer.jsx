@@ -131,6 +131,7 @@ export default function PostComposer({ onPost, userName }) {
             <input
               type="file"
               accept="image/*"
+              capture="environment"
               onChange={handleImageUpload}
               className="hidden"
               disabled={isUploading || videoUrl}
