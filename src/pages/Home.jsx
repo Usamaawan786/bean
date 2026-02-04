@@ -38,6 +38,47 @@ export default function Home() {
     initialData: []
   });
 
+  const handleClaimDrop = async (drop) => {
+    if (!user) return;
+    
+    const newClaimedBy = [...(drop.claimed_by || []), user.email];
+    await base44.entities.FlashDrop.update(drop.id, {
+      claimed_by: newClaimedBy,
+      items_remaining: Math.max(0, (drop.items_remaining || drop.total_items) - 1)
+    });
+    
+    // Award points
+    if (customer) {
+      await base44.entities.Customer.update(customer.id, {
+        points_balance: customer.points_balance + 25,
+        total_points_earned: customer.total_points_earned + 25
+      });
+      setCustomer(prev => ({
+        ...prev,
+        points_balance: prev.points_balance + 25,
+        total_points_earned: prev.total_points_earned + 25
+      }));
+
+      // Log activity
+      await base44.entities.Activity.create({
+        user_email: user.email,
+        action_type: "flash_drop_claimed",
+        description: `Claimed ${drop.title}`,
+        points_amount: 25,
+        metadata: { drop_id: drop.id }
+      });
+    }
+  };
+
+  const allDrops = [...activeDrops, ...upcomingDrops];
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -82,47 +123,6 @@ export default function Home() {
       </div>
     );
   }
-
-  const handleClaimDrop = async (drop) => {
-    if (!user) return;
-    
-    const newClaimedBy = [...(drop.claimed_by || []), user.email];
-    await base44.entities.FlashDrop.update(drop.id, {
-      claimed_by: newClaimedBy,
-      items_remaining: Math.max(0, (drop.items_remaining || drop.total_items) - 1)
-    });
-    
-    // Award points
-    if (customer) {
-      await base44.entities.Customer.update(customer.id, {
-        points_balance: customer.points_balance + 25,
-        total_points_earned: customer.total_points_earned + 25
-      });
-      setCustomer(prev => ({
-        ...prev,
-        points_balance: prev.points_balance + 25,
-        total_points_earned: prev.total_points_earned + 25
-      }));
-
-      // Log activity
-      await base44.entities.Activity.create({
-        user_email: user.email,
-        action_type: "flash_drop_claimed",
-        description: `Claimed ${drop.title}`,
-        points_amount: 25,
-        metadata: { drop_id: drop.id }
-      });
-    }
-  };
-
-  const allDrops = [...activeDrops, ...upcomingDrops];
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
