@@ -20,6 +20,12 @@ export default function PostComposer({ onPost, userName }) {
     
     setIsUploadingImage(true);
     
+    // Timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setIsUploadingImage(false);
+      toast.error("Upload timed out. Please try again.");
+    }, 30000);
+    
     try {
       const image = await Camera.getPhoto({
         quality: 90,
@@ -28,6 +34,8 @@ export default function PostComposer({ onPost, userName }) {
         source: CameraSource.Prompt,
         saveToGallery: false
       });
+
+      clearTimeout(timeout);
 
       if (!image?.webPath) {
         setIsUploadingImage(false);
@@ -41,20 +49,19 @@ export default function PostComposer({ onPost, userName }) {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setImageUrl(file_url);
-      setIsUploadingImage(false);
       toast.success("Photo uploaded!");
     } catch (error) {
-      setIsUploadingImage(false);
+      clearTimeout(timeout);
       
       const errorMsg = error?.message || String(error);
       
       // User cancelled - don't show error
-      if (errorMsg.includes("cancel") || errorMsg.includes("Cancel") || errorMsg.includes("cancelled")) {
-        return;
+      if (!errorMsg.includes("cancel") && !errorMsg.includes("Cancel") && !errorMsg.includes("cancelled")) {
+        console.error("Image upload error:", error);
+        toast.error("Failed to upload image. Please try again.");
       }
-
-      console.error("Image upload error:", error);
-      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
