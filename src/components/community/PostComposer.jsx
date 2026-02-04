@@ -21,12 +21,12 @@ export default function PostComposer({ onPost, userName }) {
 
   const handleImageUpload = async () => {
     if (isUploadingImage) return;
+    setPermissionType("photos");
+    setShowPermissionModal(true);
+  };
 
-    // Simulate "Permission Ask" for consistency across Web/Native as requested
-    if (!window.confirm("Allow BEAN Coffee to access your photos?")) {
-      return;
-    }
-
+  const proceedWithImageUpload = async () => {
+    setShowPermissionModal(false);
     setIsUploadingImage(true);
 
     try {
