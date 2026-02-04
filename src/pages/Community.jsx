@@ -23,12 +23,9 @@ export default function Community() {
   }, []);
 
   const { data: allPosts = [], isLoading } = useQuery({
-    queryKey: ["community-posts", activeTab],
+    queryKey: ["community-posts"],
     queryFn: () => {
-      if (activeTab === "all") {
-        return base44.entities.CommunityPost.list("-created_date", 50);
-      }
-      return base44.entities.CommunityPost.filter({ post_type: activeTab }, "-created_date", 50);
+      return base44.entities.CommunityPost.list("-created_date", 50);
     }
   });
 
