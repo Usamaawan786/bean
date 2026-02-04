@@ -20,12 +20,13 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const { data: activeDrops = [] } = useQuery({
     queryKey: ["active-drops"],
     queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
     refetchInterval: 30000,
-    enabled: !!user && !!customer,
+    enabled: !!user && !!customer && authChecked,
     staleTime: 30000,
     initialData: []
   });
@@ -33,7 +34,7 @@ export default function Home() {
   const { data: upcomingDrops = [] } = useQuery({
     queryKey: ["upcoming-drops"],
     queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
-    enabled: !!user && !!customer,
+    enabled: !!user && !!customer && authChecked,
     staleTime: 60000,
     initialData: []
   });
@@ -82,14 +83,10 @@ export default function Home() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) {
-          base44.auth.redirectToLogin(createPageUrl("Home"));
-          return;
-        }
-
+        // Try to get user first - this will throw if not authenticated
         const u = await base44.auth.me();
         setUser(u);
+        setAuthChecked(true);
         
         // Load or create customer profile in parallel
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
@@ -106,17 +103,17 @@ export default function Home() {
           });
           setCustomer(newCustomer);
         }
-      } catch (error) {
-        console.error('Failed to load user:', error);
-        base44.auth.redirectToLogin(createPageUrl("Home"));
-      } finally {
         setIsCheckingAuth(false);
+      } catch (error) {
+        console.error('Authentication failed:', error);
+        // Redirect to login page
+        base44.auth.redirectToLogin(createPageUrl("Home"));
       }
     };
     loadUser();
   }, []);
 
-  if (isCheckingAuth) {
+  if (isCheckingAuth || !authChecked) {
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
