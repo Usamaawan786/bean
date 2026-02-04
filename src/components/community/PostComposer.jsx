@@ -28,7 +28,6 @@ export default function PostComposer({ onPost, userName }) {
       });
 
       if (!image.webPath) {
-        setIsUploadingImage(false);
         return;
       }
 
@@ -41,8 +40,10 @@ export default function PostComposer({ onPost, userName }) {
       setImageUrl(file_url);
       toast.success("Photo uploaded!");
     } catch (error) {
-      if (error.message && error.message.includes("User cancelled")) {
-        setIsUploadingImage(false);
+      const errorMsg = error?.message || String(error);
+      
+      // User cancelled - don't show error
+      if (errorMsg.includes("cancel") || errorMsg.includes("Cancel")) {
         return;
       }
 
