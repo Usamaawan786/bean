@@ -12,7 +12,6 @@ import StatsCard from "@/components/dashboard/StatsCard";
 import TierBadge from "@/components/dashboard/TierBadge";
 import FlashDropCard from "@/components/flashdrop/FlashDropCard";
 import ReferralCard from "@/components/referral/ReferralCard";
-import NameSetup from "@/components/NameSetup";
 import RewardProgress from "@/components/dashboard/RewardProgress";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
