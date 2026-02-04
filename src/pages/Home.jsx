@@ -21,6 +21,23 @@ export default function Home() {
   const [customer, setCustomer] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  const { data: activeDrops = [] } = useQuery({
+    queryKey: ["active-drops"],
+    queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
+    refetchInterval: 30000,
+    enabled: !!user && !!customer,
+    staleTime: 30000,
+    initialData: []
+  });
+
+  const { data: upcomingDrops = [] } = useQuery({
+    queryKey: ["upcoming-drops"],
+    queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
+    enabled: !!user && !!customer,
+    staleTime: 60000,
+    initialData: []
+  });
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -65,23 +82,6 @@ export default function Home() {
       </div>
     );
   }
-
-  const { data: activeDrops = [] } = useQuery({
-    queryKey: ["active-drops"],
-    queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
-    refetchInterval: 30000,
-    enabled: !!user && !!customer,
-    staleTime: 30000,
-    initialData: []
-  });
-
-  const { data: upcomingDrops = [] } = useQuery({
-    queryKey: ["upcoming-drops"],
-    queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
-    enabled: !!user && !!customer,
-    staleTime: 60000,
-    initialData: []
-  });
 
   const handleClaimDrop = async (drop) => {
     if (!user) return;
