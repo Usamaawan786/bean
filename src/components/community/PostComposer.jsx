@@ -175,12 +175,13 @@ export default function PostComposer({ onPost, userName }) {
         <Button
           onClick={handleSubmit}
           disabled={!content.trim() || isPosting}
-          className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A]"
+          size="sm"
+          className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] flex-shrink-0"
         >
           {isPosting ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
           ) : (
-            <Send className="h-4 w-4 mr-2" />
+            <Send className="h-3.5 w-3.5 mr-1.5" />
           )}
           Post
         </Button>
