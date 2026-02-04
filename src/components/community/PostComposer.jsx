@@ -20,22 +20,17 @@ export default function PostComposer({ onPost, userName }) {
     
     setIsUploadingImage(true);
     
-    // Timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      setIsUploadingImage(false);
-      toast.error("Upload timed out. Please try again.");
-    }, 30000);
-    
     try {
       const image = await Camera.getPhoto({
         quality: 90,
-        allowEditing: true,
+        allowEditing: false,
         resultType: CameraResultType.Uri,
-        source: CameraSource.Prompt,
+        source: CameraSource.Photos,
         saveToGallery: false
+      }).catch(err => {
+        setIsUploadingImage(false);
+        throw err;
       });
-
-      clearTimeout(timeout);
 
       if (!image?.webPath) {
         setIsUploadingImage(false);
@@ -51,8 +46,6 @@ export default function PostComposer({ onPost, userName }) {
       setImageUrl(file_url);
       toast.success("Photo uploaded!");
     } catch (error) {
-      clearTimeout(timeout);
-      
       const errorMsg = error?.message || String(error);
       
       // User cancelled - don't show error
