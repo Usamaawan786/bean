@@ -132,13 +132,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     }
   });
 
-  const tabs = [
-    { id: "all", label: "All", icon: TrendingUp },
-    { id: "general", label: "General", icon: Coffee },
-    { id: "review", label: "Reviews", icon: Star },
-    { id: "photo", label: "Photos", icon: Camera },
-    { id: "tip", label: "Tips", icon: Lightbulb }
-  ];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
