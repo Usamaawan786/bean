@@ -42,7 +42,8 @@ export default function Rewards() {
 
   const { data: rewards = [], isLoading } = useQuery({
     queryKey: ["rewards"],
-    queryFn: () => base44.entities.Reward.filter({ is_active: true })
+    queryFn: () => base44.entities.Reward.filter({ is_active: true }),
+    initialData: []
   });
 
   const { data: allCustomers = [], isLoading: loadingLeaderboard } = useQuery({

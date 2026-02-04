@@ -9,6 +9,7 @@ export default function RewardProgress({ currentPoints }) {
   const { data: rewards = [] } = useQuery({
     queryKey: ['rewards'],
     queryFn: () => base44.entities.Reward.filter({ is_active: true }),
+    initialData: []
   });
 
   // Find the next reward the user can work toward
