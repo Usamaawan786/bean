@@ -16,9 +16,11 @@ export default function PostComposer({ onPost, userName }) {
   const [isPosting, setIsPosting] = useState(false);
 
   const handleImageUpload = async () => {
+    if (isUploadingImage) return;
+    
+    setIsUploadingImage(true);
+    
     try {
-      setIsUploadingImage(true);
-
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: true,
@@ -27,7 +29,8 @@ export default function PostComposer({ onPost, userName }) {
         saveToGallery: false
       });
 
-      if (!image.webPath) {
+      if (!image?.webPath) {
+        setIsUploadingImage(false);
         return;
       }
 
@@ -38,19 +41,20 @@ export default function PostComposer({ onPost, userName }) {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setImageUrl(file_url);
+      setIsUploadingImage(false);
       toast.success("Photo uploaded!");
     } catch (error) {
+      setIsUploadingImage(false);
+      
       const errorMsg = error?.message || String(error);
       
       // User cancelled - don't show error
-      if (errorMsg.includes("cancel") || errorMsg.includes("Cancel")) {
+      if (errorMsg.includes("cancel") || errorMsg.includes("Cancel") || errorMsg.includes("cancelled")) {
         return;
       }
 
       console.error("Image upload error:", error);
       toast.error("Failed to upload image. Please try again.");
-    } finally {
-      setIsUploadingImage(false);
     }
   };
 
