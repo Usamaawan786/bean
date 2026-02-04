@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { X, QrCode, CheckCircle, AlertCircle } from "lucide-react";
+import { X, QrCode, CheckCircle, AlertCircle, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 
 export default function QRScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
@@ -69,7 +70,47 @@ export default function QRScanner({ onScan, onClose }) {
     }
   };
 
+  const handleImageUpload = async () => {
+    if (!scanner) return;
 
+    // Stop scanning if active
+    if (isScanning) {
+      await stopScanning();
+    }
+
+    try {
+      setError("");
+
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Photos
+      });
+
+      if (!image.webPath) return;
+
+      // Fetch the file to pass to html5-qrcode
+      const response = await fetch(image.webPath);
+      const blob = await response.blob();
+      const file = new File([blob], `scan_${Date.now()}.${image.format}`, { type: blob.type });
+
+      const decodedText = await scanner.scanFile(file, true);
+      onScan(decodedText);
+    } catch (err) {
+      if (err.message && err.message.includes("User cancelled")) return;
+
+      console.error("QR scan error:", err);
+      if (err.message && err.message.includes("No QR code found")) {
+        setError("No QR code found in the image. Please try another image.");
+      } else if (err.message && err.message.includes("Permission")) {
+        setError("Gallery permission denied.");
+        toast.error("Gallery permission required to scan images.");
+      } else {
+        setError("Failed to scan image. Please try again.");
+      }
+    }
+  };
 
   const stopScanning = async () => {
     if (scanner && isScanning) {
@@ -117,12 +158,25 @@ export default function QRScanner({ onScan, onClose }) {
           />
 
           {!isScanning ? (
-            <Button
-              onClick={startScanning}
-              className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
-            >
-              Start Scanning
-            </Button>
+            <>
+              <Button
+                onClick={startScanning}
+                className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
+              >
+                Start Scanning
+              </Button>
+
+              <div className="relative mt-2">
+                <Button
+                  onClick={handleImageUpload}
+                  variant="outline"
+                  className="w-full rounded-xl border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image Instead
+                </Button>
+              </div>
+            </>
           ) : (
             <Button
               onClick={stopScanning}
