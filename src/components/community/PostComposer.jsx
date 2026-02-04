@@ -284,5 +284,6 @@ export default function PostComposer({ onPost, userName }) {
         </Button>
       </div>
     </div>
+    </>
   );
 }
