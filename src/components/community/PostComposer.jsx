@@ -137,15 +137,15 @@ export default function PostComposer({ onPost, userName }) {
               disabled={isUploading || videoUrl}
               id="photo-input"
             />
-            <div className={`flex items-center gap-1.5 transition-colors ${
+            <div className={`flex items-center gap-1 transition-colors ${
               videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
             }`}>
               {isUploading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Image className="h-5 w-5" />
+                <Image className="h-4 w-4" />
               )}
-              <span className="text-sm">Photo</span>
+              <span className="text-xs">Photo</span>
             </div>
           </label>
 
@@ -159,15 +159,15 @@ export default function PostComposer({ onPost, userName }) {
               disabled={isUploading || imageUrl}
               id="video-input"
             />
-            <div className={`flex items-center gap-1.5 transition-colors ${
+            <div className={`flex items-center gap-1 transition-colors ${
               imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
             }`}>
               {isUploading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                <Video className="h-5 w-5" />
+                <Video className="h-4 w-4" />
               )}
-              <span className="text-sm">Video</span>
+              <span className="text-xs">Video</span>
             </div>
           </label>
         </div>
