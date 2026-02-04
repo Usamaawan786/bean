@@ -19,18 +19,11 @@ import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
-  const [showNameSetup, setShowNameSetup] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const u = await base44.auth.me();
-        
-        // Check if user needs to set their name
-        if (!u.full_name || u.full_name.includes("@") || u.full_name.trim() === "") {
-          setShowNameSetup(true);
-        }
-        
         setUser(u);
         
         // Load or create customer profile in parallel
