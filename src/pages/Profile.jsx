@@ -370,13 +370,8 @@ export default function Profile() {
 
         {/* Logout Button */}
         <Button
-          onClick={async () => {
-            try {
-              await base44.auth.logout();
-            } catch (error) {
-              console.error("Logout error:", error);
-              toast.error("Failed to logout");
-            }
+          onClick={() => {
+            base44.auth.logout(window.location.origin);
           }}
           variant="outline"
           className="w-full mt-6 rounded-xl border-red-300 text-red-600 hover:bg-red-50"
