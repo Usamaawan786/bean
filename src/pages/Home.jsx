@@ -53,14 +53,16 @@ export default function Home() {
     queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
     refetchInterval: 30000,
     enabled: !!user && !!customer,
-    staleTime: 30000
+    staleTime: 30000,
+    initialData: []
   });
 
   const { data: upcomingDrops = [] } = useQuery({
     queryKey: ["upcoming-drops"],
     queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
     enabled: !!user && !!customer,
-    staleTime: 60000
+    staleTime: 60000,
+    initialData: []
   });
 
   const handleClaimDrop = async (drop) => {

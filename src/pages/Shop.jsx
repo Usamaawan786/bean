@@ -38,16 +38,17 @@ export default function Shop() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
-    queryFn: () => base44.entities.Product.list("-created_date")
+    queryFn: () => base44.entities.Product.list("-created_date"),
+    initialData: []
   });
 
   const categories = ["all", "Coffee Beans", "Matcha", "Equipment", "Merchandise", "Gift Sets"];
 
   const filteredProducts = selectedCategory === "all"
-    ? products
-    : products.filter((p) => p.category === selectedCategory);
+    ? (products || [])
+    : (products || []).filter((p) => p.category === selectedCategory);
 
-  const featuredProducts = products.filter((p) => p.featured);
+  const featuredProducts = (products || []).filter((p) => p.featured);
 
   const handleAddToCart = (product) => {
     const existingItem = cart.find((item) => item.id === product.id);
