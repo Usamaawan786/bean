@@ -80,6 +80,19 @@ export default function QRScanner({ onScan, onClose }) {
 
     try {
       setError("");
+      
+      // Check and request permissions first
+      const permissions = await Camera.checkPermissions();
+      
+      if (permissions.photos === 'denied') {
+        const requested = await Camera.requestPermissions({ permissions: ['photos'] });
+        if (requested.photos === 'denied') {
+          setError("Gallery permission required. Please enable it in your device settings.");
+          toast.error("Gallery permission required to scan images.");
+          return;
+        }
+      }
+
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
@@ -103,7 +116,7 @@ export default function QRScanner({ onScan, onClose }) {
       if (err.message && err.message.includes("No QR code found")) {
         setError("No QR code found in the image. Please try another image.");
       } else if (err.message && err.message.includes("Permission")) {
-        setError("Gallery permission denied.");
+        setError("Gallery permission required. Please enable it in your device settings.");
         toast.error("Gallery permission required to scan images.");
       } else {
         setError("Failed to scan image. Please try again.");

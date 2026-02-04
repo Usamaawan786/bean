@@ -15,7 +15,20 @@ export default function PostComposer({ onPost, userName }) {
   const [isPosting, setIsPosting] = useState(false);
 
   const handleImageUpload = async () => {
+    setIsUploading(true);
     try {
+      // Check and request permissions first
+      const permissions = await Camera.checkPermissions();
+      
+      if (permissions.photos === 'denied') {
+        const requested = await Camera.requestPermissions({ permissions: ['photos'] });
+        if (requested.photos === 'denied') {
+          toast.error("Camera permission required. Please enable it in your device settings.");
+          setIsUploading(false);
+          return;
+        }
+      }
+
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: true,
@@ -24,25 +37,30 @@ export default function PostComposer({ onPost, userName }) {
         saveToGallery: false
       });
 
-      if (!image.webPath) return;
+      if (!image.webPath) {
+        setIsUploading(false);
+        return;
+      }
 
-      setIsUploading(true);
-
-      // Convert webPath tO File object
+      // Convert webPath to File object
       const response = await fetch(image.webPath);
       const blob = await response.blob();
       const file = new File([blob], `photo_${Date.now()}.${image.format}`, { type: blob.type });
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setImageUrl(file_url);
+      toast.success("Photo uploaded!");
     } catch (error) {
-      if (error.message.includes("User cancelled")) return;
+      if (error.message && error.message.includes("User cancelled")) {
+        setIsUploading(false);
+        return;
+      }
 
       console.error("Image upload error:", error);
-      if (error.message.includes("Permission")) {
-        toast.error("Gallery permission required to upload photos.");
+      if (error.message && error.message.includes("Permission")) {
+        toast.error("Camera permission required. Please enable it in your device settings.");
       } else {
-        toast.error("Failed to upload image");
+        toast.error("Failed to upload image. Please try again.");
       }
     } finally {
       setIsUploading(false);
@@ -50,6 +68,7 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   const handleVideoUpload = async () => {
+    setIsUploading(true);
     try {
       const result = await FilePicker.pickMedia({
         types: ['video/*'],
@@ -57,16 +76,11 @@ export default function PostComposer({ onPost, userName }) {
       });
 
       const fileData = result.files[0];
-      if (!fileData) return;
+      if (!fileData) {
+        setIsUploading(false);
+        return;
+      }
 
-      setIsUploading(true);
-
-      // For web/hybrid support
-      // On native, we might need to read the path, but FilePicker often returns a blob-like representation or path we can fetch
-      // If webPath is available (it usually is for pickMedia)
-      // Note: FilePicker handles permissions automatically
-
-      // On web/PWA this might behave differently, but for Capacitor context:
       const videoSrc = fileData.webPath || fileData.path;
       if (!videoSrc) throw new Error("Could not get video path");
 
@@ -76,11 +90,15 @@ export default function PostComposer({ onPost, userName }) {
 
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setVideoUrl(file_url);
+      toast.success("Video uploaded!");
     } catch (error) {
-      if (error.message.includes("canceled")) return;
+      if (error.message && error.message.includes("canceled")) {
+        setIsUploading(false);
+        return;
+      }
 
       console.error("Video upload error:", error);
-      toast.error("Failed to upload video");
+      toast.error("Failed to upload video. Please try again.");
     } finally {
       setIsUploading(false);
     }
