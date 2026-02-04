@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
@@ -15,6 +16,8 @@ export default function PostComposer({ onPost, userName }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionType, setPermissionType] = useState("");
 
   const handleImageUpload = async () => {
     if (isUploadingImage) return;
