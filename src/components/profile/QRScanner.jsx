@@ -137,28 +137,23 @@ export default function QRScanner({ onScan, onClose }) {
                 Start Scanning
               </Button>
               
-              {permissionDenied && (
-                <>
-                  <div className="relative">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      capture={true}
-                    />
-                    <Button
-                      onClick={handleUploadImageClick}
-                      variant="outline"
-                      className="w-full rounded-xl border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Image Instead
-                    </Button>
-                  </div>
-                </>
-              )}
+              <div className="relative">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="outline"
+                  className="w-full rounded-xl border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Image Instead
+                </Button>
+              </div>
             </>
           ) : (
             <Button
