@@ -11,11 +11,12 @@ export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
   const handleImageUpload = async () => {
-    setIsUploading(true);
+    setIsUploadingImage(true);
     try {
       // Check and request permissions first
       const permissions = await Camera.checkPermissions();
@@ -24,7 +25,7 @@ export default function PostComposer({ onPost, userName }) {
         const requested = await Camera.requestPermissions({ permissions: ['photos'] });
         if (requested.photos === 'denied') {
           toast.error("Camera permission required. Please enable it in your device settings.");
-          setIsUploading(false);
+          setIsUploadingImage(false);
           return;
         }
       }
@@ -38,7 +39,7 @@ export default function PostComposer({ onPost, userName }) {
       });
 
       if (!image.webPath) {
-        setIsUploading(false);
+        setIsUploadingImage(false);
         return;
       }
 
@@ -52,7 +53,7 @@ export default function PostComposer({ onPost, userName }) {
       toast.success("Photo uploaded!");
     } catch (error) {
       if (error.message && error.message.includes("User cancelled")) {
-        setIsUploading(false);
+        setIsUploadingImage(false);
         return;
       }
 
@@ -63,12 +64,12 @@ export default function PostComposer({ onPost, userName }) {
         toast.error("Failed to upload image. Please try again.");
       }
     } finally {
-      setIsUploading(false);
+      setIsUploadingImage(false);
     }
   };
 
   const handleVideoUpload = async () => {
-    setIsUploading(true);
+    setIsUploadingVideo(true);
     try {
       const result = await FilePicker.pickMedia({
         types: ['video/*'],
@@ -77,7 +78,7 @@ export default function PostComposer({ onPost, userName }) {
 
       const fileData = result.files[0];
       if (!fileData) {
-        setIsUploading(false);
+        setIsUploadingVideo(false);
         return;
       }
 
@@ -93,14 +94,14 @@ export default function PostComposer({ onPost, userName }) {
       toast.success("Video uploaded!");
     } catch (error) {
       if (error.message && error.message.includes("canceled")) {
-        setIsUploading(false);
+        setIsUploadingVideo(false);
         return;
       }
 
       console.error("Video upload error:", error);
       toast.error("Failed to upload video. Please try again.");
     } finally {
-      setIsUploading(false);
+      setIsUploadingVideo(false);
     }
   };
 
@@ -159,11 +160,11 @@ export default function PostComposer({ onPost, userName }) {
           <button
             type="button"
             onClick={handleImageUpload}
-            disabled={isUploading || videoUrl}
+            disabled={isUploadingImage || videoUrl}
             className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
               }`}
           >
-            {isUploading ? (
+            {isUploadingImage ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Image className="h-4 w-4" />
@@ -174,11 +175,11 @@ export default function PostComposer({ onPost, userName }) {
           <button
             type="button"
             onClick={handleVideoUpload}
-            disabled={isUploading || imageUrl}
+            disabled={isUploadingVideo || imageUrl}
             className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
               }`}
           >
-            {isUploading ? (
+            {isUploadingVideo ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Video className="h-4 w-4" />
