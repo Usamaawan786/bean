@@ -42,9 +42,9 @@ export default function Rewards() {
 
         setCustomer(customerData);
       }
-      } catch (error) {
-        base44.auth.redirectToLogin(createPageUrl("Rewards"));
-      }
+    } catch (error) {
+      base44.auth.redirectToLogin(createPageUrl("Rewards"));
+    }
     };
     loadUser();
   }, []);
