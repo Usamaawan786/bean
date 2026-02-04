@@ -17,15 +17,15 @@ export default function PostComposer({ onPost, userName }) {
 
   const handleImageUpload = async () => {
     if (isUploadingImage) return;
-    
+
     setIsUploadingImage(true);
-    
+
     try {
       // Request gallery permissions first
       const permissions = await Camera.checkPermissions();
       if (permissions.photos !== 'granted') {
         const result = await Camera.requestPermissions({ permissions: ['photos'] });
-        if (result.photos !== 'granted') {
+        if (result.photos !== 'granted' && result.photos !== 'limited') {
           setIsUploadingImage(false);
           toast.error("Gallery access is required to upload photos");
           return;
@@ -58,7 +58,7 @@ export default function PostComposer({ onPost, userName }) {
       toast.success("Photo uploaded!");
     } catch (error) {
       const errorMsg = error?.message || String(error);
-      
+
       // User cancelled - don't show error
       if (!errorMsg.includes("cancel") && !errorMsg.includes("Cancel") && !errorMsg.includes("cancelled")) {
         console.error("Image upload error:", error);
@@ -70,8 +70,24 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   const handleVideoUpload = async () => {
+    if (isUploadingVideo) return;
+
     setIsUploadingVideo(true);
     try {
+      // Force request gallery permissions first (to satisfy user requirement)
+      // even though FilePicker might not strictly need it on some OS versions,
+      // this ensures the "App wants access" prompt appears.
+      const permissions = await Camera.checkPermissions();
+      if (permissions.photos !== 'granted') {
+        const result = await Camera.requestPermissions({ permissions: ['photos'] });
+        // If they deny photos access, we stop them from uploading video from gallery 
+        if (result.photos !== 'granted' && result.photos !== 'limited') {
+          setIsUploadingVideo(false);
+          toast.error("Gallery access is required to upload videos");
+          return;
+        }
+      }
+
       // FilePicker will request permissions automatically and show native prompt
       const result = await FilePicker.pickMedia({
         types: ['video/*'],
