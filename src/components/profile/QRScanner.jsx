@@ -78,27 +78,8 @@ export default function QRScanner({ onScan, onClose }) {
       const decodedText = await scanner.scanFile(file, true);
       onScan(decodedText);
     } catch (err) {
+      console.error("QR scan error:", err);
       setError("No QR code found in the image. Please try another image.");
-    }
-  };
-
-  const handleUploadImageClick = async () => {
-    try {
-      // Request photo library access on iOS
-      if (navigator.permissions && navigator.permissions.query) {
-        try {
-          const permission = await navigator.permissions.query({ name: 'camera' });
-          if (permission.state === 'denied') {
-            setError("Photo library access denied. Enable it in settings to upload images.");
-            return;
-          }
-        } catch (err) {
-          // Permission check not supported, continue anyway
-        }
-      }
-      fileInputRef.current?.click();
-    } catch (err) {
-      fileInputRef.current?.click();
     }
   };
 
