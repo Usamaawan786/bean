@@ -31,20 +31,7 @@ export default function QRScanner({ onScan, onClose }) {
       setError("");
       setPermissionDenied(false);
 
-      // Request camera permissions explicitly (important for iOS)
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        try {
-          await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        } catch (permissionErr) {
-          if (permissionErr.name === "NotAllowedError") {
-            setError("Camera permission was denied. Enable it in settings or upload an image instead.");
-            setPermissionDenied(true);
-            setIsScanning(false);
-            return;
-          }
-        }
-      }
-
+      // Try to start scanner directly
       await scanner.start(
         { facingMode: "environment" },
         {
@@ -64,10 +51,18 @@ export default function QRScanner({ onScan, onClose }) {
         }
       );
     } catch (err) {
-      const errorMsg = err?.message || "";
-      // Only show meaningful errors
-      if (errorMsg.includes("Permission") || errorMsg.includes("NotAllowedError")) {
+      console.error("Scanner error:", err);
+      const errorMsg = err?.message || String(err);
+      
+      // Handle permission errors
+      if (errorMsg.includes("Permission") || errorMsg.includes("NotAllowedError") || errorMsg.includes("denied")) {
         setError("Camera permission required. Enable it in settings or upload an image instead.");
+        setPermissionDenied(true);
+      } else if (errorMsg.includes("NotFoundError") || errorMsg.includes("No camera")) {
+        setError("No camera found. Please upload an image instead.");
+        setPermissionDenied(true);
+      } else {
+        setError("Failed to start camera. Please upload an image instead.");
         setPermissionDenied(true);
       }
       setIsScanning(false);
