@@ -30,7 +30,7 @@ export default function NameSetup({ onComplete }) {
           <div className="w-16 h-16 rounded-full bg-[#F5EBE8] flex items-center justify-center mx-auto mb-4">
             <Coffee className="h-8 w-8 text-[#8B7355]" />
           </div>
-          <h2 className="text-2xl font-bold text-[#5C4A3A] mb-2">Welcome to BrewCrew!</h2>
+          <h2 className="text-2xl font-bold text-[#5C4A3A] mb-2">Welcome to BEAN Coffee!</h2>
           <p className="text-[#8B7355]">Let's get to know you better</p>
         </div>
 
