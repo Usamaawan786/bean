@@ -63,27 +63,6 @@ export default function PostComposer({ onPost, userName }) {
 
   return (
     <div className="rounded-3xl bg-white border border-[#E8DED8] p-4 shadow-sm">
-      <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-        {postTypes.map(type => {
-          const Icon = type.icon;
-          const isActive = postType === type.id;
-          return (
-            <button
-              key={type.id}
-              onClick={() => setPostType(type.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex-shrink-0 ${
-                isActive 
-                  ? "bg-[#F5EBE8] text-[#5C4A3A]" 
-                  : "bg-[#F8F6F4] text-[#8B7355] hover:bg-[#F5EBE8]"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {type.label}
-            </button>
-          );
-        })}
-      </div>
-      
       <Textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
