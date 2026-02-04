@@ -162,12 +162,11 @@ export default function Profile() {
         <div className="text-center">
           <h2 className="text-xl font-bold text-[#5C4A3A] mb-4">You're logged out</h2>
           <p className="text-[#8B7355] mb-6">Log back in to access your profile</p>
-          <Button 
-            onClick={() => base44.auth.redirectToLogin(createPageUrl("Profile"))}
-            className="bg-[#8B7355] hover:bg-[#6B5744]"
-          >
-            Log In
-          </Button>
+          <Link to={createPageUrl("Login")}>
+            <Button className="bg-[#8B7355] hover:bg-[#6B5744]">
+              Log In
+            </Button>
+          </Link>
         </div>
       </div>
     );
