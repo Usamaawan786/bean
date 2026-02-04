@@ -6,14 +6,6 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
@@ -22,23 +14,17 @@ export default function PostComposer({ onPost, userName }) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
-  const [showPermissionDialog, setShowPermissionDialog] = useState(false);
-  const [permissionType, setPermissionType] = useState(""); // "photo" or "video"
 
   const handleImageUpload = async () => {
     setIsUploadingImage(true);
-    setShowPermissionDialog(false);
     try {
-      // Check and request permissions first
-      const permissions = await Camera.checkPermissions();
+      // Request permissions - this will show native system prompt
+      const requested = await Camera.requestPermissions({ permissions: ['photos', 'camera'] });
       
-      if (permissions.photos === 'denied') {
-        const requested = await Camera.requestPermissions({ permissions: ['photos'] });
-        if (requested.photos === 'denied') {
-          toast.error("Camera permission required. Please enable it in your device settings.");
-          setIsUploadingImage(false);
-          return;
-        }
+      if (requested.photos === 'denied' && requested.camera === 'denied') {
+        toast.error("Permission denied. Please enable camera/gallery access in your device settings.");
+        setIsUploadingImage(false);
+        return;
       }
 
       const image = await Camera.getPhoto({
@@ -70,7 +56,7 @@ export default function PostComposer({ onPost, userName }) {
 
       console.error("Image upload error:", error);
       if (error.message && error.message.includes("Permission")) {
-        toast.error("Camera permission required. Please enable it in your device settings.");
+        toast.error("Permission denied. Please enable access in your device settings.");
       } else {
         toast.error("Failed to upload image. Please try again.");
       }
@@ -79,15 +65,10 @@ export default function PostComposer({ onPost, userName }) {
     }
   };
 
-  const handlePhotoClick = () => {
-    setPermissionType("photo");
-    setShowPermissionDialog(true);
-  };
-
   const handleVideoUpload = async () => {
     setIsUploadingVideo(true);
-    setShowPermissionDialog(false);
     try {
+      // FilePicker will request permissions automatically and show native prompt
       const result = await FilePicker.pickMedia({
         types: ['video/*'],
         multiple: false
@@ -122,11 +103,6 @@ export default function PostComposer({ onPost, userName }) {
     }
   };
 
-  const handleVideoClick = () => {
-    setPermissionType("video");
-    setShowPermissionDialog(true);
-  };
-
   const handleSubmit = async () => {
     if (!content.trim()) return;
 
@@ -145,38 +121,6 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   return (
-    <>
-      <Dialog open={showPermissionDialog} onOpenChange={setShowPermissionDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Access {permissionType === "photo" ? "Photos" : "Videos"}</DialogTitle>
-            <DialogDescription>
-              We need permission to access your {permissionType === "photo" ? "photos" : "videos"} to upload and share in the community.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowPermissionDialog(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (permissionType === "photo") {
-                  handleImageUpload();
-                } else {
-                  handleVideoUpload();
-                }
-              }}
-              className="bg-[#8B7355] hover:bg-[#6B5744]"
-            >
-              Allow Access
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
     <div className="rounded-3xl bg-white border border-[#E8DED8] p-4 shadow-sm">
       <Textarea
         value={content}
@@ -213,7 +157,7 @@ export default function PostComposer({ onPost, userName }) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={handlePhotoClick}
+            onClick={handleImageUpload}
             disabled={isUploadingImage || videoUrl}
             className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
               }`}
@@ -228,7 +172,7 @@ export default function PostComposer({ onPost, userName }) {
 
           <button
             type="button"
-            onClick={handleVideoClick}
+            onClick={handleVideoUpload}
             disabled={isUploadingVideo || imageUrl}
             className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
               }`}
@@ -257,6 +201,5 @@ export default function PostComposer({ onPost, userName }) {
         </Button>
       </div>
     </div>
-    </>
   );
 }
