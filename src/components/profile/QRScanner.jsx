@@ -3,10 +3,11 @@ import { Html5Qrcode } from "html5-qrcode";
 import { X, QrCode, CheckCircle, AlertCircle, Upload } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { toast } from "sonner";
 
 export default function QRScanner({ onScan, onClose }) {
   const scannerRef = useRef(null);
-  const fileInputRef = useRef(null);
   const [scanner, setScanner] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +43,7 @@ export default function QRScanner({ onScan, onClose }) {
           // Stop scanner immediately
           await scanner.stop();
           setIsScanning(false);
-          
+
           // Process the scanned QR code
           onScan(decodedText);
         },
@@ -53,7 +54,7 @@ export default function QRScanner({ onScan, onClose }) {
     } catch (err) {
       console.error("Scanner error:", err);
       const errorMsg = err?.message || String(err);
-      
+
       // Handle permission errors
       if (errorMsg.includes("Permission") || errorMsg.includes("NotAllowedError") || errorMsg.includes("denied")) {
         setError("Camera permission required. Enable it in settings or upload an image instead.");
@@ -69,17 +70,44 @@ export default function QRScanner({ onScan, onClose }) {
     }
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !scanner) return;
+  const handleImageUpload = async () => {
+    if (!scanner) return;
+
+    // Stop scanning if active
+    if (isScanning) {
+      await stopScanning();
+    }
 
     try {
       setError("");
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Photos
+      });
+
+      if (!image.webPath) return;
+
+      // Fetch the file to pass to html5-qrcode
+      const response = await fetch(image.webPath);
+      const blob = await response.blob();
+      const file = new File([blob], `scan_${Date.now()}.${image.format}`, { type: blob.type });
+
       const decodedText = await scanner.scanFile(file, true);
       onScan(decodedText);
     } catch (err) {
+      if (err.message && err.message.includes("User cancelled")) return;
+
       console.error("QR scan error:", err);
-      setError("No QR code found in the image. Please try another image.");
+      if (err.message && err.message.includes("No QR code found")) {
+        setError("No QR code found in the image. Please try another image.");
+      } else if (err.message && err.message.includes("Permission")) {
+        setError("Gallery permission denied.");
+        toast.error("Gallery permission required to scan images.");
+      } else {
+        setError("Failed to scan image. Please try again.");
+      }
     }
   };
 
@@ -123,8 +151,8 @@ export default function QRScanner({ onScan, onClose }) {
         )}
 
         <div className="space-y-4">
-          <div 
-            id="qr-reader" 
+          <div
+            id="qr-reader"
             className="rounded-2xl overflow-hidden border-4 border-[#E8DED8]"
           />
 
@@ -136,17 +164,10 @@ export default function QRScanner({ onScan, onClose }) {
               >
                 Start Scanning
               </Button>
-              
+
               <div className="relative">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
                 <Button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={handleImageUpload}
                   variant="outline"
                   className="w-full rounded-xl border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
                 >

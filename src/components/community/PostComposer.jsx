@@ -4,6 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Send, Image, X, Loader2, Video } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { FilePicker } from "@capawesome/capacitor-file-picker";
 
 export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
@@ -12,31 +14,71 @@ export default function PostComposer({ onPost, userName }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleImageUpload = async () => {
     try {
+      const image = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: true,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Prompt,
+        saveToGallery: false
+      });
+
+      if (!image.webPath) return;
+
       setIsUploading(true);
+
+      // Convert webPath tO File object
+      const response = await fetch(image.webPath);
+      const blob = await response.blob();
+      const file = new File([blob], `photo_${Date.now()}.${image.format}`, { type: blob.type });
+
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setImageUrl(file_url);
     } catch (error) {
+      if (error.message.includes("User cancelled")) return;
+
       console.error("Image upload error:", error);
-      toast.error("Failed to upload image");
+      if (error.message.includes("Permission")) {
+        toast.error("Gallery permission required to upload photos.");
+      } else {
+        toast.error("Failed to upload image");
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleVideoUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleVideoUpload = async () => {
     try {
+      const result = await FilePicker.pickMedia({
+        types: ['video/*'],
+        multiple: false
+      });
+
+      const fileData = result.files[0];
+      if (!fileData) return;
+
       setIsUploading(true);
+
+      // For web/hybrid support
+      // On native, we might need to read the path, but FilePicker often returns a blob-like representation or path we can fetch
+      // If webPath is available (it usually is for pickMedia)
+      // Note: FilePicker handles permissions automatically
+
+      // On web/PWA this might behave differently, but for Capacitor context:
+      const videoSrc = fileData.webPath || fileData.path;
+      if (!videoSrc) throw new Error("Could not get video path");
+
+      const response = await fetch(videoSrc);
+      const blob = await response.blob();
+      const file = new File([blob], fileData.name || `video_${Date.now()}.mp4`, { type: fileData.mimeType || 'video/mp4' });
+
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setVideoUrl(file_url);
     } catch (error) {
+      if (error.message.includes("canceled")) return;
+
       console.error("Video upload error:", error);
       toast.error("Failed to upload video");
     } finally {
@@ -46,7 +88,7 @@ export default function PostComposer({ onPost, userName }) {
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
-    
+
     setIsPosting(true);
     await onPost({
       content: content.trim(),
@@ -69,7 +111,7 @@ export default function PostComposer({ onPost, userName }) {
         placeholder="Share your coffee moment..."
         className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]"
       />
-      
+
       {imageUrl && (
         <div className="mt-3 relative inline-block">
           <img src={imageUrl} alt="Upload" className="h-24 rounded-xl object-cover" />
@@ -93,54 +135,40 @@ export default function PostComposer({ onPost, userName }) {
           </button>
         </div>
       )}
-      
+
       <div className="mt-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageUpload}
-              className="hidden"
-              disabled={isUploading || videoUrl}
-              id="photo-input"
-            />
-            <div className={`flex items-center gap-1 transition-colors ${
-              videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
-            }`}>
-              {isUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Image className="h-4 w-4" />
-              )}
-              <span className="text-xs">Photo</span>
-            </div>
-          </label>
+          <button
+            type="button"
+            onClick={handleImageUpload}
+            disabled={isUploading || videoUrl}
+            className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
+              }`}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Image className="h-4 w-4" />
+            )}
+            <span className="text-xs">Photo</span>
+          </button>
 
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept="video/*"
-              capture="environment"
-              onChange={handleVideoUpload}
-              className="hidden"
-              disabled={isUploading || imageUrl}
-              id="video-input"
-            />
-            <div className={`flex items-center gap-1 transition-colors ${
-              imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
-            }`}>
-              {isUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Video className="h-4 w-4" />
-              )}
-              <span className="text-xs">Video</span>
-            </div>
-          </label>
+          <button
+            type="button"
+            onClick={handleVideoUpload}
+            disabled={isUploading || imageUrl}
+            className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
+              }`}
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Video className="h-4 w-4" />
+            )}
+            <span className="text-xs">Video</span>
+          </button>
         </div>
-        
+
         <Button
           onClick={handleSubmit}
           disabled={!content.trim() || isPosting}
