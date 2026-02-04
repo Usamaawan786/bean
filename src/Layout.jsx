@@ -15,7 +15,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   
   // Hide nav on certain pages if needed
-  const showNav = currentPageName !== "waitlist";
+  const showNav = currentPageName !== "Waitlist";
 
   return (
     <div className="min-h-screen bg-[#F5F1ED]">
