@@ -16,16 +16,8 @@ export default function PostComposer({ onPost, userName }) {
   const [isPosting, setIsPosting] = useState(false);
 
   const handleImageUpload = async () => {
-    setIsUploadingImage(true);
     try {
-      // Request permissions - this will show native system prompt
-      const requested = await Camera.requestPermissions({ permissions: ['photos', 'camera'] });
-      
-      if (requested.photos === 'denied' && requested.camera === 'denied') {
-        toast.error("Permission denied. Please enable camera/gallery access in your device settings.");
-        setIsUploadingImage(false);
-        return;
-      }
+      setIsUploadingImage(true);
 
       const image = await Camera.getPhoto({
         quality: 90,
@@ -55,11 +47,7 @@ export default function PostComposer({ onPost, userName }) {
       }
 
       console.error("Image upload error:", error);
-      if (error.message && error.message.includes("Permission")) {
-        toast.error("Permission denied. Please enable access in your device settings.");
-      } else {
-        toast.error("Failed to upload image. Please try again.");
-      }
+      toast.error("Failed to upload image. Please try again.");
     } finally {
       setIsUploadingImage(false);
     }
