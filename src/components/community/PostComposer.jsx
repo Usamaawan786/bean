@@ -18,6 +18,11 @@ export default function PostComposer({ onPost, userName }) {
   const handleImageUpload = async () => {
     if (isUploadingImage) return;
 
+    // Simulate "Permission Ask" for consistency across Web/Native as requested
+    if (!window.confirm("Allow BEAN Coffee to access your photos?")) {
+      return;
+    }
+
     setIsUploadingImage(true);
 
     try {
@@ -71,6 +76,11 @@ export default function PostComposer({ onPost, userName }) {
 
   const handleVideoUpload = async () => {
     if (isUploadingVideo) return;
+
+    // Simulate "Permission Ask" for consistency across Web/Native as requested
+    if (!window.confirm("Allow BEAN Coffee to access your videos?")) {
+      return;
+    }
 
     setIsUploadingVideo(true);
     try {
