@@ -50,7 +50,7 @@ export default function PostComposer({ onPost, userName }) {
     setIsPosting(true);
     await onPost({
       content: content.trim(),
-      post_type: postType,
+      post_type: "general",
       image_url: imageUrl || undefined,
       video_url: videoUrl || undefined,
       author_name: userName
@@ -58,7 +58,6 @@ export default function PostComposer({ onPost, userName }) {
     setContent("");
     setImageUrl("");
     setVideoUrl("");
-    setPostType("general");
     setIsPosting(false);
   };
 
