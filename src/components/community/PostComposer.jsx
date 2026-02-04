@@ -5,6 +5,7 @@ import { Send, Image, X, Loader2, Video } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 
 export default function PostComposer({ onPost, userName }) {
@@ -26,14 +27,16 @@ export default function PostComposer({ onPost, userName }) {
     setIsUploadingImage(true);
 
     try {
-      // Request gallery permissions first
-      const permissions = await Camera.checkPermissions();
-      if (permissions.photos !== 'granted') {
-        const result = await Camera.requestPermissions({ permissions: ['photos'] });
-        if (result.photos !== 'granted' && result.photos !== 'limited') {
-          setIsUploadingImage(false);
-          toast.error("Gallery access is required to upload photos");
-          return;
+      // Request gallery permissions first (only on Native)
+      if (Capacitor.isNativePlatform()) {
+        const permissions = await Camera.checkPermissions();
+        if (permissions.photos !== 'granted') {
+          const result = await Camera.requestPermissions({ permissions: ['photos'] });
+          if (result.photos !== 'granted' && result.photos !== 'limited') {
+            setIsUploadingImage(false);
+            toast.error("Gallery access is required to upload photos");
+            return;
+          }
         }
       }
 
@@ -84,17 +87,17 @@ export default function PostComposer({ onPost, userName }) {
 
     setIsUploadingVideo(true);
     try {
-      // Force request gallery permissions first (to satisfy user requirement)
-      // even though FilePicker might not strictly need it on some OS versions,
-      // this ensures the "App wants access" prompt appears.
-      const permissions = await Camera.checkPermissions();
-      if (permissions.photos !== 'granted') {
-        const result = await Camera.requestPermissions({ permissions: ['photos'] });
-        // If they deny photos access, we stop them from uploading video from gallery 
-        if (result.photos !== 'granted' && result.photos !== 'limited') {
-          setIsUploadingVideo(false);
-          toast.error("Gallery access is required to upload videos");
-          return;
+      // Force request gallery permissions first (only on Native)
+      if (Capacitor.isNativePlatform()) {
+        const permissions = await Camera.checkPermissions();
+        if (permissions.photos !== 'granted') {
+          const result = await Camera.requestPermissions({ permissions: ['photos'] });
+          // If they deny photos access, we stop them from uploading video from gallery 
+          if (result.photos !== 'granted' && result.photos !== 'limited') {
+            setIsUploadingVideo(false);
+            toast.error("Gallery access is required to upload videos");
+            return;
+          }
         }
       }
 
