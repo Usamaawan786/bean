@@ -21,6 +21,17 @@ export default function PostComposer({ onPost, userName }) {
     setIsUploadingImage(true);
     
     try {
+      // Request gallery permissions first
+      const permissions = await Camera.checkPermissions();
+      if (permissions.photos !== 'granted') {
+        const result = await Camera.requestPermissions({ permissions: ['photos'] });
+        if (result.photos !== 'granted') {
+          setIsUploadingImage(false);
+          toast.error("Gallery access is required to upload photos");
+          return;
+        }
+      }
+
       const image = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
