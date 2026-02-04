@@ -97,16 +97,6 @@ export default function Home() {
 
   const allDrops = [...activeDrops, ...upcomingDrops];
 
-  const handleNameSetupComplete = async () => {
-    setShowNameSetup(false);
-    // Reload the entire page to refresh all data
-    window.location.reload();
-  };
-
-  if (showNameSetup) {
-    return <NameSetup onComplete={handleNameSetupComplete} />;
-  }
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
