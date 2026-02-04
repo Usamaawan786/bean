@@ -163,35 +163,31 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
             Back
           </Link>
           
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between flex-1"
-          >
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <motion.div
                 whileHover={{ scale: 1.1 }}
-                className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-3 shadow-md"
+                className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-3 shadow-md flex-shrink-0"
               >
                 <Users className="h-6 w-6 text-[#8B7355]" />
               </motion.div>
-              <div>
+              <div className="min-w-0">
                 <h1 className="text-2xl font-bold text-[#5C4A3A]">Community</h1>
-                <p className="text-sm text-[#8B7355]">Share your coffee moments</p>
+                <p className="text-sm text-[#8B7355] truncate">Share your coffee moments</p>
               </div>
             </div>
             
             {user?.role === "admin" && (
-              <Link to={createPageUrl("Moderation")}>
+              <Link to={createPageUrl("Moderation")} className="flex-shrink-0">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-4 py-2 rounded-xl text-sm font-medium text-[#5C4A3A] transition-colors shadow-md"
+                  className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-3 py-2 rounded-xl text-xs font-medium text-[#5C4A3A] transition-colors shadow-md whitespace-nowrap"
                 >
                   Moderation
                 </motion.button>
               </Link>
             )}
-          </motion.div>
+          </div>
         </div>
         
         {/* Tabs */}
