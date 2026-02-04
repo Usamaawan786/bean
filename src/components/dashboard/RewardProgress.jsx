@@ -13,7 +13,8 @@ export default function RewardProgress({ currentPoints }) {
   });
 
   // Find the next reward the user can work toward
-  const nextReward = (rewards || [])
+  const rewardList = Array.isArray(rewards) ? rewards : [];
+  const nextReward = rewardList
     .filter(r => r.points_required > currentPoints)
     .sort((a, b) => a.points_required - b.points_required)[0];
 
@@ -43,8 +44,8 @@ export default function RewardProgress({ currentPoints }) {
       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-4">
         <div className="flex items-center gap-3">
           {nextReward.image_url && (
-            <img 
-              src={nextReward.image_url} 
+            <img
+              src={nextReward.image_url}
               alt={nextReward.name}
               className="w-16 h-16 rounded-xl object-cover"
             />

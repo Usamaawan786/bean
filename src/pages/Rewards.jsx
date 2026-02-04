@@ -26,14 +26,14 @@ export default function Rewards() {
       const customers = await base44.entities.Customer.filter({ created_by: u.email });
       if (customers.length > 0) {
         const customerData = customers[0];
-        
+
         // Auto-update tier based on total points
         const calculatedTier = calculateTier(customerData.total_points_earned || 0);
         if (calculatedTier !== customerData.tier) {
           await base44.entities.Customer.update(customerData.id, { tier: calculatedTier });
           customerData.tier = calculatedTier;
         }
-        
+
         setCustomer(customerData);
       }
     };
@@ -65,7 +65,7 @@ export default function Rewards() {
         points_spent: reward.points_required,
         redemption_code: code
       });
-      
+
       // Update customer points
       const newBalance = customer.points_balance - reward.points_required;
       const newCups = (customer.cups_redeemed || 0) + (reward.category === "Drinks" ? 1 : 0);
@@ -73,7 +73,7 @@ export default function Rewards() {
         points_balance: newBalance,
         cups_redeemed: newCups
       });
-      
+
       setCustomer(prev => ({
         ...prev,
         points_balance: newBalance,
@@ -88,7 +88,7 @@ export default function Rewards() {
         points_amount: -reward.points_required,
         metadata: { reward_id: reward.id, redemption_code: code }
       });
-      
+
       return { code, reward };
     },
     onSuccess: ({ code, reward }) => {
@@ -97,10 +97,11 @@ export default function Rewards() {
   });
 
   const categories = ["all", "Drinks", "Food", "Merchandise", "Experience"];
-  
-  const filteredRewards = selectedCategory === "all" 
-    ? rewards 
-    : (rewards || []).filter(r => r.category === selectedCategory);
+
+  const rewardList = Array.isArray(rewards) ? rewards : [];
+  const filteredRewards = selectedCategory === "all"
+    ? rewardList
+    : rewardList.filter(r => r.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
@@ -119,14 +120,14 @@ export default function Rewards() {
           />
         </div>
         <div className="relative max-w-lg mx-auto px-5 pt-6 pb-8">
-          <Link 
+          <Link
             to={createPageUrl("Home")}
             className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
-          
+
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -152,9 +153,9 @@ export default function Rewards() {
 
           {/* Tier Badge */}
           {customer && (
-            <TierBadge 
-              tier={customer.tier || "Bronze"} 
-              totalPoints={customer.total_points_earned || 0} 
+            <TierBadge
+              tier={customer.tier || "Bronze"}
+              totalPoints={customer.total_points_earned || 0}
             />
           )}
         </div>
@@ -172,11 +173,10 @@ export default function Rewards() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveTab("rewards")}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-              activeTab === "rewards"
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === "rewards"
                 ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
                 : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
-            }`}
+              }`}
           >
             <Gift className="h-4 w-4" />
             Rewards
@@ -185,11 +185,10 @@ export default function Rewards() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setActiveTab("leaderboard")}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-              activeTab === "leaderboard"
+            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === "leaderboard"
                 ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
                 : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
-            }`}
+              }`}
           >
             <Trophy className="h-4 w-4" />
             Leaderboard
@@ -212,11 +211,10 @@ export default function Rewards() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === cat
+                className={`px-5 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
                     ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
                     : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0] hover:shadow-md"
-                }`}
+                  }`}
               >
                 {cat === "all" ? "All Rewards" : cat}
               </motion.button>
@@ -229,92 +227,92 @@ export default function Rewards() {
       <div className="max-w-lg mx-auto px-5 pb-24 space-y-6">
         {activeTab === "rewards" ? (
           <>
-        {/* Tier Benefits */}
-        {customer && (
-          <TierBenefits tier={customer.tier || "Bronze"} />
-        )}
+            {/* Tier Benefits */}
+            {customer && (
+              <TierBenefits tier={customer.tier || "Bronze"} />
+            )}
 
-        {/* Progress to Next Tier */}
-        {customer && getTierData(customer.tier).nextTier && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl border border-[#E8DED8] p-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="h-5 w-5 text-[#8B7355]" />
-              <h3 className="font-bold text-[#5C4A3A]">Next Tier Progress</h3>
+            {/* Progress to Next Tier */}
+            {customer && getTierData(customer.tier).nextTier && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-3xl border border-[#E8DED8] p-6"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <TrendingUp className="h-5 w-5 text-[#8B7355]" />
+                  <h3 className="font-bold text-[#5C4A3A]">Next Tier Progress</h3>
+                </div>
+
+                {(() => {
+                  const currentTierData = getTierData(customer.tier);
+                  const totalPoints = customer.total_points_earned || 0;
+                  const pointsNeeded = currentTierData.pointsNeeded;
+                  const progress = (totalPoints / pointsNeeded) * 100;
+                  const remaining = pointsNeeded - totalPoints;
+
+                  return (
+                    <>
+                      <div className="relative h-3 bg-[#F5EBE8] rounded-full overflow-hidden mb-3">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(progress, 100)}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="absolute h-full bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-full"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[#8B7355]">
+                          {totalPoints} / {pointsNeeded} points
+                        </span>
+                        <span className="font-semibold text-[#5C4A3A]">
+                          {remaining} more to {currentTierData.nextTier}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </motion.div>
+            )}
+
+            {/* Section Title */}
+            <div>
+              <h2 className="text-xl font-bold text-[#5C4A3A] mb-1">Available Rewards</h2>
+              <p className="text-sm text-[#8B7355]">Redeem your points for treats</p>
             </div>
-            
-            {(() => {
-              const currentTierData = getTierData(customer.tier);
-              const totalPoints = customer.total_points_earned || 0;
-              const pointsNeeded = currentTierData.pointsNeeded;
-              const progress = (totalPoints / pointsNeeded) * 100;
-              const remaining = pointsNeeded - totalPoints;
-              
-              return (
-                <>
-                  <div className="relative h-3 bg-[#F5EBE8] rounded-full overflow-hidden mb-3">
+            {isLoading ? (
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="aspect-[3/4] bg-stone-200 rounded-3xl animate-pulse" />
+                ))}
+              </div>
+            ) : filteredRewards.length === 0 ? (
+              <div className="text-center py-12">
+                <Gift className="h-12 w-12 text-stone-300 mx-auto mb-4" />
+                <p className="text-stone-500">No rewards available in this category</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <AnimatePresence>
+                  {filteredRewards.map((reward, i) => (
                     <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(progress, 100)}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className="absolute h-full bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-full"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-[#8B7355]">
-                      {totalPoints} / {pointsNeeded} points
-                    </span>
-                    <span className="font-semibold text-[#5C4A3A]">
-                      {remaining} more to {currentTierData.nextTier}
-                    </span>
-                  </div>
-                </>
-              );
-            })()}
-          </motion.div>
-        )}
-
-        {/* Section Title */}
-        <div>
-          <h2 className="text-xl font-bold text-[#5C4A3A] mb-1">Available Rewards</h2>
-          <p className="text-sm text-[#8B7355]">Redeem your points for treats</p>
-        </div>
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="aspect-[3/4] bg-stone-200 rounded-3xl animate-pulse" />
-            ))}
-          </div>
-        ) : filteredRewards.length === 0 ? (
-          <div className="text-center py-12">
-            <Gift className="h-12 w-12 text-stone-300 mx-auto mb-4" />
-            <p className="text-stone-500">No rewards available in this category</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <AnimatePresence>
-              {filteredRewards.map((reward, i) => (
-                <motion.div
-                  key={reward.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <RewardCard
-                    reward={reward}
-                    userPoints={customer?.points_balance || 0}
-                    onRedeem={() => redeemMutation.mutate(reward)}
-                    isRedeeming={redeemMutation.isPending}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
-        </>
+                      key={reward.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <RewardCard
+                        reward={reward}
+                        userPoints={customer?.points_balance || 0}
+                        onRedeem={() => redeemMutation.mutate(reward)}
+                        isRedeeming={redeemMutation.isPending}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
+          </>
         ) : (
           /* Leaderboard Content */
           <>
@@ -411,7 +409,7 @@ export default function Rewards() {
               <h3 className="text-sm font-semibold text-[#8B7355] mb-3 px-1">Rankings</h3>
               {loadingLeaderboard ? (
                 <div className="space-y-2">
-                  {[1,2,3,4].map(i => (
+                  {[1, 2, 3, 4].map(i => (
                     <div key={i} className="bg-white rounded-2xl h-16 animate-pulse" />
                   ))}
                 </div>
@@ -419,20 +417,18 @@ export default function Rewards() {
                 topCustomers.slice(3, 10).map((c, index) => {
                   const rank = index + 4;
                   const isCurrentUser = c.created_by === user?.email;
-                  
+
                   return (
                     <motion.div
                       key={c.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.03 }}
-                      className={`bg-white rounded-2xl border p-4 flex items-center gap-3 ${
-                        isCurrentUser ? "border-[#8B7355] shadow-md" : "border-[#E8DED8]"
-                      }`}
+                      className={`bg-white rounded-2xl border p-4 flex items-center gap-3 ${isCurrentUser ? "border-[#8B7355] shadow-md" : "border-[#E8DED8]"
+                        }`}
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                        isCurrentUser ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355]"
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${isCurrentUser ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355]"
+                        }`}>
                         {rank}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -475,19 +471,19 @@ export default function Rewards() {
             <p className="text-[#8B7355] mt-2">
               You've redeemed <strong>{successDialog.reward?.name}</strong>
             </p>
-            
+
             <div className="mt-6 bg-[#F5EBE8] rounded-2xl p-4">
               <p className="text-xs text-[#8B7355] mb-1">Your redemption code</p>
               <code className="text-2xl font-bold text-[#5C4A3A] tracking-wider">
                 {successDialog.code}
               </code>
             </div>
-            
+
             <p className="text-xs text-[#8B7355] mt-4">
               Show this code to our barista to claim your reward
             </p>
-            
-            <Button 
+
+            <Button
               onClick={() => setSuccessDialog({ open: false, reward: null, code: "" })}
               className="w-full mt-6 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
             >
