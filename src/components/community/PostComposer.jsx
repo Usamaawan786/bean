@@ -82,12 +82,12 @@ export default function PostComposer({ onPost, userName }) {
 
   const handleVideoUpload = async () => {
     if (isUploadingVideo) return;
+    setPermissionType("videos");
+    setShowPermissionModal(true);
+  };
 
-    // Simulate "Permission Ask" for consistency across Web/Native as requested
-    if (!window.confirm("Allow BEAN Coffee to access your videos?")) {
-      return;
-    }
-
+  const proceedWithVideoUpload = async () => {
+    setShowPermissionModal(false);
     setIsUploadingVideo(true);
     try {
       // Force request gallery permissions first (only on Native)
