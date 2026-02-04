@@ -12,7 +12,7 @@ export default function RewardProgress({ currentPoints }) {
   });
 
   // Find the next reward the user can work toward
-  const nextReward = rewards
+  const nextReward = (rewards || [])
     .filter(r => r.points_required > currentPoints)
     .sort((a, b) => a.points_required - b.points_required)[0];
 
