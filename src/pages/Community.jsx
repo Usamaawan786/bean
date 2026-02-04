@@ -191,34 +191,27 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         </div>
         
         {/* Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto"
-        >
-          <div className="flex gap-2">
+        <div className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 min-w-max">
             {tabs.map((tab, idx) => {
               const Icon = tab.icon;
               return (
-                <motion.button
+                <button
                   key={tab.id}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     activeTab === tab.id
                       ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
-                      : "bg-[#F5EBE8] text-[#6B5744] hover:bg-[#EDE8E3] hover:shadow-md"
+                      : "bg-[#F5EBE8] text-[#6B5744] hover:bg-[#EDE8E3]"
                   }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" />
                   {tab.label}
-                </motion.button>
+                </button>
               );
             })}
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Main Content */}
