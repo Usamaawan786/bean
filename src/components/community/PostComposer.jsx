@@ -157,6 +157,53 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   return (
+    <>
+      <AnimatePresence>
+        {showPermissionModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
+            >
+              <div className="text-center mb-6">
+                {permissionType === "photos" ? (
+                  <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Image className="h-8 w-8 text-[#8B7355]" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Video className="h-8 w-8 text-[#8B7355]" />
+                  </div>
+                )}
+                <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">
+                  Allow Access to {permissionType === "photos" ? "Photos" : "Videos"}
+                </h3>
+                <p className="text-sm text-[#8B7355]">
+                  BEAN Coffee needs permission to access your {permissionType} to let you share moments with the community.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowPermissionModal(false)}
+                  variant="outline"
+                  className="flex-1 rounded-xl border-[#E8DED8]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={permissionType === "photos" ? proceedWithImageUpload : proceedWithVideoUpload}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A]"
+                >
+                  Allow
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     <div className="rounded-3xl bg-white border border-[#E8DED8] p-4 shadow-sm">
       <Textarea
         value={content}
