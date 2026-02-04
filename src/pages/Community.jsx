@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Community() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState("all");
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
