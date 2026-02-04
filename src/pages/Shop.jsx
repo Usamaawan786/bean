@@ -19,8 +19,17 @@ export default function Shop() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const u = await base44.auth.me();
-      setUser(u);
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin(createPageUrl("Shop"));
+          return;
+        }
+        const u = await base44.auth.me();
+        setUser(u);
+      } catch (error) {
+        base44.auth.redirectToLogin(createPageUrl("Shop"));
+      }
     };
     loadUser();
     

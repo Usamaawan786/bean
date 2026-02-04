@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
   Coffee, Star, Gift, Users, Zap, ChevronRight, 
-  TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown
+  TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown, Loader2
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TierBadge from "@/components/dashboard/TierBadge";
@@ -19,13 +19,14 @@ import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          window.location.href = createPageUrl("Login");
+          base44.auth.redirectToLogin(createPageUrl("Home"));
           return;
         }
 
@@ -49,11 +50,21 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Failed to load user:', error);
-        window.location.href = createPageUrl("Login");
+        base44.auth.redirectToLogin(createPageUrl("Home"));
+      } finally {
+        setIsCheckingAuth(false);
       }
     };
     loadUser();
   }, []);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
+      </div>
+    );
+  }
 
   const { data: activeDrops = [] } = useQuery({
     queryKey: ["active-drops"],

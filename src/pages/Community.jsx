@@ -16,8 +16,17 @@ export default function Community() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const u = await base44.auth.me();
-      setUser(u);
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin(createPageUrl("Community"));
+          return;
+        }
+        const u = await base44.auth.me();
+        setUser(u);
+      } catch (error) {
+        base44.auth.redirectToLogin(createPageUrl("Community"));
+      }
     };
     loadUser();
   }, []);

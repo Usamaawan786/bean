@@ -21,8 +21,14 @@ export default function Rewards() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const u = await base44.auth.me();
-      setUser(u);
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin(createPageUrl("Rewards"));
+          return;
+        }
+        const u = await base44.auth.me();
+        setUser(u);
       const customers = await base44.entities.Customer.filter({ created_by: u.email });
       if (customers.length > 0) {
         const customerData = customers[0];
