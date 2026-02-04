@@ -99,7 +99,7 @@ export default function Rewards() {
   
   const filteredRewards = selectedCategory === "all" 
     ? rewards 
-    : rewards.filter(r => r.category === selectedCategory);
+    : (rewards || []).filter(r => r.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
