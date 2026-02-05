@@ -7,6 +7,7 @@ import { createPageUrl } from "@/utils";
 import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import AppHeader from "@/components/shared/AppHeader";
 
 const statusConfig = {
   pending: { icon: Clock, label: "Pending", color: "bg-[#F5EBE8] text-[#8B7355] border-[#E8DED8]" },
@@ -35,29 +36,13 @@ export default function Orders() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
-        <div className="max-w-3xl mx-auto px-5 pt-6 pb-8">
-          <Link
-            to={createPageUrl("Shop")}
-            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Shop
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-white/20 p-3">
-              <Package className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">My Orders</h1>
-              <p className="text-[#E8DED8] text-sm">Track your purchases</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <AppHeader 
+        title="My Orders" 
+        subtitle="Track your purchases" 
+        icon={Package}
+        backTo="Shop"
+      />
 
       {/* Orders List */}
       <div className="max-w-3xl mx-auto px-5 py-6 pb-24 space-y-4">

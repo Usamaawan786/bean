@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import AppHeader from "@/components/shared/AppHeader";
 
 export default function Moderation() {
   const [user, setUser] = useState(null);
@@ -85,29 +86,13 @@ export default function Moderation() {
   const allReviewPosts = [...flaggedPosts, ...pendingPosts];
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
-        <div className="max-w-5xl mx-auto px-5 pt-6 pb-8">
-          <Link
-            to={createPageUrl("Community")}
-            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Community
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-white/20 p-3">
-              <Shield className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Content Moderation</h1>
-              <p className="text-[#E8DED8] text-sm">Review flagged and reported posts</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <AppHeader 
+        title="Content Moderation" 
+        subtitle="Review flagged and reported posts" 
+        icon={Shield}
+        backTo="Community"
+      />
 
       <div className="max-w-5xl mx-auto px-5 py-8 pb-24">
         <Tabs defaultValue="review" className="space-y-6">

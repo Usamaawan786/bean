@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import CoffeeCupAnimation from "@/components/rewards/CoffeeCupAnimation";
 import { getTierDiscount } from "@/components/rewards/TierBenefits";
+import AppHeader from "@/components/shared/AppHeader";
 
 export default function Checkout() {
   const [user, setUser] = useState(null);
@@ -124,22 +125,13 @@ export default function Checkout() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
-        <div className="max-w-3xl mx-auto px-5 pt-6 pb-8">
-          <Link
-            to={createPageUrl("Shop")}
-            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Shop
-          </Link>
-
-          <h1 className="text-2xl font-bold">Checkout</h1>
-          <p className="text-[#E8DED8] text-sm mt-1">Complete your order</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <AppHeader 
+        title="Checkout" 
+        subtitle="Complete your order" 
+        icon={Package}
+        backTo="Shop"
+      />
 
       <div className="max-w-3xl mx-auto px-5 py-8 pb-24">
         <form onSubmit={handleSubmit} className="space-y-6">

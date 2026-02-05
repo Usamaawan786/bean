@@ -8,6 +8,7 @@ import { createPageUrl } from "@/utils";
 import FlashDropCard from "@/components/flashdrop/FlashDropCard";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
+import AppHeader from "@/components/shared/AppHeader";
 
 export default function FlashDrops() {
   const [user, setUser] = useState(null);
@@ -67,53 +68,37 @@ export default function FlashDrops() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
-        <div className="max-w-lg mx-auto px-5 pt-6 pb-8">
-          <Link 
-            to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] p-3">
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold">Flash Drops</h1>
-                <p className="text-[#E8DED8] text-sm">Free coffee, random times!</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 bg-white/10 rounded-xl px-3 py-2">
-              {notificationsEnabled ? (
-                <BellRing className="h-4 w-4 text-[#F8F6F4]" />
-              ) : (
-                <Bell className="h-4 w-4 text-[#D4C4B0]" />
-              )}
-              <Switch
-                checked={notificationsEnabled}
-                onCheckedChange={setNotificationsEnabled}
-              />
-            </div>
+    <div className="min-h-screen bg-[var(--bg-primary)]">
+      <AppHeader 
+        title="Flash Drops" 
+        subtitle="Free coffee, random times!" 
+        icon={Zap}
+        backTo="Home"
+        actions={
+          <div className="flex items-center gap-2 bg-white/10 dark:bg-white/5 rounded-xl px-3 py-2">
+            {notificationsEnabled ? (
+              <BellRing className="h-4 w-4 text-white" />
+            ) : (
+              <Bell className="h-4 w-4 text-[#D4C4B0]" />
+            )}
+            <Switch
+              checked={notificationsEnabled}
+              onCheckedChange={setNotificationsEnabled}
+            />
           </div>
-          
-          {notificationsEnabled && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 bg-[#D4C4B0]/20 text-[#F8F6F4] text-sm rounded-xl px-4 py-2"
-            >
-              🔔 You'll get notified when new drops go live!
-            </motion.div>
-          )}
+        }
+      />
+      {notificationsEnabled && (
+        <div className="max-w-lg mx-auto px-5 pt-4">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#D4C4B0]/20 dark:bg-white/10 text-white dark:text-[var(--text-secondary)] text-sm rounded-xl px-4 py-2"
+          >
+            🔔 You'll get notified when new drops go live!
+          </motion.div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-8">
