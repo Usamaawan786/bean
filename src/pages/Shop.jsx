@@ -23,7 +23,7 @@ export default function Shop() {
         const u = await base44.auth.me();
         setUser(u);
       } catch (error) {
-        window.location.href = '/login';
+        base44.auth.redirectToLogin(window.location.href);
       }
     };
     loadUser();
