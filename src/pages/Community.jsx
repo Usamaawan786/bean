@@ -20,8 +20,7 @@ export default function Community() {
         const u = await base44.auth.me();
         setUser(u);
       } catch (error) {
-        const currentUrl = window.location.href;
-        window.location.href = `/login?next=${encodeURIComponent(currentUrl)}`;
+        base44.auth.redirectToLogin(window.location.href);
       }
     };
     loadUser();

@@ -157,8 +157,7 @@ export default function Profile() {
   }
 
   if (!user || !user.email) {
-    const currentUrl = window.location.href;
-    window.location.href = `/login?next=${encodeURIComponent(currentUrl)}`;
+    base44.auth.redirectToLogin(window.location.href);
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />

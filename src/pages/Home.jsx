@@ -108,9 +108,8 @@ export default function Home() {
         console.error('Authentication failed:', error);
         setIsCheckingAuth(false);
         setAuthChecked(true);
-        // Redirect to in-app login page
-        const currentUrl = window.location.href;
-        window.location.href = `/login?next=${encodeURIComponent(currentUrl)}`;
+        // Redirect to built-in login page
+        base44.auth.redirectToLogin(window.location.href);
       }
     };
     loadUser();
