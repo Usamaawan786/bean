@@ -38,7 +38,19 @@ export default function Profile() {
   const loadUserData = async () => {
     setIsLoading(true);
     try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        setIsLoading(false);
+        base44.auth.redirectToLogin(window.location.href);
+        return;
+      }
+
       const u = await base44.auth.me();
+      if (!u || !u.email) {
+        setIsLoading(false);
+        base44.auth.redirectToLogin(window.location.href);
+        return;
+      }
       setUser(u);
       setFormData({
         full_name: u.full_name || "",

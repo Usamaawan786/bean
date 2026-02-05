@@ -85,11 +85,18 @@ export default function Home() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
+          setIsCheckingAuth(false);
           base44.auth.redirectToLogin(window.location.href);
           return;
         }
 
         const u = await base44.auth.me();
+        if (!u || !u.email) {
+          setIsCheckingAuth(false);
+          base44.auth.redirectToLogin(window.location.href);
+          return;
+        }
+
         setUser(u);
         setAuthChecked(true);
         
@@ -110,13 +117,14 @@ export default function Home() {
         setIsCheckingAuth(false);
       } catch (error) {
         console.error('Auth error:', error);
+        setIsCheckingAuth(false);
         base44.auth.redirectToLogin(window.location.href);
       }
     };
     loadUser();
   }, []);
 
-  if (isCheckingAuth || !authChecked) {
+  if (isCheckingAuth || !authChecked || !user || !customer) {
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
