@@ -16,12 +16,14 @@ import RewardProgress from "@/components/dashboard/RewardProgress";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
 import PullToRefresh from "@/components/shared/PullToRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: activeDrops = [] } = useQuery({
     queryKey: ["active-drops"],
@@ -463,6 +465,7 @@ export default function Home() {
           </motion.div>
         )}
       </div>
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }
