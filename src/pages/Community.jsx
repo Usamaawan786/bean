@@ -137,7 +137,13 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     }
   });
 
-
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
