@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 import { Loader2, RefreshCw } from "lucide-react";
 
 export default function PullToRefresh({ onRefresh, children }) {
@@ -9,7 +9,7 @@ export default function PullToRefresh({ onRefresh, children }) {
   const scale = useTransform(y, [0, 80], [0.5, 1]);
   const rotate = useTransform(y, [0, 80], [0, 180]);
 
-  const handleDragEnd = async (event: any, info: PanInfo) => {
+  const handleDragEnd = async (event, info) => {
     if (info.offset.y > 80 && !isRefreshing) {
       setIsRefreshing(true);
       await onRefresh();
