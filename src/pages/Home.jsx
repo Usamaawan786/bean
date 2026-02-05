@@ -108,8 +108,9 @@ export default function Home() {
         console.error('Authentication failed:', error);
         setIsCheckingAuth(false);
         setAuthChecked(true);
-        // Use Base44's built-in redirect method
-        window.location.href = 'https://app.base44.com/login';
+        // Redirect to in-app login page
+        const currentUrl = window.location.href;
+        window.location.href = `/login?next=${encodeURIComponent(currentUrl)}`;
       }
     };
     loadUser();

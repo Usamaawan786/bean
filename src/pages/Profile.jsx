@@ -157,7 +157,8 @@ export default function Profile() {
   }
 
   if (!user || !user.email) {
-    window.location.href = 'https://app.base44.com/login';
+    const currentUrl = window.location.href;
+    window.location.href = `/login?next=${encodeURIComponent(currentUrl)}`;
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
