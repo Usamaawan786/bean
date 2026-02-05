@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import QRScanner from "@/components/profile/QRScanner";
 import PointsAnimation from "@/components/profile/PointsAnimation";
 import ImageCropModal from "@/components/profile/ImageCropModal";
+import DeleteAccountDialog from "@/components/profile/DeleteAccountDialog";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -25,6 +26,7 @@ export default function Profile() {
   const [pointsData, setPointsData] = useState({ old: 0, new: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [imageToEdit, setImageToEdit] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -378,9 +380,19 @@ export default function Profile() {
             base44.auth.logout(window.location.origin);
           }}
           variant="outline"
-          className="w-full mt-6 rounded-xl border-red-300 text-red-600 hover:bg-red-50"
+          className="w-full mt-6 rounded-xl border-[#E8DED8] dark:border-[var(--border-light)] text-[#5C4A3A] dark:text-[var(--text-primary)] hover:bg-[#F5EBE8] dark:hover:bg-[var(--bg-elevated)]"
         >
           Logout
+        </Button>
+
+        {/* Delete Account Button */}
+        <Button
+          onClick={() => setDeleteDialogOpen(true)}
+          variant="outline"
+          className="w-full mt-3 rounded-xl border-red-300 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Account
         </Button>
       </div>
 
@@ -413,6 +425,13 @@ export default function Profile() {
           onClose={() => setImageToEdit(null)}
         />
       )}
+
+      {/* Delete Account Dialog */}
+      <DeleteAccountDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        userEmail={user?.email}
+      />
     </div>
   );
 }
