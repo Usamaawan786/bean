@@ -19,18 +19,18 @@ export default function Community() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          window.location.href = `/login?next=${encodeURIComponent(window.location.href)}`;
+          base44.auth.redirectToLogin(window.location.href);
           return;
         }
 
         const u = await base44.auth.me();
         if (!u || !u.email) {
-          window.location.href = `/login?next=${encodeURIComponent(window.location.href)}`;
+          base44.auth.redirectToLogin(window.location.href);
           return;
         }
         setUser(u);
       } catch (error) {
-        window.location.href = `/login?next=${encodeURIComponent(window.location.href)}`;
+        base44.auth.redirectToLogin(window.location.href);
       }
     };
     loadUser();
