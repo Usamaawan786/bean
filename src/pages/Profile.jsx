@@ -41,14 +41,14 @@ export default function Profile() {
       const isAuth = await base44.auth.isAuthenticated();
       if (!isAuth) {
         setIsLoading(false);
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = '/login';
         return;
       }
 
       const u = await base44.auth.me();
       if (!u || !u.email) {
         setIsLoading(false);
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = '/login';
         return;
       }
       setUser(u);
@@ -169,7 +169,7 @@ export default function Profile() {
   }
 
   if (!user || !user.email) {
-    base44.auth.redirectToLogin(window.location.href);
+    window.location.href = '/login';
     return (
       <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />

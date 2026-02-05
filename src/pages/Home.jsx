@@ -86,14 +86,14 @@ export default function Home() {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
           setIsCheckingAuth(false);
-          base44.auth.redirectToLogin(window.location.href);
+          window.location.href = '/login';
           return;
         }
 
         const u = await base44.auth.me();
         if (!u || !u.email) {
           setIsCheckingAuth(false);
-          base44.auth.redirectToLogin(window.location.href);
+          window.location.href = '/login';
           return;
         }
 
@@ -118,7 +118,7 @@ export default function Home() {
       } catch (error) {
         console.error('Auth error:', error);
         setIsCheckingAuth(false);
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = '/login';
       }
     };
     loadUser();
