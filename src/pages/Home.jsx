@@ -83,17 +83,21 @@ export default function Home() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        // Try to get user first - this will throw if not authenticated
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin(window.location.href);
+          return;
+        }
+
         const u = await base44.auth.me();
         setUser(u);
         setAuthChecked(true);
         
-        // Load or create customer profile in parallel
+        // Load or create customer profile
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
           setCustomer(customers[0]);
         } else {
-          // Create new customer with referral code
           const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
           const newCustomer = await base44.entities.Customer.create({
             referral_code: refCode,
@@ -105,10 +109,7 @@ export default function Home() {
         }
         setIsCheckingAuth(false);
       } catch (error) {
-        console.error('Authentication failed:', error);
-        setIsCheckingAuth(false);
-        setAuthChecked(true);
-        // Redirect to built-in login page
+        console.error('Auth error:', error);
         base44.auth.redirectToLogin(window.location.href);
       }
     };
