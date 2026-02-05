@@ -37,6 +37,32 @@ export default function CommentSection({ postId, currentUser }) {
 
       return comment;
     },
+    onMutate: async (content) => {
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ["comments", postId] });
+      
+      // Snapshot previous value
+      const previousComments = queryClient.getQueryData(["comments", postId]);
+      
+      // Optimistically update
+      const optimisticComment = {
+        id: `temp-${Date.now()}`,
+        post_id: postId,
+        author_email: currentUser.email,
+        author_name: currentUser.full_name || currentUser.email.split("@")[0],
+        content,
+        likes_count: 0,
+        liked_by: [],
+        created_date: new Date().toISOString()
+      };
+      
+      queryClient.setQueryData(["comments", postId], old => [optimisticComment, ...(old || [])]);
+      
+      return { previousComments };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["comments", postId], context.previousComments);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
@@ -55,6 +81,25 @@ export default function CommentSection({ postId, currentUser }) {
         liked_by: newLikedBy,
         likes_count: newLikedBy.length
       });
+    },
+    onMutate: async (comment) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", postId] });
+      
+      const previousComments = queryClient.getQueryData(["comments", postId]);
+      
+      const isLiked = comment.liked_by?.includes(currentUser.email);
+      const newLikedBy = isLiked
+        ? comment.liked_by.filter(e => e !== currentUser.email)
+        : [...(comment.liked_by || []), currentUser.email];
+      
+      queryClient.setQueryData(["comments", postId], old => 
+        old?.map(c => c.id === comment.id ? { ...c, liked_by: newLikedBy, likes_count: newLikedBy.length } : c)
+      );
+      
+      return { previousComments };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["comments", postId], context.previousComments);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
