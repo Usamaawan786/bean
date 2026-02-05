@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #F5F1ED;
+  --bg-secondary: #EBE5DF;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F5EBE8;
+  
+  --text-primary: #5C4A3A;
+  --text-secondary: #8B7355;
+  --text-tertiary: #C9B8A6;
+  
+  --accent-primary: #8B7355;
+  --accent-secondary: #6B5744;
+  --accent-tertiary: #5C4A3A;
+  
+  --border-light: #E8DED8;
+  --border-medium: #D4C4B0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1a1612;
+    --bg-secondary: #201b16;
+    --bg-card: #2a241e;
+    --bg-elevated: #342e28;
+    
+    --text-primary: #E8DED8;
+    --text-secondary: #C9B8A6;
+    --text-tertiary: #8B7355;
+    
+    --accent-primary: #D4C4B0;
+    --accent-secondary: #C9B8A6;
+    --accent-tertiary: #B5A593;
+    
+    --border-light: #3a3329;
+    --border-medium: #4a4339;
+  }
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)];
+  }
+}
