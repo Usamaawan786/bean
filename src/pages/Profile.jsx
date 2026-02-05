@@ -157,17 +157,11 @@ export default function Profile() {
   }
 
   if (!user || !user.email) {
+    const currentUrl = window.location.href;
+    window.location.href = `https://app.base44.com/login?next=${encodeURIComponent(currentUrl)}`;
     return (
-      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center p-5">
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-[#5C4A3A] mb-4">You're logged out</h2>
-          <p className="text-[#8B7355] mb-6">Log back in to access your profile</p>
-          <Link to={createPageUrl("Login")}>
-            <Button className="bg-[#8B7355] hover:bg-[#6B5744]">
-              Log In
-            </Button>
-          </Link>
-        </div>
+      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
       </div>
     );
   }

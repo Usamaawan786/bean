@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Filter, Star, Coffee } from "lucide-react";
+import { ShoppingCart, Filter, Star, Coffee, Loader2 } from "lucide-react";
 import ProductCard from "@/components/shop/ProductCard";
 import CartDrawer from "@/components/shop/CartDrawer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,15 +20,11 @@ export default function Shop() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) {
-          base44.auth.redirectToLogin(createPageUrl("Shop"));
-          return;
-        }
         const u = await base44.auth.me();
         setUser(u);
       } catch (error) {
-        base44.auth.redirectToLogin(createPageUrl("Shop"));
+        const currentUrl = window.location.href;
+        window.location.href = `https://app.base44.com/login?next=${encodeURIComponent(currentUrl)}`;
       }
     };
     loadUser();
@@ -87,6 +83,14 @@ export default function Shop() {
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF] pb-24">

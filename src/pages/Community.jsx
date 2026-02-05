@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Users, Coffee, Star, Camera, Lightbulb, TrendingUp } from "lucide-react";
+import { ArrowLeft, Users, Coffee, Star, Camera, Lightbulb, TrendingUp, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PostCard from "@/components/community/PostCard";
@@ -17,15 +17,11 @@ export default function Community() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) {
-          base44.auth.redirectToLogin(createPageUrl("Community"));
-          return;
-        }
         const u = await base44.auth.me();
         setUser(u);
       } catch (error) {
-        base44.auth.redirectToLogin(createPageUrl("Community"));
+        const currentUrl = window.location.href;
+        window.location.href = `https://app.base44.com/login?next=${encodeURIComponent(currentUrl)}`;
       }
     };
     loadUser();
