@@ -8,6 +8,8 @@ import { createPageUrl } from "@/utils";
 import PostCard from "@/components/community/PostCard";
 import PostComposer from "@/components/community/PostComposer";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PullToRefresh from "@/components/shared/PullToRefresh";
+import AppHeader from "@/components/shared/AppHeader";
 
 export default function Community() {
   const [user, setUser] = useState(null);
@@ -42,6 +44,10 @@ export default function Community() {
       return base44.entities.CommunityPost.list("-created_date", 50);
     }
   });
+
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+  };
 
   // Filter out hidden/removed posts for regular users
   const posts = allPosts.filter(post => 
@@ -155,9 +161,10 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
-      {/* Header */}
-      <div className="relative bg-gradient-to-br from-white to-[#F5F1ED] border-b border-[#E8DED8] sticky top-0 z-10 shadow-sm">
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
+        {/* Header */}
+        <div className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] sticky top-0 z-10 shadow-sm select-none">
         <div className="absolute inset-0 opacity-5">
           <motion.div
             animate={{ rotate: 360 }}
@@ -252,6 +259,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
           </AnimatePresence>
         )}
       </div>
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

@@ -15,6 +15,7 @@ import ReferralCard from "@/components/referral/ReferralCard";
 import RewardProgress from "@/components/dashboard/RewardProgress";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
+import PullToRefresh from "@/components/shared/PullToRefresh";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -80,6 +81,13 @@ export default function Home() {
     return "Good evening";
   };
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["active-drops"] }),
+      queryClient.invalidateQueries({ queryKey: ["upcoming-drops"] })
+    ]);
+  };
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -133,9 +141,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
+        {/* Hero Section */}
+        <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] dark:from-[#2a241e] dark:via-[#201b16] dark:to-[#1a1612] text-white overflow-hidden select-none">
         {/* Animated Background */}
         <div className="absolute inset-0 opacity-30">
           <motion.div
