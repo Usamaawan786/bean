@@ -18,14 +18,14 @@ export default function Layout({ children, currentPageName }) {
   const showNav = currentPageName !== "waitlist" && currentPageName !== "login" && currentPageName !== "signup";
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
+    <div className="min-h-screen bg-[var(--bg-primary)] select-none" style={{ overscrollBehavior: 'none' }}>
       {children}
 
       {/* Bottom Navigation */}
       {showNav && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8DED8] pb-safe z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[var(--bg-card)] border-t border-[#E8DED8] dark:border-[var(--border-light)] pb-safe z-50">
           <div className="max-w-lg mx-auto px-2">
-            <div className="flex items-center justify-around">
+            <div className="flex items-center justify-around select-none">
               {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = currentPageName === item.page;
@@ -34,20 +34,20 @@ export default function Layout({ children, currentPageName }) {
                   <Link
                     key={item.page}
                     to={createPageUrl(item.page)}
-                    className="relative flex flex-col items-center py-3 px-4"
+                    className="relative flex flex-col items-center py-3 px-4 select-none"
                   >
                     {isActive && (
                       <motion.div
                         layoutId="nav-indicator"
-                        className="absolute -top-0.5 w-8 h-1 bg-[#8B7355] rounded-full"
+                        className="absolute -top-0.5 w-8 h-1 bg-[var(--accent-primary)] dark:bg-[var(--accent-primary)] rounded-full"
                       />
                     )}
                     <Icon
-                      className={`h-5 w-5 transition-colors ${isActive ? "text-[#8B7355]" : "text-[#C9B8A6]"
+                      className={`h-5 w-5 transition-colors ${isActive ? "text-[var(--accent-primary)]" : "text-[var(--text-tertiary)]"
                         }`}
                     />
                     <span
-                      className={`text-xs mt-1 transition-colors ${isActive ? "text-[#8B7355] font-medium" : "text-[#C9B8A6]"
+                      className={`text-xs mt-1 transition-colors ${isActive ? "text-[var(--accent-primary)] font-medium" : "text-[var(--text-tertiary)]"
                         }`}
                     >
                       {item.name}
