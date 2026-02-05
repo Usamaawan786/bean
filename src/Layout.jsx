@@ -13,14 +13,14 @@ const navItems = [
 
 export default function Layout({ children, currentPageName }) {
   const location = useLocation();
-  
+
   // Hide nav on certain pages if needed
-  const showNav = currentPageName !== "Waitlist";
+  const showNav = currentPageName !== "waitlist" && currentPageName !== "login" && currentPageName !== "signup";
 
   return (
     <div className="min-h-screen bg-[#F5F1ED]">
       {children}
-      
+
       {/* Bottom Navigation */}
       {showNav && (
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E8DED8] pb-safe z-50">
@@ -29,7 +29,7 @@ export default function Layout({ children, currentPageName }) {
               {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = currentPageName === item.page;
-                
+
                 return (
                   <Link
                     key={item.page}
@@ -42,15 +42,13 @@ export default function Layout({ children, currentPageName }) {
                         className="absolute -top-0.5 w-8 h-1 bg-[#8B7355] rounded-full"
                       />
                     )}
-                    <Icon 
-                      className={`h-5 w-5 transition-colors ${
-                        isActive ? "text-[#8B7355]" : "text-[#C9B8A6]"
-                      }`} 
+                    <Icon
+                      className={`h-5 w-5 transition-colors ${isActive ? "text-[#8B7355]" : "text-[#C9B8A6]"
+                        }`}
                     />
-                    <span 
-                      className={`text-xs mt-1 transition-colors ${
-                        isActive ? "text-[#8B7355] font-medium" : "text-[#C9B8A6]"
-                      }`}
+                    <span
+                      className={`text-xs mt-1 transition-colors ${isActive ? "text-[#8B7355] font-medium" : "text-[#C9B8A6]"
+                        }`}
                     >
                       {item.name}
                     </span>
