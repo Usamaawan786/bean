@@ -23,7 +23,8 @@ export default function Shop() {
         const u = await base44.auth.me();
         setUser(u);
       } catch (error) {
-        base44.auth.redirectToLogin(window.location.href);
+        // Allow browsing without login
+        setUser(null);
       }
     };
     loadUser();
@@ -55,6 +56,13 @@ export default function Shop() {
   const featuredProducts = (products || []).filter((p) => p.featured);
 
   const handleAddToCart = (product) => {
+    // Require login for cart operations
+    if (!user) {
+      toast.error("Please sign in to add items to cart");
+      base44.auth.redirectToLogin(window.location.href);
+      return;
+    }
+    
     const existingItem = cart.find((item) => item.id === product.id);
     if (existingItem) {
       setCart(cart.map((item) =>
@@ -83,13 +91,7 @@ export default function Shop() {
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
-      </div>
-    );
-  }
+  // Remove loading check - allow browsing without login
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF] pb-24">
