@@ -15,10 +15,11 @@ const postTypeConfig = {
 
 const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
-export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReaction }) {
+export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReaction, onBlock }) {
   const [isLiking, setIsLiking] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
   const isLiked = post.liked_by?.includes(currentUserEmail);
@@ -180,8 +181,49 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
               </AnimatePresence>
             </div>
 
-
+            {post.author_email !== currentUserEmail && (
+              <button
+                onClick={() => setShowBlockConfirm(true)}
+                className="text-xs text-red-500 hover:text-red-600 transition-colors ml-auto"
+              >
+                Block User
+              </button>
+            )}
           </div>
+
+          {/* Block Confirmation Dialog */}
+          {showBlockConfirm && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
+              >
+                <h3 className="text-lg font-bold text-[#5C4A3A] mb-2">Block {post.author_name}?</h3>
+                <p className="text-sm text-[#8B7355] mb-6">
+                  You won't see posts from this user anymore. This action will also notify the developer.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => setShowBlockConfirm(false)}
+                    variant="outline"
+                    className="flex-1 rounded-xl"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      onBlock(post.author_email);
+                      setShowBlockConfirm(false);
+                    }}
+                    className="flex-1 rounded-xl bg-red-500 hover:bg-red-600"
+                  >
+                    Block
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
 
           {/* Comments Section */}
           <AnimatePresence>

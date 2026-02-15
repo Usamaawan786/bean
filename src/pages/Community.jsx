@@ -49,9 +49,12 @@ export default function Community() {
     await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
   };
 
-  // Filter out hidden/removed posts for regular users
+  // Filter out hidden/removed posts and posts from blocked users
+  const blockedUsers = user?.blocked_users || [];
   const posts = allPosts.filter(post => 
-    post.moderation_status !== "hidden" && post.moderation_status !== "removed"
+    post.moderation_status !== "hidden" && 
+    post.moderation_status !== "removed" &&
+    !blockedUsers.includes(post.author_email)
   );
 
   const createPostMutation = useMutation({
@@ -151,6 +154,20 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     }
   });
+
+  const handleBlockUser = async (userEmailToBlock) => {
+    const currentBlockedUsers = user.blocked_users || [];
+    await base44.auth.updateMe({
+      blocked_users: [...currentBlockedUsers, userEmailToBlock]
+    });
+    
+    // Refresh user data
+    const updatedUser = await base44.auth.me();
+    setUser(updatedUser);
+    
+    // Refresh posts to hide blocked users
+    await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+  };
 
   if (!user) {
     return (
@@ -253,6 +270,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                   onLike={likeMutation.mutate}
                   onReport={reportPostMutation.mutate}
                   onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
+                  onBlock={handleBlockUser}
                 />
               </motion.div>
             ))}

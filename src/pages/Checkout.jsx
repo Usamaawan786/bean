@@ -34,12 +34,22 @@ export default function Checkout() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const u = await base44.auth.me();
-      setUser(u);
-      setFormData(prev => ({ ...prev, name: u.full_name || "" }));
-      
-      const customers = await base44.entities.Customer.filter({ created_by: u.email });
-      if (customers.length > 0) setCustomer(customers[0]);
+      try {
+        const isAuth = await base44.auth.isAuthenticated();
+        if (!isAuth) {
+          base44.auth.redirectToLogin(window.location.href);
+          return;
+        }
+
+        const u = await base44.auth.me();
+        setUser(u);
+        setFormData(prev => ({ ...prev, name: u.full_name || "" }));
+        
+        const customers = await base44.entities.Customer.filter({ created_by: u.email });
+        if (customers.length > 0) setCustomer(customers[0]);
+      } catch (error) {
+        base44.auth.redirectToLogin(window.location.href);
+      }
     };
     loadUser();
 
