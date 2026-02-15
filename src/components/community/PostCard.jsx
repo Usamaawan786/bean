@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import CommentSection from "./CommentSection";
@@ -15,15 +15,17 @@ const postTypeConfig = {
 
 const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
-export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReaction, onBlock }) {
+export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReaction, onBlock, onReport }) {
   const [isLiking, setIsLiking] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
   const isLiked = post.liked_by?.includes(currentUserEmail);
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
+  const hasReported = post.reported_by?.includes(currentUserEmail);
 
   const handleLike = async () => {
     if (isLiking) return;
@@ -75,11 +77,38 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-[#5C4A3A]">{post.author_name || "Coffee Lover"}</span>
-            <span className="text-xs text-[#C9B8A6]">
-              {post.created_date && format(new Date(post.created_date), "MMM d, h:mm a")}
-            </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-[#5C4A3A]">{post.author_name || "Coffee Lover"}</span>
+              <span className="text-xs text-[#C9B8A6]">
+                {post.created_date && format(new Date(post.created_date), "MMM d, h:mm a")}
+              </span>
+            </div>
+            
+            {post.author_email !== currentUserEmail && (
+              <div className="flex items-center gap-1">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => onReport(post)}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    hasReported ? "bg-orange-100 text-orange-600" : "text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-orange-500"
+                  }`}
+                  title="Flag post"
+                >
+                  <Flag className="h-3.5 w-3.5" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setShowBlockConfirm(true)}
+                  className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-red-50 hover:text-red-500 transition-colors"
+                  title="Block user"
+                >
+                  <Ban className="h-3.5 w-3.5" />
+                </motion.button>
+              </div>
+            )}
           </div>
           <p className="mt-2 text-[#6B5744] whitespace-pre-wrap">{post.content}</p>
           
@@ -180,15 +209,6 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
                 )}
               </AnimatePresence>
             </div>
-
-            {post.author_email !== currentUserEmail && (
-              <button
-                onClick={() => setShowBlockConfirm(true)}
-                className="text-xs text-red-500 hover:text-red-600 transition-colors ml-auto"
-              >
-                Block User
-              </button>
-            )}
           </div>
 
           {/* Block Confirmation Dialog */}

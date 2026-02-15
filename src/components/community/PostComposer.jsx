@@ -18,7 +18,9 @@ export default function PostComposer({ onPost, userName }) {
   const [isPosting, setIsPosting] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionType, setPermissionType] = useState("");
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => {
+    return localStorage.getItem("bean_terms_accepted") === "true";
+  });
 
   const handleImageUpload = async () => {
     if (isUploadingImage) return;
@@ -141,7 +143,7 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   const handleSubmit = async () => {
-    if (!content.trim() || !agreedToTerms) return;
+    if (!content.trim()) return;
 
     setIsPosting(true);
     await onPost({
@@ -154,8 +156,12 @@ export default function PostComposer({ onPost, userName }) {
     setContent("");
     setImageUrl("");
     setVideoUrl("");
-    setAgreedToTerms(false);
     setIsPosting(false);
+  };
+
+  const handleAcceptTerms = () => {
+    localStorage.setItem("bean_terms_accepted", "true");
+    setHasAcceptedTerms(true);
   };
 
   return (
@@ -238,18 +244,20 @@ export default function PostComposer({ onPost, userName }) {
         </div>
       )}
 
-      <div className="mt-3 flex items-start gap-2">
-        <input
-          type="checkbox"
-          id="terms"
-          checked={agreedToTerms}
-          onChange={(e) => setAgreedToTerms(e.target.checked)}
-          className="mt-1 accent-[#8B7355]"
-        />
-        <label htmlFor="terms" className="text-xs text-[#8B7355] leading-relaxed">
-          I agree that my content will not include hate speech, spam, profanity, threats, harassment, or any objectionable material. Violation may result in content removal and account suspension.
-        </label>
-      </div>
+      {!hasAcceptedTerms && (
+        <div className="mt-3 flex items-start gap-2">
+          <input
+            type="checkbox"
+            id="terms"
+            checked={hasAcceptedTerms}
+            onChange={handleAcceptTerms}
+            className="mt-1 accent-[#8B7355]"
+          />
+          <label htmlFor="terms" className="text-xs text-[#8B7355] leading-relaxed">
+            I agree that my content will not include hate speech, spam, profanity, threats, harassment, or any objectionable material. Violation may result in content removal and account suspension.
+          </label>
+        </div>
+      )}
 
       <div className="mt-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
@@ -286,7 +294,7 @@ export default function PostComposer({ onPost, userName }) {
 
         <Button
           onClick={handleSubmit}
-          disabled={!content.trim() || !agreedToTerms || isPosting}
+          disabled={!content.trim() || !hasAcceptedTerms || isPosting}
           size="sm"
           className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] flex-shrink-0"
         >
