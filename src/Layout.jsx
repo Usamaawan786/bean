@@ -18,7 +18,7 @@ export default function Layout({ children, currentPageName }) {
   const showNav = currentPageName !== "waitlist" && currentPageName !== "login" && currentPageName !== "signup";
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] select-none" style={{ overscrollBehavior: 'none' }}>
+    <div className="min-h-screen bg-[var(--bg-primary)] select-none overflow-y-auto" style={{ overscrollBehavior: 'none' }}>
       {children}
 
       {/* Bottom Navigation */}
