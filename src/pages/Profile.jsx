@@ -180,7 +180,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
+    <div className="h-screen overflow-y-auto bg-[#F5F1ED]">
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
         <div className="max-w-lg mx-auto px-5 pt-6 pb-20">

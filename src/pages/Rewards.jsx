@@ -113,7 +113,7 @@ export default function Rewards() {
     : rewardList.filter(r => r.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
+    <div className="h-screen overflow-y-auto bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
       {/* Header */}
       <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-20">
