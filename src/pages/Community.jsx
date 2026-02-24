@@ -179,7 +179,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)] overflow-y-auto">
+      <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Header */}
         <div className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] sticky top-0 z-10 shadow-sm select-none">
         <div className="absolute inset-0 opacity-5">

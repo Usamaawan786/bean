@@ -144,7 +144,7 @@ export default function Home() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)] overflow-y-auto">
+      <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Hero Section */}
         <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] dark:from-[#2a241e] dark:via-[#201b16] dark:to-[#1a1612] text-white overflow-hidden select-none">
         {/* Animated Background */}
