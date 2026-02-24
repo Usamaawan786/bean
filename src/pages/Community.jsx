@@ -21,18 +21,20 @@ export default function Community() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          base44.auth.redirectToLogin(window.location.href);
+          // Allow viewing posts without login
+          setUser(null);
           return;
         }
 
         const u = await base44.auth.me();
         if (!u || !u.email) {
-          base44.auth.redirectToLogin(window.location.href);
+          setUser(null);
           return;
         }
         setUser(u);
       } catch (error) {
-        base44.auth.redirectToLogin(window.location.href);
+        // Allow guest browsing
+        setUser(null);
       }
     };
     loadUser();
@@ -169,13 +171,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
-      </div>
-    );
-  }
+
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
@@ -230,17 +226,36 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
       {/* Main Content */}
       <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-4">
-        {/* Post Composer */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <PostComposer 
-            onPost={createPostMutation.mutate}
-            userName={user?.full_name}
-          />
-        </motion.div>
+        {/* Post Composer - Only show if logged in */}
+        {user ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <PostComposer 
+              onPost={createPostMutation.mutate}
+              userName={user?.full_name}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-center"
+          >
+            <Users className="h-10 w-10 text-[#8B7355] mx-auto mb-3" />
+            <h3 className="font-bold text-[#5C4A3A] mb-2">Join the Conversation</h3>
+            <p className="text-sm text-[#8B7355] mb-4">Sign in to share your coffee moments with the community</p>
+            <Button 
+              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              className="bg-[#8B7355] hover:bg-[#6B5744] text-white"
+            >
+              Sign In to Post
+            </Button>
+          </motion.div>
+        )}
         
         {/* Posts */}
         {isLoading ? (
