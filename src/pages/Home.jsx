@@ -95,15 +95,21 @@ export default function Home() {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
-        setIsCheckingAuth(false);
-        setAuthChecked(true);
         
         if (!isAuth) {
+          setIsCheckingAuth(false);
+          setAuthChecked(true);
+          setUser(null);
+          setCustomer(null);
           return;
         }
 
         const u = await base44.auth.me();
         if (!u || !u.email) {
+          setIsCheckingAuth(false);
+          setAuthChecked(true);
+          setUser(null);
+          setCustomer(null);
           return;
         }
 
@@ -123,10 +129,15 @@ export default function Home() {
           });
           setCustomer(newCustomer);
         }
+        
+        setIsCheckingAuth(false);
+        setAuthChecked(true);
       } catch (error) {
         console.error('Auth error:', error);
         setIsCheckingAuth(false);
         setAuthChecked(true);
+        setUser(null);
+        setCustomer(null);
       }
     };
     loadUser();
