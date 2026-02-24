@@ -94,23 +94,19 @@ export default function Home() {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
+        setIsCheckingAuth(false);
+        setAuthChecked(true);
+        
         if (!isAuth) {
-          // Allow guest browsing - don't force login
-          setIsCheckingAuth(false);
-          setAuthChecked(true);
           return;
         }
 
         const u = await base44.auth.me();
         if (!u || !u.email) {
-          // Allow guest browsing
-          setIsCheckingAuth(false);
-          setAuthChecked(true);
           return;
         }
 
         setUser(u);
-        setAuthChecked(true);
         
         // Load or create customer profile
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
@@ -126,10 +122,8 @@ export default function Home() {
           });
           setCustomer(newCustomer);
         }
-        setIsCheckingAuth(false);
       } catch (error) {
         console.error('Auth error:', error);
-        // Allow guest browsing even on error
         setIsCheckingAuth(false);
         setAuthChecked(true);
       }
@@ -145,44 +139,28 @@ export default function Home() {
     );
   }
 
-  // Guest browsing mode - show limited version
+  // Guest mode - show sign in prompt
   if (!user || !customer) {
     return (
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
           <div className="relative max-w-lg mx-auto px-5 pt-12 pb-16">
             <h1 className="text-4xl font-bold mb-2">Welcome to Bean! ☕</h1>
-            <p className="text-[#E8DED8] text-base">Your daily dose of rewards awaits</p>
+            <p className="text-[#E8DED8] text-base">Sign in to access your rewards</p>
           </div>
         </div>
 
-        <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
-          {/* Shop Preview */}
-          <Link to={createPageUrl("Shop")}>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-lg"
+        <div className="max-w-lg mx-auto px-5 pt-6 pb-24">
+          <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-3xl p-8 text-white text-center">
+            <Star className="h-12 w-12 mx-auto mb-4" />
+            <h3 className="font-bold text-2xl mb-3">Join Bean Rewards</h3>
+            <p className="text-sm text-[#E8DED8] mb-6">Earn points with every purchase, get free coffee, and unlock exclusive perks</p>
+            <Button 
+              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              className="w-full bg-white text-[#8B7355] hover:bg-[#E8DED8] font-bold py-6 text-lg"
             >
-              <Coffee className="h-12 w-12 text-[#8B7355] mb-3" />
-              <h3 className="font-bold text-[#5C4A3A] text-xl mb-2">Browse Our Menu</h3>
-              <p className="text-sm text-[#8B7355]">Premium coffee beans, matcha, and more</p>
-              <div className="mt-4 flex items-center gap-2 text-[#8B7355] font-medium">
-                View Products <ChevronRight className="h-4 w-4" />
-              </div>
-            </motion.div>
-          </Link>
-
-          {/* Sign in CTA */}
-          <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-3xl p-6 text-white text-center">
-            <Star className="h-10 w-10 mx-auto mb-3" />
-            <h3 className="font-bold text-xl mb-2">Join Bean Rewards</h3>
-            <p className="text-sm text-[#E8DED8] mb-4">Earn points, get free coffee, and unlock exclusive perks</p>
-            <Link to={createPageUrl("Login")}>
-              <Button className="w-full bg-white text-[#8B7355] hover:bg-[#E8DED8] font-bold">
-                Sign In / Sign Up
-              </Button>
-            </Link>
+              Sign In / Sign Up
+            </Button>
           </div>
         </div>
       </div>
