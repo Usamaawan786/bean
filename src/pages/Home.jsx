@@ -8,6 +8,7 @@ import {
   Coffee, Star, Gift, Users, Zap, ChevronRight, 
   TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown, Loader2
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/StatsCard";
 import TierBadge from "@/components/dashboard/TierBadge";
 import FlashDropCard from "@/components/flashdrop/FlashDropCard";
