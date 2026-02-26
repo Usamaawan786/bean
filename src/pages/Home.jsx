@@ -30,7 +30,7 @@ export default function Home() {
     queryKey: ["active-drops"],
     queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
     refetchInterval: 30000,
-    enabled: !!user && !!customer && authChecked,
+    enabled: authChecked && !!user && !!customer,
     staleTime: 30000,
     initialData: []
   });
@@ -38,7 +38,7 @@ export default function Home() {
   const { data: upcomingDrops = [] } = useQuery({
     queryKey: ["upcoming-drops"],
     queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
-    enabled: !!user && !!customer && authChecked,
+    enabled: authChecked && !!user && !!customer,
     staleTime: 60000,
     initialData: []
   });

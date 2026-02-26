@@ -20,11 +20,18 @@ export default function Shop() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const u = await base44.auth.me();
-        setUser(u);
+        const isAuth = await base44.auth.isAuthenticated();
+        if (isAuth) {
+          const u = await base44.auth.me();
+          setUser(u);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         // Allow browsing without login
         setUser(null);
+      } finally {
+        setAuthChecked(true);
       }
     };
     loadUser();
@@ -41,10 +48,13 @@ export default function Shop() {
     localStorage.setItem("bean_cart", JSON.stringify(cart));
   }, [cart]);
 
+  const [authChecked, setAuthChecked] = useState(false);
+
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: () => base44.entities.Product.list("-created_date"),
-    initialData: []
+    initialData: [],
+    enabled: authChecked
   });
 
   const categories = ["all", "Coffee Beans", "Matcha", "Equipment", "Merchandise", "Gift Sets"];
