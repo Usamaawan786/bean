@@ -55,7 +55,7 @@ export default function Shop() {
     queryKey: ["products"],
     queryFn: () => base44.entities.Product.list("-created_date"),
     initialData: [],
-    enabled: authChecked
+    enabled: true
   });
 
   const categories = ["all", "Coffee Beans", "Matcha", "Equipment", "Merchandise", "Gift Sets"];
