@@ -23,6 +23,11 @@ export default function Orders() {
 
   useEffect(() => {
     const loadUser = async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+        return;
+      }
       const u = await base44.auth.me();
       setUser(u);
     };
