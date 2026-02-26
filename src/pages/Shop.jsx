@@ -69,7 +69,7 @@ export default function Shop() {
     // Require login for cart operations
     if (!user) {
       toast.error("Please sign in to add items to cart");
-      base44.auth.redirectToLogin(window.location.href);
+      window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
       return;
     }
     
