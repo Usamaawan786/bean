@@ -43,14 +43,14 @@ export default function Profile() {
       const isAuth = await base44.auth.isAuthenticated();
       if (!isAuth) {
         setIsLoading(false);
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
         return;
       }
 
       const u = await base44.auth.me();
       if (!u || !u.email) {
         setIsLoading(false);
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
         return;
       }
       setUser(u);
