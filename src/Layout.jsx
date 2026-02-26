@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Gift, Users, Zap, ShoppingBag, UserCircle, Wallet } from "lucide-react";
+import { Home, Gift, Users, Zap, ShoppingBag, UserCircle, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
 
 const navItems = [
   { name: "Home", icon: Home, page: "Home" },
