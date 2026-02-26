@@ -25,6 +25,7 @@ export default function Home() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: activeDrops = [] } = useQuery({
     queryKey: ["active-drops"],
