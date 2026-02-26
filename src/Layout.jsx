@@ -15,7 +15,7 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
 
   // Hide nav on certain pages if needed
-  const showNav = currentPageName !== "waitlist" && currentPageName !== "login";
+  const showNav = currentPageName !== "waitlist";
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] select-none" style={{ overscrollBehavior: 'none' }}>
