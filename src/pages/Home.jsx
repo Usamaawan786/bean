@@ -98,10 +98,7 @@ export default function Home() {
         const isAuth = await base44.auth.isAuthenticated();
         
         if (!isAuth) {
-          setIsCheckingAuth(false);
-          setAuthChecked(true);
-          setUser(null);
-          setCustomer(null);
+          window.location.replace(createPageUrl("Login"));
           return;
         }
 
