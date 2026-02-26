@@ -37,7 +37,7 @@ export default function Checkout() {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          base44.auth.redirectToLogin(window.location.href);
+          window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
           return;
         }
 
@@ -48,7 +48,7 @@ export default function Checkout() {
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) setCustomer(customers[0]);
       } catch (error) {
-        base44.auth.redirectToLogin(window.location.href);
+        window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
       }
     };
     loadUser();
