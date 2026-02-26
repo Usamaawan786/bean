@@ -5,7 +5,15 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 
-const navItems = [
+const guestNavItems = [
+  { name: "Home", icon: Home, page: "Home" },
+  { name: "Shop", icon: ShoppingBag, page: "Shop" },
+  { name: "Rewards", icon: Gift, page: "Rewards" },
+  { name: "Community", icon: Users, page: "Community" },
+  { name: "Sign In", icon: LogIn, page: "Login" }
+];
+
+const authNavItems = [
   { name: "Home", icon: Home, page: "Home" },
   { name: "Shop", icon: ShoppingBag, page: "Shop" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
@@ -14,9 +22,17 @@ const navItems = [
 ];
 
 export default function Layout({ children, currentPageName }) {
-  const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
-  // Hide nav on certain pages if needed
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(auth => {
+      setIsAuthenticated(auth);
+      setAuthChecked(true);
+    });
+  }, [currentPageName]);
+
+  const navItems = isAuthenticated ? authNavItems : guestNavItems;
   const showNav = currentPageName !== "waitlist";
 
   return (
@@ -24,7 +40,7 @@ export default function Layout({ children, currentPageName }) {
       {children}
 
       {/* Bottom Navigation */}
-      {showNav && (
+      {showNav && authChecked && (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[var(--bg-card)] border-t border-[#E8DED8] dark:border-[var(--border-light)] pb-safe z-50">
           <div className="max-w-lg mx-auto px-2">
             <div className="flex items-center justify-around select-none">
