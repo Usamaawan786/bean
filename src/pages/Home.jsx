@@ -169,7 +169,7 @@ export default function Home() {
             <h3 className="font-bold text-2xl mb-3">Join Bean Rewards</h3>
             <p className="text-sm text-[#E8DED8] mb-6">Earn points with every purchase, get free coffee, and unlock exclusive perks</p>
             <Button 
-              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              onClick={() => navigate(createPageUrl("Login"))}
               className="w-full bg-white text-[#8B7355] hover:bg-[#E8DED8] font-bold py-6 text-lg"
             >
               Sign In / Sign Up
