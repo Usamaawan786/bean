@@ -40,7 +40,7 @@ export default function Layout({ children, currentPageName }) {
       {children}
 
       {/* Bottom Navigation */}
-      {showNav && (authChecked || currentPageName === "Login" || currentPageName === "Signup") && (
+      {showNav && (
         <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[var(--bg-card)] border-t border-[#E8DED8] dark:border-[var(--border-light)] pb-safe z-50">
           <div className="max-w-lg mx-auto px-2">
             <div className="flex items-center justify-around select-none">
