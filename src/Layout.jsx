@@ -33,7 +33,7 @@ export default function Layout({ children, currentPageName }) {
   }, [currentPageName]);
 
   const navItems = isAuthenticated ? authNavItems : guestNavItems;
-  const showNav = currentPageName !== "waitlist" && currentPageName !== "Signup";
+  const showNav = currentPageName !== "waitlist";
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] select-none" style={{ overscrollBehavior: 'none' }}>
