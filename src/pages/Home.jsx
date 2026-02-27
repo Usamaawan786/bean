@@ -3,10 +3,11 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
+// useNavigate kept for Button navigation below
 import { createPageUrl } from "@/utils";
 import { 
   Coffee, Star, Gift, Users, Zap, ChevronRight, 
-  TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown, Loader2
+  TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/StatsCard";
