@@ -60,10 +60,9 @@ export default function Shop() {
   const featuredProducts = (products || []).filter((p) => p.featured);
 
   const handleAddToCart = (product) => {
-    // Require login for cart operations
     if (!user) {
       toast.error("Please sign in to add items to cart");
-      window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname);
       return;
     }
     
