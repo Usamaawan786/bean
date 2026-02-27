@@ -96,24 +96,12 @@ export default function Home() {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
-        
-        if (!isAuth) {
-          // Allow guest browsing — don't redirect
-          setIsCheckingAuth(false);
-          setAuthChecked(true);
-          return;
-        }
+        if (!isAuth) return; // Guest — render page immediately
 
         const u = await base44.auth.me();
-        if (!u || !u.email) {
-          setIsCheckingAuth(false);
-          setAuthChecked(true);
-          return;
-        }
-
+        if (!u || !u.email) return;
         setUser(u);
-        
-        // Load or create customer profile
+
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
           setCustomer(customers[0]);
@@ -127,25 +115,12 @@ export default function Home() {
           });
           setCustomer(newCustomer);
         }
-        
-        setIsCheckingAuth(false);
-        setAuthChecked(true);
       } catch (error) {
         console.error('Auth error:', error);
-        setIsCheckingAuth(false);
-        setAuthChecked(true);
       }
     };
     loadUser();
   }, []);
-
-  if (isCheckingAuth || !authChecked) {
-    return (
-      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" />
-      </div>
-    );
-  }
 
   // Guest mode - show browse-friendly home
   if (!user || !customer) {
