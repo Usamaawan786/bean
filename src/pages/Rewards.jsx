@@ -23,28 +23,22 @@ export default function Rewards() {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) {
-          base44.auth.redirectToLogin(createPageUrl("Rewards"));
-          return;
-        }
+        if (!isAuth) return; // Allow guests to browse rewards
         const u = await base44.auth.me();
         setUser(u);
-      const customers = await base44.entities.Customer.filter({ created_by: u.email });
-      if (customers.length > 0) {
-        const customerData = customers[0];
-
-        // Auto-update tier based on total points
-        const calculatedTier = calculateTier(customerData.total_points_earned || 0);
-        if (calculatedTier !== customerData.tier) {
-          await base44.entities.Customer.update(customerData.id, { tier: calculatedTier });
-          customerData.tier = calculatedTier;
+        const customers = await base44.entities.Customer.filter({ created_by: u.email });
+        if (customers.length > 0) {
+          const customerData = customers[0];
+          const calculatedTier = calculateTier(customerData.total_points_earned || 0);
+          if (calculatedTier !== customerData.tier) {
+            await base44.entities.Customer.update(customerData.id, { tier: calculatedTier });
+            customerData.tier = calculatedTier;
+          }
+          setCustomer(customerData);
         }
-
-        setCustomer(customerData);
+      } catch (error) {
+        console.error("Error loading user:", error);
       }
-    } catch (error) {
-      base44.auth.redirectToLogin(createPageUrl("Rewards"));
-    }
     };
     loadUser();
   }, []);
