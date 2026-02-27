@@ -29,15 +29,11 @@ export default function Shop() {
           setUser(null);
         }
       } catch (error) {
-        // Allow browsing without login
         setUser(null);
-      } finally {
-        setAuthChecked(true);
       }
     };
     loadUser();
     
-    // Load cart from localStorage
     const savedCart = localStorage.getItem("bean_cart");
     if (savedCart) {
       setCart(JSON.parse(savedCart));
@@ -45,11 +41,8 @@ export default function Shop() {
   }, []);
 
   useEffect(() => {
-    // Save cart to localStorage
     localStorage.setItem("bean_cart", JSON.stringify(cart));
   }, [cart]);
-
-  const [authChecked, setAuthChecked] = useState(false);
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
