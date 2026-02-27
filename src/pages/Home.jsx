@@ -22,8 +22,8 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [authChecked, setAuthChecked] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  const [authChecked, setAuthChecked] = useState(true);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
