@@ -98,7 +98,9 @@ export default function Home() {
         const isAuth = await base44.auth.isAuthenticated();
         
         if (!isAuth) {
-          window.location.replace(createPageUrl("Login"));
+          // Allow guest browsing — don't redirect
+          setIsCheckingAuth(false);
+          setAuthChecked(true);
           return;
         }
 
@@ -106,8 +108,6 @@ export default function Home() {
         if (!u || !u.email) {
           setIsCheckingAuth(false);
           setAuthChecked(true);
-          setUser(null);
-          setCustomer(null);
           return;
         }
 
@@ -134,8 +134,6 @@ export default function Home() {
         console.error('Auth error:', error);
         setIsCheckingAuth(false);
         setAuthChecked(true);
-        setUser(null);
-        setCustomer(null);
       }
     };
     loadUser();
