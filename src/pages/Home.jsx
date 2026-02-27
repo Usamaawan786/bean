@@ -147,23 +147,56 @@ export default function Home() {
     );
   }
 
-  // Guest mode - show sign in prompt
+  // Guest mode - show browse-friendly home
   if (!user || !customer) {
     return (
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
           <div className="relative max-w-lg mx-auto px-5 pt-12 pb-16">
+            <div className="flex items-center gap-2 text-[#D4C4B0] text-sm font-medium mb-3">
+              <Coffee className="h-4 w-4" />
+              <span>Bean Rewards</span>
+            </div>
             <h1 className="text-4xl font-bold mb-2">Welcome to Bean! ☕</h1>
-            <p className="text-[#E8DED8] text-base">Sign in to access your rewards</p>
+            <p className="text-[#E8DED8] text-base">Premium coffee, rewards & community</p>
           </div>
         </div>
 
-        <div className="max-w-lg mx-auto px-5 pt-6 pb-24">
+        <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-5">
+          {/* Shop teaser */}
+          <Link to={createPageUrl("Shop")}>
+            <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="rounded-2xl bg-gradient-to-br from-[#F5EBE8] to-[#EDE3DF] p-4">
+                <Coffee className="h-7 w-7 text-[#8B7355]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-[#5C4A3A] text-lg">Browse the Shop</h3>
+                <p className="text-xs text-[#8B7355] mt-1">Coffee beans, equipment & more</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
+            </div>
+          </Link>
+
+          {/* Community teaser */}
+          <Link to={createPageUrl("Community")}>
+            <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-4">
+                <Users className="h-7 w-7 text-[#8B7355]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-[#5C4A3A] text-lg">Community</h3>
+                <p className="text-xs text-[#8B7355] mt-1">See what coffee lovers are sharing</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
+            </div>
+          </Link>
+
+          {/* Sign in CTA */}
           <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-3xl p-8 text-white text-center">
-            <Star className="h-12 w-12 mx-auto mb-4" />
-            <h3 className="font-bold text-2xl mb-3">Join Bean Rewards</h3>
-            <p className="text-sm text-[#E8DED8] mb-6">Earn points with every purchase, get free coffee, and unlock exclusive perks</p>
-            <Button 
+            <Star className="h-10 w-10 mx-auto mb-3" />
+            <h3 className="font-bold text-xl mb-2">Join Bean Rewards</h3>
+            <p className="text-sm text-[#E8DED8] mb-5">Earn points, get free coffee, and unlock exclusive perks</p>
+            <Button
               onClick={() => navigate(createPageUrl("Login"))}
               className="w-full bg-white text-[#8B7355] hover:bg-[#E8DED8] font-bold py-6 text-lg"
             >
