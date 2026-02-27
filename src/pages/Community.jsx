@@ -249,7 +249,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
             <h3 className="font-bold text-[#5C4A3A] mb-2">Join the Conversation</h3>
             <p className="text-sm text-[#8B7355] mb-4">Sign in to share your coffee moments with the community</p>
             <Button 
-              onClick={() => base44.auth.redirectToLogin(window.location.href)}
+              onClick={() => { window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname); }}
               className="bg-[#8B7355] hover:bg-[#6B5744] text-white"
             >
               Sign In to Post
