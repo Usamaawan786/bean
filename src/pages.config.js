@@ -58,17 +58,16 @@ import Community from './pages/Community';
 import FlashDrops from './pages/FlashDrops';
 import GiftCards from './pages/GiftCards';
 import Home from './pages/Home';
-import Login from './pages/Login';
 import Moderation from './pages/Moderation';
 import Orders from './pages/Orders';
 import Profile from './pages/Profile';
 import Referral from './pages/Referral';
 import Rewards from './pages/Rewards';
 import Shop from './pages/Shop';
-import Signup from './pages/Signup';
 import Waitlist from './pages/Waitlist';
 import Wallet from './pages/Wallet';
 import waitlist from './pages/waitlist';
+import SignIn from './pages/SignIn';
 import __Layout from './Layout.jsx';
 
 
@@ -84,17 +83,16 @@ export const PAGES = {
     "FlashDrops": FlashDrops,
     "GiftCards": GiftCards,
     "Home": Home,
-    "Login": Login,
     "Moderation": Moderation,
     "Orders": Orders,
     "Profile": Profile,
     "Referral": Referral,
     "Rewards": Rewards,
     "Shop": Shop,
-    "Signup": Signup,
     "Waitlist": Waitlist,
     "Wallet": Wallet,
     "waitlist": waitlist,
+    "SignIn": SignIn,
 }
 
 export const pagesConfig = {
