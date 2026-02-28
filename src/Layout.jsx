@@ -9,8 +9,7 @@ const guestNavItems = [
   { name: "Home", icon: Home, page: "Home" },
   { name: "Shop", icon: ShoppingBag, page: "Shop" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
-  { name: "Community", icon: Users, page: "Community" },
-  { name: "Sign In", icon: LogIn, page: "SignIn" }
+  { name: "Community", icon: Users, page: "Community" }
 ];
 
 const authNavItems = [

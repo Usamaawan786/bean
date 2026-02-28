@@ -167,18 +167,7 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Sign in CTA */}
-          <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-3xl p-8 text-white text-center">
-            <Star className="h-10 w-10 mx-auto mb-3" />
-            <h3 className="font-bold text-xl mb-2">Join Bean Rewards</h3>
-            <p className="text-sm text-[#E8DED8] mb-5">Earn points, get free coffee, and unlock exclusive perks</p>
-            <Button
-              onClick={() => navigate(createPageUrl("Login"))}
-              className="w-full bg-white text-[#8B7355] hover:bg-[#E8DED8] font-bold py-6 text-lg"
-            >
-              Sign In / Sign Up
-            </Button>
-          </div>
+
         </div>
       </div>
     );
