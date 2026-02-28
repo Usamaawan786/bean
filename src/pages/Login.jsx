@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Coffee } from "lucide-react";
-import { useAuth } from "@/lib/AuthContext";
+
 
 export default function Login() {
     const [email, setEmail] = useState("");
@@ -14,7 +14,7 @@ export default function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const { checkAppState } = useAuth();
+  
 
     const from = new URLSearchParams(location.search).get("next") || new URLSearchParams(location.search).get("from") || "/";
 
@@ -28,7 +28,7 @@ export default function Login() {
         setIsLoading(true);
         try {
             await base44.auth.loginViaEmailPassword(email, password);
-            await checkAppState();
+           
             toast.success("Welcome back!");
             navigate(from.startsWith('http') ? '/' : from);
         } catch (error) {
