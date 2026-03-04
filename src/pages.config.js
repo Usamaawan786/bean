@@ -69,6 +69,7 @@ import Waitlist from './pages/Waitlist';
 import Wallet from './pages/Wallet';
 import waitlist from './pages/waitlist';
 import Landing from './pages/Landing';
+import Welcome from './pages/Welcome';
 import __Layout from './Layout.jsx';
 
 
@@ -95,6 +96,7 @@ export const PAGES = {
     "Wallet": Wallet,
     "waitlist": waitlist,
     "Landing": Landing,
+    "Welcome": Welcome,
 }
 
 export const pagesConfig = {
