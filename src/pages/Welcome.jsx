@@ -34,7 +34,7 @@ export default function Welcome() {
           </motion.div>
 
           <motion.p {...fadeUp(0.1)} className="text-[#D4C4B0] text-sm font-semibold tracking-widest uppercase mb-2">
-            Bean Coffee · Karachi
+            Bean | Brews · Bites · Bar
           </motion.p>
 
           <motion.h1 {...fadeUp(0.2)} className="text-4xl font-bold leading-tight mb-4">
