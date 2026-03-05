@@ -9,7 +9,7 @@ export default function SignIn() {
       if (auth) {
         window.location.href = createPageUrl("Home");
       } else {
-        base44.auth.redirectToLogin(createPageUrl("Home"));
+        window.location.href = createPageUrl("Welcome");
       }
     });
   }, []);
