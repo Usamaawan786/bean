@@ -8,6 +8,7 @@ import { createPageUrl } from "@/utils";
 import PostCard from "@/components/community/PostCard";
 import PostComposer from "@/components/community/PostComposer";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/shared/PullToRefresh";
 import AppHeader from "@/components/shared/AppHeader";
 
