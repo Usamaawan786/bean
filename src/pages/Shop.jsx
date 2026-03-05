@@ -62,7 +62,7 @@ export default function Shop() {
   const handleAddToCart = (product) => {
     if (!user) {
       toast.error("Please sign in to add items to cart");
-      window.location.href = createPageUrl("Login") + "?next=" + encodeURIComponent(window.location.pathname);
+      base44.auth.redirectToLogin(window.location.pathname);
       return;
     }
     
