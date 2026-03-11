@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export default function Shop() {
+  // user state removed - cart is available to all guests
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
