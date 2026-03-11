@@ -44,12 +44,6 @@ export default function Shop() {
   const featuredProducts = (products || []).filter((p) => p.featured);
 
   const handleAddToCart = (product) => {
-    if (!user) {
-      toast.error("Please sign in to add items to cart");
-      base44.auth.redirectToLogin(window.location.pathname);
-      return;
-    }
-    
     const existingItem = cart.find((item) => item.id === product.id);
     if (existingItem) {
       setCart(cart.map((item) =>
