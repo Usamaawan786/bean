@@ -12,28 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export default function Shop() {
-  const [user, setUser] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const isAuth = await base44.auth.isAuthenticated();
-        if (isAuth) {
-          const u = await base44.auth.me();
-          setUser(u);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        setUser(null);
-      }
-    };
-    loadUser();
-    
     const savedCart = localStorage.getItem("bean_cart");
     if (savedCart) {
       setCart(JSON.parse(savedCart));
