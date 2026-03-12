@@ -21,6 +21,24 @@ export default function Waitlist() {
   const [totalSignups, setTotalSignups] = useState(147);
 
   useEffect(() => {
+    // Meta Pixel initialization
+    if (typeof window !== 'undefined' && !window.fbq) {
+      (function(f,b,e,v,n,t,s) {
+        if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)
+      })(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      window.fbq('init', '3019559928433122');
+    }
+    
+    // Track PageView
+    if (window.fbq) {
+      window.fbq('track', 'PageView');
+    }
+
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
     if (ref) {
@@ -49,6 +67,14 @@ export default function Waitlist() {
         setPosition(response.data.position);
         setReferralCode(response.data.referralCode);
         setSubmitted(true);
+
+        // Track conversion event
+        if (window.fbq) {
+          window.fbq('track', 'Lead', {
+            content_name: 'Waitlist Signup',
+            content_category: 'Waitlist'
+          });
+        }
 
         confetti({
           particleCount: 100,
@@ -230,6 +256,11 @@ export default function Waitlist() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F5F1ED] to-[#EBE5DF]">
+      <noscript>
+        <img height="1" width="1" style={{ display: 'none' }}
+          src="https://www.facebook.com/tr?id=3019559928433122&ev=PageView&noscript=1"
+        />
+      </noscript>
       <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-20">
           <motion.div
