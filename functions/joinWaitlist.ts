@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
     try {
@@ -8,6 +8,31 @@ Deno.serve(async (req) => {
         // Validate input
         if (!full_name || !email) {
             return Response.json({ error: 'Name and email are required' }, { status: 400 });
+        }
+
+        // Check for duplicate email
+        const existingSignups = await base44.asServiceRole.entities.WaitlistSignup.filter({ email });
+        if (existingSignups.length > 0) {
+            return Response.json({ 
+                error: 'This email is already registered on the waitlist',
+                duplicate: true 
+            }, { status: 409 });
+        }
+
+        // Get client IP address
+        const clientIP = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+                        req.headers.get('x-real-ip') || 
+                        'unknown';
+
+        // Check for duplicate IP (if IP is known)
+        if (clientIP !== 'unknown') {
+            const ipSignups = await base44.asServiceRole.entities.WaitlistSignup.filter({ ip_address: clientIP });
+            if (ipSignups.length > 0) {
+                return Response.json({ 
+                    error: 'A signup from this location has already been registered',
+                    duplicate: true 
+                }, { status: 409 });
+            }
         }
 
         // Generate unique referral code
@@ -24,7 +49,8 @@ Deno.serve(async (req) => {
             email,
             referral_code: refCode,
             referred_by: referred_by || null,
-            position: newPosition
+            position: newPosition,
+            ip_address: clientIP
         });
 
         // Send welcome email
