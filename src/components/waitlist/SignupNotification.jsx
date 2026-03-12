@@ -29,16 +29,16 @@ export default function SignupNotification() {
       });
       setShow(true);
 
-      setTimeout(() => setShow(false), 4000);
+      setTimeout(() => setShow(false), 6000);
     };
 
-    // Show first notification after 3 seconds
-    const initialTimeout = setTimeout(generateNotification, 3000);
+    // Show first notification after 5 seconds
+    const initialTimeout = setTimeout(generateNotification, 5000);
 
-    // Then show every 8-12 seconds
+    // Then show every 15-20 seconds
     const interval = setInterval(() => {
       generateNotification();
-    }, Math.random() * 4000 + 8000);
+    }, Math.random() * 5000 + 15000);
 
     return () => {
       clearTimeout(initialTimeout);
