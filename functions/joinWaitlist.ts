@@ -27,6 +27,17 @@ Deno.serve(async (req) => {
             position: newPosition
         });
 
+        // Send welcome email
+        try {
+            await base44.asServiceRole.functions.invoke('sendWaitlistWelcomeEmail', {
+                full_name,
+                email
+            });
+        } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+            // Don't fail the signup if email fails
+        }
+
         return Response.json({
             success: true,
             position: newPosition,
