@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import SignupNotification from "@/components/waitlist/SignupNotification";
 import Footer from "@/components/shared/Footer";
 
 export default function Waitlist() {
