@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import SignupNotification from "@/components/waitlist/SignupNotification";
+import Footer from "@/components/shared/Footer";
 
 export default function Waitlist() {
   const [formData, setFormData] = useState({
@@ -620,6 +621,8 @@ export default function Waitlist() {
           </div>
         </motion.div>
       </div>
+
+      <Footer />
     </div>);
 
 }
