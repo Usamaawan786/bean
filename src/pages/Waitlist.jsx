@@ -169,7 +169,7 @@ export default function Waitlist() {
                   <Sparkles className="h-5 w-5 text-green-300" />
                 </div>
                 <div>
-                  <p className="font-semibold">20% Off First 3 Purchases</p>
+                  <p className="font-semibold">10% Off First 3 Purchases</p>
                   <p className="text-sm text-[#E8DED8]">Exclusive early bird discount</p>
                 </div>
               </div>
@@ -305,7 +305,7 @@ export default function Waitlist() {
                 🎁 50 Points Welcome Bonus
               </Badge>
               <Badge className="bg-green-500/20 text-green-200 px-5 py-2.5 text-base font-semibold border border-green-400/30">
-                💰 20% Off Your First 3 Orders
+                💰 10% Off Your First 3 Orders
               </Badge>
               <Badge className="bg-purple-500/20 text-purple-200 px-5 py-2.5 text-base font-semibold border border-purple-400/30">
                 👑 Founding Member Badge
@@ -488,7 +488,7 @@ export default function Waitlist() {
                   <p className="text-xs text-[#8B7355]">Bonus Points</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-[#5C4A3A]">20%</p>
+                  <p className="text-2xl font-bold text-[#5C4A3A]">10%</p>
                   <p className="text-xs text-[#8B7355]">First Orders</p>
                 </div>
                 <div>
@@ -574,7 +574,7 @@ export default function Waitlist() {
                   <Sparkles className="h-6 w-6 text-white" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">20% Off First 3 Orders</h3>
+                  <h3 className="font-bold text-[#5C4A3A] text-lg mb-1">10% Off First 3 Orders</h3>
                   <p className="text-sm text-[#8B7355]">Save big on your first visits</p>
                 </div>
               </div>
