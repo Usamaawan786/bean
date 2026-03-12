@@ -23,17 +23,17 @@ export default function Waitlist() {
   useEffect(() => {
     // Meta Pixel initialization
     if (typeof window !== 'undefined' && !window.fbq) {
-      (function(f,b,e,v,n,t,s) {
-        if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)
-      })(window, document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      (function (f, b, e, v, n, t, s) {
+        if (f.fbq) return;n = f.fbq = function () {n.callMethod ?
+          n.callMethod.apply(n, arguments) : n.queue.push(arguments);};
+        if (!f._fbq) f._fbq = n;n.push = n;n.loaded = !0;n.version = '2.0';
+        n.queue = [];t = b.createElement(e);t.async = !0;
+        t.src = v;s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s);
+      })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
       window.fbq('init', '3019559928433122');
     }
-    
+
     // Track PageView
     if (window.fbq) {
       window.fbq('track', 'PageView');
@@ -258,8 +258,8 @@ export default function Waitlist() {
     <div className="min-h-screen bg-gradient-to-br from-[#F5F1ED] to-[#EBE5DF]">
       <noscript>
         <img height="1" width="1" style={{ display: 'none' }}
-          src="https://www.facebook.com/tr?id=3019559928433122&ev=PageView&noscript=1"
-        />
+        src="https://www.facebook.com/tr?id=3019559928433122&ev=PageView&noscript=1" />
+
       </noscript>
       <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-20">
@@ -453,17 +453,17 @@ export default function Waitlist() {
                 <div className="w-14 h-14 bg-gradient-to-br from-[#8B7355] to-[#6B5744] rounded-full flex items-center justify-center text-white text-xl font-bold">S</div>
                 <div>
                   <p className="font-bold text-[#5C4A3A]">Sarah Khan</p>
-                  <p className="text-sm text-[#8B7355]">Founding Member • F-7 Islamabad</p>
+                  <p className="text-sm text-[#8B7355]">Founding Member • Bahria Phase 7
+                  </p>
                 </div>
               </div>
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7 }}
-            className="sticky top-8">
+          <motion.div initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.7 }}
+          className="sticky top-8">
 
             <div className="bg-white rounded-3xl border-2 border-[#E8DED8] shadow-2xl p-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-transparent rounded-full -mr-16 -mt-16"></div>
