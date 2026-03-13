@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coffee, Users, Calendar, Gift, Sparkles, ArrowRight, CheckCircle, MapPin, Share2 } from "lucide-react";
+import { Coffee, Users, Calendar, Trophy, Gift, Sparkles, ArrowRight, CheckCircle, MapPin, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
