@@ -83,6 +83,9 @@ export default function Waitlist() {
         });
 
         toast.success("Welcome to the BEAN community! 🎉");
+
+        // Reload count after signup
+        await loadTotalSignups();
       } else {
         toast.error(response.data.error || "Something went wrong.");
       }
