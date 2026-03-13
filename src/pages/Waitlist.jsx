@@ -49,8 +49,8 @@ export default function Waitlist() {
 
   const loadTotalSignups = async () => {
     try {
-      const response = await base44.functions.invoke('getWaitlistCount', {});
-      setTotalSignups(response.data.count);
+      const signups = await base44.entities.WaitlistSignup.list();
+      setTotalSignups(signups.length);
     } catch (error) {
       console.error("Failed to load signups");
       setTotalSignups(0);
