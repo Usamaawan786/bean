@@ -14,9 +14,10 @@ Deno.serve(async (req) => {
         const existingSignups = await base44.asServiceRole.entities.WaitlistSignup.filter({ email });
         if (existingSignups.length > 0) {
             return Response.json({ 
-                error: 'This email is already registered on the waitlist',
+                success: false,
+                error: 'You are already registered on the waitlist! Check your email for confirmation.',
                 duplicate: true 
-            }, { status: 409 });
+            }, { status: 400 });
         }
 
         // Get client IP address
