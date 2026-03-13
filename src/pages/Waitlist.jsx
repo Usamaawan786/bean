@@ -247,7 +247,7 @@ export default function Waitlist() {
             transition={{ delay: 1.2 }}
             className="text-[#E8DED8] mt-8">
 
-            After following us on Instagram, we'll email you when it's time to join!
+            We'll email you when it's time to join the app and claim your rewards!
           </motion.p>
         </div>
       </div>);
