@@ -45,6 +45,21 @@ export default function CampaignEditor({ campaign, onClose }) {
     }
   });
 
+  const sendMutation = useMutation({
+    mutationFn: async (campaignId) => {
+      return base44.functions.invoke('sendCampaign', { campaign_id: campaignId });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['email-logs'] });
+      toast.success(`Campaign sent! ${response.data.delivered} delivered, ${response.data.failed} failed`);
+      onClose();
+    },
+    onError: (error) => {
+      toast.error('Failed to send campaign: ' + error.message);
+    }
+  });
+
   const handleSave = () => {
     if (!formData.name || !formData.subject || !formData.body) {
       toast.error('Please fill in all required fields');
@@ -192,14 +207,26 @@ export default function CampaignEditor({ campaign, onClose }) {
               Schedule Campaign
             </Button>
             <Button
-              onClick={() => {
-                if (confirm('Send this campaign immediately?')) {
-                  saveMutation.mutate({ ...formData, status: 'sending' });
+              onClick={async () => {
+                if (!formData.name || !formData.subject || !formData.body) {
+                  toast.error('Please fill in all required fields');
+                  return;
+                }
+                if (confirm('Send this campaign immediately to all recipients?')) {
+                  // First save/update the campaign
+                  const savedCampaign = campaign 
+                    ? await base44.entities.EmailCampaign.update(campaign.id, { ...formData, status: 'sending' })
+                    : await base44.entities.EmailCampaign.create({ ...formData, status: 'sending' });
+                  
+                  // Then trigger the send function
+                  const campaignId = savedCampaign.id || campaign.id;
+                  sendMutation.mutate(campaignId);
                 }
               }}
+              disabled={sendMutation.isPending}
               className="bg-green-600 hover:bg-green-700">
               <Send className="h-4 w-4 mr-2" />
-              Send Now
+              {sendMutation.isPending ? 'Sending...' : 'Send Now'}
             </Button>
           </div>
         </Card>
