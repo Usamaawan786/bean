@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import AdminDashboard from './pages/AdminDashboard';
+import AdminEmails from './pages/AdminEmails';
 import AdminExpenses from './pages/AdminExpenses';
 import AdminInventory from './pages/AdminInventory';
 import AdminPOS from './pages/AdminPOS';
@@ -70,11 +71,13 @@ import Waitlist from './pages/Waitlist';
 import Wallet from './pages/Wallet';
 import Welcome from './pages/Welcome';
 import waitlist from './pages/waitlist';
+import CampaignDownload from './pages/CampaignDownload';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "AdminDashboard": AdminDashboard,
+    "AdminEmails": AdminEmails,
     "AdminExpenses": AdminExpenses,
     "AdminInventory": AdminInventory,
     "AdminPOS": AdminPOS,
@@ -97,10 +100,11 @@ export const PAGES = {
     "Wallet": Wallet,
     "Welcome": Welcome,
     "waitlist": waitlist,
+    "CampaignDownload": CampaignDownload,
 }
 
 export const pagesConfig = {
-    mainPage: "Welcome",
+    mainPage: "AdminPOS",
     Pages: PAGES,
     Layout: __Layout,
 };
