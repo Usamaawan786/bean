@@ -47,12 +47,12 @@ export default function CampaignEditor({ campaign, onClose }) {
 
   const sendMutation = useMutation({
     mutationFn: async (campaignId) => {
-      return base44.functions.invoke('sendCampaign', { campaign_id: campaignId });
+      return base44.functions.invoke('sendCampaignViaGHL', { campaign_id: campaignId });
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['email-campaigns'] });
       queryClient.invalidateQueries({ queryKey: ['email-logs'] });
-      toast.success(`Campaign sent! ${response.data.delivered} delivered, ${response.data.failed} failed`);
+      toast.success(`Campaign sent via GoHighLevel! ${response.data.delivered} delivered, ${response.data.failed} failed`);
       onClose();
     },
     onError: (error) => {
