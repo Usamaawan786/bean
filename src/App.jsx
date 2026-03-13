@@ -6,7 +6,6 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
-import WaitlistLeaderboard from './pages/WaitlistLeaderboard';
 import AdminEmails from './pages/AdminEmails';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -40,7 +39,6 @@ function App() {
                 }
               />
             ))}
-            <Route path="/WaitlistLeaderboard" element={<WaitlistLeaderboard />} />
             <Route path="/AdminEmails" element={<AdminEmails />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>

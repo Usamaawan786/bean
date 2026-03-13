@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Coffee, Users, Calendar, Trophy, Gift, Sparkles, ArrowRight, CheckCircle, MapPin, Share2 } from "lucide-react";
+import { Coffee, Users, Calendar, Gift, Sparkles, ArrowRight, CheckCircle, MapPin, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -266,18 +266,11 @@ export default function Waitlist() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.2 }}
-            className="mt-8 space-y-4">
+            className="mt-8">
 
             <p className="text-[#E8DED8]">
               We'll email you when it's time to join the app and claim your rewards!
             </p>
-
-            <Button
-              onClick={() => window.location.href = '/WaitlistLeaderboard'}
-              className="bg-white/20 backdrop-blur-lg border border-white/30 text-white hover:bg-white/30 w-full">
-              <Trophy className="h-5 w-5 mr-2" />
-              View Referral Leaderboard
-            </Button>
           </motion.div>
         </div>
       </div>);
@@ -324,28 +317,14 @@ export default function Waitlist() {
 
             </motion.div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-lg px-4 py-2 rounded-full border border-white/20">
-                <Users className="h-4 w-4 text-amber-300" />
-                <span className="text-sm font-medium">{totalSignups} coffee lovers already joined</span>
-              </motion.div>
-              
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: "spring" }}>
-                <Button
-                  onClick={() => window.location.href = '/WaitlistLeaderboard'}
-                  className="bg-white/10 backdrop-blur-lg border border-white/20 text-white hover:bg-white/20 text-sm">
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Leaderboard
-                </Button>
-              </motion.div>
-            </div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-lg px-4 py-2 rounded-full border border-white/20 mb-6">
+              <Users className="h-4 w-4 text-amber-300" />
+              <span className="text-sm font-medium">{totalSignups} coffee lovers already joined</span>
+            </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
