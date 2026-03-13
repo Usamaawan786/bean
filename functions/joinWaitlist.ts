@@ -65,6 +65,33 @@ Deno.serve(async (req) => {
             // Don't fail the signup if email fails
         }
 
+        // Send lead data to GoHighLevel webhook
+        try {
+            const ghlWebhookUrl = "https://services.leadconnectorhq.com/hooks/gj8OBCLmVBdkG2uJwiTN/webhook-trigger/fe044896-846d-465d-8078-0f9eeb44bcb7";
+            
+            const nameParts = full_name.split(' ');
+            const firstName = nameParts[0];
+            const lastName = nameParts.slice(1).join(' ') || '';
+
+            await fetch(ghlWebhookUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    position: newPosition,
+                    referralCode: refCode
+                }),
+            });
+            console.log("Successfully sent lead data to GoHighLevel webhook.");
+        } catch (ghlError) {
+            console.error("Error sending data to GHL webhook:", ghlError);
+            // Don't fail the signup if GHL webhook fails
+        }
+
         return Response.json({
             success: true,
             position: newPosition,
