@@ -18,7 +18,7 @@ export default function Waitlist() {
   const [submitted, setSubmitted] = useState(false);
   const [position, setPosition] = useState(null);
   const [referralCode, setReferralCode] = useState("");
-  const [totalSignups, setTotalSignups] = useState(147);
+  const [totalSignups, setTotalSignups] = useState(0);
 
   useEffect(() => {
     // Meta Pixel initialization
@@ -50,10 +50,10 @@ export default function Waitlist() {
   const loadTotalSignups = async () => {
     try {
       const response = await base44.functions.invoke('getWaitlistCount', {});
-      setTotalSignups(147 + response.data.count);
+      setTotalSignups(response.data.count);
     } catch (error) {
       console.error("Failed to load signups");
-      setTotalSignups(147);
+      setTotalSignups(0);
     }
   };
 
@@ -301,7 +301,7 @@ export default function Waitlist() {
               className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-lg px-4 py-2 rounded-full mb-6 border border-white/20">
 
               <Users className="h-4 w-4 text-amber-300" />
-              <span className="text-sm font-medium">{totalSignups}+ coffee lovers already joined</span>
+              <span className="text-sm font-medium">{totalSignups} coffee lovers already joined</span>
             </motion.div>
 
             <motion.h1
@@ -579,7 +579,7 @@ export default function Waitlist() {
               <Badge className="bg-red-500 text-white px-4 py-2 text-sm font-bold mb-4 shadow-lg animate-pulse">
                 LIMITED TIME OFFER
               </Badge>
-              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {500 - (totalSignups - 147)} Founding Spots Left</h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {Math.max(0, 500 - totalSignups)} Founding Spots Left</h2>
               <p className="text-lg md:text-xl text-[#E8DED8]">
                 Lock in your perks before we hit 500 members
               </p>
