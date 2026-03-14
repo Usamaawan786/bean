@@ -9,6 +9,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Use service role to send email (no auth required for waitlist emails)
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: email,
       from_name: "BEAN Coffee",
