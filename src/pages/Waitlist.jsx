@@ -249,6 +249,11 @@ export default function Waitlist() {
 
             <h3 className="text-xl font-bold mb-3">Move Up The List</h3>
             <p className="text-[#E8DED8] mb-6">Share your referral link - for every friend who joins, you both move up 3 spots!</p>
+            <div className="bg-amber-500/20 border border-amber-400/40 rounded-xl p-4 mb-4">
+              <p className="text-sm text-amber-100 leading-relaxed">
+                <strong className="text-amber-200">🌟 Elite Bean Ambassador:</strong> Refer 5+ friends and unlock exclusive discounts, VIP event access, and become a verified Coffee Creator in our community!
+              </p>
+            </div>
             
             <div className="flex gap-3">
               <Input
