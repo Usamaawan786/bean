@@ -18,9 +18,16 @@ Deno.serve(async (req) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light only">
+    <meta name="supported-color-schemes" content="light">
     <title>An Exclusive Invitation for You, BEAN Ambassador!</title>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            body, div, p, h1, h2, h3, ul, li, a { background-color: #F5F1ED !important; color: #5C4A3A !important; }
+        }
+    </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #F5F1ED; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #F5F1ED; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased; color-scheme: light only;">
     <div style="max-width: 600px; margin: 40px auto; background-color: #F5F1ED;">
         
         <div style="background: linear-gradient(135deg, #8B7355 0%, #6B5744 100%); padding: 50px 30px; text-align: center; border-radius: 16px 16px 0 0;">
