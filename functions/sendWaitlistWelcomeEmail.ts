@@ -9,13 +9,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Use service role to send email (no auth required for waitlist emails)
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: email,
-      from_name: "BEAN Coffee",
-      subject: `Welcome to BEAN, ${full_name}! Your Waitlist Confirmation`,
-      body: `
-<!DOCTYPE html>
+    const firstName = full_name.split(' ')[0];
+    
+    // Get GHL credentials from environment
+    const ghlApiKey = Deno.env.get('GHL_API_KEY');
+    const ghlLocationId = Deno.env.get('GHL_LOCATION_ID');
+
+    if (!ghlApiKey || !ghlLocationId) {
+      console.error('GHL credentials not configured');
+      return Response.json({ error: 'Email service not configured' }, { status: 500 });
+    }
+
+    // Send email via GoHighLevel
+    const ghlEmailUrl = `https://services.leadconnectorhq.com/conversations/messages/email`;
+    
+    const emailBody = `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -40,7 +48,7 @@ Deno.serve(async (req) => {
         <div style="background-color: white; padding: 45px 40px; border-radius: 0 0 16px 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
             
             <p style="font-size: 18px; color: #5C4A3A; line-height: 1.8; margin: 0 0 28px 0;">
-                Hi <strong>${full_name}</strong>,
+                Hi <strong>${firstName}</strong>,
             </p>
             
             <p style="font-size: 16px; color: #5C4A3A; line-height: 1.8; margin: 0 0 36px 0;">
@@ -114,9 +122,30 @@ Deno.serve(async (req) => {
         </div>
     </div>
 </body>
-</html>
-`
+</html>`;
+
+    const ghlResponse = await fetch(ghlEmailUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${ghlApiKey}`,
+        'Content-Type': 'application/json',
+        'Version': '2021-07-28'
+      },
+      body: JSON.stringify({
+        type: 'Email',
+        emailFrom: 'BEAN Coffee <noreply@beanpakistan.com>',
+        emailTo: [email],
+        subject: `Welcome to BEAN, ${firstName}! Your Waitlist Confirmation`,
+        html: emailBody,
+        locationId: ghlLocationId
+      })
     });
+
+    if (!ghlResponse.ok) {
+      const errorText = await ghlResponse.text();
+      console.error('GHL Email API Error:', errorText);
+      return Response.json({ error: 'Failed to send email' }, { status: 500 });
+    }
 
     return Response.json({ success: true });
   } catch (error) {
