@@ -14,8 +14,8 @@ Deno.serve(async (req) => {
         
         let updated = 0;
         let skipped = 0;
-        const BATCH_SIZE = 10;
-        const DELAY_MS = 1000; // 1 second delay between batches
+        const BATCH_SIZE = 5;
+        const DELAY_MS = 2000; // 2 second delay between batches
 
         // Process in batches
         for (let i = 0; i < signups.length; i += BATCH_SIZE) {
