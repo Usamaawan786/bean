@@ -14,19 +14,35 @@ Deno.serve(async (req) => {
         
         let updated = 0;
         let skipped = 0;
+        const BATCH_SIZE = 10;
+        const DELAY_MS = 1000; // 1 second delay between batches
 
-        for (const signup of signups) {
-            // Only update if referral_link is missing
-            if (!signup.referral_link && signup.referral_code) {
-                const refLink = `https://bean.base44.app/waitlist?referred_by=${signup.referral_code}`;
-                
-                await base44.asServiceRole.entities.WaitlistSignup.update(signup.id, {
-                    referral_link: refLink
-                });
-                
-                updated++;
-            } else {
-                skipped++;
+        // Process in batches
+        for (let i = 0; i < signups.length; i += BATCH_SIZE) {
+            const batch = signups.slice(i, i + BATCH_SIZE);
+            
+            // Process batch concurrently
+            const promises = batch.map(async (signup) => {
+                if (!signup.referral_link && signup.referral_code) {
+                    const refLink = `https://bean.base44.app/waitlist?referred_by=${signup.referral_code}`;
+                    
+                    await base44.asServiceRole.entities.WaitlistSignup.update(signup.id, {
+                        referral_link: refLink
+                    });
+                    
+                    return 'updated';
+                } else {
+                    return 'skipped';
+                }
+            });
+
+            const results = await Promise.all(promises);
+            updated += results.filter(r => r === 'updated').length;
+            skipped += results.filter(r => r === 'skipped').length;
+
+            // Delay between batches (except for the last batch)
+            if (i + BATCH_SIZE < signups.length) {
+                await new Promise(resolve => setTimeout(resolve, DELAY_MS));
             }
         }
 
