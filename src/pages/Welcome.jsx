@@ -54,6 +54,12 @@ export default function Welcome() {
 
             </span>
           </motion.div>
+
+          <Link to={createPageUrl("Home")}>
+            <motion.button {...fadeUp(0.4)} className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105">
+              Join the Club →
+            </motion.button>
+          </Link>
         </div>
       </div>
 
