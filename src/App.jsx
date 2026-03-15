@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import AdminEmails from './pages/AdminEmails';
 import AdminReferrals from './pages/AdminReferrals';
+import Welcome from './pages/Welcome';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -24,11 +25,7 @@ function App() {
         <Router>
           <NavigationTracker />
           <Routes>
-            <Route path="/" element={
-              <LayoutWrapper currentPageName={mainPageKey}>
-                <MainPage />
-              </LayoutWrapper>
-            } />
+            <Route path="/" element={<Welcome />} />
             {Object.entries(Pages).map(([path, Page]) => (
               <Route
                 key={path}
