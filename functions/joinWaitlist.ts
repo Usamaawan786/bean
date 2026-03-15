@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
                     lastName: lastName,
                     email: email,
                     position: newPosition,
-                    referralCode: refCode
+                    referralCode: refCode,
+                    referralLink: `https://bean.base44.app/waitlist?referred_by=${refCode}`
                 }),
             });
             console.log("Successfully sent lead data to GoHighLevel webhook.");
