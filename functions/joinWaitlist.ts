@@ -34,8 +34,21 @@ Deno.serve(async (req) => {
             referral_link: refLink,
             referred_by: referred_by || null,
             position: newPosition,
-            ip_address: clientIP
+            ip_address: clientIP,
+            eba_status: "None"
         });
+
+        // Check if referrer should be promoted to EBA
+        if (referred_by) {
+            try {
+                await base44.asServiceRole.functions.invoke('checkAndPromoteEBA', {
+                    referral_code: referred_by
+                });
+            } catch (ebaError) {
+                console.error('EBA check failed:', ebaError);
+                // Don't fail the signup if EBA check fails
+            }
+        }
 
         // Send welcome email
         try {

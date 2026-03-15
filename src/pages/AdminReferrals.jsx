@@ -167,6 +167,9 @@ export default function AdminReferrals() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-[#5C4A3A]">{stat.referrer.full_name}</h3>
+                          {stat.referrer.eba_status === 'EBA' && (
+                            <Badge className="bg-green-600 text-white">✓ EBA</Badge>
+                          )}
                           <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
                             {stat.count} referrals
                           </Badge>
@@ -216,7 +219,12 @@ export default function AdminReferrals() {
                           #{index + 1}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-[#5C4A3A]">{stat.referrer.full_name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-[#5C4A3A]">{stat.referrer.full_name}</h3>
+                            {stat.referrer.eba_status === 'EBA' && (
+                              <Badge className="bg-green-600 text-white text-xs">✓ EBA</Badge>
+                            )}
+                          </div>
                           <p className="text-sm text-[#8B7355]">{stat.referrer.email}</p>
                           <p className="text-xs text-[#8B7355] mt-1">Code: {stat.referrer.referral_code}</p>
                         </div>
