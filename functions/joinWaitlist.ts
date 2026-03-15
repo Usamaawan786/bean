@@ -19,6 +19,9 @@ Deno.serve(async (req) => {
         const refCode = full_name.split(" ")[0].toUpperCase() + 
             Math.random().toString(36).substring(2, 6).toUpperCase();
 
+        // Generate complete referral link
+        const refLink = `https://bean.base44.app/waitlist?referred_by=${refCode}`;
+
         // Get current position using service role
         const signups = await base44.asServiceRole.entities.WaitlistSignup.list();
         const newPosition = signups.length + 1;
@@ -28,6 +31,7 @@ Deno.serve(async (req) => {
             full_name,
             email,
             referral_code: refCode,
+            referral_link: refLink,
             referred_by: referred_by || null,
             position: newPosition,
             ip_address: clientIP
