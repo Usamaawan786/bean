@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Coffee, Gift, Users, ShoppingBag, Star, Zap, Shield, FileText, MapPin, Instagram, MessageCircle } from "lucide-react";
+import { Coffee, Gift, Users, ShoppingBag, Star, Zap, Shield, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
@@ -71,12 +71,29 @@ export default function Welcome() {
 
       <div className="max-w-lg mx-auto px-5 pt-6 pb-16 space-y-5">
 
-        {/* ── ABOUT ── */}
-        <motion.div {...fadeUp(0.1)} className="bg-white rounded-3xl border border-[#E8DED8] p-7 shadow-sm text-center">
-          <h2 className="text-2xl font-bold text-[#5C4A3A] mb-3">More than just coffee</h2>
-          <p className="text-[#8B7355] leading-relaxed text-sm">
-            Bean is Karachi's specialty coffee experience. We source the world's finest beans, craft every cup with care, and reward our community for every sip they take. Whether you're a daily regular or a weekend explorer — there's always something brewing for you.
+        {/* ── COFFEE LOVER'S CLUB ── */}
+        <motion.div {...fadeUp(0.1)} className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] rounded-3xl p-8 text-white text-center shadow-xl">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 backdrop-blur mb-4">
+            <Coffee className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold mb-3">Coffee Lover's Club</h2>
+          <p className="text-[#E8DED8] leading-relaxed text-sm mb-6">
+            Join Karachi's most rewarding coffee community. Earn points with every sip, unlock exclusive perks, and connect with fellow coffee enthusiasts.
           </p>
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold">500+</div>
+              <div className="text-xs text-[#D4C4B0] mt-1">Members</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">4.9★</div>
+              <div className="text-xs text-[#D4C4B0] mt-1">Rating</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold">10K+</div>
+              <div className="text-xs text-[#D4C4B0] mt-1">Rewards</div>
+            </div>
+          </div>
         </motion.div>
 
         {/* ── FEATURES ── */}
@@ -124,33 +141,6 @@ export default function Welcome() {
           </div>
           <p className="font-bold text-xl mb-1">Loved by coffee lovers</p>
           <p className="text-[#E8DED8] text-sm">Join our growing Bean community earning rewards every single day.</p>
-        </motion.div>
-
-        {/* ── LOCATION / CONTACT ── */}
-        <motion.div {...fadeUp(0.4)} className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm">
-          <h2 className="text-lg font-bold text-[#5C4A3A] mb-4">Find Us</h2>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-[#8B7355] mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-[#5C4A3A] text-sm">Bean Coffee</p>
-                <p className="text-xs text-[#8B7355]">Karachi, Pakistan</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5 text-[#8B7355] shrink-0" />
-              <a href="mailto:support@beancoffee.co" className="text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors">
-                support@beancoffee.co
-              </a>
-            </div>
-            <div className="flex items-center gap-3">
-              <Instagram className="h-5 w-5 text-[#8B7355] shrink-0" />
-              <a href="https://instagram.com/beancoffee" target="_blank" rel="noopener noreferrer"
-                className="text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors">
-                @beancoffee
-              </a>
-            </div>
-          </div>
         </motion.div>
 
         {/* ── LEGAL ── */}
