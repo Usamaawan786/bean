@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     // Construct referral link
-    const referralLink = `https://bean-coffee.base44.app/Waitlist?referred_by=${referral_code}`;
+    const referralLink = `https://bean.base44.app/waitlist?referred_by=${referral_code}`;
     const firstName = full_name.split(' ')[0];
 
     const emailBody = `<!DOCTYPE html>
