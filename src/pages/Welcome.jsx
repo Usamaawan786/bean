@@ -139,7 +139,7 @@ export default function Welcome() {
           </motion.div>
         }
 
-        <p className="text-center text-xs text-[#C9B8A6] pb-2">© 2026 Bean Coffee · Karachi · All rights reserved.</p>
+        <p className="text-center text-xs text-[#C9B8A6] pb-2">© 2026 Bean Coffee · Pakistan · All rights reserved</p>
       </div>
     </div>);
 
