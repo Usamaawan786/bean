@@ -45,11 +45,14 @@ export default function AdminReferrals() {
     return acc;
   }, {});
 
-  // Count referrals for each person
+  // Count referrals for each person (unique emails only)
   signups.forEach(signup => {
     if (signup.referred_by && referralStats[signup.referred_by]) {
-      referralStats[signup.referred_by].referrals.push(signup);
-      referralStats[signup.referred_by].count++;
+      const existingEmails = referralStats[signup.referred_by].referrals.map(r => r.email);
+      if (!existingEmails.includes(signup.email)) {
+        referralStats[signup.referred_by].referrals.push(signup);
+        referralStats[signup.referred_by].count++;
+      }
     }
   });
 
