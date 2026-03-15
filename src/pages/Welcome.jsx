@@ -60,22 +60,8 @@ export default function Welcome() {
       <div className="max-w-lg mx-auto px-5 pt-12 pb-24 space-y-4">
 
         {/* ── ACTION CARDS ── */}
-        <Link to={createPageUrl("Shop")}>
-          <motion.div {...fadeUp(0.1)} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
-
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
-              <ShoppingBag className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-[#5C4A3A]">Browse the Shop</h3>
-              <p className="text-xs text-[#8B7355]">Coffee beans, equipment & more</p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
-          </motion.div>
-        </Link>
-
         <Link to={createPageUrl("Community")}>
-          <motion.div {...fadeUp(0.15)} className="bg-white my-2 p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+          <motion.div {...fadeUp(0.1)} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
 
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
               <Users className="h-6 w-6 text-white" />
@@ -89,8 +75,8 @@ export default function Welcome() {
         </Link>
 
         <Link to={createPageUrl("Rewards")}>
-          <motion.div {...fadeUp(0.2)}
-          className="bg-white rounded-2xl p-5 shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+          <motion.div {...fadeUp(0.15)} className="bg-white my-2 p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shrink-0">
               <Gift className="h-6 w-6 text-white" />
             </div>
@@ -104,7 +90,7 @@ export default function Welcome() {
 
         {/* ── SIGN IN CTA ── */}
         <Link to={createPageUrl("Home")}>
-          <motion.div {...fadeUp(0.25)} className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow">
+          <motion.div {...fadeUp(0.2)} className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow">
 
             <Coffee className="h-6 w-6 mx-auto mb-3" />
             <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>

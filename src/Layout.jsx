@@ -7,14 +7,12 @@ import { base44 } from "@/api/base44Client";
 
 const guestNavItems = [
   { name: "Home", icon: Home, page: "Home" },
-  { name: "Shop", icon: ShoppingBag, page: "Shop" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
   { name: "Community", icon: Users, page: "Community" }
 ];
 
 const authNavItems = [
   { name: "Home", icon: Home, page: "Home" },
-  { name: "Shop", icon: ShoppingBag, page: "Shop" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
   { name: "Community", icon: Users, page: "Community" },
   { name: "Profile", icon: UserCircle, page: "Profile" }
