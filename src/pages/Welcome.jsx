@@ -21,10 +21,10 @@ export default function Welcome() {
       <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden min-h-[45vh] flex items-center">
         {/* ambient blobs */}
         <div className="absolute inset-0 pointer-events-none">
-          <motion.div animate={{ x: [0,80,0], y: [0,40,0] }} transition={{ duration: 20, repeat: Infinity, ease:"linear" }}
-            className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-          <motion.div animate={{ x: [0,-60,0], y: [0,-30,0] }} transition={{ duration: 16, repeat: Infinity, ease:"linear" }}
-            className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl" />
+          <motion.div animate={{ x: [0, 80, 0], y: [0, 40, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
+          <motion.div animate={{ x: [0, -60, 0], y: [0, -30, 0] }} transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl" />
         </div>
 
         <div className="relative max-w-lg mx-auto px-6 py-16 text-left w-full">
@@ -44,14 +44,14 @@ export default function Welcome() {
           </motion.p>
 
           <motion.div {...fadeUp(0.3)} className="flex flex-wrap gap-2">
-            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">
-              Premium Beans
+            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Rewards
+
             </span>
-            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">
-              Earn Points
+            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Community
+
             </span>
-            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">
-              Exclusive Rewards
+            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Premium Coffee
+
             </span>
           </motion.div>
         </div>
@@ -61,8 +61,8 @@ export default function Welcome() {
 
         {/* ── ACTION CARDS ── */}
         <Link to={createPageUrl("Shop")}>
-          <motion.div {...fadeUp(0.1)} 
-            className="bg-white rounded-2xl p-5 shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+          <motion.div {...fadeUp(0.1)} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
               <ShoppingBag className="h-6 w-6 text-white" />
             </div>
@@ -75,8 +75,8 @@ export default function Welcome() {
         </Link>
 
         <Link to={createPageUrl("Community")}>
-          <motion.div {...fadeUp(0.15)} 
-            className="bg-white rounded-2xl p-5 shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+          <motion.div {...fadeUp(0.15)} className="bg-white my-2 p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
               <Users className="h-6 w-6 text-white" />
             </div>
@@ -89,8 +89,8 @@ export default function Welcome() {
         </Link>
 
         <Link to={createPageUrl("Rewards")}>
-          <motion.div {...fadeUp(0.2)} 
-            className="bg-white rounded-2xl p-5 shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+          <motion.div {...fadeUp(0.2)}
+          className="bg-white rounded-2xl p-5 shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shrink-0">
               <Gift className="h-6 w-6 text-white" />
             </div>
@@ -104,8 +104,8 @@ export default function Welcome() {
 
         {/* ── SIGN IN CTA ── */}
         <Link to={createPageUrl("Home")}>
-          <motion.div {...fadeUp(0.25)} 
-            className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-2xl p-6 shadow-lg text-white text-center hover:shadow-xl transition-shadow">
+          <motion.div {...fadeUp(0.25)} className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow">
+
             <Coffee className="h-6 w-6 mx-auto mb-3" />
             <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>
             <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee & more</p>
@@ -114,19 +114,19 @@ export default function Welcome() {
 
         {/* ── LEGAL ── */}
         <div className="flex justify-center gap-6 pt-2">
-          <button onClick={() => { setShowPrivacy(!showPrivacy); setShowTerms(false); }}
-            className="flex items-center gap-1.5 text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors font-medium">
+          <button onClick={() => {setShowPrivacy(!showPrivacy);setShowTerms(false);}}
+          className="flex items-center gap-1.5 text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors font-medium">
             <Shield className="h-4 w-4" /> Privacy Policy
           </button>
-          <button onClick={() => { setShowTerms(!showTerms); setShowPrivacy(false); }}
-            className="flex items-center gap-1.5 text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors font-medium">
+          <button onClick={() => {setShowTerms(!showTerms);setShowPrivacy(false);}}
+          className="flex items-center gap-1.5 text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors font-medium">
             <FileText className="h-4 w-4" /> Terms of Use
           </button>
         </div>
 
-        {showPrivacy && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
+        {showPrivacy &&
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
             <h3 className="font-bold text-lg flex items-center gap-2"><Shield className="h-5 w-5 text-[#8B7355]" /> Privacy Policy</h3>
             <p><strong>Last updated:</strong> March 2026</p>
             <p>Bean Coffee ("we", "us", or "our") is committed to protecting your privacy.</p>
@@ -136,11 +136,11 @@ export default function Welcome() {
             <p><strong>Security:</strong> We implement appropriate technical measures to protect your information against unauthorised access.</p>
             <p><strong>Your Rights:</strong> You may request access to, correction of, or deletion of your personal data by contacting us at support@beancoffee.co.</p>
           </motion.div>
-        )}
+        }
 
-        {showTerms && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
+        {showTerms &&
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
             <h3 className="font-bold text-lg flex items-center gap-2"><FileText className="h-5 w-5 text-[#8B7355]" /> Terms of Use</h3>
             <p><strong>Last updated:</strong> March 2026</p>
             <p>By using the Bean app, you agree to these Terms of Use.</p>
@@ -151,10 +151,10 @@ export default function Welcome() {
             <p><strong>Changes to Terms:</strong> We reserve the right to update these terms at any time. Continued use constitutes acceptance.</p>
             <p><strong>Contact:</strong> support@beancoffee.co</p>
           </motion.div>
-        )}
+        }
 
         <p className="text-center text-xs text-[#C9B8A6] pb-2">© 2026 Bean Coffee · Karachi · All rights reserved.</p>
       </div>
-    </div>
-  );
+    </div>);
+
 }
