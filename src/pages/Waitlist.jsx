@@ -337,8 +337,8 @@ export default function Waitlist() {
               transition={{ delay: 0.3 }}
               className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
 
-              Join Pakistan's Most<br />
-              <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">Exclusive Coffee Club</span>
+              Islamabad's First<br />
+              <span className="bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">Coffee Lover's Club</span>
             </motion.h1>
 
             <motion.p
@@ -347,8 +347,8 @@ export default function Waitlist() {
               transition={{ delay: 0.4 }}
               className="text-xl md:text-2xl text-[#E8DED8] mb-8">
 
-              Secret tastings • Brewing battles • Epic rewards<br />
-              <strong>Connect with passionate coffee lovers who get it.</strong>
+              Where great coffee meets great people.<br />
+              <strong>Exclusive events, challenges, rewards & more.</strong>
             </motion.p>
 
             <motion.div
@@ -445,6 +445,29 @@ export default function Waitlist() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.75 }}
+              className="bg-white rounded-3xl border-2 border-[#E8DED8] p-8 shadow-lg">
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#5C4A3A]">Coffee Social Hub</h3>
+              </div>
+              <p className="text-[#8B7355] mb-4 leading-relaxed">
+                Connect with fellow coffee enthusiasts! Share your coffee moments, follow your favorite creators, discover new recipes, learn brewing techniques, and engage with a vibrant community of coffee lovers.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Badge className="bg-pink-100 text-pink-700 border-pink-200">📸 Share Posts</Badge>
+                <Badge className="bg-blue-100 text-blue-700 border-blue-200">💬 Comment & Like</Badge>
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">👥 Follow Creators</Badge>
+                <Badge className="bg-amber-100 text-amber-700 border-amber-200">📚 Learn Recipes</Badge>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.85 }}
               className="bg-gradient-to-br from-[#F5EBE8] to-white rounded-3xl border-2 border-[#E8DED8] p-8 shadow-xl">
 
               <div className="flex gap-1 mb-4">
@@ -460,29 +483,6 @@ export default function Waitlist() {
                   <p className="text-sm text-[#8B7355]">Founding Member • Bahria Phase 7
                   </p>
                 </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.85 }}
-              className="bg-white rounded-3xl border-2 border-[#E8DED8] p-8 shadow-lg">
-
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Sparkles className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-[#5C4A3A]">Coffee Social Hub</h3>
-              </div>
-              <p className="text-[#8B7355] mb-4 leading-relaxed">
-                Share your brewing experiments, follow coffee creators, discover new recipes, and connect with a community that actually appreciates the difference between light and dark roast.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Badge className="bg-pink-100 text-pink-700 border-pink-200">📸 Share Posts</Badge>
-                <Badge className="bg-blue-100 text-blue-700 border-blue-200">💬 Comment & Like</Badge>
-                <Badge className="bg-purple-100 text-purple-700 border-purple-200">👥 Follow Creators</Badge>
-                <Badge className="bg-amber-100 text-amber-700 border-amber-200">📚 Learn Recipes</Badge>
               </div>
             </motion.div>
           </motion.div>
@@ -554,7 +554,19 @@ export default function Waitlist() {
               </div>
             </div>
 
-
+            <div className="mt-6 text-center">
+              <div className="flex items-center justify-center gap-4 text-sm text-[#8B7355]">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  <span>Islamabad Based</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-1">
+                  <Coffee className="h-4 w-4" />
+                  <span>Premium Quality</span>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
 
