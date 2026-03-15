@@ -3,6 +3,7 @@ import { createPageUrl } from "@/utils";
 import { Coffee, Gift, Users, ShoppingBag, Shield, FileText, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { base44 } from "@/api/base44Client";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -55,11 +56,13 @@ export default function Welcome() {
             </span>
           </motion.div>
 
-          <Link to={createPageUrl("Home")}>
-            <motion.button {...fadeUp(0.4)} className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105">
-              Join the Club →
-            </motion.button>
-          </Link>
+          <motion.button 
+            {...fadeUp(0.4)} 
+            onClick={() => base44.auth.redirectToLogin(createPageUrl("Home"))}
+            className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          >
+            Join the Club →
+          </motion.button>
         </div>
       </div>
 
@@ -95,14 +98,15 @@ export default function Welcome() {
         </Link>
 
         {/* ── SIGN IN CTA ── */}
-        <Link to={createPageUrl("Home")}>
-          <motion.div {...fadeUp(0.2)} className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow">
-
-            <Coffee className="h-6 w-6 mx-auto mb-3" />
-            <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>
-            <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee & more</p>
-          </motion.div>
-        </Link>
+        <motion.div 
+          {...fadeUp(0.2)} 
+          onClick={() => base44.auth.redirectToLogin(createPageUrl("Home"))}
+          className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+        >
+          <Coffee className="h-6 w-6 mx-auto mb-3" />
+          <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>
+          <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee & more</p>
+        </motion.div>
 
         {/* ── LEGAL ── */}
         <div className="flex justify-center gap-6 pt-2">
