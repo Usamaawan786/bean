@@ -40,7 +40,7 @@ export default function Welcome() {
           </motion.h1>
 
           <motion.p {...fadeUp(0.2)} className="text-[#E8DED8] text-base leading-relaxed mb-8 max-w-sm">
-            Premium coffee, earn rewards, join the community
+            Islamabad's First Coffee Lover's Club
           </motion.p>
 
           <motion.div {...fadeUp(0.3)} className="flex flex-wrap gap-2">
