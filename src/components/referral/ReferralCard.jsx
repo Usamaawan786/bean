@@ -1,31 +1,24 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Copy, Share2, Users, Gift, Check } from "lucide-react";
-import { toast } from "sonner";
 
 export default function ReferralCard({ referralCode, referralCount = 0 }) {
   const [copied, setCopied] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   
-  const referralLink = `${window.location.origin}?ref=${referralCode}`;
+  const referralLink = `https://bean.base44.app/waitlist?ref=${referralCode}`;
   
   const handleCopy = async () => {
     await navigator.clipboard.writeText(referralLink);
     setCopied(true);
-    toast.success("Referral link copied!");
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
-      await navigator.share({
-        title: "Join BrewCrew!",
-        text: "Get free coffee and earn rewards! Use my referral code.",
-        url: referralLink
-      });
-    } else {
-      handleCopy();
-    }
+    await navigator.clipboard.writeText(referralLink);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
   };
 
   return (
