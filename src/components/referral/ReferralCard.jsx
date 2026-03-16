@@ -58,29 +58,21 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
       </div>
       
       <div className="mt-5 bg-white/10 backdrop-blur rounded-2xl p-4">
-        <div className="text-xs text-[#E8DED8] mb-2">Your referral code</div>
-        <div className="flex items-center gap-3">
-          <code className="flex-1 bg-white/10 px-4 py-2.5 rounded-xl font-mono text-lg font-bold tracking-wider">
-            {referralCode}
+        <div className="text-xs text-[#E8DED8] mb-2">Your referral link</div>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 bg-white/10 px-3 py-2.5 rounded-xl text-xs font-mono truncate text-[#E8DED8]">
+            {referralLink}
           </code>
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleCopy}
-            className="hover:bg-white/20 text-white"
+            onClick={handleShare}
+            className="hover:bg-white/20 text-white shrink-0"
           >
-            {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+            {shareCopied ? <Check className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
           </Button>
         </div>
       </div>
-      
-      <Button
-        onClick={handleShare}
-        className="w-full mt-4 bg-white text-[#5C4A3A] hover:bg-[#F8F6F4] font-semibold rounded-xl"
-      >
-        <Share2 className="h-4 w-4 mr-2" />
-        Share with Friends
-      </Button>
       
       <div className="mt-4 flex items-center justify-center gap-6 text-sm">
         <div className="flex items-center gap-1.5 text-[#E8DED8]">
