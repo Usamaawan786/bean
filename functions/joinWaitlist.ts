@@ -54,8 +54,7 @@ Deno.serve(async (req) => {
         try {
             await base44.asServiceRole.functions.invoke('sendWaitlistWelcomeEmail', {
                 full_name,
-                email,
-                referral_link: refLink
+                email
             });
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
