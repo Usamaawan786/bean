@@ -3,10 +3,18 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { full_name, email, referred_by } = await req.json();
+        const { full_name, referred_by } = await req.json();
+        const rawEmail = (await req.json().catch(() => ({}))).email;
+        // Re-parse properly
+        const body = await new Response(req.body).json().catch(() => ({}));
+        // Already parsed above, use destructuring from body
+        const parsedBody = await req.clone().json();
+        const normalizedEmail = parsedBody.email?.toLowerCase().trim();
+        const parsedFullName = parsedBody.full_name;
+        const parsedReferredBy = parsedBody.referred_by;
 
         // Validate input
-        if (!full_name || !email) {
+        if (!parsedFullName || !normalizedEmail) {
             return Response.json({ error: 'Name and email are required' }, { status: 400 });
         }
 
@@ -16,7 +24,7 @@ Deno.serve(async (req) => {
                         'unknown';
 
         // Check for duplicate email FIRST
-        const existing = await base44.asServiceRole.entities.WaitlistSignup.filter({ email: email.toLowerCase().trim() });
+        const existing = await base44.asServiceRole.entities.WaitlistSignup.filter({ email: normalizedEmail });
         if (existing.length > 0) {
             return Response.json({
                 success: true,
@@ -26,8 +34,9 @@ Deno.serve(async (req) => {
             });
         }
 
-        // Normalize email
-        email = email.toLowerCase().trim();
+        const email = normalizedEmail;
+        const full_name = parsedFullName;
+        const referred_by_code = parsedReferredBy;
 
         // Generate unique referral code
         const refCode = full_name.split(" ")[0].toUpperCase() + 
