@@ -146,12 +146,10 @@ export default function Profile() {
     setIsUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: croppedFile });
-      setFormData(prev => ({ ...prev, profile_picture: file_url }));
-      
-      // Auto-save profile picture
       await base44.auth.updateMe({ profile_picture: file_url });
-      await loadUserData();
-      
+      // Update local state directly — don't rely on re-fetch for immediate UI update
+      setFormData(prev => ({ ...prev, profile_picture: file_url }));
+      setUser(prev => ({ ...prev, profile_picture: file_url }));
       toast.success("Profile picture updated!");
     } catch (error) {
       toast.error("Failed to upload image");
