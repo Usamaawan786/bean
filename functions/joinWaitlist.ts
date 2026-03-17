@@ -15,6 +15,20 @@ Deno.serve(async (req) => {
                         req.headers.get('x-real-ip') || 
                         'unknown';
 
+        // Check for duplicate email FIRST
+        const existing = await base44.asServiceRole.entities.WaitlistSignup.filter({ email: email.toLowerCase().trim() });
+        if (existing.length > 0) {
+            return Response.json({
+                success: true,
+                position: existing[0].position,
+                referralCode: existing[0].referral_code,
+                alreadyRegistered: true
+            });
+        }
+
+        // Normalize email
+        email = email.toLowerCase().trim();
+
         // Generate unique referral code
         const refCode = full_name.split(" ")[0].toUpperCase() + 
             Math.random().toString(36).substring(2, 6).toUpperCase();
