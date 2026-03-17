@@ -74,7 +74,7 @@ export default function Referral() {
   const userRank = topReferrers.findIndex(r => r.created_by === user?.email) + 1;
 
   const referralLink = customer?.referral_code 
-    ? `${window.location.origin}?ref=${customer.referral_code}`
+    ? `https://bean.base44.app/Home?ref=${customer.referral_code}`
     : "";
 
   const handleCopy = async () => {
@@ -133,7 +133,7 @@ export default function Referral() {
               <div className="text-xs text-[#E8DED8] mt-1">Friends Referred</div>
             </div>
             <div className="bg-white/10 rounded-2xl p-4 text-center">
-              <div className="text-3xl font-bold">{(customer?.referral_count || 0) * 100}</div>
+              <div className="text-3xl font-bold">{(customer?.referral_count || 0) * 25}</div>
               <div className="text-xs text-[#E8DED8] mt-1">Points Earned</div>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function Referral() {
             {[
               { step: 1, text: "Share your unique code with friends" },
               { step: 2, text: "They sign up using your code" },
-              { step: 3, text: "You both get 100 bonus points!" }
+              { step: 3, text: "You both get 25 bonus points!" }
             ].map(item => (
               <div key={item.step} className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#F5EBE8] flex items-center justify-center font-bold text-[#8B7355]">
@@ -342,7 +342,7 @@ export default function Referral() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-[#8B7355]">+100 pts</div>
+                  <div className="text-sm font-medium text-[#8B7355]">+25 pts</div>
                 </div>
               ))}
             </div>
