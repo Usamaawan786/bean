@@ -14,6 +14,13 @@ const fadeUp = (delay = 0) => ({
 export default function Welcome() {
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    base44.auth.isAuthenticated().then(isAuth => {
+      if (isAuth) navigate("/Home", { replace: true });
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F5F1ED] overflow-y-auto">
