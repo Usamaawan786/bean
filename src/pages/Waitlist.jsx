@@ -19,7 +19,6 @@ export default function Waitlist() {
   const [position, setPosition] = useState(null);
   const [referralCode, setReferralCode] = useState("");
   const [totalSignups, setTotalSignups] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Meta Pixel initialization
@@ -60,14 +59,9 @@ export default function Waitlist() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    setIsSubmitting(true);
 
     try {
-      const response = await base44.functions.invoke('joinWaitlist', {
-        ...formData,
-        email: formData.email.toLowerCase().trim()
-      });
+      const response = await base44.functions.invoke('joinWaitlist', formData);
 
       if (response.data.success) {
         setPosition(response.data.position);
@@ -98,8 +92,6 @@ export default function Waitlist() {
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -535,10 +527,9 @@ export default function Waitlist() {
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-[#8B7355] via-[#7A6448] to-[#6B5744] hover:shadow-2xl hover:scale-[1.02] transition-all text-white py-6 text-lg font-bold rounded-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100">
+                  className="w-full bg-gradient-to-r from-[#8B7355] via-[#7A6448] to-[#6B5744] hover:shadow-2xl hover:scale-[1.02] transition-all text-white py-6 text-lg font-bold rounded-xl">
 
-                  {isSubmitting ? "Joining..." : <> Claim Your Early Bird Perks <ArrowRight className="h-5 w-5 ml-2" /> </>}
+                  Claim Your Early Bird Perks <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
 
                 <div className="flex items-center justify-center gap-2 text-xs text-[#8B7355] pt-2">

@@ -22,18 +22,6 @@ Deno.serve(async (req) => {
         // Generate complete referral link
         const refLink = `https://bean.base44.app/waitlist?referred_by=${refCode}`;
 
-        // Check for duplicate email
-        const existingSignups = await base44.asServiceRole.entities.WaitlistSignup.filter({ email: email.toLowerCase().trim() });
-        if (existingSignups.length > 0) {
-            const existing = existingSignups[0];
-            return Response.json({
-                success: true,
-                position: existing.position,
-                referralCode: existing.referral_code,
-                already_registered: true
-            });
-        }
-
         // Get current position using service role
         const signups = await base44.asServiceRole.entities.WaitlistSignup.list();
         const newPosition = signups.length + 1;
@@ -41,7 +29,7 @@ Deno.serve(async (req) => {
         // Create signup using service role (bypasses auth)
         await base44.asServiceRole.entities.WaitlistSignup.create({
             full_name,
-            email: email.toLowerCase().trim(),
+            email,
             referral_code: refCode,
             referral_link: refLink,
             referred_by: referred_by || null,
