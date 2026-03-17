@@ -155,33 +155,53 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
             </div>
           )}
 
-          <div className="mt-4 flex items-center gap-4">
-            <button
+          <div className="mt-4 flex items-center gap-2">
+            <motion.button
               onClick={handleLike}
               disabled={isLiking}
-              className={`flex items-center gap-1.5 text-sm transition-colors ${
-                isLiked ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"
+              whileTap={{ scale: 0.85 }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                isLiked
+                  ? "bg-rose-50 text-rose-500 border border-rose-200"
+                  : "bg-[#F5F1ED] text-[#C9B8A6] hover:text-rose-400 hover:bg-rose-50 border border-transparent"
               }`}
             >
-              <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-              <span>{post.likes_count || 0}</span>
-            </button>
+              <motion.div
+                animate={isLiked ? { scale: [1, 1.4, 1] } : {}}
+                transition={{ duration: 0.3 }}
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+              </motion.div>
+              <motion.span
+                key={post.likes_count}
+                initial={{ y: -8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="font-semibold"
+              >
+                {post.likes_count || 0}
+              </motion.span>
+            </motion.button>
 
-            <button
+            <motion.button
               onClick={() => setShowComments(!showComments)}
-              className="flex items-center gap-1.5 text-sm text-[#C9B8A6] hover:text-[#8B7355] transition-colors"
+              whileTap={{ scale: 0.85 }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                showComments
+                  ? "bg-blue-50 text-blue-500 border-blue-200"
+                  : "bg-[#F5F1ED] text-[#C9B8A6] hover:text-blue-400 hover:bg-blue-50 border-transparent"
+              }`}
             >
               <MessageCircle className="h-4 w-4" />
-              <span>{post.comments_count || 0}</span>
-            </button>
+              <span className="font-semibold">{post.comments_count || 0}</span>
+            </motion.button>
 
-            <div className="relative">
+            <div className="relative ml-auto">
               <button
                 onClick={() => setShowReactions(!showReactions)}
-                className="flex items-center gap-1.5 text-sm text-[#C9B8A6] hover:text-[#8B7355] transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm bg-[#F5F1ED] text-[#C9B8A6] hover:text-[#8B7355] hover:bg-[#EDE8E3] transition-all border border-transparent"
               >
-                <span className="text-base">😊</span>
-                <span className="text-xs">React</span>
+                <span className="text-base leading-none">😊</span>
+                <span className="text-xs font-medium">React</span>
               </button>
 
               <AnimatePresence>
