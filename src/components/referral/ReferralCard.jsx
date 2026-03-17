@@ -7,7 +7,7 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
   const [copied, setCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   
-  const referralLink = `https://bean.base44.app/waitlist?ref=${referralCode}`;
+  const referralLink = `https://bean.base44.app/Home?ref=${referralCode}`;
   
   const handleCopy = async () => {
     await navigator.clipboard.writeText(referralLink);
@@ -48,7 +48,7 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
             Refer Friends, Earn Points
           </h3>
           <p className="text-[#E8DED8] text-sm mt-1">
-            Get 100 points for each friend who joins!
+            Get 25 points for each friend who joins!
           </p>
         </div>
         <div className="text-right">
@@ -82,7 +82,7 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
         <span className="text-[#D4C4B0]">→</span>
         <div className="flex items-center gap-1.5 text-white font-semibold">
           <Gift className="h-4 w-4" />
-          <span>+100 pts each!</span>
+          <span>+25 pts each!</span>
         </div>
       </div>
     </motion.div>
