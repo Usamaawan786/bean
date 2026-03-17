@@ -98,20 +98,20 @@ export default function BillGenerator({ bill, onClose }) {
         </div>
 
         {/* Bill Content */}
-        <div ref={billRef} className="p-8 bg-white">
+        <div ref={billRef} className="p-6 bg-white">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-4">
             <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6976cd7fe6e4b20fcb30cf61/5ce41afe3_ChatGPTImageJan28202607_27_43AM.png" 
+              src="https://media.base44.com/images/public/6976cd7fe6e4b20fcb30cf61/f3d3c0edf_Group1302.png" 
               alt="Bean Logo" 
-              className="w-32 h-32 mx-auto mb-4 object-contain"
+              className="w-20 h-20 mx-auto mb-2 object-contain"
             />
-            <h1 className="text-3xl font-bold text-[#5C4A3A]">Bean Coffee</h1>
-            <p className="text-[#8B7355] text-sm">Premium Coffee & Rewards</p>
+            <h1 className="text-2xl font-bold text-[#5C4A3A]">Bean</h1>
+            <p className="text-[#8B7355] text-xs">More than just coffee, it's a community!</p>
           </div>
 
           {/* Invoice Details */}
-          <div className="grid grid-cols-2 gap-4 mb-8 pb-6 border-b-2 border-[#E8DED8]">
+          <div className="grid grid-cols-2 gap-2 mb-4 pb-4 border-b-2 border-[#E8DED8]">
             <div>
               <p className="text-xs text-[#8B7355] mb-1">Invoice Number</p>
               <p className="font-bold text-[#5C4A3A]">{bill.billNumber}</p>
@@ -137,7 +137,7 @@ export default function BillGenerator({ bill, onClose }) {
           </div>
 
           {/* Items Table */}
-          <table className="w-full mb-8">
+          <table className="w-full mb-4">
             <thead>
               <tr className="border-b-2 border-[#E8DED8]">
                 <th className="text-left py-3 text-sm font-semibold text-[#5C4A3A]">Item</th>
@@ -161,7 +161,7 @@ export default function BillGenerator({ bill, onClose }) {
           </table>
 
           {/* Totals */}
-          <div className="space-y-2 mb-8">
+          <div className="space-y-1.5 mb-4">
             <div className="flex justify-between text-[#8B7355]">
               <span>Subtotal</span>
               <span>PKR {bill.subtotal.toFixed(2)}</span>
@@ -170,7 +170,7 @@ export default function BillGenerator({ bill, onClose }) {
               <span>GST (17%)</span>
               <span>PKR {bill.tax.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-2xl font-bold text-[#5C4A3A] pt-4 border-t-2 border-[#E8DED8]">
+            <div className="flex justify-between text-xl font-bold text-[#5C4A3A] pt-3 border-t-2 border-[#E8DED8]">
               <span>Total</span>
               <span>PKR {bill.total.toFixed(2)}</span>
             </div>
@@ -182,19 +182,19 @@ export default function BillGenerator({ bill, onClose }) {
 
           {/* QR Code for Rewards */}
           {qrCodeUrl && (
-            <div className="text-center py-6 border-t border-[#E8DED8]">
-              <p className="text-sm font-semibold text-[#5C4A3A] mb-3">Earn Rewards</p>
-              <img src={qrCodeUrl} alt="Rewards QR Code" className="w-48 h-48 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
-              <p className="text-xs text-[#8B7355] mt-3">
+            <div className="text-center py-3 border-t border-[#E8DED8]">
+              <p className="text-xs font-semibold text-[#5C4A3A] mb-2">Earn Rewards</p>
+              <img src={qrCodeUrl} alt="Rewards QR Code" className="w-32 h-32 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
+              <p className="text-xs text-[#8B7355] mt-2">
                 Scan in the Bean app to add points to your account
               </p>
             </div>
           )}
 
           {/* Footer */}
-          <div className="text-center pt-6 border-t border-[#E8DED8]">
-            <p className="text-sm text-[#8B7355] mb-2">Thank you for your purchase!</p>
-            <p className="text-xs text-[#C9B8A6]">Bean Coffee - Where every cup tells a story</p>
+          <div className="text-center pt-3 border-t border-[#E8DED8]">
+            <p className="text-sm text-[#8B7355] mb-1">Thank you for your purchase!</p>
+            <p className="text-xs text-[#C9B8A6]">Bean — More than just coffee, it's a community!</p>
           </div>
         </div>
       </motion.div>
