@@ -3,18 +3,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { full_name, referred_by } = await req.json();
-        const rawEmail = (await req.json().catch(() => ({}))).email;
-        // Re-parse properly
-        const body = await new Response(req.body).json().catch(() => ({}));
-        // Already parsed above, use destructuring from body
-        const parsedBody = await req.clone().json();
-        const normalizedEmail = parsedBody.email?.toLowerCase().trim();
-        const parsedFullName = parsedBody.full_name;
-        const parsedReferredBy = parsedBody.referred_by;
+        const body = await req.json();
+        const full_name = body.full_name;
+        const email = body.email?.toLowerCase().trim();
+        const referred_by = body.referred_by;
 
         // Validate input
-        if (!parsedFullName || !normalizedEmail) {
+        if (!full_name || !email) {
             return Response.json({ error: 'Name and email are required' }, { status: 400 });
         }
 
@@ -24,7 +19,7 @@ Deno.serve(async (req) => {
                         'unknown';
 
         // Check for duplicate email FIRST
-        const existing = await base44.asServiceRole.entities.WaitlistSignup.filter({ email: normalizedEmail });
+        const existing = await base44.asServiceRole.entities.WaitlistSignup.filter({ email });
         if (existing.length > 0) {
             return Response.json({
                 success: true,
@@ -33,10 +28,6 @@ Deno.serve(async (req) => {
                 alreadyRegistered: true
             });
         }
-
-        const email = normalizedEmail;
-        const full_name = parsedFullName;
-        const referred_by_code = parsedReferredBy;
 
         // Generate unique referral code
         const refCode = full_name.split(" ")[0].toUpperCase() + 
@@ -69,7 +60,6 @@ Deno.serve(async (req) => {
                 });
             } catch (ebaError) {
                 console.error('EBA check failed:', ebaError);
-                // Don't fail the signup if EBA check fails
             }
         }
 
@@ -81,7 +71,6 @@ Deno.serve(async (req) => {
             });
         } catch (emailError) {
             console.error('Failed to send welcome email:', emailError);
-            // Don't fail the signup if email fails
         }
 
         // Send lead data to GoHighLevel webhook
@@ -94,22 +83,19 @@ Deno.serve(async (req) => {
 
             await fetch(ghlWebhookUrl, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
+                    firstName,
+                    lastName,
+                    email,
                     position: newPosition,
                     referralCode: refCode,
-                    referralLink: `https://bean.base44.app/waitlist?referred_by=${refCode}`
+                    referralLink: refLink
                 }),
             });
             console.log("Successfully sent lead data to GoHighLevel webhook.");
         } catch (ghlError) {
             console.error("Error sending data to GHL webhook:", ghlError);
-            // Don't fail the signup if GHL webhook fails
         }
 
         return Response.json({
