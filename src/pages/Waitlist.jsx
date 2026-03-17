@@ -67,6 +67,7 @@ export default function Waitlist() {
         setPosition(response.data.position);
         setReferralCode(response.data.referralCode);
         setSubmitted(true);
+        window.scrollTo({ top: 0, behavior: 'instant' });
 
         // Track conversion event
         if (window.fbq) {
