@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -175,6 +175,12 @@ export default function AdminPOS() {
                 <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
                   <Users className="h-4 w-4 mr-2" />
                   Referrals
+                </Button>
+              </Link>
+              <Link to={createPageUrl("AdminRedemptions")}>
+                <Button variant="outline" className="bg-white/10 text-white border-white/20 hover:bg-white/20">
+                  <Gift className="h-4 w-4 mr-2" />
+                  Redemptions
                 </Button>
               </Link>
             </div>
