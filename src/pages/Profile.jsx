@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2, ImagePlus } from "lucide-react";
-import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
-import { Capacitor } from "@capacitor/core";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +27,6 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [imageToEdit, setImageToEdit] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [showPhotoConsent, setShowPhotoConsent] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -102,54 +99,17 @@ export default function Profile() {
 
 
 
-  const handlePhotoUpload = async () => {
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const permissions = await CapCamera.checkPermissions();
-        if (permissions.photos !== 'granted') {
-          const result = await CapCamera.requestPermissions({ permissions: ['photos'] });
-          if (result.photos !== 'granted' && result.photos !== 'limited') {
-            toast.error("Photo access is required to set a profile picture");
-            return;
-          }
-        }
-        const image = await CapCamera.getPhoto({
-          quality: 90,
-          allowEditing: false,
-          resultType: CameraResultType.DataUrl,
-          source: CameraSource.Photos,
-        });
-        if (image?.dataUrl) setImageToEdit(image.dataUrl);
-      } else {
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "image/*";
-        input.onchange = (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (ev) => setImageToEdit(ev.target.result);
-          reader.readAsDataURL(file);
-        };
-        input.click();
-      }
-    } catch (error) {
-      const msg = error?.message || String(error);
-      if (!msg.toLowerCase().includes("cancel")) {
-        toast.error("Could not open photo library");
-      }
-    }
-  };
-
   const handleCropComplete = async (croppedFile) => {
     setImageToEdit(null);
     setIsUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: croppedFile });
-      await base44.auth.updateMe({ profile_picture: file_url });
-      // Update local state directly — don't rely on re-fetch for immediate UI update
       setFormData(prev => ({ ...prev, profile_picture: file_url }));
-      setUser(prev => ({ ...prev, profile_picture: file_url }));
+      
+      // Auto-save profile picture
+      await base44.auth.updateMe({ profile_picture: file_url });
+      await loadUserData();
+      
       toast.success("Profile picture updated!");
     } catch (error) {
       toast.error("Failed to upload image");
@@ -238,70 +198,20 @@ export default function Profile() {
 
       {/* Profile Picture */}
       <div className="relative z-10 flex justify-center -mt-16">
-        <div className="relative">
-          <div className="w-32 h-32 rounded-full bg-white p-2 shadow-lg">
-            {formData.profile_picture ? (
-              <img 
-                src={formData.profile_picture} 
-                alt="Profile" 
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
-                <User className="h-12 w-12 text-white" />
-              </div>
-            )}
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setShowPhotoConsent(true)}
-            disabled={isUploading}
-            className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shadow-lg border-2 border-white"
-          >
-            {isUploading ? <Loader2 className="h-4 w-4 text-white animate-spin" /> : <Camera className="h-4 w-4 text-white" />}
-          </motion.button>
+        <div className="w-32 h-32 rounded-full bg-white p-2 shadow-lg">
+          {formData.profile_picture ? (
+            <img 
+              src={formData.profile_picture} 
+              alt="Profile" 
+              className="w-full h-full rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
+              <User className="h-12 w-12 text-white" />
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Photo Consent Modal */}
-      <AnimatePresence>
-        {showPhotoConsent && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
-            >
-              <div className="text-center mb-5">
-                <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ImagePlus className="h-8 w-8 text-[#8B7355]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">Update Profile Photo</h3>
-                <p className="text-sm text-[#8B7355]">
-                  BEAN needs access to your photo library to let you choose a profile picture. Your photo is only used as your avatar in the community.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => setShowPhotoConsent(false)}
-                  variant="outline"
-                  className="flex-1 rounded-xl border-[#E8DED8]"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => { setShowPhotoConsent(false); handlePhotoUpload(); }}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744]"
-                >
-                  Allow & Continue
-                </Button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 pt-6 pb-24">

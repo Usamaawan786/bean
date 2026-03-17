@@ -39,38 +39,30 @@ export default function Waitlist() {
     }
   };
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isSubmitting) return;
-    setIsSubmitting(true);
 
     try {
-      const response = await base44.functions.invoke('joinWaitlist', {
-        ...formData,
-        email: formData.email.toLowerCase().trim()
-      });
+      const response = await base44.functions.invoke('joinWaitlist', formData);
       
       if (response.data.success) {
         setPosition(response.data.position);
         setReferralCode(response.data.referralCode);
         setSubmitted(true);
         
-        if (!response.data.alreadyRegistered) {
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-          toast.success("Welcome to the BEAN community! 🎉");
-        } else {
-          toast.info("You're already on the waitlist! Here's your spot.");
-        }
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+
+        toast.success("Welcome to the BEAN community! 🎉");
       } else {
         toast.error(response.data.error || "Something went wrong.");
       }
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -479,10 +471,9 @@ export default function Waitlist() {
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-[#8B7355] via-[#7A6448] to-[#6B5744] hover:shadow-2xl hover:scale-[1.02] transition-all text-white py-6 text-lg font-bold rounded-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:scale-100"
+                  className="w-full bg-gradient-to-r from-[#8B7355] via-[#7A6448] to-[#6B5744] hover:shadow-2xl hover:scale-[1.02] transition-all text-white py-6 text-lg font-bold rounded-xl"
                 >
-                  {isSubmitting ? "Securing your spot..." : <>Claim Your Early Bird Perks <ArrowRight className="h-5 w-5 ml-2" /></>}
+                  Claim Your Early Bird Perks <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
 
                 <div className="flex items-center justify-center gap-2 text-xs text-[#8B7355] pt-2">
