@@ -74,7 +74,7 @@ export default function Referral() {
   const userRank = topReferrers.findIndex(r => r.created_by === user?.email) + 1;
 
   const referralLink = customer?.referral_code 
-    ? `https://bean.base44.app/Home?ref=${customer.referral_code}`
+    ? `https://bean.base44.app/Welcome?ref=${customer.referral_code}`
     : "";
 
   const handleCopy = async () => {

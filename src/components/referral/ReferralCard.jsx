@@ -7,7 +7,7 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
   const [copied, setCopied] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   
-  const referralLink = `https://bean.base44.app/Home?ref=${referralCode}`;
+  const referralLink = `https://bean.base44.app/Welcome?ref=${referralCode}`;
   
   const handleCopy = async () => {
     await navigator.clipboard.writeText(referralLink);
