@@ -499,7 +499,7 @@ export default function Waitlist() {
               <div className="text-center mb-8 relative">
                 <Badge className="bg-amber-500 text-white px-4 py-1 mb-3">Limited Spots</Badge>
                 <h3 className="text-3xl font-bold text-[#5C4A3A] mb-2">Secure Your Spot</h3>
-                <p className="text-[#8B7355] text-lg">Join the first 500 founding members</p>
+                <p className="text-[#8B7355] text-lg">Join the first 1000 founding members</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -607,9 +607,9 @@ export default function Waitlist() {
               <Badge className="bg-red-500 text-white px-4 py-2 text-sm font-bold mb-4 shadow-lg animate-pulse">
                 LIMITED TIME OFFER
               </Badge>
-              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {Math.max(0, 500 - totalSignups)} Founding Spots Left</h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {Math.max(0, 1000 - totalSignups)} Founding Spots Left</h2>
               <p className="text-lg md:text-xl text-[#E8DED8]">
-                Lock in your perks before we hit 500 members
+                Lock in your perks before we hit 1000 members
               </p>
             </div>
           </div>
