@@ -38,6 +38,14 @@ Deno.serve(async (req) => {
         const lastName = nameParts.slice(1).join(' ') || '';
         const ghlWebhookUrl = "https://services.leadconnectorhq.com/hooks/gj8OBCLmVBdkG2uJwiTN/webhook-trigger/fe044896-846d-465d-8078-0f9eeb44bcb7";
 
+        // Normalize phone to +92 format
+        let normalizedPhone = phone || '';
+        if (normalizedPhone.startsWith('0')) {
+            normalizedPhone = '+92' + normalizedPhone.slice(1);
+        } else if (normalizedPhone.startsWith('92') && !normalizedPhone.startsWith('+')) {
+            normalizedPhone = '+' + normalizedPhone;
+        }
+
         // Fire and forget — don't block the response
         Promise.all([
             referred_by
