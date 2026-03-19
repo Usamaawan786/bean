@@ -13,8 +13,10 @@ import Footer from "@/components/shared/Footer";
 export default function Waitlist() {
   const [formData, setFormData] = useState({
     full_name: "",
-    email: ""
+    email: "",
+    phone: ""
   });
+  const [phoneError, setPhoneError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [position, setPosition] = useState(null);
   const [referralCode, setReferralCode] = useState("");
