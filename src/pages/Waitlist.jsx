@@ -48,12 +48,18 @@ export default function Waitlist() {
   }, []);
 
   const loadTotalSignups = async () => {
+    // Show cached value instantly
+    const cached = localStorage.getItem('bean_waitlist_count');
+    if (cached) setTotalSignups(parseInt(cached));
+
+    // Refresh in background
     try {
       const res = await base44.functions.invoke('getWaitlistCount', {});
-      setTotalSignups(res.data?.count || 0);
+      const count = res.data?.count || 0;
+      setTotalSignups(count);
+      localStorage.setItem('bean_waitlist_count', count);
     } catch (error) {
       console.error("Failed to load signups");
-      setTotalSignups(0);
     }
   };
 
