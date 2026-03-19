@@ -18,11 +18,8 @@ Deno.serve(async (req) => {
 
         const refLink = `https://bean.base44.app/waitlist?referred_by=${refCode}`;
 
-        // Get position and create signup in parallel
-        const [signups] = await Promise.all([
-            base44.asServiceRole.entities.WaitlistSignup.list('-created_date', 1000),
-        ]);
-        const newPosition = signups.length + 1;
+        const { position: clientPosition = 0 } = await req.clone().json().catch(() => ({}));
+        const newPosition = clientPosition || 1;
 
         await base44.asServiceRole.entities.WaitlistSignup.create({
             full_name,
