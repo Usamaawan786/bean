@@ -61,7 +61,7 @@ export default function Waitlist() {
     e.preventDefault();
 
     try {
-      const response = await base44.functions.invoke('joinWaitlist', formData);
+      const response = await base44.functions.invoke('joinWaitlist', { ...formData, position: totalSignups });
 
       if (response.data.success) {
         setPosition(response.data.position);
@@ -83,10 +83,8 @@ export default function Waitlist() {
           origin: { y: 0.6 }
         });
 
+        setTotalSignups(prev => prev + 1);
         toast.success("Welcome to the BEAN community! 🎉");
-
-        // Reload count after signup
-        await loadTotalSignups();
       } else {
         toast.error(response.data.error || "Something went wrong.");
       }
