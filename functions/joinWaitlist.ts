@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { full_name, email, referred_by, position: clientPosition } = await req.json();
+        const { full_name, email, phone, referred_by, position: clientPosition } = await req.json();
 
         if (!full_name || !email) {
             return Response.json({ error: 'Name and email are required' }, { status: 400 });
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
             fetch(ghlWebhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ firstName, lastName, email, position: newPosition, referralCode: refCode, referralLink: refLink }),
+                body: JSON.stringify({ firstName, lastName, email, phone: phone || '', position: newPosition, referralCode: refCode, referralLink: refLink }),
             }).catch(e => console.error('GHL webhook failed:', e)),
         ]);
 
