@@ -23,6 +23,7 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.WaitlistSignup.create({
             full_name,
             email,
+            phone: phone || null,
             referral_code: refCode,
             referral_link: refLink,
             referred_by: referred_by || null,
