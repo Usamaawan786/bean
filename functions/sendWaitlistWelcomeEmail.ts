@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { full_name, email } = await req.json();
+    const { full_name, email, referral_code } = await req.json();
 
     if (!full_name || !email) {
       return Response.json({ error: 'Missing required fields' }, { status: 400 });
@@ -27,7 +27,8 @@ Deno.serve(async (req) => {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        triggerWelcomeEmail: true // Flag to trigger welcome email workflow in GHL
+        referralCode: referral_code || '',
+        triggerWelcomeEmail: true
       }),
     });
 

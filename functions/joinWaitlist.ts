@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
             referred_by
                 ? base44.asServiceRole.functions.invoke('checkAndPromoteEBA', { referral_code: referred_by }).catch(e => console.error('EBA check failed:', e))
                 : Promise.resolve(),
-            base44.asServiceRole.functions.invoke('sendWaitlistWelcomeEmail', { full_name, email }).catch(e => console.error('Welcome email failed:', e)),
+            base44.asServiceRole.functions.invoke('sendWaitlistWelcomeEmail', { full_name, email, referral_code: refCode }).catch(e => console.error('Welcome email failed:', e)),
             fetch(ghlWebhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
