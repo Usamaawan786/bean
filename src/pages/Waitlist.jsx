@@ -76,12 +76,6 @@ export default function Waitlist() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setPhoneError("");
-    if (!validatePhone(formData.phone)) {
-      setPhoneError("Please enter a valid phone number (e.g. 03001234567)");
-      return;
-    }
-
     try {
       const response = await base44.functions.invoke('joinWaitlist', { ...formData, position: totalSignups });
 
