@@ -65,8 +65,22 @@ export default function Waitlist() {
     }
   };
 
+  const validatePhone = (phone) => {
+    // Accept Pakistani numbers: 03XXXXXXXXX or +923XXXXXXXXX or international formats
+    const cleaned = phone.replace(/[\s\-()]/g, '');
+    const pkLocal = /^03[0-9]{9}$/;
+    const pkIntl = /^\+923[0-9]{9}$/;
+    const intl = /^\+[1-9][0-9]{7,14}$/;
+    return pkLocal.test(cleaned) || pkIntl.test(cleaned) || intl.test(cleaned);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setPhoneError("");
+    if (!validatePhone(formData.phone)) {
+      setPhoneError("Please enter a valid phone number (e.g. 03001234567)");
+      return;
+    }
 
     try {
       const response = await base44.functions.invoke('joinWaitlist', { ...formData, position: totalSignups });
