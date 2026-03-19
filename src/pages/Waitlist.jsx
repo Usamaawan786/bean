@@ -545,18 +545,6 @@ export default function Waitlist() {
                     className="border-2 border-[#E8DED8] focus:border-[#8B7355] h-12 text-base rounded-xl" />
                 </div>
 
-                <div>
-                  <Label className="text-base font-semibold text-[#5C4A3A]">Phone Number</Label>
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => { setFormData((prev) => ({ ...prev, phone: e.target.value })); setPhoneError(""); }}
-                    required
-                    placeholder="03001234567"
-                    className={`border-2 focus:border-[#8B7355] h-12 text-base rounded-xl ${phoneError ? 'border-red-400' : 'border-[#E8DED8]'}`} />
-                  {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full bg-gradient-to-r from-[#8B7355] via-[#7A6448] to-[#6B5744] hover:shadow-2xl hover:scale-[1.02] transition-all text-white py-6 text-lg font-bold rounded-xl">
