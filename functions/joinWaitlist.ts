@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
             fetch(ghlWebhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ firstName, lastName, email, phone: phone || '', position: newPosition, referralCode: refCode, referralLink: refLink }),
+                body: JSON.stringify({ firstName, lastName, email, phone: normalizedPhone, position: newPosition, referralCode: refCode, referralLink: refLink }),
             }).catch(e => console.error('GHL webhook failed:', e)),
         ]);
 
