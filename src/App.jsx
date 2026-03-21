@@ -10,6 +10,7 @@ import AdminEmails from './pages/AdminEmails';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
 import Welcome from './pages/Welcome';
+import UserProfile from './pages/UserProfile';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -41,6 +42,7 @@ function App() {
             <Route path="/AdminEmails" element={<AdminEmails />} />
             <Route path="/AdminReferrals" element={<AdminReferrals />} />
             <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
+            <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Users, Coffee, Star, Camera, Lightbulb, TrendingUp, Loader2 } from "lucide-react";
+import NotificationBell from "@/components/community/NotificationBell";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PostCard from "@/components/community/PostCard";
@@ -14,6 +15,7 @@ import AppHeader from "@/components/shared/AppHeader";
 
 export default function Community() {
   const [user, setUser] = useState(null);
+  const [feedTab, setFeedTab] = useState("all"); // all | following
 
   const queryClient = useQueryClient();
 
@@ -54,11 +56,16 @@ export default function Community() {
 
   // Filter out hidden/removed posts and posts from blocked users
   const blockedUsers = user?.blocked_users || [];
-  const posts = allPosts.filter(post => 
+  const allFilteredPosts = allPosts.filter(post => 
     post.moderation_status !== "hidden" && 
     post.moderation_status !== "removed" &&
     !blockedUsers.includes(post.author_email)
   );
+
+  const following = user?.following || [];
+  const posts = feedTab === "following"
+    ? allFilteredPosts.filter(p => following.includes(p.author_email))
+    : allFilteredPosts;
 
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
@@ -163,13 +170,26 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     await base44.auth.updateMe({
       blocked_users: [...currentBlockedUsers, userEmailToBlock]
     });
-    
-    // Refresh user data
     const updatedUser = await base44.auth.me();
     setUser(updatedUser);
-    
-    // Refresh posts to hide blocked users
     await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+  };
+
+  const handleFollow = async (targetEmail) => {
+    if (!user) return;
+    const isFollowing = (user.following || []).includes(targetEmail);
+    await base44.functions.invoke("followUser", { targetEmail, action: isFollowing ? "unfollow" : "follow" });
+    const updatedUser = await base44.auth.me();
+    setUser(updatedUser);
+  };
+
+  const handleSavePost = async (postId) => {
+    if (!user) return;
+    const saved = user.saved_posts || [];
+    const isSaved = saved.includes(postId);
+    await base44.auth.updateMe({ saved_posts: isSaved ? saved.filter(id => id !== postId) : [...saved, postId] });
+    const updatedUser = await base44.auth.me();
+    setUser(updatedUser);
   };
 
 
@@ -209,8 +229,10 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
               </div>
             </div>
             
+            <div className="flex items-center gap-2 flex-shrink-0">
+            {user && <NotificationBell userEmail={user.email} />}
             {user?.role === "admin" && (
-              <Link to={createPageUrl("Moderation")} className="flex-shrink-0">
+              <Link to={createPageUrl("Moderation")}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-3 py-2 rounded-xl text-xs font-medium text-[#5C4A3A] transition-colors shadow-md whitespace-nowrap"
@@ -221,8 +243,24 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
             )}
           </div>
         </div>
-        
 
+        {/* Feed Tabs */}
+        {user && (
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={() => setFeedTab("all")}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                feedTab === "all" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
+              }`}
+            >All</button>
+            <button
+              onClick={() => setFeedTab("following")}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                feedTab === "following" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
+              }`}
+            >Following</button>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -283,10 +321,14 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                   post={post}
                   currentUserEmail={user?.email}
                   currentUser={user}
+                  currentUserFollowing={user?.following || []}
+                  currentUserSavedPosts={user?.saved_posts || []}
                   onLike={likeMutation.mutate}
                   onReport={reportPostMutation.mutate}
                   onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
                   onBlock={handleBlockUser}
+                  onFollow={handleFollow}
+                  onSave={handleSavePost}
                 />
               </motion.div>
             ))}

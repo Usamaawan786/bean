@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 
 const postTypeConfig = {
@@ -15,12 +16,25 @@ const postTypeConfig = {
 
 const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
-export default function PostCard({ post, currentUserEmail, currentUser, onLike, onReaction, onBlock, onReport }) {
+function renderContent(content) {
+  if (!content) return null;
+  // Parse hashtags and mentions
+  const parts = content.split(/(#\w+|@\w+)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('#')) return <span key={i} className="text-[#8B7355] font-medium">{part}</span>;
+    if (part.startsWith('@')) return <span key={i} className="text-blue-500 font-medium">{part}</span>;
+    return part;
+  });
+}
+
+export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], onLike, onReaction, onBlock, onReport, onFollow, onSave }) {
   const [isLiking, setIsLiking] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const isFollowingAuthor = currentUserFollowing.includes(post.author_email);
+  const isSaved = currentUserSavedPosts.includes(post.id);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
   const isLiked = post.liked_by?.includes(currentUserEmail);
@@ -78,14 +92,27 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-[#5C4A3A]">{post.author_name || "Coffee Lover"}</span>
-              <span className="text-xs text-[#C9B8A6]">
-                {post.created_date && format(new Date(post.created_date), "MMM d, h:mm a")}
-              </span>
-            </div>
-            
-            {post.author_email !== currentUserEmail && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to={`/UserProfile?email=${encodeURIComponent(post.author_email)}`} className="font-semibold text-[#5C4A3A] hover:text-[#8B7355] transition-colors">
+              {post.author_name || "Coffee Lover"}
+            </Link>
+            {currentUserEmail && post.author_email !== currentUserEmail && onFollow && (
+              <button
+                onClick={() => onFollow(post.author_email)}
+                className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full transition-colors ${
+                  isFollowingAuthor ? "bg-[#F5EBE8] text-[#8B7355]" : "bg-[#8B7355] text-white hover:bg-[#6B5744]"
+                }`}
+              >
+                {isFollowingAuthor ? <UserCheck className="h-3 w-3" /> : <UserPlus className="h-3 w-3" />}
+                {isFollowingAuthor ? "Following" : "Follow"}
+              </button>
+            )}
+            <span className="text-xs text-[#C9B8A6]">
+              {post.created_date && format(new Date(post.created_date), "MMM d, h:mm a")}
+            </span>
+          </div>
+
+          {post.author_email !== currentUserEmail && (
               <div className="flex items-center gap-1">
                 <motion.button
                   whileHover={{ scale: 1.1 }}
@@ -110,7 +137,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
               </div>
             )}
           </div>
-          <p className="mt-2 text-[#6B5744] whitespace-pre-wrap">{post.content}</p>
+          <p className="mt-2 text-[#6B5744] whitespace-pre-wrap leading-relaxed">{renderContent(post.content)}</p>
           
           {post.image_url && (
             <div className="mt-3 rounded-2xl overflow-hidden">
@@ -209,6 +236,18 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
                 )}
               </AnimatePresence>
             </div>
+
+            {currentUserEmail && onSave && (
+              <button
+                onClick={() => onSave(post.id)}
+                className={`flex items-center gap-1 text-sm ml-auto transition-colors ${
+                  isSaved ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"
+                }`}
+                title={isSaved ? "Unsave" : "Save post"}
+              >
+                <Bookmark className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+              </button>
+            )}
           </div>
 
           {/* Block Confirmation Dialog */}
@@ -253,7 +292,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, onLike, 
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                <CommentSection postId={post.id} currentUser={currentUser} />
+                <CommentSection postId={post.id} currentUser={currentUser} postAuthorEmail={post.author_email} />
               </motion.div>
             )}
           </AnimatePresence>

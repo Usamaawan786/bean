@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [imageToEdit, setImageToEdit] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showPicConsentModal, setShowPicConsentModal] = useState(false);
+  const [pendingPicFile, setPendingPicFile] = useState(null);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -101,20 +103,35 @@ export default function Profile() {
 
   const handleCropComplete = async (croppedFile) => {
     setImageToEdit(null);
+    // Check consent
+    if (!user?.profile_picture_consent) {
+      setPendingPicFile(croppedFile);
+      setShowPicConsentModal(true);
+      return;
+    }
+    await uploadProfilePicture(croppedFile);
+  };
+
+  const uploadProfilePicture = async (file) => {
     setIsUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: croppedFile });
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, profile_picture: file_url }));
-      
-      // Auto-save profile picture
-      await base44.auth.updateMe({ profile_picture: file_url });
+      await base44.auth.updateMe({ profile_picture: file_url, profile_picture_consent: true });
       await loadUserData();
-      
       toast.success("Profile picture updated!");
     } catch (error) {
       toast.error("Failed to upload image");
     }
     setIsUploading(false);
+  };
+
+  const handleConsentAndUpload = async () => {
+    setShowPicConsentModal(false);
+    if (pendingPicFile) {
+      await uploadProfilePicture(pendingPicFile);
+      setPendingPicFile(null);
+    }
   };
 
   const handleSave = async () => {
@@ -198,18 +215,36 @@ export default function Profile() {
 
       {/* Profile Picture */}
       <div className="relative z-10 flex justify-center -mt-16">
-        <div className="w-32 h-32 rounded-full bg-white p-2 shadow-lg">
-          {formData.profile_picture ? (
-            <img 
-              src={formData.profile_picture} 
-              alt="Profile" 
-              className="w-full h-full rounded-full object-cover"
+        <div className="relative">
+          <div className="w-32 h-32 rounded-full bg-white p-2 shadow-lg">
+            {formData.profile_picture ? (
+              <img 
+                src={formData.profile_picture} 
+                alt="Profile" 
+                className="w-full h-full rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
+                <User className="h-12 w-12 text-white" />
+              </div>
+            )}
+          </div>
+          <label className="absolute bottom-2 right-2 w-8 h-8 bg-[#8B7355] rounded-full flex items-center justify-center cursor-pointer shadow-md hover:bg-[#6B5744] transition-colors">
+            <Camera className="h-4 w-4 text-white" />
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => setImageToEdit(ev.target.result);
+                  reader.readAsDataURL(file);
+                }
+              }}
             />
-          ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#C9B8A6] flex items-center justify-center">
-              <User className="h-12 w-12 text-white" />
-            </div>
-          )}
+          </label>
         </div>
       </div>
 
@@ -219,6 +254,20 @@ export default function Profile() {
           <h2 className="text-xl font-bold text-[#5C4A3A]">{user.full_name}</h2>
           <p className="text-sm text-[#8B7355]">{user.email}</p>
         </div>
+
+        {/* Followers/Following */}
+        {user && (
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
+              <div className="text-2xl font-bold text-[#8B7355]">{(user.followers || []).length}</div>
+              <div className="text-xs text-[#C9B8A6] mt-1">Followers</div>
+            </div>
+            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
+              <div className="text-2xl font-bold text-[#8B7355]">{(user.following || []).length}</div>
+              <div className="text-xs text-[#C9B8A6] mt-1">Following</div>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         {customer && (
@@ -424,6 +473,40 @@ export default function Profile() {
           onComplete={handleCropComplete}
           onClose={() => setImageToEdit(null)}
         />
+      )}
+
+      {/* Profile Picture Consent Modal */}
+      {showPicConsentModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
+          >
+            <div className="w-14 h-14 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Camera className="h-7 w-7 text-[#8B7355]" />
+            </div>
+            <h3 className="text-xl font-bold text-[#5C4A3A] text-center mb-2">Upload Profile Picture?</h3>
+            <p className="text-sm text-[#8B7355] text-center mb-6 leading-relaxed">
+              By uploading a profile picture, you consent to your photo being visible to other community members in the Bean Coffee app. You can remove it at any time.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => { setShowPicConsentModal(false); setPendingPicFile(null); }}
+                variant="outline"
+                className="flex-1 rounded-xl border-[#E8DED8]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConsentAndUpload}
+                className="flex-1 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
+              >
+                I Consent & Upload
+              </Button>
+            </div>
+          </motion.div>
+        </div>
       )}
 
       {/* Delete Account Dialog */}
