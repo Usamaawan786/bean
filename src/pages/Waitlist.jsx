@@ -42,7 +42,7 @@ export default function Waitlist() {
     }
 
     const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
+    const ref = params.get("ref") || params.get("referred_by");
     if (ref) {
       setFormData((prev) => ({ ...prev, referred_by: ref }));
     }
