@@ -261,6 +261,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
             >Following</button>
           </div>
         )}
+        </div>
       </div>
 
       {/* Main Content */}
