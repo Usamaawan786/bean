@@ -267,21 +267,34 @@ export default function Waitlist() {
             transition={{ delay: 1 }}
             className="bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 p-8">
 
-            <h3 className="text-xl font-bold mb-3">Move Up The List</h3>
-            <p className="text-[#E8DED8] mb-6">Share your referral link - for every friend who joins, you both move up 3 spots!</p>
-            <div className="bg-amber-500/20 border border-amber-400/40 rounded-xl p-4 mb-4">
-              <p className="text-sm text-amber-100 leading-relaxed">
-                <strong className="text-amber-200">🌟 Elite Bean Ambassador:</strong> Refer 5+ friends and unlock exclusive discounts, VIP event access, and become a verified Coffee Creator in our community!
-              </p>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center text-xl">🌟</div>
+              <h3 className="text-2xl font-bold">Become an Elite Bean Ambassador</h3>
             </div>
-            
+            <p className="text-[#E8DED8] mb-6 text-base leading-relaxed">
+              Refer <strong className="text-amber-300">5+ friends</strong> to the waitlist and unlock exclusive perks reserved only for our top community members:
+            </p>
+            <div className="space-y-3 mb-6 text-left">
+              <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
+                <span className="text-lg">🎟️</span>
+                <span className="text-sm font-medium">VIP access to all Bean events & tastings</span>
+              </div>
+              <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
+                <span className="text-lg">💰</span>
+                <span className="text-sm font-medium">Exclusive ambassador discounts</span>
+              </div>
+              <div className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
+                <span className="text-lg">✅</span>
+                <span className="text-sm font-medium">Verified Coffee Creator badge in the community</span>
+              </div>
+            </div>
+            <p className="text-[#E8DED8] text-sm mb-3">Share your referral link to get started:</p>
             <div className="flex gap-3">
               <Input
                 value={shareLink}
                 readOnly
                 className="bg-white/20 border-white/30 text-white" />
-
-              <Button onClick={copyShareLink} className="bg-white text-[#8B7355] hover:bg-[#F5EBE8]">
+              <Button onClick={copyShareLink} className="bg-amber-400 text-[#5C4A3A] hover:bg-amber-300 font-bold">
                 <Share2 className="h-4 w-4" />
               </Button>
             </div>
