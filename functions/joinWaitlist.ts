@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
         const refCode = full_name.split(" ")[0].toUpperCase() + 
             Math.random().toString(36).substring(2, 6).toUpperCase();
 
-        const refLink = `https://bean.base44.app/waitlist?referred_by=${refCode}`;
+        const refLink = `https://beancoffee.co/waitlist?ref=${refCode}`;
 
         const newPosition = (clientPosition || 0) + 1;
 

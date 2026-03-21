@@ -115,7 +115,7 @@ export default function Waitlist() {
     }
   };
 
-  const shareLink = `${window.location.origin}/waitlist?ref=${referralCode}`;
+  const shareLink = `https://beancoffee.co/waitlist?ref=${referralCode}`;
 
   const copyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
