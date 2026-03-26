@@ -32,7 +32,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
-  const [showActions, setShowActions] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
   const isFollowingAuthor = currentUserFollowing.includes(post.author_email);
   const isSaved = currentUserSavedPosts.includes(post.id);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
@@ -113,11 +113,11 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
           </div>
 
           {post.author_email !== currentUserEmail && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-shrink-0 self-start">
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => onReport(post)}
+                  onClick={() => setShowReportConfirm(true)}
                   className={`p-1.5 rounded-lg transition-colors ${
                     hasReported ? "bg-orange-100 text-orange-600" : "text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-orange-500"
                   }`}
@@ -183,16 +183,45 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
           )}
 
           <div className="mt-4 flex items-center gap-4">
-            <button
-              onClick={handleLike}
-              disabled={isLiking}
-              className={`flex items-center gap-1.5 text-sm transition-colors ${
-                isLiked ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"
-              }`}
-            >
-              <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-              <span>{post.likes_count || 0}</span>
-            </button>
+            <div className="relative">
+              <motion.button
+                onHoverStart={() => currentUserEmail && setShowReactions(true)}
+                onHoverEnd={() => setShowReactions(false)}
+                onClick={handleLike}
+                disabled={isLiking}
+                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                  isLiked ? "text-rose-500" : "text-[#C9B8A6] hover:text-rose-400"
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                <span>{post.likes_count || 0}</span>
+              </motion.button>
+
+              <AnimatePresence>
+                {showReactions && currentUserEmail && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                    onHoverStart={() => setShowReactions(true)}
+                    onHoverEnd={() => setShowReactions(false)}
+                    className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-lg border border-[#E8DED8] p-2 flex gap-1 z-10"
+                  >
+                    {reactionEmojis.map(emoji => (
+                      <motion.button
+                        key={emoji}
+                        whileHover={{ scale: 1.3, y: -4 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => { handleReaction(emoji); setShowReactions(false); }}
+                        className={`p-2 rounded-xl hover:bg-[#F5EBE8] transition-colors ${hasUserReacted(emoji) ? "bg-[#EDE8E3]" : ""}`}
+                      >
+                        <span className="text-xl">{emoji}</span>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <button
               onClick={() => setShowComments(!showComments)}
@@ -202,40 +231,6 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
               <span>{post.comments_count || 0}</span>
             </button>
 
-            <div className="relative">
-              <button
-                onClick={() => setShowReactions(!showReactions)}
-                className="flex items-center gap-1.5 text-sm text-[#C9B8A6] hover:text-[#8B7355] transition-colors"
-              >
-                <span className="text-base">😊</span>
-                <span className="text-xs">React</span>
-              </button>
-
-              <AnimatePresence>
-                {showReactions && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-lg border border-[#E8DED8] p-2 flex gap-1"
-                  >
-                    {reactionEmojis.map(emoji => (
-                      <motion.button
-                        key={emoji}
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleReaction(emoji)}
-                        className={`p-2 rounded-xl hover:bg-[#F5EBE8] transition-colors ${
-                          hasUserReacted(emoji) ? "bg-[#EDE8E3]" : ""
-                        }`}
-                      >
-                        <span className="text-xl">{emoji}</span>
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
 
             {currentUserEmail && onSave && (
               <button
@@ -250,6 +245,38 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
             )}
           </div>
 
+          {/* Report Confirmation Dialog */}
+          {showReportConfirm && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center">
+                    <Flag className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#5C4A3A]">{hasReported ? "Unreport Post" : "Report Post"}</h3>
+                </div>
+                <p className="text-sm text-[#8B7355] mb-6">
+                  {hasReported
+                    ? "Remove your report on this post."
+                    : "This will flag the post for review. If enough users report it, it will be reviewed by our team."}
+                </p>
+                <div className="flex gap-3">
+                  <Button onClick={() => setShowReportConfirm(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
+                  <Button
+                    onClick={() => { onReport(post); setShowReportConfirm(false); }}
+                    className="flex-1 rounded-xl bg-orange-500 hover:bg-orange-600 text-white"
+                  >
+                    {hasReported ? "Unreport" : "Report"}
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
           {/* Block Confirmation Dialog */}
           {showBlockConfirm && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -263,22 +290,8 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                   You won't see posts from this user anymore. This action will also notify the developer.
                 </p>
                 <div className="flex gap-3">
-                  <Button
-                    onClick={() => setShowBlockConfirm(false)}
-                    variant="outline"
-                    className="flex-1 rounded-xl"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      onBlock(post.author_email);
-                      setShowBlockConfirm(false);
-                    }}
-                    className="flex-1 rounded-xl bg-red-500 hover:bg-red-600"
-                  >
-                    Block
-                  </Button>
+                  <Button onClick={() => setShowBlockConfirm(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
+                  <Button onClick={() => { onBlock(post.author_email); setShowBlockConfirm(false); }} className="flex-1 rounded-xl bg-red-500 hover:bg-red-600">Block</Button>
                 </div>
               </motion.div>
             </div>
