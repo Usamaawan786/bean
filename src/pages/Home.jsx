@@ -23,8 +23,7 @@ import { useQueryClient } from "@tanstack/react-query";
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
-  const [authChecked, setAuthChecked] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -135,10 +134,21 @@ export default function Home() {
         }
       } catch (error) {
         console.error('Auth error:', error);
+      } finally {
+        setAuthChecked(true);
       }
     };
     loadUser();
   }, []);
+
+  // Loading state — prevent guest flash
+  if (!authChecked) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
+        <div className="w-8 h-8 border-4 border-[#D4C4B0] border-t-[#8B7355] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   // Guest mode - show browse-friendly home
   if (!user || !customer) {
