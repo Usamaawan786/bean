@@ -29,6 +29,7 @@ export default function Profile() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showPicConsentModal, setShowPicConsentModal] = useState(false);
   const [pendingPicFile, setPendingPicFile] = useState(null);
+  const [consentChecked, setConsentChecked] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
@@ -103,13 +104,10 @@ export default function Profile() {
 
   const handleCropComplete = async (croppedFile) => {
     setImageToEdit(null);
-    // Check consent
-    if (!user?.profile_picture_consent) {
-      setPendingPicFile(croppedFile);
-      setShowPicConsentModal(true);
-      return;
-    }
-    await uploadProfilePicture(croppedFile);
+    // Always show consent modal
+    setConsentChecked(false);
+    setPendingPicFile(croppedFile);
+    setShowPicConsentModal(true);
   };
 
   const uploadProfilePicture = async (file) => {
@@ -486,13 +484,24 @@ export default function Profile() {
             <div className="w-14 h-14 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
               <Camera className="h-7 w-7 text-[#8B7355]" />
             </div>
-            <h3 className="text-xl font-bold text-[#5C4A3A] text-center mb-2">Upload Profile Picture?</h3>
-            <p className="text-sm text-[#8B7355] text-center mb-6 leading-relaxed">
-              By uploading a profile picture, you consent to your photo being visible to other community members in the Bean Coffee app. You can remove it at any time.
+            <h3 className="text-xl font-bold text-[#5C4A3A] text-center mb-2">Upload Profile Picture</h3>
+            <p className="text-sm text-[#8B7355] text-center mb-5 leading-relaxed">
+              Your photo will be visible to other community members in the Bean Coffee app. You can remove it at any time.
             </p>
+            <label className="flex items-start gap-3 mb-6 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consentChecked}
+                onChange={(e) => setConsentChecked(e.target.checked)}
+                className="mt-0.5 w-5 h-5 accent-[#8B7355] cursor-pointer flex-shrink-0"
+              />
+              <span className="text-sm text-[#5C4A3A] leading-relaxed">
+                I consent to my profile picture being displayed to other members of the Bean community.
+              </span>
+            </label>
             <div className="flex gap-3">
               <Button
-                onClick={() => { setShowPicConsentModal(false); setPendingPicFile(null); }}
+                onClick={() => { setShowPicConsentModal(false); setPendingPicFile(null); setConsentChecked(false); }}
                 variant="outline"
                 className="flex-1 rounded-xl border-[#E8DED8]"
               >
@@ -500,9 +509,10 @@ export default function Profile() {
               </Button>
               <Button
                 onClick={handleConsentAndUpload}
-                className="flex-1 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
+                disabled={!consentChecked}
+                className="flex-1 rounded-xl bg-[#8B7355] hover:bg-[#6B5744] disabled:opacity-50"
               >
-                I Consent & Upload
+                Upload Photo
               </Button>
             </div>
           </motion.div>
