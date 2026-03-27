@@ -7,7 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
   Coffee, Star, Gift, Users, Zap, ChevronRight, 
-  TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown
+  TrendingUp, Award, Bell, Trophy, Sparkles, TrendingDown, MapPin
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatsCard from "@/components/dashboard/StatsCard";
@@ -194,6 +194,19 @@ export default function Home() {
             </div>
           </Link>
 
+          {/* Find Us on Maps */}
+          <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
+            <div className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+              <div className="rounded-2xl bg-white/20 p-4">
+                <MapPin className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-white text-lg">Find Us on Maps</h3>
+                <p className="text-xs text-[#E8DED8] mt-1">Get directions to our store</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-white/70" />
+            </div>
+          </a>
 
         </div>
       </div>
@@ -510,6 +523,30 @@ export default function Home() {
               </div>
             </motion.div>
           </Link>
+        </motion.div>
+
+        {/* Find Us on Maps */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.25 }}
+        >
+          <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
+            <motion.div
+              whileHover={{ scale: 1.02, y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-lg flex items-center gap-4"
+            >
+              <div className="rounded-2xl bg-white/20 p-4">
+                <MapPin className="h-7 w-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-white text-lg">Find Us on Maps</h3>
+                <p className="text-xs text-[#E8DED8] mt-1">Get directions to our store</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-white/70" />
+            </motion.div>
+          </a>
         </motion.div>
 
         {/* Activity Feed */}
