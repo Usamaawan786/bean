@@ -44,7 +44,7 @@ export default function Welcome() {
             <span className="text-sm font-medium">Bean</span>
           </motion.div>
 
-          <motion.h1 {...fadeUp(0.1)} className="text-5xl font-bold leading-tight mb-4">
+          <motion.h1 {...fadeUp(0.1)} className="text-4xl sm:text-5xl font-bold leading-tight mb-4">
             Welcome to<br />
             <span className="text-[#F4D35E]">Bean</span> ☕
           </motion.h1>

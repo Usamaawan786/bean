@@ -91,7 +91,7 @@ export default function Shop() {
             className="absolute bottom-5 right-10 w-48 h-48 bg-[#C9B8A6]/30 rounded-full blur-3xl"
           />
         </div>
-        <div className="relative max-w-6xl mx-auto px-5 pt-6 pb-6">
+        <div className="relative max-w-lg mx-auto px-5 pt-6 pb-6">
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -122,7 +122,7 @@ export default function Shop() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-5 py-6 space-y-8">
+      <div className="max-w-lg mx-auto px-5 py-6 space-y-8">
         {/* Featured Products */}
         {featuredProducts.length > 0 && (
           <motion.section
@@ -136,7 +136,7 @@ export default function Shop() {
               </motion.div>
               <h2 className="text-xl font-bold text-[#5C4A3A]">Featured Products</h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {featuredProducts.slice(0, 4).map((product, idx) => (
                 <motion.div
                   key={product.id}
@@ -194,7 +194,7 @@ export default function Shop() {
             <p className="text-[#8B7355]">No products found in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <AnimatePresence>
               {filteredProducts.map((product, i) => (
                 <motion.div
@@ -226,9 +226,9 @@ export default function Shop() {
 
       {/* Product Detail Modal */}
       <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-        <DialogContent className="max-w-2xl rounded-3xl">
+        <DialogContent className="max-w-sm mx-4 rounded-3xl">
           {selectedProduct && (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-4">
               <div className="aspect-square rounded-2xl overflow-hidden bg-[#F5EBE8]">
                 {selectedProduct.image_url ? (
                   <img
@@ -242,47 +242,20 @@ export default function Shop() {
                   </div>
                 )}
               </div>
-              
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <h2 className="text-2xl font-bold text-[#5C4A3A]">{selectedProduct.name}</h2>
-                  <p className="text-3xl font-bold text-[#8B7355] mt-2">${selectedProduct.price}</p>
+                  <h2 className="text-xl font-bold text-[#5C4A3A]">{selectedProduct.name}</h2>
+                  <p className="text-2xl font-bold text-[#8B7355] mt-1">${selectedProduct.price}</p>
                 </div>
-                
-                <p className="text-[#6B5744]">{selectedProduct.description}</p>
-                
-                <div className="space-y-2">
-                  {selectedProduct.category && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-[#8B7355]">Category:</span>
-                      <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.category}</Badge>
-                    </div>
-                  )}
-                  {selectedProduct.weight && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-[#8B7355]">Size:</span>
-                      <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.weight}</Badge>
-                    </div>
-                  )}
-                  {selectedProduct.origin && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-[#8B7355]">Origin:</span>
-                      <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.origin}</Badge>
-                    </div>
-                  )}
-                  {selectedProduct.roast_level && selectedProduct.roast_level !== "N/A" && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-[#8B7355]">Roast:</span>
-                      <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.roast_level}</Badge>
-                    </div>
-                  )}
+                <p className="text-sm text-[#6B5744]">{selectedProduct.description}</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProduct.category && <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.category}</Badge>}
+                  {selectedProduct.weight && <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.weight}</Badge>}
+                  {selectedProduct.origin && <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.origin}</Badge>}
+                  {selectedProduct.roast_level && selectedProduct.roast_level !== "N/A" && <Badge className="bg-[#F5EBE8] text-[#5C4A3A]">{selectedProduct.roast_level}</Badge>}
                 </div>
-                
                 <Button
-                  onClick={() => {
-                    handleAddToCart(selectedProduct);
-                    setSelectedProduct(null);
-                  }}
+                  onClick={() => { handleAddToCart(selectedProduct); setSelectedProduct(null); }}
                   disabled={!selectedProduct.in_stock}
                   className="w-full rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] text-white py-6"
                 >

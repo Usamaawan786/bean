@@ -272,16 +272,16 @@ export default function Profile() {
         {/* Stats */}
         {customer && (
           <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-              <div className="text-2xl font-bold text-[#8B7355]">{customer.points_balance}</div>
+            <div className="bg-white rounded-2xl border border-[#E8DED8] p-3 text-center">
+              <div className="text-xl font-bold text-[#8B7355]">{customer.points_balance}</div>
               <div className="text-xs text-[#C9B8A6] mt-1">Points</div>
             </div>
-            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-              <div className="text-2xl font-bold text-[#8B7355]">{customer.referral_count || 0}</div>
+            <div className="bg-white rounded-2xl border border-[#E8DED8] p-3 text-center">
+              <div className="text-xl font-bold text-[#8B7355]">{customer.referral_count || 0}</div>
               <div className="text-xs text-[#C9B8A6] mt-1">Referrals</div>
             </div>
-            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-              <div className="text-2xl font-bold text-[#8B7355]">{customer.tier}</div>
+            <div className="bg-white rounded-2xl border border-[#E8DED8] p-3 text-center">
+              <div className="text-sm font-bold text-[#8B7355] leading-tight">{customer.tier}</div>
               <div className="text-xs text-[#C9B8A6] mt-1">Tier</div>
             </div>
           </div>

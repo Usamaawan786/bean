@@ -134,23 +134,23 @@ export default function Rewards() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-6"
+            className="flex items-center justify-between mb-6 gap-3"
           >
-            <div>
-              <h1 className="text-3xl font-bold">Rewards</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold">Rewards</h1>
               <p className="text-[#E8DED8] text-sm mt-1">Treat yourself!</p>
             </div>
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white/10 backdrop-blur-lg rounded-2xl px-5 py-4 border border-white/20 shadow-lg"
+              className="bg-white/10 backdrop-blur-lg rounded-2xl px-4 py-3 border border-white/20 shadow-lg flex-shrink-0"
             >
               <div className="flex items-center gap-2">
                 <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
-                  <Star className="h-5 w-5 text-amber-300 fill-amber-300" />
+                  <Star className="h-4 w-4 text-amber-300 fill-amber-300" />
                 </motion.div>
-                <span className="text-2xl font-bold">{customer?.points_balance || 0}</span>
+                <span className="text-xl font-bold">{customer?.points_balance || 0}</span>
               </div>
-              <p className="text-xs text-[#E8DED8]">Available points</p>
+              <p className="text-xs text-[#E8DED8]">Available pts</p>
             </motion.div>
           </motion.div>
 
