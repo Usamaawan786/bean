@@ -650,7 +650,7 @@ export default function Waitlist() {
               </Badge>
               <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {Math.max(0, 1239 - totalSignups)} Founding Spots Left</h2>
               <p className="text-lg md:text-xl text-[#E8DED8]">
-                Lock in your perks before we hit 1000 members
+                Lock in your perks before we hit 1239 members
               </p>
             </div>
           </div>

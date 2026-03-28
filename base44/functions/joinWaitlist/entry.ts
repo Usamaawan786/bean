@@ -18,11 +18,10 @@ Deno.serve(async (req) => {
 
         const refLink = `https://beancoffee.co/waitlist?ref=${refCode}`;
 
-        // Get current max position by sorting descending, limit 1 — avoids fetching all records
-        const latest = await base44.asServiceRole.entities.WaitlistSignup.list('-position', 1);
-        const latestArr = Array.isArray(latest) ? latest : [];
-        const maxPosition = latestArr.length > 0 ? (Number(latestArr[0].position) || 0) : 0;
-        const newPosition = maxPosition + 1;
+        // Use record count as position — avoids relying on potentially corrupted position values
+        const allSignups = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', 10000);
+        const allArr = Array.isArray(allSignups) ? allSignups : [];
+        const newPosition = allArr.length + 1;
 
         await base44.asServiceRole.entities.WaitlistSignup.create({
             full_name,
