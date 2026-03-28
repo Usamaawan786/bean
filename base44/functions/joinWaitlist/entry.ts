@@ -18,10 +18,16 @@ Deno.serve(async (req) => {
 
         const refLink = `https://beancoffee.co/waitlist?ref=${refCode}`;
 
-        // Use record count as position — avoids relying on potentially corrupted position values
-        const allSignups = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', 10000);
-        const allArr = Array.isArray(allSignups) ? allSignups : [];
-        const newPosition = allArr.length + 1;
+        // Count total records by paginating in batches of 100
+        let totalCount = 0;
+        const batchSize = 100;
+        while (true) {
+            const batch = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', batchSize, totalCount);
+            const batchArr = Array.isArray(batch) ? batch : [];
+            totalCount += batchArr.length;
+            if (batchArr.length < batchSize) break;
+        }
+        const newPosition = totalCount + 1;
 
         await base44.asServiceRole.entities.WaitlistSignup.create({
             full_name,
