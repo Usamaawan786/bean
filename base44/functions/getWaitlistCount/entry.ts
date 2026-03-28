@@ -1,17 +1,14 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        
-        // Get count using service role (no auth required)
-        const signups = await base44.asServiceRole.entities.WaitlistSignup.list();
-        
-        return Response.json({
-            count: signups.length
-        });
+        const latest = await base44.asServiceRole.entities.WaitlistSignup.list('-position', 1);
+        const latestArr = Array.isArray(latest) ? latest : [];
+        const count = latestArr.length > 0 ? (Number(latestArr[0].position) || 0) : 0;
+        return Response.json({ count });
     } catch (error) {
         console.error('Failed to get waitlist count:', error);
-        return Response.json({ count: 147 }); // Fallback number
+        return Response.json({ count: 739 });
     }
 });

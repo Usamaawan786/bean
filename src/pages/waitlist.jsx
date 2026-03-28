@@ -32,10 +32,10 @@ export default function Waitlist() {
   const loadTotalSignups = async () => {
     try {
       const response = await base44.functions.invoke('getWaitlistCount', {});
-      setTotalSignups(147 + response.data.count);
+      setTotalSignups(response.data.count || 0);
     } catch (error) {
       console.error("Failed to load signups");
-      setTotalSignups(147);
+      setTotalSignups(739);
     }
   };
 
@@ -550,9 +550,9 @@ export default function Waitlist() {
               <Badge className="bg-red-500 text-white px-4 py-2 text-sm font-bold mb-4 shadow-lg animate-pulse">
                 LIMITED TIME OFFER
               </Badge>
-              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {500 - (totalSignups - 147)} Founding Spots Left</h2>
+              <h2 className="text-3xl md:text-5xl font-bold mb-3">Only {Math.max(0, 1239 - totalSignups)} Founding Spots Left</h2>
               <p className="text-lg md:text-xl text-[#E8DED8]">
-                Lock in your perks before we hit 500 members
+                Lock in your perks before we hit 1239 members
               </p>
             </div>
           </div>
