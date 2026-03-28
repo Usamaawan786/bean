@@ -3,8 +3,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const signups = await base44.asServiceRole.entities.WaitlistSignup.filter({}, 'created_date', 10000);
-        
+        const raw = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', 10000);
+        const signups = typeof raw === 'string' ? JSON.parse(raw) : (Array.isArray(raw) ? raw : []);
+
         if (!signups || signups.length === 0) {
             return Response.json({ success: true, total: 0, fixed: 0 });
         }
