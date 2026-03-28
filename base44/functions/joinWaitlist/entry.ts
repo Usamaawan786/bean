@@ -3,7 +3,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        const { full_name, email, phone, referred_by, position: clientPosition } = await req.json();
+        const { full_name, email, phone, referred_by } = await req.json();
 
         if (!full_name || !email) {
             return Response.json({ error: 'Name and email are required' }, { status: 400 });
@@ -18,7 +18,8 @@ Deno.serve(async (req) => {
 
         const refLink = `https://beancoffee.co/waitlist?ref=${refCode}`;
 
-        const newPosition = (clientPosition || 0) + 1;
+        const existing = await base44.asServiceRole.entities.WaitlistSignup.list();
+        const newPosition = existing.length + 1;
 
         await base44.asServiceRole.entities.WaitlistSignup.create({
             full_name,
