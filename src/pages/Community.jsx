@@ -43,10 +43,13 @@ export default function Community() {
   }, []);
 
   useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight);
-    }
-  }, [user]); // re-measure when tabs appear/disappear
+    if (!headerRef.current) return;
+    const observer = new ResizeObserver(() => {
+      setHeaderHeight(headerRef.current?.offsetHeight || 0);
+    });
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
