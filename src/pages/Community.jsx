@@ -48,8 +48,9 @@ export default function Community() {
       setHeaderHeight(headerRef.current?.offsetHeight || 0);
     });
     observer.observe(headerRef.current);
+    setHeaderHeight(headerRef.current.offsetHeight);
     return () => observer.disconnect();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const loadUser = async () => {
