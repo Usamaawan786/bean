@@ -228,145 +228,118 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     <PullToRefresh onRefresh={handleRefresh}>
       <div ref={scrollRef} className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Header */}
-        <motion.div
+        <div
           ref={headerRef}
-          animate={{ y: headerVisible ? 0 : -headerHeight }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] fixed top-0 left-0 right-0 z-10 shadow-sm select-none"
+          className="bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] fixed top-0 left-0 right-0 z-10 shadow-sm select-none transition-transform duration-200"
+          style={{ transform: headerVisible ? 'translateY(0)' : `translateY(-${headerHeight}px)` }}
         >
-        <div className="absolute inset-0 opacity-5">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            className="absolute top-5 right-10 w-32 h-32 bg-[#D4C4B0] rounded-full blur-3xl"
-          />
-        </div>
-        <div className="relative max-w-lg mx-auto px-5 pt-6 pb-4">
-          <Link 
-            to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-[#8B7355] text-sm mb-4 hover:text-[#5C4A3A] transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
-          
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-3 shadow-md flex-shrink-0"
-              >
-                <Users className="h-6 w-6 text-[#8B7355]" />
-              </motion.div>
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-[#5C4A3A]">Community</h1>
-                <p className="text-sm text-[#8B7355] truncate">Share your coffee moments</p>
+          <div className="relative max-w-lg mx-auto px-5 pt-6 pb-4">
+            <Link 
+              to={createPageUrl("Home")}
+              className="inline-flex items-center gap-1 text-[#8B7355] text-sm mb-4 hover:text-[#5C4A3A] transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Link>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-3 shadow-md flex-shrink-0">
+                  <Users className="h-6 w-6 text-[#8B7355]" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-2xl font-bold text-[#5C4A3A]">Community</h1>
+                  <p className="text-sm text-[#8B7355] truncate">Share your coffee moments</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {user && <NotificationBell userEmail={user.email} />}
+                {user?.role === "admin" && (
+                  <Link to={createPageUrl("Moderation")}>
+                    <button className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-3 py-2 rounded-xl text-xs font-medium text-[#5C4A3A] transition-colors shadow-md whitespace-nowrap">
+                      Moderation
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
-            
-            <div className="flex items-center gap-2 flex-shrink-0">
-            {user && <NotificationBell userEmail={user.email} />}
-            {user?.role === "admin" && (
-              <Link to={createPageUrl("Moderation")}>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-3 py-2 rounded-xl text-xs font-medium text-[#5C4A3A] transition-colors shadow-md whitespace-nowrap"
-                >
-                  Moderation
-                </motion.button>
-              </Link>
+            {user && (
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => setFeedTab("all")}
+                  className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                    feedTab === "all" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
+                  }`}
+                >All</button>
+                <button
+                  onClick={() => setFeedTab("following")}
+                  className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                    feedTab === "following" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
+                  }`}
+                >Following</button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Feed Tabs */}
-        {user && (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => setFeedTab("all")}
-              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
-                feedTab === "all" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
-              }`}
-            >All</button>
-            <button
-              onClick={() => setFeedTab("following")}
-              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
-                feedTab === "following" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
-              }`}
-            >Following</button>
-          </div>
-        )}
-        </div>
-      </motion.div>
-
-      {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 pb-24 space-y-4" style={{ paddingTop: headerHeight }}>
-        {/* Post Composer - Only show if logged in */}
-        {user ? (
-          <div>
+        {/* Main Content */}
+        <div className="max-w-lg mx-auto px-5 pb-24 space-y-4" style={{ paddingTop: headerHeight }}>
+          {user ? (
             <PostComposer 
               onPost={createPostMutation.mutate}
               userName={user?.full_name}
             />
-          </div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-center"
-          >
-            <Users className="h-10 w-10 text-[#8B7355] mx-auto mb-3" />
-            <h3 className="font-bold text-[#5C4A3A] mb-2">Join the Conversation</h3>
-            <p className="text-sm text-[#8B7355] mb-4">Sign in to share your coffee moments with the community</p>
-            <Button 
-              onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
-              className="bg-[#8B7355] hover:bg-[#6B5744] text-white"
-            >
-              Sign In to Post
-            </Button>
-          </motion.div>
-        )}
-        
-        {/* Posts */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-3xl h-32 animate-pulse" />
-            ))}
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-12">
-            <Coffee className="h-12 w-12 text-stone-300 mx-auto mb-4" />
-            <p className="text-stone-500">No posts yet. Be the first to share!</p>
-          </div>
-        ) : (
-          <AnimatePresence>
-            {posts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+          ) : (
+            <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-center">
+              <Users className="h-10 w-10 text-[#8B7355] mx-auto mb-3" />
+              <h3 className="font-bold text-[#5C4A3A] mb-2">Join the Conversation</h3>
+              <p className="text-sm text-[#8B7355] mb-4">Sign in to share your coffee moments with the community</p>
+              <Button 
+                onClick={() => base44.auth.redirectToLogin(window.location.pathname)}
+                className="bg-[#8B7355] hover:bg-[#6B5744] text-white"
               >
-                <PostCard
-                  post={post}
-                  currentUserEmail={user?.email}
-                  currentUser={user}
-                  currentUserFollowing={user?.following || []}
-                  currentUserSavedPosts={user?.saved_posts || []}
-                  onLike={likeMutation.mutate}
-                  onReport={reportPostMutation.mutate}
-                  onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
-                  onBlock={handleBlockUser}
-                  onFollow={handleFollow}
-                  onSave={handleSavePost}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-      </div>
+                Sign In to Post
+              </Button>
+            </div>
+          )}
+          
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-3xl h-32 animate-pulse" />
+              ))}
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="text-center py-12">
+              <Coffee className="h-12 w-12 text-stone-300 mx-auto mb-4" />
+              <p className="text-stone-500">No posts yet. Be the first to share!</p>
+            </div>
+          ) : (
+            <AnimatePresence>
+              {posts.map((post, i) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <PostCard
+                    post={post}
+                    currentUserEmail={user?.email}
+                    currentUser={user}
+                    currentUserFollowing={user?.following || []}
+                    currentUserSavedPosts={user?.saved_posts || []}
+                    onLike={likeMutation.mutate}
+                    onReport={reportPostMutation.mutate}
+                    onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
+                    onBlock={handleBlockUser}
+                    onFollow={handleFollow}
+                    onSave={handleSavePost}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
       </div>
     </PullToRefresh>
   );
