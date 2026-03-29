@@ -300,19 +300,15 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       </motion.div>
 
       {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 pb-24 space-y-4" style={{ paddingTop: headerHeight + 8 }}>
+      <div className="max-w-lg mx-auto px-5 pb-24 space-y-4" style={{ paddingTop: headerHeight }}>
         {/* Post Composer - Only show if logged in */}
         {user ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <div>
             <PostComposer 
               onPost={createPostMutation.mutate}
               userName={user?.full_name}
             />
-          </motion.div>
+          </div>
         ) : (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
