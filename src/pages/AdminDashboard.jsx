@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, TrendingUp, ShoppingCart, DollarSign, Package, Calendar } from "lucide-react";
+import { ArrowLeft, TrendingUp, ShoppingCart, DollarSign, Package, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,10 +130,16 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white">
         <div className="max-w-7xl mx-auto px-5 pt-6 pb-8">
-          <Link to={createPageUrl("AdminPOS")} className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4">
-            <ArrowLeft className="h-4 w-4" />
-            Back to POS
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link to={createPageUrl("AdminPOS")} className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4">
+              <ArrowLeft className="h-4 w-4" />
+              Back to POS
+            </Link>
+            <Link to="/AdminPushNotifications" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-4 py-2 rounded-xl border border-white/20 transition-colors mb-4">
+              <Bell className="h-4 w-4" />
+              Push Notifications
+            </Link>
+          </div>
           
           <div className="flex items-center justify-between mb-6">
             <div>
