@@ -219,7 +219,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         <motion.div
           animate={{ y: headerVisible ? 0 : -120 }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
-          className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] sticky top-0 z-10 shadow-sm select-none"
+          className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] fixed top-0 left-0 right-0 z-10 shadow-sm select-none"
         >
         <div className="absolute inset-0 opacity-5">
           <motion.div
@@ -287,7 +287,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       </motion.div>
 
       {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-4">
+      <div className="max-w-lg mx-auto px-5 pt-36 pb-24 space-y-4">
         {/* Post Composer - Only show if logged in */}
         {user ? (
           <motion.div
