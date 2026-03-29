@@ -212,7 +212,7 @@ export default function PostComposer({ onPost, userName }) {
         }
       </AnimatePresence>
 
-    <div className="bg-white my-2 p-4 rounded-3xl border border-[#E8DED8] shadow-sm">
+    <div className="bg-white my-4 px-5 py-5 rounded-3xl border border-[#E8DED8] shadow-sm">
       <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
