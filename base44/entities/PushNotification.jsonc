@@ -1,0 +1,101 @@
+{
+  "name": "PushNotification",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Notification title"
+    },
+    "body": {
+      "type": "string",
+      "description": "Notification body text"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image URL"
+    },
+    "deep_link": {
+      "type": "string",
+      "description": "In-app route to open (e.g. /FlashDrops)"
+    },
+    "template_id": {
+      "type": "string",
+      "description": "Template used (if any)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "scheduled",
+        "failed"
+      ],
+      "default": "draft"
+    },
+    "audience": {
+      "type": "string",
+      "enum": [
+        "all",
+        "tier_bronze",
+        "tier_silver",
+        "tier_gold",
+        "tier_platinum"
+      ],
+      "default": "all",
+      "description": "Target audience"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to send (if scheduled)"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When actually sent"
+    },
+    "sent_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of devices reached"
+    },
+    "failure_count": {
+      "type": "number",
+      "default": 0
+    },
+    "sent_by": {
+      "type": "string",
+      "description": "Admin email who sent it"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    }
+  },
+  "required": [
+    "title",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

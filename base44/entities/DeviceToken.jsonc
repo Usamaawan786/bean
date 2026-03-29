@@ -1,0 +1,48 @@
+{
+  "name": "DeviceToken",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "token": {
+      "type": "string",
+      "description": "FCM device token"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "ios",
+        "android",
+        "web"
+      ],
+      "description": "Device platform"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "user_tier": {
+      "type": "string",
+      "description": "User loyalty tier for targeting"
+    }
+  },
+  "required": [
+    "token"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
