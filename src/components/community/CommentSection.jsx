@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Send, Loader2, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -21,19 +22,24 @@ function CommentBubble({ comment, currentUser, onLike, onReply, isReply = false 
   const timeAgo = comment.created_date
     ? formatDistanceToNow(new Date(comment.created_date), { addSuffix: true })
     : "";
+  const profileUrl = `/UserProfile?email=${encodeURIComponent(comment.author_email || "")}`;
 
   return (
     <div className="flex gap-2 min-w-0">
-      <Avatar src={comment.author_profile_picture} name={comment.author_name} size={isReply ? "sm" : "md"} />
+      <Link to={profileUrl} className="flex-shrink-0 mt-0.5">
+        <Avatar src={comment.author_profile_picture} name={comment.author_name} size={isReply ? "sm" : "md"} />
+      </Link>
       <div className="flex-1 min-w-0">
         <div className={`${isReply ? "bg-[#EDE8E3]" : "bg-[#F5EBE8]"} rounded-2xl px-3 py-2`}>
           <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className="font-semibold text-[#5C4A3A] text-sm leading-tight">{comment.author_name}</span>
+            <Link to={profileUrl} className="font-semibold text-[#5C4A3A] text-sm leading-tight hover:underline">
+              {comment.author_name}
+            </Link>
             {comment.reply_to_author && (
               <span className="text-xs text-[#8B7355] font-medium">@{comment.reply_to_author}</span>
             )}
           </div>
-          <p className="text-[#5C4A3A] text-sm mt-0.5 break-words">
+          <p className="text-[#5C4A3A] text-sm mt-0.5 break-words leading-snug">
             {comment.content.split(/(#\w+|@\w+)/g).map((part, i) =>
               part.startsWith('#') ? <span key={i} className="text-[#8B7355] font-medium">{part}</span>
               : part.startsWith('@') ? <span key={i} className="text-blue-500 font-medium">{part}</span>
@@ -220,7 +226,6 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
                   onLike={likeCommentMutation.mutate}
                   onReply={handleSetReply}
                 />
-                {/* Replies */}
                 {replies.length > 0 && (
                   <div className="ml-10 mt-2 space-y-2">
                     {replies.map(reply => (

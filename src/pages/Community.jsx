@@ -17,12 +17,17 @@ export default function Community() {
   const [user, setUser] = useState(null);
   const [feedTab, setFeedTab] = useState("all");
   const [headerVisible, setHeaderVisible] = useState(true);
+  const [headerHeight, setHeaderHeight] = useState(160);
   const lastScrollY = useRef(0);
   const scrollRef = useRef(null);
+  const headerRef = useRef(null);
 
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight);
+    }
     const el = scrollRef.current;
     if (!el) return;
     const handleScroll = () => {
@@ -217,7 +222,8 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       <div ref={scrollRef} className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Header */}
         <motion.div
-          animate={{ y: headerVisible ? 0 : -120 }}
+          ref={headerRef}
+          animate={{ y: headerVisible ? 0 : -headerHeight }}
           transition={{ duration: 0.25, ease: "easeInOut" }}
           className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] fixed top-0 left-0 right-0 z-10 shadow-sm select-none"
         >
@@ -287,7 +293,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       </motion.div>
 
       {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 pt-36 pb-24 space-y-4">
+      <div className="max-w-lg mx-auto px-5 pb-24 space-y-4" style={{ paddingTop: headerHeight + 8 }}>
         {/* Post Composer - Only show if logged in */}
         {user ? (
           <motion.div
