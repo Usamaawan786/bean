@@ -17,7 +17,7 @@ export default function Community() {
   const [user, setUser] = useState(null);
   const [feedTab, setFeedTab] = useState("all");
   const [headerVisible, setHeaderVisible] = useState(true);
-  const [headerHeight, setHeaderHeight] = useState(160);
+  const [headerHeight, setHeaderHeight] = useState(0);
   const lastScrollY = useRef(0);
   const scrollRef = useRef(null);
   const headerRef = useRef(null);
@@ -25,9 +25,6 @@ export default function Community() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight);
-    }
     const el = scrollRef.current;
     if (!el) return;
     const handleScroll = () => {
@@ -44,6 +41,12 @@ export default function Community() {
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (headerRef.current) {
+      setHeaderHeight(headerRef.current.offsetHeight);
+    }
+  }, [user]); // re-measure when tabs appear/disappear
 
   useEffect(() => {
     const loadUser = async () => {
