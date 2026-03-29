@@ -7,6 +7,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import AdminEmails from './pages/AdminEmails';
+import AdminPushNotifications from './pages/AdminPushNotifications';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
 import Welcome from './pages/Welcome';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/AdminEmails" element={<AdminEmails />} />
             <Route path="/AdminReferrals" element={<AdminReferrals />} />
             <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
+            <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
             <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
