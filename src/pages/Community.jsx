@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,20 +15,39 @@ import AppHeader from "@/components/shared/AppHeader";
 
 export default function Community() {
   const [user, setUser] = useState(null);
-  const [feedTab, setFeedTab] = useState("all"); // all | following
+  const [feedTab, setFeedTab] = useState("all");
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollRef = useRef(null);
 
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      const currentY = el.scrollTop;
+      if (currentY < 60) {
+        setHeaderVisible(true);
+      } else if (currentY > lastScrollY.current + 8) {
+        setHeaderVisible(false);
+      } else if (currentY < lastScrollY.current - 8) {
+        setHeaderVisible(true);
+      }
+      lastScrollY.current = currentY;
+    };
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
         if (!isAuth) {
-          // Allow viewing posts without login
           setUser(null);
           return;
         }
-
         const u = await base44.auth.me();
         if (!u || !u.email) {
           setUser(null);
@@ -36,7 +55,6 @@ export default function Community() {
         }
         setUser(u);
       } catch (error) {
-        // Allow guest browsing
         setUser(null);
       }
     };
@@ -196,9 +214,13 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
+      <div ref={scrollRef} className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Header */}
-        <div className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] sticky top-0 z-10 shadow-sm select-none">
+        <motion.div
+          animate={{ y: headerVisible ? 0 : -120 }}
+          transition={{ duration: 0.25, ease: "easeInOut" }}
+          className="relative bg-gradient-to-br from-white dark:from-[var(--bg-card)] to-[#F5F1ED] dark:to-[var(--bg-elevated)] border-b border-[#E8DED8] dark:border-[var(--border-light)] sticky top-0 z-10 shadow-sm select-none"
+        >
         <div className="absolute inset-0 opacity-5">
           <motion.div
             animate={{ rotate: 360 }}
@@ -262,7 +284,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
           </div>
         )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Main Content */}
       <div className="max-w-lg mx-auto px-5 py-6 pb-24 space-y-4">
