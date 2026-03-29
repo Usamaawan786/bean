@@ -6,6 +6,7 @@ import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
+import usePushNotifications from './hooks/usePushNotifications';
 import AdminEmails from './pages/AdminEmails';
 import AdminPushNotifications from './pages/AdminPushNotifications';
 import AdminReferrals from './pages/AdminReferrals';
@@ -21,12 +22,18 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+function PushNotificationInit() {
+  usePushNotifications();
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <NavigationTracker />
+          <PushNotificationInit />
           <Routes>
             <Route path="/" element={<Welcome />} />
             {Object.entries(Pages).map(([path, Page]) => (
