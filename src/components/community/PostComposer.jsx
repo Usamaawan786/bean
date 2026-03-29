@@ -52,7 +52,7 @@ export default function PostComposer({ onPost, userName }) {
         resultType: CameraResultType.Uri,
         source: CameraSource.Photos,
         saveToGallery: false
-      }).catch(err => {
+      }).catch((err) => {
         setIsUploadingImage(false);
         throw err;
       });
@@ -167,24 +167,24 @@ export default function PostComposer({ onPost, userName }) {
   return (
     <>
       <AnimatePresence>
-        {showPermissionModal && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        {showPermissionModal &&
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
-            >
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+            
               <div className="text-center mb-6">
-                {permissionType === "photos" ? (
-                  <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
+                {permissionType === "photos" ?
+              <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
                     <Image className="h-8 w-8 text-[#8B7355]" />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
+                  </div> :
+
+              <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
                     <Video className="h-8 w-8 text-[#8B7355]" />
                   </div>
-                )}
+              }
                 <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">
                   Allow Access to {permissionType === "photos" ? "Photos" : "Videos"}
                 </h3>
@@ -194,119 +194,119 @@ export default function PostComposer({ onPost, userName }) {
               </div>
               <div className="flex gap-3">
                 <Button
-                  onClick={() => setShowPermissionModal(false)}
-                  variant="outline"
-                  className="flex-1 rounded-xl border-[#E8DED8]"
-                >
+                onClick={() => setShowPermissionModal(false)}
+                variant="outline"
+                className="flex-1 rounded-xl border-[#E8DED8]">
+                
                   Cancel
                 </Button>
                 <Button
-                  onClick={permissionType === "photos" ? proceedWithImageUpload : proceedWithVideoUpload}
-                  className="flex-1 rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A]"
-                >
+                onClick={permissionType === "photos" ? proceedWithImageUpload : proceedWithVideoUpload}
+                className="flex-1 rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A]">
+                
                   Allow
                 </Button>
               </div>
             </motion.div>
           </div>
-        )}
+        }
       </AnimatePresence>
 
-    <div className="rounded-3xl bg-white border border-[#E8DED8] p-4 shadow-sm">
+    <div className="bg-white my-2 p-4 rounded-3xl border border-[#E8DED8] shadow-sm">
       <Textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="Share your coffee moment..."
-        className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]"
-      />
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Share your coffee moment..."
+          className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]" />
+        
 
-      {imageUrl && (
+      {imageUrl &&
         <div className="mt-3 relative inline-block">
           <img src={imageUrl} alt="Upload" className="h-24 rounded-xl object-cover" />
           <button
             onClick={() => setImageUrl("")}
-            className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1"
-          >
+            className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1">
+            
             <X className="h-3 w-3" />
           </button>
         </div>
-      )}
+        }
 
-      {videoUrl && (
+      {videoUrl &&
         <div className="mt-3 relative inline-block">
           <video src={videoUrl} controls className="h-32 rounded-xl" />
           <button
             onClick={() => setVideoUrl("")}
-            className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1"
-          >
+            className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1">
+            
             <X className="h-3 w-3" />
           </button>
         </div>
-      )}
+        }
 
-      {!hasAcceptedTerms && (
+      {!hasAcceptedTerms &&
         <div className="mt-3 flex items-start gap-2">
           <input
             type="checkbox"
             id="terms"
             checked={hasAcceptedTerms}
             onChange={handleAcceptTerms}
-            className="mt-1 accent-[#8B7355]"
-          />
+            className="mt-1 accent-[#8B7355]" />
+          
           <label htmlFor="terms" className="text-xs text-[#8B7355] leading-relaxed">
             I agree that my content will not include hate speech, spam, profanity, threats, harassment, or any objectionable material. Violation may result in content removal and account suspension.
           </label>
         </div>
-      )}
+        }
 
       <div className="mt-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <button
-            type="button"
-            onClick={handleImageUpload}
-            disabled={isUploadingImage || videoUrl}
-            className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
-              }`}
-          >
-            {isUploadingImage ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+              type="button"
+              onClick={handleImageUpload}
+              disabled={isUploadingImage || videoUrl}
+              className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`
+              }>
+              
+            {isUploadingImage ?
+              <Loader2 className="h-4 w-4 animate-spin" /> :
+
               <Image className="h-4 w-4" />
-            )}
+              }
             <span className="text-xs">Photo</span>
           </button>
 
           <button
-            type="button"
-            onClick={handleVideoUpload}
-            disabled={isUploadingVideo || imageUrl}
-            className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"
-              }`}
-          >
-            {isUploadingVideo ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+              type="button"
+              onClick={handleVideoUpload}
+              disabled={isUploadingVideo || imageUrl}
+              className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`
+              }>
+              
+            {isUploadingVideo ?
+              <Loader2 className="h-4 w-4 animate-spin" /> :
+
               <Video className="h-4 w-4" />
-            )}
+              }
             <span className="text-xs">Video</span>
           </button>
         </div>
 
         <Button
-          onClick={handleSubmit}
-          disabled={!content.trim() || !hasAcceptedTerms || isPosting}
-          size="sm"
-          className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] flex-shrink-0"
-        >
-          {isPosting ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-          ) : (
+            onClick={handleSubmit}
+            disabled={!content.trim() || !hasAcceptedTerms || isPosting}
+            size="sm"
+            className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] flex-shrink-0">
+            
+          {isPosting ?
+            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> :
+
             <Send className="h-3.5 w-3.5 mr-1.5" />
-          )}
+            }
           Post
         </Button>
       </div>
     </div>
-    </>
-  );
+    </>);
+
 }
