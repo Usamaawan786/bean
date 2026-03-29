@@ -251,12 +251,7 @@ export default function AdminPushNotifications() {
       if (!asDraft) {
         // Send via backend function
         const res = await base44.functions.invoke("sendPushNotification", {
-          notificationId: record.id,
-          title: form.title,
-          body: form.body,
-          imageUrl: form.imageUrl,
-          deepLink: form.deepLink,
-          audience: form.audience
+          notification_id: record.id
         });
         toast.success(`Sent to ${res.data.sent_count} devices!`);
       } else {
