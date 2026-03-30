@@ -123,19 +123,14 @@ export default function Home() {
           });
           setCustomer(newCustomer);
 
-          // Award 25 points to referrer if signed up via referral link
+          // Track referral source — bonus points are awarded only when referred person spends PKR 2,000+
           const params = new URLSearchParams(window.location.search);
           const refParam = params.get('ref');
           if (refParam) {
             const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
             if (referrers.length > 0) {
               const referrer = referrers[0];
-              await base44.entities.Customer.update(referrer.id, {
-                points_balance: (referrer.points_balance || 0) + 25,
-                total_points_earned: (referrer.total_points_earned || 0) + 25,
-                referral_count: (referrer.referral_count || 0) + 1,
-                referral_points_earned: (referrer.referral_points_earned || 0) + 25,
-              });
+              // Just store who referred them — no points yet
               await base44.entities.Customer.update(newCustomer.id, { referred_by: referrer.created_by });
             }
           }

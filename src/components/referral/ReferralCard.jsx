@@ -48,7 +48,7 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
             Refer Friends, Earn Points
           </h3>
           <p className="text-[#E8DED8] text-sm mt-1">
-            Get 25 points for each friend who joins!
+            Earn 25 points when your friend spends PKR 2,000+
           </p>
         </div>
         <div className="text-right">
@@ -80,11 +80,16 @@ export default function ReferralCard({ referralCode, referralCount = 0 }) {
           <span>Friend joins</span>
         </div>
         <span className="text-[#D4C4B0]">→</span>
+        <div className="flex items-center gap-1.5 text-[#E8DED8]">
+          <span>spends 2k PKR</span>
+        </div>
+        <span className="text-[#D4C4B0]">→</span>
         <div className="flex items-center gap-1.5 text-white font-semibold">
           <Gift className="h-4 w-4" />
-          <span>+25 pts each!</span>
+          <span>+25 pts each</span>
         </div>
       </div>
+      <p className="text-center text-[#D4C4B0]/60 text-xs mt-3">Points unlock once your friend's total spend reaches PKR 2,000</p>
     </motion.div>
   );
 }

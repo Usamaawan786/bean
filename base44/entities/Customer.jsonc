@@ -1,0 +1,100 @@
+{
+  "name": "Customer",
+  "type": "object",
+  "properties": {
+    "points_balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Current reward points balance"
+    },
+    "total_points_earned": {
+      "type": "number",
+      "default": 0,
+      "description": "Lifetime points earned"
+    },
+    "total_spend_pkr": {
+      "type": "number",
+      "default": 0,
+      "description": "Cumulative PKR spent in store (from scanned bills)"
+    },
+    "referral_code": {
+      "type": "string",
+      "description": "Unique referral code for this customer"
+    },
+    "referred_by": {
+      "type": "string",
+      "description": "Email of the customer who referred them"
+    },
+    "referral_bonus_awarded": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the referral spend-based bonus has been awarded (to prevent double-awarding)"
+    },
+    "referral_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of successful referrals"
+    },
+    "referral_conversions": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of referred users who met the spend threshold"
+    },
+    "referral_points_earned": {
+      "type": "number",
+      "default": 0,
+      "description": "Total points earned from referrals"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum"
+      ],
+      "default": "Bronze",
+      "description": "Loyalty tier based on points"
+    },
+    "cups_redeemed": {
+      "type": "number",
+      "default": 0,
+      "description": "Total free cups redeemed"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
