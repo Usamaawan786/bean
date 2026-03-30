@@ -1,0 +1,43 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "User's preferred display name"
+    },
+    "profile_picture": {
+      "type": "string",
+      "description": "Profile picture URL"
+    },
+    "following": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of users this user follows"
+    },
+    "blocked_users": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of blocked users"
+    },
+    "saved_posts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of saved posts"
+    }
+  }
+}

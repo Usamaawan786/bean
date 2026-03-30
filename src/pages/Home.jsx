@@ -18,12 +18,14 @@ import RewardProgress from "@/components/dashboard/RewardProgress";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
 import PullToRefresh from "@/components/shared/PullToRefresh";
+import OnboardingNameModal from "@/components/shared/OnboardingNameModal";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -78,6 +80,11 @@ export default function Home() {
 
   const allDrops = [...activeDrops, ...upcomingDrops];
 
+  const handleNameComplete = (name) => {
+  setShowNameModal(false);
+  setUser(prev => ({ ...prev, display_name: name }));
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -101,6 +108,7 @@ export default function Home() {
         const u = await base44.auth.me();
         if (!u || !u.email) return;
         setUser(u);
+        if (!u.display_name && !u.full_name) setShowNameModal(true);
 
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
@@ -214,6 +222,8 @@ export default function Home() {
   }
 
   return (
+    <>
+    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} />}
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Hero Section */}
@@ -280,7 +290,7 @@ export default function Home() {
               transition={{ delay: 0.3 }}
               className="text-4xl font-bold mb-2"
             >
-              {getGreeting()}, {user?.full_name?.split(" ")[0]}! ☕
+              {getGreeting()}, {(user?.display_name || user?.full_name)?.split(" ")[0]}! ☕
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0 }}
@@ -562,5 +572,6 @@ export default function Home() {
       </div>
       </div>
     </PullToRefresh>
+    </>
   );
 }
