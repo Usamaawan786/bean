@@ -50,7 +50,8 @@ export default function usePushNotifications() {
           }
         });
       } catch (e) {
-        // Silently fail on web
+        // Only log on native — expected to fail silently on web
+        console.error("[PushNotifications] Registration error:", e);
       }
     };
 
