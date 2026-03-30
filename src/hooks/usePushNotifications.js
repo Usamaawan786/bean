@@ -28,23 +28,13 @@ export default function usePushNotifications() {
 
           const platform = Capacitor.getPlatform(); // "ios" or "android"
 
-          // Check if token already registered
-          const existing = await base44.entities.DeviceToken.filter({ token });
-          if (existing.length > 0) {
-            // Update user_email and mark active in case it changed
-            await base44.entities.DeviceToken.update(existing[0].id, {
-              user_email: user?.email || "",
-              is_active: true,
-              platform
-            });
-          } else {
-            await base44.entities.DeviceToken.create({
-              token,
-              user_email: user?.email || "",
-              platform,
-              is_active: true
-            });
-          }
+          // Always create — admin can deduplicate; read is admin-only so we skip the check
+          await base44.entities.DeviceToken.create({
+            token,
+            user_email: user?.email || "",
+            platform,
+            is_active: true
+          });
         });
 
         // Handle foreground notifications
