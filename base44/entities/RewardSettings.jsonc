@@ -1,0 +1,64 @@
+{
+  "name": "RewardSettings",
+  "type": "object",
+  "properties": {
+    "pkr_per_point": {
+      "type": "number",
+      "description": "How many PKR spent = 1 point (e.g. 10 means 10 PKR = 1 point)"
+    },
+    "min_spend_for_points": {
+      "type": "number",
+      "description": "Minimum bill amount in PKR to earn points"
+    },
+    "welcome_bonus_points": {
+      "type": "number",
+      "description": "Points awarded to new users on signup"
+    },
+    "referral_bonus_points": {
+      "type": "number",
+      "description": "Points awarded to referrer when someone joins via referral"
+    },
+    "referral_joinee_bonus_points": {
+      "type": "number",
+      "description": "Points awarded to new user who joins via referral"
+    },
+    "flash_drop_points": {
+      "type": "number",
+      "description": "Points awarded when a flash drop is claimed"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this settings config is active"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    }
+  },
+  "required": [
+    "pkr_per_point"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

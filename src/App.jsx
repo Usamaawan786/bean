@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import usePushNotifications from './hooks/usePushNotifications';
 import AdminEmails from './pages/AdminEmails';
+import AdminRewards from './pages/AdminRewards';
 import AdminPushNotifications from './pages/AdminPushNotifications';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
@@ -51,6 +52,7 @@ function App() {
             <Route path="/AdminReferrals" element={<AdminReferrals />} />
             <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
             <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
+            <Route path="/AdminRewards" element={<AdminRewards />} />
             <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
