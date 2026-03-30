@@ -13,6 +13,7 @@ import AdminPushNotifications from './pages/AdminPushNotifications';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
 import Welcome from './pages/Welcome';
+import Leaderboard from './pages/Leaderboard';
 import UserProfile from './pages/UserProfile';
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -54,6 +55,7 @@ function App() {
             <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
             <Route path="/AdminRewards" element={<AdminRewards />} />
             <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
+            <Route path="/Leaderboard" element={<LayoutWrapper currentPageName="Leaderboard"><Leaderboard /></LayoutWrapper>} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
