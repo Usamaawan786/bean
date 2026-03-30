@@ -7,6 +7,7 @@ import {
   Star, TrendingUp, Users, Coffee, Zap, ChevronRight, AlertCircle,
   PackageCheck, ArrowLeft, DollarSign, RefreshCw, Check
 } from "lucide-react";
+import UsersLeaderboard from "../components/admin/UsersLeaderboard";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
@@ -161,6 +162,11 @@ export default function AdminRewards() {
     queryFn: () => base44.entities.Redemption.list("-created_date", 200)
   });
 
+  const { data: activities = [] } = useQuery({
+    queryKey: ["admin-activities"],
+    queryFn: () => base44.asServiceRole ? base44.entities.Activity.list("-created_date", 500) : Promise.resolve([])
+  });
+
   const { data: customers = [] } = useQuery({
     queryKey: ["admin-customers"],
     queryFn: () => base44.entities.Customer.list("-total_points_earned", 200)
@@ -227,6 +233,7 @@ export default function AdminRewards() {
 
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },
+    { id: "users", label: "Users", icon: Users },
     { id: "rewards", label: "Rewards", icon: Gift },
     { id: "settings", label: "Settings", icon: Settings },
     { id: "redemptions", label: "Redemptions", icon: PackageCheck },
@@ -538,6 +545,11 @@ export default function AdminRewards() {
               )}
             </Button>
           </div>
+        )}
+
+        {/* USERS TAB */}
+        {activeTab === "users" && (
+          <UsersLeaderboard customers={customers} activities={activities} redemptions={redemptions} settings={settings} />
         )}
 
         {/* REDEMPTIONS TAB */}
