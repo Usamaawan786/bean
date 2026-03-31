@@ -1,37 +1,101 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-async function sendWhatsApp(apiKey, locationId, phone, message) {
+const GHL_BASE = 'https://services.leadconnectorhq.com';
+const GHL_VERSION = '2021-07-28';
+
+function ghlHeaders(apiKey) {
+  return {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    Version: GHL_VERSION,
+  };
+}
+
+function formatPhone(phone) {
   let p = phone.trim().replace(/[\s\-()]/g, '');
   if (p.startsWith('0092')) p = '+' + p.slice(2);
   else if (p.startsWith('92') && !p.startsWith('+')) p = '+' + p;
   else if (p.startsWith('0')) p = '+92' + p.slice(1);
   else if (!p.startsWith('+')) p = '+92' + p;
-  // Validate: Pakistani numbers should be +923XXXXXXXXX (12 digits total)
-  if (p.startsWith('+92') && p.length !== 13) throw new Error(`Invalid PK phone length: ${p}`);
+  if (p.startsWith('+92') && p.length !== 13) throw new Error(`Invalid PK phone length: ${p} (${p.length} digits)`);
   if (p.length < 10) throw new Error(`Phone too short: ${p}`);
-
-  const searchRes = await fetch(
-    `https://services.leadconnectorhq.com/contacts/?locationId=${locationId}&query=${encodeURIComponent(p)}`,
-    { headers: { Authorization: `Bearer ${apiKey}`, Version: '2021-07-28' } }
-  );
-  const searchData = await searchRes.json();
-  const contact = searchData?.contacts?.[0];
-  if (!contact) throw new Error(`No GHL contact for ${p}`);
-
-  const msgRes = await fetch('https://services.leadconnectorhq.com/conversations/messages', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Version: '2021-07-28' },
-    body: JSON.stringify({ type: 'WhatsApp', contactId: contact.id, message }),
-  });
-  if (!msgRes.ok) throw new Error(`GHL error: ${await msgRes.text()}`);
-  return await msgRes.json();
+  return p;
 }
 
-/**
- * Manually triggered WhatsApp campaign runner (admin only).
- * Payload: { campaignId }
- * Sends to the audience defined on the campaign record. NO auto-trigger.
- */
+async function findOrCreateContact(apiKey, locationId, phone, name) {
+  // 1. Search by phone
+  const searchRes = await fetch(
+    `${GHL_BASE}/contacts/?locationId=${locationId}&query=${encodeURIComponent(phone)}`,
+    { headers: ghlHeaders(apiKey) }
+  );
+  const searchData = await searchRes.json();
+  const existing = searchData?.contacts?.[0];
+  if (existing) return existing.id;
+
+  // 2. Create contact if not found
+  const createRes = await fetch(`${GHL_BASE}/contacts/`, {
+    method: 'POST',
+    headers: ghlHeaders(apiKey),
+    body: JSON.stringify({
+      locationId,
+      phone,
+      firstName: name.split(' ')[0] || name,
+      lastName: name.split(' ').slice(1).join(' ') || '',
+      tags: ['bean-loyalty-app'],
+    }),
+  });
+  if (!createRes.ok) throw new Error(`Failed to create GHL contact: ${await createRes.text()}`);
+  const created = await createRes.json();
+  return created?.contact?.id || created?.id;
+}
+
+async function getOrCreateConversation(apiKey, locationId, contactId) {
+  // Search for existing conversation
+  const searchRes = await fetch(
+    `${GHL_BASE}/conversations/search?locationId=${locationId}&contactId=${contactId}`,
+    { headers: ghlHeaders(apiKey) }
+  );
+  const searchData = await searchRes.json();
+  const existing = searchData?.conversations?.[0];
+  if (existing) return existing.id;
+
+  // Create new conversation
+  const createRes = await fetch(`${GHL_BASE}/conversations/`, {
+    method: 'POST',
+    headers: ghlHeaders(apiKey),
+    body: JSON.stringify({ locationId, contactId }),
+  });
+  if (!createRes.ok) throw new Error(`Failed to create conversation: ${await createRes.text()}`);
+  const created = await createRes.json();
+  return created?.conversation?.id || created?.id;
+}
+
+async function sendWhatsApp(apiKey, locationId, phone, message, name) {
+  const p = formatPhone(phone);
+  const contactId = await findOrCreateContact(apiKey, locationId, p, name);
+  if (!contactId) throw new Error(`Could not find or create GHL contact for ${p}`);
+
+  const conversationId = await getOrCreateConversation(apiKey, locationId, contactId);
+  if (!conversationId) throw new Error(`Could not get/create conversation for contact ${contactId}`);
+
+  // Send WhatsApp message via conversation
+  const msgRes = await fetch(`${GHL_BASE}/conversations/messages`, {
+    method: 'POST',
+    headers: ghlHeaders(apiKey),
+    body: JSON.stringify({
+      type: 'WhatsApp',
+      conversationId,
+      contactId,
+      message,
+    }),
+  });
+
+  const msgBody = await msgRes.text();
+  if (!msgRes.ok) throw new Error(`GHL send error (${msgRes.status}): ${msgBody}`);
+  console.log(`✅ Sent WhatsApp to ${p} (contact: ${contactId}, conv: ${conversationId})`);
+  return JSON.parse(msgBody);
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -56,7 +120,7 @@ Deno.serve(async (req) => {
     const allUsers = await base44.asServiceRole.entities.User.list();
     const usersWithPhone = allUsers.filter(u => u.phone);
 
-    // Get all customers for filtering
+    // Get all customers for filtering + personalisation
     const allCustomers = await base44.asServiceRole.entities.Customer.list();
     const customerMap = {};
     allCustomers.forEach(c => { customerMap[c.created_by] = c; });
@@ -79,6 +143,7 @@ Deno.serve(async (req) => {
     }
 
     let sent = 0, failed = 0;
+    const errors = [];
 
     for (const u of targets) {
       const name = u.display_name || u.full_name || 'Coffee Lover';
@@ -87,24 +152,25 @@ Deno.serve(async (req) => {
         .replace(/\{\{tier\}\}/g, customerMap[u.email]?.tier || 'Bronze')
         .replace(/\{\{points\}\}/g, customerMap[u.email]?.points_balance || 0);
       try {
-        await sendWhatsApp(apiKey, locationId, u.phone, personalised);
+        await sendWhatsApp(apiKey, locationId, u.phone, personalised, name);
         sent++;
       } catch (e) {
-        console.error(`Failed ${u.email}:`, e.message);
+        console.error(`❌ Failed for ${u.email} (${u.phone}):`, e.message);
+        errors.push({ email: u.email, phone: u.phone, error: e.message });
         failed++;
       }
     }
 
     // Update campaign record
     await base44.asServiceRole.entities.WhatsAppCampaign.update(campaignId, {
-      status: 'sent',
+      status: failed === targets.length && targets.length > 0 ? 'failed' : 'sent',
       sent_at: new Date().toISOString(),
       total_recipients: targets.length,
       sent_count: sent,
       failed_count: failed,
     });
 
-    return Response.json({ success: true, total: targets.length, sent, failed });
+    return Response.json({ success: true, total: targets.length, sent, failed, errors });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
