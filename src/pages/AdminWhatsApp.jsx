@@ -140,6 +140,7 @@ export default function AdminWhatsApp() {
   const [checkingStatus, setCheckingStatus] = useState(null);
   const [toast, setToast] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [templateDialog, setTemplateDialog] = useState(null); // { templateName, templateBody, campaignId }
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -247,10 +248,21 @@ Rules:
     queryClient.invalidateQueries({ queryKey: ['wa-campaigns'] });
     setSubmittingTemplate(null);
     if (res.data?.success) {
-      showToast('✅ Template submitted for WhatsApp approval!');
+      setTemplateDialog({
+        campaignId: campaign.id,
+        templateName: res.data.templateName,
+        templateBody: res.data.templateBody,
+      });
     } else {
-      showToast(`❌ ${res.data?.error || 'Failed to submit template'}`, 'error');
+      showToast(`❌ ${res.data?.error || 'Failed to prepare template'}`, 'error');
     }
+  };
+
+  const handleMarkApproved = async (campaignId) => {
+    await base44.entities.WhatsAppCampaign.update(campaignId, { template_status: 'approved' });
+    queryClient.invalidateQueries({ queryKey: ['wa-campaigns'] });
+    setTemplateDialog(null);
+    showToast('✅ Campaign marked as approved — ready to send!');
   };
 
   const handleCheckStatus = async (campaign) => {
@@ -317,6 +329,62 @@ Rules:
           >
             {toast.msg}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Template Instructions Dialog */}
+      <AnimatePresence>
+        {templateDialog && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center px-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.93 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.93 }}
+              className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <FileCheck className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#5C4A3A]">Create Template in GHL</h3>
+                  <p className="text-xs text-[#8B7355]">GHL doesn't allow API template creation — follow these steps:</p>
+                </div>
+              </div>
+
+              <ol className="text-sm text-[#5C4A3A] space-y-2 mb-4 list-decimal list-inside">
+                <li>Go to <strong>GHL → Settings → WhatsApp → Templates</strong></li>
+                <li>Create a new <strong>MARKETING</strong> template with this exact name:</li>
+              </ol>
+
+              <div className="bg-[#F5F1ED] rounded-xl p-3 mb-3 flex items-center justify-between gap-2">
+                <code className="text-xs text-[#5C4A3A] font-mono break-all">{templateDialog.templateName}</code>
+                <button onClick={() => { navigator.clipboard.writeText(templateDialog.templateName); showToast('Copied!'); }} className="flex-shrink-0 text-[#8B7355] hover:text-[#5C4A3A]">
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+
+              <p className="text-sm text-[#5C4A3A] mb-2"><strong>3.</strong> Paste this message body (variables are numbered):</p>
+              <div className="bg-[#F5F1ED] rounded-xl p-3 mb-4 flex items-start justify-between gap-2">
+                <pre className="text-xs text-[#5C4A3A] font-mono whitespace-pre-wrap flex-1">{templateDialog.templateBody}</pre>
+                <button onClick={() => { navigator.clipboard.writeText(templateDialog.templateBody); showToast('Copied!'); }} className="flex-shrink-0 text-[#8B7355] hover:text-[#5C4A3A]">
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-[#8B7355] mb-4">4. Submit in GHL for WhatsApp approval. Once approved, come back and click <strong>"Mark as Approved"</strong> below.</p>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setTemplateDialog(null)}>Close</Button>
+                <Button
+                  onClick={() => handleMarkApproved(templateDialog.campaignId)}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-xl gap-1.5"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Mark as Approved
+                </Button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
