@@ -317,144 +317,69 @@ export default function Rewards() {
             )}
           </>
         ) : (
-          /* Leaderboard Content */
-          <>
-            {/* Your Rank Card */}
+          /* Leaderboard Teaser */
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            {/* Your rank teaser */}
             {customer && userRank > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white rounded-2xl p-5 shadow-lg"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                      <Trophy className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm text-[#E8DED8]">Your Rank</div>
-                      <div className="text-2xl font-bold">#{userRank}</div>
-                    </div>
+              <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white rounded-3xl p-5 shadow-lg flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                    <Trophy className="h-6 w-6" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-[#E8DED8]">Total Points</div>
-                    <div className="text-2xl font-bold">{customer.total_points_earned || 0}</div>
+                  <div>
+                    <div className="text-xs text-[#E8DED8]">Your Rank</div>
+                    <div className="text-2xl font-bold">#{userRank}</div>
                   </div>
                 </div>
-              </motion.div>
-            )}
-
-            {/* Top 3 Podium */}
-            {topCustomers.length >= 3 && (
-              <div>
-                <h3 className="text-sm font-semibold text-[#8B7355] mb-3 px-1">Top 3</h3>
-                <div className="flex items-end justify-center gap-2 mb-6">
-                  {/* 2nd Place */}
-                  <div className="flex-1">
-                    <div className="text-center mb-2">
-                      <div className="w-14 h-14 mx-auto rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center mb-2 border-4 border-white shadow-lg">
-                        <span className="text-xl">🥈</span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#5C4A3A] truncate px-1">
-                        {topCustomers[1].created_by?.split('@')[0]}
-                      </div>
-                      <div className="text-sm font-bold text-[#8B7355]">
-                        {topCustomers[1].total_points_earned || 0}
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-b from-gray-300 to-gray-400 rounded-t-2xl h-20 flex items-center justify-center font-bold text-gray-800 shadow-lg">
-                      2
-                    </div>
-                  </div>
-
-                  {/* 1st Place */}
-                  <div className="flex-1">
-                    <div className="text-center mb-2">
-                      <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center mb-2 border-4 border-white shadow-xl relative">
-                        <Crown className="h-6 w-6 text-white absolute -top-5" />
-                        <span className="text-2xl">👑</span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#5C4A3A] truncate px-1">
-                        {topCustomers[0].created_by?.split('@')[0]}
-                      </div>
-                      <div className="text-sm font-bold text-[#8B7355]">
-                        {topCustomers[0].total_points_earned || 0}
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-b from-amber-400 to-yellow-500 rounded-t-2xl h-28 flex items-center justify-center font-bold text-white text-xl shadow-xl">
-                      1
-                    </div>
-                  </div>
-
-                  {/* 3rd Place */}
-                  <div className="flex-1">
-                    <div className="text-center mb-2">
-                      <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-orange-400 to-amber-600 flex items-center justify-center mb-2 border-4 border-white shadow-lg">
-                        <span className="text-lg">🥉</span>
-                      </div>
-                      <div className="text-xs font-semibold text-[#5C4A3A] truncate px-1">
-                        {topCustomers[2].created_by?.split('@')[0]}
-                      </div>
-                      <div className="text-sm font-bold text-[#8B7355]">
-                        {topCustomers[2].total_points_earned || 0}
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-b from-orange-400 to-amber-600 rounded-t-2xl h-16 flex items-center justify-center font-bold text-white shadow-lg">
-                      3
-                    </div>
-                  </div>
+                <div className="text-right">
+                  <div className="text-xs text-[#E8DED8]">Total Points</div>
+                  <div className="text-2xl font-bold">{customer.total_points_earned || 0}</div>
                 </div>
               </div>
             )}
 
-            {/* Rest of Leaderboard */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-[#8B7355] mb-3 px-1">Rankings</h3>
-              {loadingLeaderboard ? (
-                <div className="space-y-2">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="bg-white rounded-2xl h-16 animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                topCustomers.slice(3, 10).map((c, index) => {
-                  const rank = index + 4;
-                  const isCurrentUser = c.created_by === user?.email;
-
+            {/* Top 3 preview */}
+            {loadingLeaderboard ? (
+              <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 bg-white rounded-2xl animate-pulse" />)}</div>
+            ) : (
+              <div className="space-y-2">
+                {topCustomers.slice(0, 3).map((c, i) => {
+                  const medals = ["🥇", "🥈", "🥉"];
+                  const isMe = c.created_by === user?.email;
                   return (
-                    <motion.div
-                      key={c.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className={`bg-white rounded-2xl border p-4 flex items-center gap-3 ${isCurrentUser ? "border-[#8B7355] shadow-md" : "border-[#E8DED8]"
-                        }`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${isCurrentUser ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355]"
-                        }`}>
-                        {rank}
-                      </div>
+                    <div key={c.id} className={`bg-white rounded-2xl border px-4 py-3 flex items-center gap-3 ${isMe ? "border-[#8B7355]" : "border-[#E8DED8]"}`}>
+                      <span className="text-xl w-8 text-center">{medals[i]}</span>
                       <div className="flex-1 min-w-0">
-                        <div className={`font-medium truncate ${isCurrentUser ? "text-[#8B7355]" : "text-[#5C4A3A]"}`}>
-                          {c.created_by?.split('@')[0]}{isCurrentUser && " (You)"}
+                        <div className="font-semibold text-[#5C4A3A] text-sm truncate">
+                          {c.created_by?.split("@")[0]}{isMe && " (You)"}
                         </div>
-                        <div className="text-xs text-[#C9B8A6] flex items-center gap-1">
-                          <Medal className="h-3 w-3" />
-                          {c.tier}
-                        </div>
+                        <div className="text-xs text-[#C9B8A6]">{c.tier}</div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-[#8B7355]">
-                          {c.total_points_earned || 0}
-                        </div>
-                        <div className="text-xs text-[#C9B8A6]">points</div>
+                      <div className="flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                        <span className="font-bold text-[#5C4A3A] text-sm">{c.total_points_earned || 0}</span>
                       </div>
-                    </motion.div>
+                    </div>
                   );
-                })
-              )}
-            </div>
-          </>
+                })}
+              </div>
+            )}
+
+            <Link to="/Leaderboard">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full bg-[#F5EBE8] hover:bg-[#EDE3DF] border border-[#E8DED8] text-[#8B7355] font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors"
+              >
+                <Trophy className="h-4 w-4" />
+                View Full Leaderboard
+              </motion.div>
+            </Link>
+          </motion.div>
         )}
       </div>
 
