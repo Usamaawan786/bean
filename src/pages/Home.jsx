@@ -108,7 +108,7 @@ export default function Home() {
         const u = await base44.auth.me();
         if (!u || !u.email) return;
         setUser(u);
-        if (!u.display_name || !u.phone) setShowNameModal(true);
+        if (!u.display_name) setShowNameModal(true);
 
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
