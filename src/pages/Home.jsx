@@ -108,7 +108,7 @@ export default function Home() {
         const u = await base44.auth.me();
         if (!u || !u.email) return;
         setUser(u);
-        if (!u.phone) setShowNameModal(true);
+        if (!u.display_name && !u.full_name) setShowNameModal(true);
 
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
@@ -218,7 +218,7 @@ export default function Home() {
 
   return (
     <>
-    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} existingName={user?.display_name || user?.full_name || ""} />}
+    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} />}
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Hero Section */}
