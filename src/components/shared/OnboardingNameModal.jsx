@@ -12,7 +12,10 @@ export default function OnboardingNameModal({ onComplete }) {
   const isValidPhone = (p) => /^[\+]?[0-9\s\-]{10,15}$/.test(p.trim());
 
   const handleSubmit = async () => {
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
     if (!isValidPhone(phone)) {
       setError("Please enter a valid phone number (e.g. 03001234567)");
       return;
@@ -24,11 +27,14 @@ export default function OnboardingNameModal({ onComplete }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-5" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-5"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+    >
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
+        initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
         className="bg-white rounded-t-3xl sm:rounded-3xl p-7 w-full sm:max-w-sm shadow-2xl"
       >
         {/* Icon */}
@@ -38,18 +44,24 @@ export default function OnboardingNameModal({ onComplete }) {
           </div>
         </div>
 
-        <h2 className="text-xl font-bold text-[#5C4A3A] text-center mb-1">Welcome to Bean! ☕</h2>
-        <p className="text-sm text-[#8B7355] text-center mb-6">Two quick things so we can make this personal</p>
+        <h2 className="text-xl font-bold text-[#5C4A3A] text-center mb-1">
+          Welcome to Bean! ☕
+        </h2>
+        <p className="text-sm text-[#8B7355] text-center mb-6">
+          Two quick things so we can make this personal
+        </p>
 
         {/* Name field */}
         <div className="mb-3">
-          <label className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1.5 block">What do your friends call you?</label>
+          <label className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1.5 block">
+            What do your friends call you?
+          </label>
           <div className="relative">
             <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C9B8A6]" />
             <input
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               placeholder="Your name — so we're not just strangers"
               autoFocus
               className="w-full border border-[#E8DED8] rounded-2xl pl-10 pr-4 py-3 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30 focus:border-[#8B7355] bg-[#FDFAF8]"
@@ -59,14 +71,16 @@ export default function OnboardingNameModal({ onComplete }) {
 
         {/* Phone field */}
         <div className="mb-1">
-          <label className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1.5 block">Where should we send your rewards?</label>
+          <label className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1.5 block">
+            Where should we send your rewards?
+          </label>
           <div className="relative">
             <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#C9B8A6]" />
             <input
               type="tel"
               value={phone}
-              onChange={e => { setPhone(e.target.value); setError(""); }}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              onChange={(e) => { setPhone(e.target.value); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               placeholder="Your number — exclusive offers await"
               className="w-full border border-[#E8DED8] rounded-2xl pl-10 pr-4 py-3 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30 focus:border-[#8B7355] bg-[#FDFAF8]"
             />
@@ -83,7 +97,9 @@ export default function OnboardingNameModal({ onComplete }) {
           {saving ? "Saving..." : "Let's go →"}
         </button>
 
-        <p className="text-center text-xs text-[#C9B8A6] mt-3">🔒 Just for your loyalty profile — no spam, ever.</p>
+        <p className="text-center text-xs text-[#C9B8A6] mt-3">
+          🔒 Just for your loyalty profile — no spam, ever.
+        </p>
       </motion.div>
     </div>
   );
