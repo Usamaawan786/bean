@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Coffee } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function OnboardingNameModal({ onComplete }) {
-  const [name, setName] = useState("");
+export default function OnboardingNameModal({ onComplete, existingName = "" }) {
+  const [name, setName] = useState(existingName);
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
