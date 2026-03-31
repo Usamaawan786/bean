@@ -1,9 +1,14 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 async function sendWhatsApp(apiKey, locationId, phone, message) {
-  let p = phone.trim().replace(/\s|-/g, '');
-  if (p.startsWith('0')) p = '+92' + p.slice(1);
-  else if (!p.startsWith('+')) p = '+' + p;
+  let p = phone.trim().replace(/[\s\-()]/g, '');
+  if (p.startsWith('0092')) p = '+' + p.slice(2);
+  else if (p.startsWith('92') && !p.startsWith('+')) p = '+' + p;
+  else if (p.startsWith('0')) p = '+92' + p.slice(1);
+  else if (!p.startsWith('+')) p = '+92' + p;
+  // Validate: Pakistani numbers should be +923XXXXXXXXX (12 digits total)
+  if (p.startsWith('+92') && p.length !== 13) throw new Error(`Invalid PK phone length: ${p}`);
+  if (p.length < 10) throw new Error(`Phone too short: ${p}`);
 
   const searchRes = await fetch(
     `https://services.leadconnectorhq.com/contacts/?locationId=${locationId}&query=${encodeURIComponent(p)}`,
