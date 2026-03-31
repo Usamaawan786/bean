@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, TrendingUp, ShoppingCart, DollarSign, Package, Bell } from "lucide-react";
+import { ArrowLeft, TrendingUp, ShoppingCart, DollarSign, Package, Bell, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,10 +135,16 @@ export default function AdminDashboard() {
               <ArrowLeft className="h-4 w-4" />
               Back to POS
             </Link>
-            <Link to="/AdminPushNotifications" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-4 py-2 rounded-xl border border-white/20 transition-colors mb-4">
+            <div className="flex gap-2 mb-4">
+            <Link to="/AdminPushNotifications" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-4 py-2 rounded-xl border border-white/20 transition-colors">
               <Bell className="h-4 w-4" />
               Push Notifications
             </Link>
+            <Link to="/AdminWhatsApp" className="inline-flex items-center gap-2 bg-[#25D366]/20 hover:bg-[#25D366]/30 text-white text-sm px-4 py-2 rounded-xl border border-[#25D366]/40 transition-colors">
+              <MessageSquare className="h-4 w-4" />
+              WhatsApp
+            </Link>
+            </div>
           </div>
           
           <div className="flex items-center justify-between mb-6">

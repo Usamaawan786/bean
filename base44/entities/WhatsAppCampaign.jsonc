@@ -1,0 +1,99 @@
+{
+  "name": "WhatsAppCampaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Campaign name"
+    },
+    "message": {
+      "type": "string",
+      "description": "Message body"
+    },
+    "audience": {
+      "type": "string",
+      "enum": [
+        "all",
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum",
+        "no_purchase_7d",
+        "high_spenders"
+      ],
+      "description": "Target audience segment"
+    },
+    "offer_type": {
+      "type": "string",
+      "enum": [
+        "flash_drop",
+        "bonus_points",
+        "discount",
+        "tier_reward",
+        "re_engagement",
+        "custom"
+      ],
+      "description": "Type of campaign"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "failed"
+      ],
+      "default": "draft",
+      "description": "Campaign status"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "total_recipients": {
+      "type": "number",
+      "default": 0
+    },
+    "sent_count": {
+      "type": "number",
+      "default": 0
+    },
+    "failed_count": {
+      "type": "number",
+      "default": 0
+    },
+    "ai_generated": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "message",
+    "audience"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
