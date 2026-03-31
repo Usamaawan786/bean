@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare, Plus, Send, Sparkles, Users, ChevronRight,
   ArrowLeft, CheckCircle2, XCircle, Clock, Edit3, Trash2,
-  RefreshCw, Zap, Crown, Coffee, Star, AlertTriangle, Copy, Check
+  RefreshCw, Zap, Crown, Coffee, Star, AlertTriangle, Copy, Check,
+  FileCheck, FileX, Hourglass, Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -84,12 +85,28 @@ const TEMPLATES = [
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
+function TemplateBadge({ status }) {
+  if (!status || status === 'none') return null;
+  const cfg = {
+    pending_approval: { icon: Hourglass, cls: 'bg-amber-100 text-amber-700', label: 'Awaiting Approval' },
+    approved: { icon: FileCheck, cls: 'bg-green-100 text-green-700', label: 'Template Approved' },
+    rejected: { icon: FileX, cls: 'bg-red-100 text-red-600', label: 'Template Rejected' },
+  }[status];
+  if (!cfg) return null;
+  const Icon = cfg.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.cls}`}>
+      <Icon className="h-3 w-3" />{cfg.label}
+    </span>
+  );
+}
+
 function StatusBadge({ status }) {
   const cfg = {
-    draft: { icon: Edit3, cls: "bg-amber-100 text-amber-700", label: "Draft" },
-    sent: { icon: CheckCircle2, cls: "bg-green-100 text-green-700", label: "Sent" },
-    failed: { icon: XCircle, cls: "bg-red-100 text-red-600", label: "Failed" },
-  }[status] || { icon: Clock, cls: "bg-gray-100 text-gray-600", label: status };
+    draft: { icon: Edit3, cls: 'bg-amber-100 text-amber-700', label: 'Draft' },
+    sent: { icon: CheckCircle2, cls: 'bg-green-100 text-green-700', label: 'Sent' },
+    failed: { icon: XCircle, cls: 'bg-red-100 text-red-600', label: 'Failed' },
+  }[status] || { icon: Clock, cls: 'bg-gray-100 text-gray-600', label: status };
   const Icon = cfg.icon;
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.cls}`}>
@@ -118,9 +135,9 @@ export default function AdminWhatsApp() {
   const [sending, setSending] = useState(null); // campaignId being sent
   const [aiLoading, setAiLoading] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [confirmSend, setConfirmSend] = useState(null); // campaign to confirm send
-  const [copiedId, setCopiedId] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [confirmSend, setConfirmSend] = useState(null);
+  const [submittingTemplate, setSubmittingTemplate] = useState(null);
+  const [checkingStatus, setCheckingStatus] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -222,10 +239,37 @@ Rules:
     setAiLoading(false);
   };
 
+  const handleSubmitTemplate = async (campaign) => {
+    setSubmittingTemplate(campaign.id);
+    const res = await base44.functions.invoke('submitGHLTemplate', { campaignId: campaign.id });
+    queryClient.invalidateQueries({ queryKey: ['wa-campaigns'] });
+    setSubmittingTemplate(null);
+    if (res.data?.success) {
+      showToast('✅ Template submitted for WhatsApp approval!');
+    } else {
+      showToast(`❌ ${res.data?.error || 'Failed to submit template'}`, 'error');
+    }
+  };
+
+  const handleCheckStatus = async (campaign) => {
+    setCheckingStatus(campaign.id);
+    const res = await base44.functions.invoke('checkGHLTemplateStatus', { campaignId: campaign.id });
+    queryClient.invalidateQueries({ queryKey: ['wa-campaigns'] });
+    setCheckingStatus(null);
+    if (res.data?.success) {
+      const s = res.data.status;
+      if (s === 'approved') showToast('✅ Template is APPROVED! You can now send the campaign.');
+      else if (s === 'rejected') showToast(`❌ Template rejected: ${res.data.rejectionReason || 'No reason given'}`, 'error');
+      else showToast('⏳ Template still pending approval...');
+    } else {
+      showToast(`❌ ${res.data?.error || 'Could not check status'}`, 'error');
+    }
+  };
+
   const handleDelete = async (id) => {
     await base44.entities.WhatsAppCampaign.delete(id);
-    queryClient.invalidateQueries({ queryKey: ["wa-campaigns"] });
-    showToast("Campaign deleted.");
+    queryClient.invalidateQueries({ queryKey: ['wa-campaigns'] });
+    showToast('Campaign deleted.');
   };
 
   const handleSendCampaign = async (campaign) => {
@@ -406,6 +450,7 @@ Rules:
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="font-semibold text-[#5C4A3A] text-sm">{c.name}</span>
                           <StatusBadge status={c.status} />
+                          <TemplateBadge status={c.template_status} />
                           {c.ai_generated && (
                             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                               <Sparkles className="h-2.5 w-2.5" /> AI
@@ -431,10 +476,10 @@ Rules:
                         className="flex items-center gap-1.5 text-xs text-[#8B7355] hover:text-[#5C4A3A] transition-colors px-2 py-1.5 rounded-lg hover:bg-[#F5EBE8]"
                       >
                         {copiedId === c.id ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
-                        {copiedId === c.id ? "Copied!" : "Copy"}
+                        {copiedId === c.id ? 'Copied!' : 'Copy'}
                       </button>
 
-                      {c.status === "draft" && (
+                      {c.status === 'draft' && (
                         <>
                           <div className="flex-1" />
                           <button
@@ -443,16 +488,57 @@ Rules:
                           >
                             <Trash2 className="h-3.5 w-3.5" /> Delete
                           </button>
+
+                          {/* Template flow */}
+                          {!c.ghl_template_name && (
+                            <Button
+                              onClick={() => handleSubmitTemplate(c)}
+                              disabled={submittingTemplate === c.id}
+                              variant="outline"
+                              className="text-xs rounded-xl px-3 h-8 gap-1.5 border-amber-400 text-amber-700 hover:bg-amber-50"
+                            >
+                              {submittingTemplate === c.id
+                                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Submitting...</>
+                                : <><FileCheck className="h-3.5 w-3.5" /> Submit Template</>}
+                            </Button>
+                          )}
+
+                          {c.ghl_template_name && c.template_status === 'pending_approval' && (
+                            <Button
+                              onClick={() => handleCheckStatus(c)}
+                              disabled={checkingStatus === c.id}
+                              variant="outline"
+                              className="text-xs rounded-xl px-3 h-8 gap-1.5 border-amber-400 text-amber-700 hover:bg-amber-50"
+                            >
+                              {checkingStatus === c.id
+                                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...</>
+                                : <><RefreshCw className="h-3.5 w-3.5" /> Check Status</>}
+                            </Button>
+                          )}
+
+                          {c.ghl_template_name && c.template_status === 'rejected' && (
+                            <Button
+                              onClick={() => handleSubmitTemplate(c)}
+                              disabled={submittingTemplate === c.id}
+                              variant="outline"
+                              className="text-xs rounded-xl px-3 h-8 gap-1.5 border-red-400 text-red-700 hover:bg-red-50"
+                            >
+                              {submittingTemplate === c.id
+                                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Resubmitting...</>
+                                : <><RefreshCw className="h-3.5 w-3.5" /> Resubmit</>}
+                            </Button>
+                          )}
+
                           <Button
                             onClick={() => setConfirmSend(c)}
-                            disabled={sending === c.id}
-                            className="bg-[#25D366] hover:bg-[#128C7E] text-white text-xs rounded-xl px-4 h-8 gap-1.5"
+                            disabled={sending === c.id || (c.ghl_template_name && c.template_status !== 'approved')}
+                            className="bg-[#25D366] hover:bg-[#128C7E] text-white text-xs rounded-xl px-4 h-8 gap-1.5 disabled:opacity-40"
+                            title={c.ghl_template_name && c.template_status !== 'approved' ? 'Waiting for template approval' : ''}
                           >
-                            {sending === c.id ? (
-                              <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Sending...</>
-                            ) : (
-                              <><Send className="h-3.5 w-3.5" /> Send Now</>
-                            )}
+                            {sending === c.id
+                              ? <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Sending...</>
+                              : <><Send className="h-3.5 w-3.5" /> {c.template_status === 'approved' ? 'Send (Template)' : 'Send Now'}</>
+                            }
                           </Button>
                         </>
                       )}

@@ -67,6 +67,34 @@
     },
     "notes": {
       "type": "string"
+    },
+    "ghl_template_id": {
+      "type": "string",
+      "description": "GHL template ID after submission"
+    },
+    "ghl_template_name": {
+      "type": "string",
+      "description": "GHL template name (must be unique, lowercase, underscores)"
+    },
+    "template_status": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pending_approval",
+        "approved",
+        "rejected"
+      ],
+      "default": "none",
+      "description": "WhatsApp template approval status"
+    },
+    "template_submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the template was submitted for approval"
+    },
+    "template_rejection_reason": {
+      "type": "string",
+      "description": "Reason for rejection if template was rejected"
     }
   },
   "required": [

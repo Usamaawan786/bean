@@ -23,7 +23,6 @@ function formatPhone(phone) {
 }
 
 async function findOrCreateContact(apiKey, locationId, phone, name) {
-  // 1. Search by phone
   const searchRes = await fetch(
     `${GHL_BASE}/contacts/?locationId=${locationId}&query=${encodeURIComponent(phone)}`,
     { headers: ghlHeaders(apiKey) }
@@ -32,7 +31,6 @@ async function findOrCreateContact(apiKey, locationId, phone, name) {
   const existing = searchData?.contacts?.[0];
   if (existing) return existing.id;
 
-  // 2. Create contact if not found
   const createRes = await fetch(`${GHL_BASE}/contacts/`, {
     method: 'POST',
     headers: ghlHeaders(apiKey),
@@ -50,7 +48,6 @@ async function findOrCreateContact(apiKey, locationId, phone, name) {
 }
 
 async function getOrCreateConversation(apiKey, locationId, contactId) {
-  // Search for existing conversation
   const searchRes = await fetch(
     `${GHL_BASE}/conversations/search?locationId=${locationId}&contactId=${contactId}`,
     { headers: ghlHeaders(apiKey) }
@@ -59,7 +56,6 @@ async function getOrCreateConversation(apiKey, locationId, contactId) {
   const existing = searchData?.conversations?.[0];
   if (existing) return existing.id;
 
-  // Create new conversation
   const createRes = await fetch(`${GHL_BASE}/conversations/`, {
     method: 'POST',
     headers: ghlHeaders(apiKey),
@@ -70,15 +66,33 @@ async function getOrCreateConversation(apiKey, locationId, contactId) {
   return created?.conversation?.id || created?.id;
 }
 
-async function sendWhatsApp(apiKey, locationId, phone, message, name) {
-  const p = formatPhone(phone);
-  const contactId = await findOrCreateContact(apiKey, locationId, p, name);
-  if (!contactId) throw new Error(`Could not find or create GHL contact for ${p}`);
+// Send using an approved WhatsApp template
+async function sendTemplateMessage(apiKey, locationId, contactId, conversationId, templateName, variables) {
+  // Build ordered variable array: {{1}} = name, {{2}} = points, {{3}} = tier
+  const varOrder = ['name', 'points', 'tier'];
+  const templateVars = varOrder
+    .filter(v => variables[v] !== undefined)
+    .map(v => ({ key: v, value: String(variables[v]) }));
 
-  const conversationId = await getOrCreateConversation(apiKey, locationId, contactId);
-  if (!conversationId) throw new Error(`Could not get/create conversation for contact ${contactId}`);
+  const msgRes = await fetch(`${GHL_BASE}/conversations/messages`, {
+    method: 'POST',
+    headers: ghlHeaders(apiKey),
+    body: JSON.stringify({
+      type: 'WhatsApp',
+      conversationId,
+      contactId,
+      message: '',
+      templateId: templateName,
+      templateParams: templateVars.map(v => v.value),
+    }),
+  });
+  const msgBody = await msgRes.text();
+  if (!msgRes.ok) throw new Error(`GHL template send error (${msgRes.status}): ${msgBody}`);
+  return JSON.parse(msgBody);
+}
 
-  // Send WhatsApp message via conversation
+// Send free-form message (within 24h window)
+async function sendFreeformMessage(apiKey, contactId, conversationId, message) {
   const msgRes = await fetch(`${GHL_BASE}/conversations/messages`, {
     method: 'POST',
     headers: ghlHeaders(apiKey),
@@ -89,10 +103,8 @@ async function sendWhatsApp(apiKey, locationId, phone, message, name) {
       message,
     }),
   });
-
   const msgBody = await msgRes.text();
   if (!msgRes.ok) throw new Error(`GHL send error (${msgRes.status}): ${msgBody}`);
-  console.log(`✅ Sent WhatsApp to ${p} (contact: ${contactId}, conv: ${conversationId})`);
   return JSON.parse(msgBody);
 }
 
@@ -107,25 +119,29 @@ Deno.serve(async (req) => {
     const { campaignId } = await req.json();
     if (!campaignId) return Response.json({ error: 'campaignId required' }, { status: 400 });
 
-    // Fetch campaign
     const allCampaigns = await base44.asServiceRole.entities.WhatsAppCampaign.list('-created_date', 200);
     const campaign = allCampaigns.find(c => c.id === campaignId);
     if (!campaign) return Response.json({ error: 'Campaign not found' }, { status: 404 });
     if (campaign.status === 'sent') return Response.json({ error: 'Campaign already sent' }, { status: 400 });
 
+    // If template-based campaign, must be approved
+    const useTemplate = campaign.template_status === 'approved' && campaign.ghl_template_name;
+    if (campaign.ghl_template_name && campaign.template_status !== 'approved') {
+      return Response.json({
+        error: `Cannot send: template status is "${campaign.template_status}". Please wait for WhatsApp to approve the template.`
+      }, { status: 400 });
+    }
+
     const apiKey = Deno.env.get('GHL_API_KEY');
     const locationId = Deno.env.get('GHL_LOCATION_ID');
 
-    // Get all users with phones
     const allUsers = await base44.asServiceRole.entities.User.list();
     const usersWithPhone = allUsers.filter(u => u.phone);
 
-    // Get all customers for filtering + personalisation
     const allCustomers = await base44.asServiceRole.entities.Customer.list();
     const customerMap = {};
     allCustomers.forEach(c => { customerMap[c.created_by] = c; });
 
-    // Filter by audience
     let targets = usersWithPhone;
     const { audience } = campaign;
 
@@ -147,13 +163,30 @@ Deno.serve(async (req) => {
 
     for (const u of targets) {
       const name = u.display_name || u.full_name || 'Coffee Lover';
-      const personalised = campaign.message
-        .replace(/\{\{name\}\}/g, name)
-        .replace(/\{\{tier\}\}/g, customerMap[u.email]?.tier || 'Bronze')
-        .replace(/\{\{points\}\}/g, customerMap[u.email]?.points_balance || 0);
+      const customer = customerMap[u.email];
+      const variables = {
+        name,
+        points: customer?.points_balance || 0,
+        tier: customer?.tier || 'Bronze',
+      };
+
       try {
-        await sendWhatsApp(apiKey, locationId, u.phone, personalised, name);
+        const p = formatPhone(u.phone);
+        const contactId = await findOrCreateContact(apiKey, locationId, p, name);
+        const conversationId = await getOrCreateConversation(apiKey, locationId, contactId);
+
+        if (useTemplate) {
+          await sendTemplateMessage(apiKey, locationId, contactId, conversationId, campaign.ghl_template_name, variables);
+        } else {
+          const personalised = campaign.message
+            .replace(/\{\{name\}\}/g, name)
+            .replace(/\{\{tier\}\}/g, variables.tier)
+            .replace(/\{\{points\}\}/g, variables.points);
+          await sendFreeformMessage(apiKey, contactId, conversationId, personalised);
+        }
+
         sent++;
+        console.log(`✅ Sent to ${u.email} (${u.phone}) via ${useTemplate ? 'template' : 'freeform'}`);
       } catch (e) {
         console.error(`❌ Failed for ${u.email} (${u.phone}):`, e.message);
         errors.push({ email: u.email, phone: u.phone, error: e.message });
@@ -161,7 +194,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update campaign record
     await base44.asServiceRole.entities.WhatsAppCampaign.update(campaignId, {
       status: failed === targets.length && targets.length > 0 ? 'failed' : 'sent',
       sent_at: new Date().toISOString(),
@@ -170,7 +202,7 @@ Deno.serve(async (req) => {
       failed_count: failed,
     });
 
-    return Response.json({ success: true, total: targets.length, sent, failed, errors });
+    return Response.json({ success: true, total: targets.length, sent, failed, errors, mode: useTemplate ? 'template' : 'freeform' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
