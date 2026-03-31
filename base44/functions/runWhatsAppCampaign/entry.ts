@@ -39,8 +39,8 @@ Deno.serve(async (req) => {
     if (!campaignId) return Response.json({ error: 'campaignId required' }, { status: 400 });
 
     // Fetch campaign
-    const campaigns = await base44.asServiceRole.entities.WhatsAppCampaign.filter({ id: campaignId });
-    const campaign = campaigns[0];
+    const allCampaigns = await base44.asServiceRole.entities.WhatsAppCampaign.list('-created_date', 200);
+    const campaign = allCampaigns.find(c => c.id === campaignId);
     if (!campaign) return Response.json({ error: 'Campaign not found' }, { status: 404 });
     if (campaign.status === 'sent') return Response.json({ error: 'Campaign already sent' }, { status: 400 });
 

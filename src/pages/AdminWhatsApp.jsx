@@ -160,7 +160,7 @@ export default function AdminWhatsApp() {
       const highEmails = new Set(customers.filter(c => (c.total_spend_pkr || 0) >= 5000).map(c => c.created_by));
       return usersWithPhone.filter(u => highEmails.has(u.email)).length;
     }
-    return "~";
+    return "?";
   };
 
   const showToast = (msg, type = "success") => {
@@ -177,6 +177,17 @@ export default function AdminWhatsApp() {
     setSaving(false);
     setTab("campaigns");
     showToast("Campaign saved as draft!");
+  };
+
+  const handleSaveAndSend = async () => {
+    if (!form.name || !form.message) return;
+    setSaving(true);
+    const campaign = await base44.entities.WhatsAppCampaign.create({ ...form, status: "draft" });
+    queryClient.invalidateQueries({ queryKey: ["wa-campaigns"] });
+    setSaving(false);
+    setForm({ name: "", message: "", audience: "all", offer_type: "custom", notes: "" });
+    setTab("campaigns");
+    setConfirmSend(campaign);
   };
 
   const handleApplyTemplate = (tpl) => {
@@ -512,7 +523,7 @@ Rules:
                           <div className="text-sm font-medium text-[#5C4A3A]">{a.label}</div>
                           <div className="text-xs text-[#8B7355]">{a.desc}</div>
                         </div>
-                        <span className="text-xs font-bold text-[#8B7355] flex-shrink-0">~{count}</span>
+                        <span className="text-xs font-bold text-[#8B7355] flex-shrink-0">{typeof count === 'number' ? `~${count}` : count}</span>
                         {form.audience === a.value && <Check className="h-4 w-4 text-[#25D366] flex-shrink-0" />}
                       </button>
                     );
@@ -582,14 +593,24 @@ Rules:
                 />
               </div>
 
-              <Button
-                onClick={handleSaveDraft}
-                disabled={saving || !form.name || !form.message}
-                className="w-full bg-[#5C4A3A] hover:bg-[#3a2e24] text-white rounded-2xl py-3 font-bold gap-2"
-              >
-                {saving ? <><RefreshCw className="h-4 w-4 animate-spin" /> Saving...</> : <><Edit3 className="h-4 w-4" /> Save as Draft</>}
-              </Button>
-              <p className="text-xs text-center text-[#C9B8A6]">Drafts won't send automatically — you must press "Send Now" from the Campaigns tab.</p>
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSaveDraft}
+                  disabled={saving || !form.name || !form.message}
+                  variant="outline"
+                  className="flex-1 rounded-2xl py-3 font-bold gap-2 border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
+                >
+                  {saving ? <><RefreshCw className="h-4 w-4 animate-spin" /> Saving...</> : <><Edit3 className="h-4 w-4" /> Save Draft</>}
+                </Button>
+                <Button
+                  onClick={handleSaveAndSend}
+                  disabled={saving || !form.name || !form.message}
+                  className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-2xl py-3 font-bold gap-2"
+                >
+                  {saving ? <><RefreshCw className="h-4 w-4 animate-spin" /> Saving...</> : <><Send className="h-4 w-4" /> Save & Send Now</>}
+                </Button>
+              </div>
+              <p className="text-xs text-center text-[#C9B8A6]">"Save Draft" to review first · "Save & Send Now" to send immediately</p>
             </div>
           </div>
         )}
