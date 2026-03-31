@@ -138,6 +138,8 @@ export default function AdminWhatsApp() {
   const [confirmSend, setConfirmSend] = useState(null);
   const [submittingTemplate, setSubmittingTemplate] = useState(null);
   const [checkingStatus, setCheckingStatus] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
