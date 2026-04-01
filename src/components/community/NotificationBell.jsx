@@ -122,7 +122,7 @@ export default function NotificationBell({ userEmail }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl shadow-2xl border border-[#E8DED8] z-[100] overflow-hidden"
+            className="fixed right-3 top-16 w-[calc(100vw-24px)] max-w-[340px] bg-white rounded-2xl shadow-2xl border border-[#E8DED8] z-[100] overflow-hidden sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[340px] sm:fixed-none"
           >
             {/* Header */}
             <div className="px-4 py-3 border-b border-[#E8DED8] flex items-center justify-between bg-[#F9F6F3]">
