@@ -93,7 +93,7 @@ export default function FlashDrops() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#D4C4B0]/20 dark:bg-white/10 text-white dark:text-[var(--text-secondary)] text-sm rounded-xl px-4 py-2"
+            className="bg-[#D4C4B0]/20 dark:bg-white/10 text-[#5C4A3A] dark:text-[var(--text-secondary)] text-sm rounded-xl px-4 py-3"
           >
             🔔 You'll get notified when new drops go live!
           </motion.div>
@@ -107,7 +107,7 @@ export default function FlashDrops() {
           <section>
             <div className="flex items-center gap-2 mb-4">
               <div className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
-              <h2 className="text-lg font-bold text-stone-800">Live Now</h2>
+              <h2 className="text-lg font-bold text-[#5C4A3A]">Live Now</h2>
             </div>
             <div className="space-y-4">
               <AnimatePresence>
@@ -177,9 +177,9 @@ export default function FlashDrops() {
                           <MapPin className="h-3 w-3" />
                           {drop.location_name || drop.location}
                         </span>
-                        <span>
-                          {format(new Date(drop.start_time), "MMM d, h:mm a")}
-                        </span>
+                        {drop.start_time && (
+                          <span>Was live: {format(new Date(drop.start_time), "MMM d, h:mm a")}</span>
+                        )}
                       </div>
                     </div>
                     <div className="text-right text-sm">
