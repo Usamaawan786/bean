@@ -10,6 +10,7 @@ import usePushNotifications from './hooks/usePushNotifications';
 import AdminEmails from './pages/AdminEmails';
 import AdminChat from './pages/AdminChat';
 import UserMessages from './pages/UserMessages';
+import AdminFlashDrops from './pages/AdminFlashDrops';
 import AdminRewards from './pages/AdminRewards';
 import AdminWhatsApp from './pages/AdminWhatsApp';
 import AdminPushNotifications from './pages/AdminPushNotifications';
@@ -60,6 +61,7 @@ function App() {
             <Route path="/AdminWhatsApp" element={<AdminWhatsApp />} />
             <Route path="/AdminChat" element={<AdminChat />} />
             <Route path="/messages" element={<UserMessages />} />
+            <Route path="/AdminFlashDrops" element={<AdminFlashDrops />} />
             <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
             <Route path="/Leaderboard" element={<LayoutWrapper currentPageName="Leaderboard"><Leaderboard /></LayoutWrapper>} />
             <Route path="*" element={<PageNotFound />} />
