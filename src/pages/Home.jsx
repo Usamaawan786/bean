@@ -48,13 +48,24 @@ export default function Home() {
 
   const handleClaimDrop = async (drop) => {
     if (!user) return;
-    
+
     const newClaimedBy = [...(drop.claimed_by || []), user.email];
     await base44.entities.FlashDrop.update(drop.id, {
       claimed_by: newClaimedBy,
       items_remaining: Math.max(0, (drop.items_remaining || drop.total_items) - 1)
     });
-    
+
+    // Create unique QR claim
+    const qrCode = `FD-${drop.id.slice(-5)}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    await base44.entities.FlashDropClaim.create({
+      drop_id: drop.id,
+      drop_title: drop.title,
+      user_email: user.email,
+      qr_code: qrCode,
+      is_redeemed: false,
+      expires_at: drop.end_time,
+    });
+
     // Award points
     if (customer) {
       await base44.entities.Customer.update(customer.id, {
@@ -67,7 +78,6 @@ export default function Home() {
         total_points_earned: prev.total_points_earned + 25
       }));
 
-      // Log activity
       await base44.entities.Activity.create({
         user_email: user.email,
         action_type: "flash_drop_claimed",
@@ -86,12 +96,10 @@ export default function Home() {
   };
 
   const getGreeting = () => {
-    // Always use Pakistan Standard Time (UTC+5)
     const pkHour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" })).getHours();
-    if (pkHour < 12) return "Good morning";
-    if (pkHour < 17) return "Good afternoon";
-    if (pkHour < 20) return "Good evening";
-    return "Good night";
+    if (pkHour >= 5 && pkHour < 12) return "Good morning";
+    if (pkHour >= 12 && pkHour < 17) return "Good afternoon";
+    return "Good evening";
   };
 
   const handleRefresh = async () => {

@@ -7,7 +7,7 @@ import {
   Zap, Plus, ArrowLeft, Edit3, Trash2, Play, Pause, CheckCircle2,
   Clock, MapPin, Package, Users, Calendar, Coffee, Gift, Star,
   RefreshCw, X, Save, AlertTriangle, Eye, EyeOff, Loader2, Copy,
-  ChevronRight, BarChart2
+  ChevronRight, BarChart2, QrCode, ShieldCheck, Search, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow, isPast, isFuture } from "date-fns";
@@ -282,6 +282,11 @@ export default function AdminFlashDrops() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [foundClaim, setFoundClaim] = useState(null);
+  const [verifyNotFound, setVerifyNotFound] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -399,6 +404,32 @@ export default function AdminFlashDrops() {
     setTab("active");
   };
 
+  const handleVerifyQR = async () => {
+    const code = verifyCode.trim().toUpperCase();
+    if (!code) return;
+    setVerifying(true);
+    setFoundClaim(null);
+    setVerifyNotFound(false);
+    const results = await base44.entities.FlashDropClaim.filter({ qr_code: code });
+    if (results.length === 0) {
+      setVerifyNotFound(true);
+    } else {
+      const claimData = results[0];
+      const drop = drops.find(d => d.id === claimData.drop_id);
+      setFoundClaim({ ...claimData, _drop: drop || null });
+    }
+    setVerifying(false);
+  };
+
+  const handleRedeemQR = async () => {
+    if (!foundClaim || foundClaim.is_redeemed) return;
+    setRedeeming(true);
+    await base44.entities.FlashDropClaim.update(foundClaim.id, { is_redeemed: true });
+    setFoundClaim(prev => ({ ...prev, is_redeemed: true }));
+    setRedeeming(false);
+    showToast("✅ Flash Drop redeemed successfully!");
+  };
+
   const tabDrops = tab === "active" ? activeDrops : tab === "upcoming" ? upcomingDrops : endedDrops;
 
   if (!user) return null;
@@ -465,6 +496,7 @@ export default function AdminFlashDrops() {
             { id: "ended", label: `Ended (${stats.ended})`, icon: CheckCircle2 },
             { id: "templates", label: "Templates", icon: Copy },
             { id: "create", label: "Create / Edit", icon: Plus },
+            { id: "verify", label: "Verify QR", icon: QrCode },
           ].map(t => {
             const Icon = t.icon;
             return (
@@ -544,6 +576,75 @@ export default function AdminFlashDrops() {
               ))}
             </div>
           </>
+        )}
+
+        {/* Verify QR Tab */}
+        {tab === "verify" && (
+          <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm">
+            <h2 className="font-bold text-[#5C4A3A] text-lg mb-1 flex items-center gap-2">
+              <QrCode className="h-5 w-5 text-[#8B7355]" /> Verify Flash Drop QR
+            </h2>
+            <p className="text-sm text-[#8B7355] mb-5">Enter the code shown on the customer's QR screen to verify and redeem.</p>
+
+            <div className="flex gap-3 mb-4">
+              <input
+                value={verifyCode}
+                onChange={e => setVerifyCode(e.target.value.toUpperCase())}
+                onKeyDown={e => e.key === "Enter" && handleVerifyQR()}
+                placeholder="e.g. FD-ABC12-XYZ99-AB12"
+                className="flex-1 border border-[#E8DED8] rounded-xl px-4 py-2.5 font-mono text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-amber-300 uppercase"
+              />
+              <Button onClick={handleVerifyQR} disabled={verifying || !verifyCode.trim()} className="bg-[#5C4A3A] hover:bg-[#4A3829] text-white rounded-xl px-5 gap-2">
+                {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Verify
+              </Button>
+            </div>
+
+            {verifyNotFound && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+                <XCircle className="h-6 w-6 text-red-500 flex-shrink-0" />
+                <div><p className="font-semibold text-red-700">QR Code Not Found</p><p className="text-sm text-red-500">This code doesn't exist — do not honour.</p></div>
+              </motion.div>
+            )}
+
+            {foundClaim && (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className={`rounded-2xl border-2 p-5 ${
+                  foundClaim.is_redeemed ? "bg-gray-50 border-gray-300"
+                  : foundClaim._drop?.status === "active" ? "bg-green-50 border-green-300"
+                  : "bg-red-50 border-red-300"
+                }`}
+              >
+                {foundClaim.is_redeemed && (
+                  <div className="flex items-center gap-2 mb-4 text-gray-600 font-bold text-base">
+                    <AlertTriangle className="h-5 w-5" /> ⚠️ Already Redeemed — Do NOT Honour Again
+                  </div>
+                )}
+                {!foundClaim.is_redeemed && foundClaim._drop?.status === "active" && (
+                  <div className="flex items-center gap-2 mb-4 text-green-700 font-bold text-base">
+                    <ShieldCheck className="h-5 w-5" /> ✅ Valid QR — OK to Honour
+                  </div>
+                )}
+                {!foundClaim.is_redeemed && foundClaim._drop?.status !== "active" && (
+                  <div className="flex items-center gap-2 mb-4 text-red-600 font-bold text-base">
+                    <XCircle className="h-5 w-5" /> ❌ Drop Not Active — Do Not Honour
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                  <div><p className="text-[#8B7355] text-xs">Drop</p><p className="font-bold text-[#5C4A3A]">{foundClaim.drop_title}</p></div>
+                  <div><p className="text-[#8B7355] text-xs">Customer</p><p className="font-medium text-[#5C4A3A] break-all text-xs">{foundClaim.user_email}</p></div>
+                  <div><p className="text-[#8B7355] text-xs">Status</p><p className="font-bold">{foundClaim.is_redeemed ? "Redeemed" : "Pending"}</p></div>
+                  <div><p className="text-[#8B7355] text-xs">Drop Status</p><p className="font-bold capitalize">{foundClaim._drop?.status || "Unknown"}</p></div>
+                </div>
+
+                {!foundClaim.is_redeemed && foundClaim._drop?.status === "active" && (
+                  <Button onClick={handleRedeemQR} disabled={redeeming} className="w-full bg-green-600 hover:bg-green-700 text-white rounded-xl gap-2">
+                    {redeeming ? <><Loader2 className="h-4 w-4 animate-spin" /> Redeeming...</> : <><ShieldCheck className="h-4 w-4" /> Mark as Redeemed</>}
+                  </Button>
+                )}
+              </motion.div>
+            )}
+          </div>
         )}
 
         {/* Drop Lists */}

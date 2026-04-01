@@ -1,0 +1,63 @@
+{
+  "name": "FlashDropClaim",
+  "type": "object",
+  "properties": {
+    "drop_id": {
+      "type": "string",
+      "description": "ID of the flash drop"
+    },
+    "drop_title": {
+      "type": "string",
+      "description": "Title of the flash drop"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the claimant"
+    },
+    "qr_code": {
+      "type": "string",
+      "description": "Unique QR code string"
+    },
+    "is_redeemed": {
+      "type": "boolean",
+      "default": false
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the QR expires (drop end time)"
+    }
+  },
+  "required": [
+    "drop_id",
+    "user_email",
+    "qr_code"
+  ],
+  "rls": {
+    "create": {
+      "data.user_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

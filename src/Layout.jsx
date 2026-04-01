@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Gift, Users, UserCircle, MessageCircle } from "lucide-react";
+import { Home, Gift, Users, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
@@ -16,7 +16,6 @@ const authNavItems = [
   { name: "Home", icon: Home, page: "Home" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
   { name: "Community", icon: Users, page: "Community" },
-  { name: "Messages", icon: MessageCircle, page: "messages", customPath: "/messages" },
   { name: "Profile", icon: UserCircle, page: "Profile" }
 ];
 
