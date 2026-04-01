@@ -342,13 +342,22 @@ export default function StaffManagement() {
         </div>
 
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
-          <p className="font-bold mb-1">📋 How to onboard staff</p>
+          <p className="font-bold mb-2">📋 How to onboard staff</p>
           <ol className="list-decimal ml-4 space-y-1 text-xs">
             <li>Enter their email above and click <strong>Send Invite</strong></li>
-            <li>They receive an email to set their password and create their account</li>
-            <li>Once they appear in the <strong>Current Staff</strong> list, assign their role using the dropdown</li>
-            <li>They log in and land on the <strong>Staff Portal</strong> — only their permitted features are shown</li>
+            <li>They receive an email — the link takes them to the <strong>Staff Login page</strong></li>
+            <li>They sign in at <code className="bg-amber-100 px-1 rounded">beancoffee.co/staff</code></li>
+            <li>Once they appear in the <strong>Current Staff</strong> list below, assign their role</li>
+            <li>They log back in and land on the <strong>Staff Portal</strong> with their permitted features</li>
           </ol>
+          <div className="mt-3 flex items-center gap-2 bg-white border border-amber-300 rounded-xl px-3 py-2">
+            <span className="text-xs font-bold text-amber-900">Staff Login URL:</span>
+            <code className="text-xs text-amber-700 flex-1">beancoffee.co/staff</code>
+            <button
+              onClick={() => { navigator.clipboard.writeText(window.location.origin + "/staff"); }}
+              className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-lg hover:bg-amber-600"
+            >Copy</button>
+          </div>
         </div>
       </div>
     </div>

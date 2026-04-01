@@ -9,6 +9,7 @@ import { AuthProvider } from '@/lib/AuthContext';
 import usePushNotifications from './hooks/usePushNotifications';
 import AdminEmails from './pages/AdminEmails';
 import StaffManagement from './pages/StaffManagement';
+import StaffLogin from './pages/StaffLogin';
 import StaffPortal from './pages/StaffPortal';
 import AdminChat from './pages/AdminChat';
 import UserMessages from './pages/UserMessages';
@@ -70,6 +71,7 @@ function App() {
             <Route path="/Leaderboard" element={<LayoutWrapper currentPageName="Leaderboard"><Leaderboard /></LayoutWrapper>} />
             <Route path="/StaffManagement" element={<StaffManagement />} />
             <Route path="/StaffPortal" element={<StaffPortal />} />
+            <Route path="/staff" element={<StaffLogin />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
