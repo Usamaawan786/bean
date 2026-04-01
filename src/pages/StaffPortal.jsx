@@ -45,7 +45,7 @@ export default function StaffPortal() {
     base44.auth.me().then(u => {
       // Regular customers should not be here
       if (!u || u.role === "user") {
-        window.location.href = "/";
+        window.location.href = "/Home";
         return;
       }
       setUser(u);

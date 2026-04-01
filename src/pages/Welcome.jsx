@@ -19,8 +19,13 @@ export default function Welcome() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
-    base44.auth.isAuthenticated().then(isAuth => {
-      if (isAuth) navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
+    base44.auth.isAuthenticated().then(async isAuth => {
+      if (isAuth) {
+        const u = await base44.auth.me();
+        const isStaff = ["cashier", "manager", "admin", "super_admin"].includes(u?.role);
+        if (isStaff) navigate("/StaffPortal", { replace: true });
+        else navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
+      }
     });
   }, []);
 
@@ -70,7 +75,8 @@ export default function Welcome() {
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
               const ref = params.get("ref");
-              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : createPageUrl("Home"));
+              // Redirect to StaffPortal after login — it handles routing for both staff and regular users
+              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal");
             }}
             className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >
@@ -116,7 +122,7 @@ export default function Welcome() {
           onClick={() => {
               const params = new URLSearchParams(window.location.search);
               const ref = params.get("ref");
-              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : createPageUrl("Home"));
+              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal");
             }}
           className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
         >
