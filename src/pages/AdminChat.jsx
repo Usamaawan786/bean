@@ -7,10 +7,15 @@ import {
   MessageCircle, Search, Send, ArrowLeft, MoreVertical,
   CheckCheck, Check, Circle, Users, Bell, BellOff, Trash2,
   Archive, Star, ChevronDown, Loader2, Coffee, Megaphone,
-  RefreshCw, X, Filter
+  RefreshCw, X, Filter, Pin, Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+
+function formatMsgTime(dateStr) {
+  if (!dateStr) return "";
+  try { return format(new Date(dateStr), "h:mm a"); } catch { return ""; }
+}
 
 function Avatar({ name, size = "md" }) {
   const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-pink-500", "bg-amber-500", "bg-teal-500", "bg-red-500", "bg-indigo-500"];
@@ -23,31 +28,73 @@ function Avatar({ name, size = "md" }) {
   );
 }
 
-function MessageBubble({ msg, isAdmin }) {
+function MessageBubble({ msg, isAdmin, onEdit, onDelete, onPin }) {
   const isFromAdmin = msg.sender_role === "admin";
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState(msg.content);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const h = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  const handleEditSave = () => {
+    if (editText.trim() && editText.trim() !== msg.content && onEdit) onEdit(msg.id, editText.trim());
+    setEditing(false);
+  };
   return (
-    <div className={`flex items-end gap-2 ${isFromAdmin ? "flex-row-reverse" : "flex-row"}`}>
+    <div className={`flex items-end gap-2 group ${isFromAdmin ? "flex-row-reverse" : "flex-row"}`}>
       {!isFromAdmin && <Avatar name={msg.sender_name} size="sm" />}
-      <div className={`max-w-[70%] ${isFromAdmin ? "items-end" : "items-start"} flex flex-col gap-1`}>
-        <div className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
-          isFromAdmin
-            ? "bg-[#0084FF] text-white rounded-br-sm"
-            : "bg-white text-gray-900 rounded-bl-sm border border-gray-100"
-        }`}>
-          {msg.message_type === "announcement" && (
-            <div className={`flex items-center gap-1 text-xs font-semibold mb-1 ${isFromAdmin ? "text-blue-200" : "text-amber-600"}`}>
-              <Megaphone className="h-3 w-3" /> Announcement
+      <div className={`max-w-[70%] ${isFromAdmin ? "items-end" : "items-start"} flex flex-col gap-1 relative`}>
+        {msg.is_pinned && <span className="text-[10px] text-amber-600 flex items-center gap-0.5 px-1"><Pin className="h-2.5 w-2.5" /> Pinned</span>}
+        {msg.message_type === "announcement" && (
+          <div className={`flex items-center gap-1 text-xs font-semibold mb-1 ${isFromAdmin ? "text-blue-200" : "text-amber-600"}`}><Megaphone className="h-3 w-3" /> Announcement</div>
+        )}
+        {editing ? (
+          <div className="flex gap-2 items-end">
+            <textarea value={editText} onChange={e => setEditText(e.target.value)} autoFocus rows={2}
+              className="border border-blue-300 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none bg-white text-gray-900 min-w-[160px]" />
+            <div className="flex flex-col gap-1">
+              <button onClick={handleEditSave} className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">✓</button>
+              <button onClick={() => setEditing(false)} className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center"><X className="h-3 w-3 text-gray-600" /></button>
             </div>
-          )}
-          {msg.content}
+          </div>
+        ) : (
+          <div
+            onContextMenu={e => { e.preventDefault(); setMenuOpen(true); }}
+            className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm ${
+              isFromAdmin ? "bg-[#0084FF] text-white rounded-br-sm" : "bg-white text-gray-900 rounded-bl-sm border border-gray-100"
+            }`}>
+            {msg.content}
+            {msg.is_edited && <span className={`text-[10px] ml-1 ${isFromAdmin ? "text-blue-200" : "text-gray-400"}`}>edited</span>}
+          </div>
+        )}
+        <div className={`flex items-center gap-1 px-1 ${isFromAdmin ? "flex-row-reverse" : "flex-row"}`}>
+          <span className="text-[10px] text-gray-400">{formatMsgTime(msg.created_date)}</span>
+          {isFromAdmin && (msg.is_read ? <CheckCheck className="h-3 w-3 text-[#53bdeb]" /> : <CheckCheck className="h-3 w-3 text-gray-400" />)}
         </div>
-        <span className="text-[10px] text-gray-400 px-1">
-          {formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })}
-          {isFromAdmin && (
-            <span className="ml-1">{msg.is_read ? <CheckCheck className="inline h-3 w-3 text-blue-400" /> : <Check className="inline h-3 w-3 text-gray-400" />}</span>
-          )}
-        </span>
+        {menuOpen && !editing && (
+          <div ref={menuRef} className={`absolute z-50 bottom-8 ${isFromAdmin ? "right-0" : "left-0"} bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden min-w-[160px]`}>
+            {isFromAdmin && onEdit && (
+              <button onClick={() => { setEditing(true); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-sm text-gray-700"><Pencil className="h-4 w-4 text-gray-400" /> Edit</button>
+            )}
+            {onPin && (
+              <button onClick={() => { onPin(msg.id, !msg.is_pinned); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-sm text-gray-700"><Pin className="h-4 w-4 text-amber-400" /> {msg.is_pinned ? "Unpin" : "Pin"}</button>
+            )}
+            {onDelete && (
+              <button onClick={() => { onDelete(msg.id); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-sm text-red-500"><Trash2 className="h-4 w-4" /> Delete</button>
+            )}
+            <button onClick={() => setMenuOpen(false)} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-sm text-gray-400"><X className="h-4 w-4" /> Cancel</button>
+          </div>
+        )}
       </div>
+      <button onClick={() => setMenuOpen(v => !v)}
+        className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-gray-200 text-gray-400 flex-shrink-0 self-center ${isFromAdmin ? "order-first" : "order-last"}`}>
+        <MoreVertical className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -188,6 +235,25 @@ export default function AdminChat() {
     setBroadcastMode(false);
     setBroadcasting(false);
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+  };
+
+  const handleEditMsg = async (msgId, newContent) => {
+    await base44.entities.ChatMessage.update(msgId, { content: newContent, is_edited: true });
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv?.id] });
+  };
+
+  const handleDeleteMsg = async (msgId) => {
+    await base44.entities.ChatMessage.delete(msgId);
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv?.id] });
+  };
+
+  const handlePinMsg = async (msgId, pin) => {
+    if (pin) {
+      const pinned = messages.filter(m => m.is_pinned);
+      await Promise.all(pinned.map(m => base44.entities.ChatMessage.update(m.id, { is_pinned: false })));
+    }
+    await base44.entities.ChatMessage.update(msgId, { is_pinned: pin });
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv?.id] });
   };
 
   const handleKeyDown = (e) => {
@@ -350,7 +416,7 @@ export default function AdminChat() {
                   Start the conversation
                 </div>
               ) : (
-                messages.map(msg => <MessageBubble key={msg.id} msg={msg} />)
+                messages.map(msg => <MessageBubble key={msg.id} msg={msg} isAdmin onEdit={handleEditMsg} onDelete={handleDeleteMsg} onPin={handlePinMsg} />)
               )}
               <div ref={messagesEndRef} />
             </div>
