@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2, Users, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -320,6 +320,22 @@ export default function Profile() {
                 <span className="font-semibold">2x points when paying with wallet</span>
               </div>
             </div>
+          </div>
+        </Link>
+
+        {/* Message Bean Support */}
+        <Link to="/messages">
+          <div className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] text-white rounded-3xl p-5 mb-4 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <MessageCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="font-semibold">Message Bean</div>
+                <div className="text-sm text-white/70">Questions? We're here for you ☕</div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-white/60" />
           </div>
         </Link>
 

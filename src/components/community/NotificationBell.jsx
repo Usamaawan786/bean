@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell } from "lucide-react";
+import { Bell, MessageCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 
 export default function NotificationBell({ userEmail }) {
   const [notifications, setNotifications] = useState([]);
@@ -33,7 +34,22 @@ export default function NotificationBell({ userEmail }) {
     setNotifications(data);
   };
 
+  const [unreadMessages, setUnreadMessages] = useState(0);
+
+  useEffect(() => {
+    if (!userEmail) return;
+    const checkMessages = async () => {
+      const convs = await base44.entities.Conversation.filter({ user_email: userEmail });
+      const total = convs.reduce((s, c) => s + (c.unread_by_user || 0), 0);
+      setUnreadMessages(total);
+    };
+    checkMessages();
+    const interval = setInterval(checkMessages, 15000);
+    return () => clearInterval(interval);
+  }, [userEmail]);
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
+  const totalBadge = unreadCount + unreadMessages;
 
   const markAllRead = async () => {
     const unread = notifications.filter(n => !n.is_read);
@@ -50,9 +66,9 @@ export default function NotificationBell({ userEmail }) {
         className="relative p-2 rounded-xl text-[#8B7355] hover:bg-[#F5EBE8] transition-colors"
       >
         <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
+        {totalBadge > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-            {unreadCount > 9 ? "9+" : unreadCount}
+            {totalBadge > 9 ? "9+" : totalBadge}
           </span>
         )}
       </button>
@@ -65,8 +81,13 @@ export default function NotificationBell({ userEmail }) {
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
             className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#E8DED8] z-50 overflow-hidden"
           >
-            <div className="px-4 py-3 border-b border-[#E8DED8]">
+            <div className="px-4 py-3 border-b border-[#E8DED8] flex items-center justify-between">
               <h3 className="font-bold text-[#5C4A3A]">Notifications</h3>
+              {unreadMessages > 0 && (
+                <Link to="/messages" onClick={() => setOpen(false)} className="flex items-center gap-1.5 bg-[#8B7355] text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-[#6B5744] transition-colors">
+                  <MessageCircle className="h-3 w-3" /> {unreadMessages} new message{unreadMessages > 1 ? "s" : ""}
+                </Link>
+              )}
             </div>
             <div className="max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (

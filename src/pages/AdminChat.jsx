@@ -61,6 +61,7 @@ export default function AdminChat() {
   const [messageType, setMessageType] = useState("text");
   const [broadcastMode, setBroadcastMode] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [broadcastType, setBroadcastType] = useState("announcement");
   const [broadcasting, setBroadcasting] = useState(false);
   const [filter, setFilter] = useState("all"); // all | unread | archived
   const messagesEndRef = useRef(null);
@@ -180,7 +181,7 @@ export default function AdminChat() {
         sender_email: user?.email,
         sender_name: "Bean Admin",
         content: broadcastMsg.trim(),
-        message_type: "announcement",
+        message_type: broadcastType,
       });
     }
     setBroadcastMsg("");
@@ -421,10 +422,39 @@ export default function AdminChat() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+              {/* Message type */}
+              <div className="flex gap-2 mb-3">
+                {[{id:"announcement",label:"📢 Announcement"},{id:"offer",label:"🎁 Offer"},{id:"text",label:"💬 Message"}].map(t => (
+                  <button key={t.id} onClick={() => setBroadcastType(t.id)}
+                    className={`text-xs px-3 py-1.5 rounded-full font-medium border transition-colors ${broadcastType === t.id ? "bg-blue-600 text-white border-blue-600" : "text-gray-600 border-gray-200 hover:bg-gray-50"}`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Quick Templates */}
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">Quick Templates</p>
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  {[
+                    { label: "⚡ Flash Drop Live!", msg: "⚡ Flash Drop is LIVE at Bean right now! Head over to the app and claim yours before they run out. Limited items — first come, first served! ☕" },
+                    { label: "⭐ Double Points Weekend", msg: "⭐ This weekend only: earn DOUBLE points on every visit! Come in Friday–Sunday and stack those rewards. See you at Bean! ☕" },
+                    { label: "🎁 Exclusive Offer", msg: "🎁 Special offer just for you! Visit Bean this week and enjoy an exclusive treat — just show this message at the counter. Limited time only! 🫘" },
+                    { label: "📣 New Launch", msg: "📣 Exciting news from Bean! We've just launched something new you're going to love. Come visit us and be among the first to experience it! ☕✨" },
+                    { label: "💛 Loyalty Thank You", msg: "💛 Thank you for being a valued Bean member! Your loyalty means the world to us. Keep visiting and keep earning — big rewards are coming your way! 🏆" },
+                  ].map((t, i) => (
+                    <button key={i} onClick={() => setBroadcastMsg(t.msg)}
+                      className="w-full text-left text-xs px-3 py-2 rounded-lg bg-gray-50 hover:bg-blue-50 hover:text-blue-700 text-gray-700 transition-colors font-medium">
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <textarea
                 value={broadcastMsg}
                 onChange={e => setBroadcastMsg(e.target.value)}
-                placeholder="Type your announcement or update..."
+                placeholder="Type your message or pick a template above..."
                 rows={4}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none mb-4"
               />
