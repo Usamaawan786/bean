@@ -64,6 +64,7 @@ export default function OnboardingNameModal({ onComplete }) {
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name — so we're not just strangers"
               autoFocus
+              style={{ fontSize: '16px' }}
               className="w-full border border-[#E8DED8] rounded-2xl pl-10 pr-4 py-3 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30 focus:border-[#8B7355] bg-[#FDFAF8]"
             />
           </div>
@@ -82,6 +83,7 @@ export default function OnboardingNameModal({ onComplete }) {
               onChange={(e) => { setPhone(e.target.value); setError(""); }}
               onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               placeholder="Your number — exclusive offers await"
+              style={{ fontSize: '16px' }}
               className="w-full border border-[#E8DED8] rounded-2xl pl-10 pr-4 py-3 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30 focus:border-[#8B7355] bg-[#FDFAF8]"
             />
           </div>
