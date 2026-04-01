@@ -12,6 +12,7 @@ import AdminChat from './pages/AdminChat';
 import UserMessages from './pages/UserMessages';
 import AdminFlashDrops from './pages/AdminFlashDrops';
 import AdminRewards from './pages/AdminRewards';
+import AdminRewardsRedemptions from './pages/AdminRewardsRedemptions';
 import AdminWhatsApp from './pages/AdminWhatsApp';
 import AdminPushNotifications from './pages/AdminPushNotifications';
 import AdminReferrals from './pages/AdminReferrals';
@@ -58,6 +59,7 @@ function App() {
             <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
             <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
             <Route path="/AdminRewards" element={<AdminRewards />} />
+            <Route path="/AdminRewardsRedemptions" element={<AdminRewardsRedemptions />} />
             <Route path="/AdminWhatsApp" element={<AdminWhatsApp />} />
             <Route path="/AdminChat" element={<AdminChat />} />
             <Route path="/messages" element={<UserMessages />} />

@@ -144,6 +144,10 @@ export default function AdminDashboard() {
               <MessageSquare className="h-4 w-4" />
               WhatsApp
             </Link>
+            <Link to="/AdminRewardsRedemptions" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-4 py-2 rounded-xl border border-white/20 transition-colors">
+              <Package className="h-4 w-4" />
+              Rewards
+            </Link>
             </div>
           </div>
           
