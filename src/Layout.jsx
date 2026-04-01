@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Gift, Users, Zap, ShoppingBag, UserCircle, Trophy } from "lucide-react";
+import { Home, Gift, Users, Zap, ShoppingBag, UserCircle, Trophy, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
@@ -15,6 +15,7 @@ const authNavItems = [
   { name: "Home", icon: Home, page: "Home" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
   { name: "Community", icon: Users, page: "Community" },
+  { name: "Messages", icon: MessageCircle, page: "messages", customPath: "/messages" },
   { name: "Profile", icon: UserCircle, page: "Profile" }
 ];
 
@@ -48,7 +49,7 @@ export default function Layout({ children, currentPageName }) {
                 return (
                   <Link
                     key={item.page}
-                    to={createPageUrl(item.page)}
+                    to={item.customPath || createPageUrl(item.page)}
                     className="relative flex flex-col items-center py-3 px-4 select-none"
                   >
                     {isActive && (

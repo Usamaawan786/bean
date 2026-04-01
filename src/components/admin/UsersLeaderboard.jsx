@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronDown, ChevronUp, Gift, Share2, ShoppingBag, UserCheck, Activity, AlertTriangle } from "lucide-react";
+import { Star, ChevronDown, ChevronUp, Gift, Share2, ShoppingBag, UserCheck, Activity, AlertTriangle, Users } from "lucide-react";
 
 const TIER_COLORS = {
   Platinum: "bg-purple-100 text-purple-700",
