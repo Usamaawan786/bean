@@ -86,10 +86,12 @@ export default function Home() {
   };
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
+    // Always use Pakistan Standard Time (UTC+5)
+    const pkHour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" })).getHours();
+    if (pkHour < 12) return "Good morning";
+    if (pkHour < 17) return "Good afternoon";
+    if (pkHour < 20) return "Good evening";
+    return "Good night";
   };
 
   const handleRefresh = async () => {
