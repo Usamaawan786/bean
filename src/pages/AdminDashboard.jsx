@@ -18,8 +18,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     const loadUser = async () => {
       const u = await base44.auth.me();
-      if (u.role !== 'admin') {
-        window.location.href = createPageUrl("Home");
+      if (!["admin", "super_admin", "manager"].includes(u?.role)) {
+        window.location.href = "/StaffPortal";
         return;
       }
       setUser(u);

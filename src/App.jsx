@@ -8,6 +8,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import usePushNotifications from './hooks/usePushNotifications';
 import AdminEmails from './pages/AdminEmails';
+import StaffManagement from './pages/StaffManagement';
+import StaffPortal from './pages/StaffPortal';
 import AdminChat from './pages/AdminChat';
 import UserMessages from './pages/UserMessages';
 import AdminFlashDrops from './pages/AdminFlashDrops';
@@ -66,6 +68,8 @@ function App() {
             <Route path="/AdminFlashDrops" element={<AdminFlashDrops />} />
             <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
             <Route path="/Leaderboard" element={<LayoutWrapper currentPageName="Leaderboard"><Leaderboard /></LayoutWrapper>} />
+            <Route path="/StaffManagement" element={<StaffManagement />} />
+            <Route path="/StaffPortal" element={<StaffPortal />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

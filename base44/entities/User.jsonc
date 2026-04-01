@@ -6,13 +6,21 @@
       "type": "string",
       "enum": [
         "admin",
+        "super_admin",
+        "manager",
+        "cashier",
         "user"
       ],
-      "default": "user"
+      "default": "user",
+      "description": "User role controlling access level"
     },
     "display_name": {
       "type": "string",
-      "description": "User's preferred display name"
+      "description": "Display name shown in the app"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
     },
     "profile_picture": {
       "type": "string",
@@ -23,21 +31,15 @@
       "items": {
         "type": "string"
       },
-      "description": "Emails of users this user follows"
+      "description": "List of emails this user follows"
     },
-    "blocked_users": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "Emails of blocked users"
+    "followers_count": {
+      "type": "number",
+      "default": 0
     },
-    "saved_posts": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "IDs of saved posts"
+    "following_count": {
+      "type": "number",
+      "default": 0
     }
   }
 }

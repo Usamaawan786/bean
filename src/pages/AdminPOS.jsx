@@ -24,8 +24,8 @@ export default function AdminPOS() {
   useEffect(() => {
     const loadUser = async () => {
       const u = await base44.auth.me();
-      if (u.role !== "admin") {
-        window.location.href = createPageUrl("Home");
+      if (!["admin", "super_admin", "manager", "cashier"].includes(u?.role)) {
+        window.location.href = "/StaffPortal";
         return;
       }
       setUser(u);
@@ -120,13 +120,9 @@ export default function AdminPOS() {
     setGeneratedBill(null);
   };
 
-  if (!user || user.role !== "admin") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-[#8B7355]">Access Denied</p>
-      </div>
-    );
-  }
+  const canManageProducts = ["admin", "super_admin", "manager"].includes(user?.role);
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-[#F5F1ED]">
@@ -192,7 +188,7 @@ export default function AdminPOS() {
         <Tabs defaultValue="pos" className="space-y-6">
           <TabsList className="bg-white border border-[#E8DED8]">
             <TabsTrigger value="pos">POS</TabsTrigger>
-            <TabsTrigger value="products">Product Management</TabsTrigger>
+            {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="pos" className="space-y-6">
@@ -360,9 +356,11 @@ export default function AdminPOS() {
             </div>
           </TabsContent>
 
-          <TabsContent value="products">
-            <ProductManager isStoreProducts={true} />
-          </TabsContent>
+          {canManageProducts && (
+            <TabsContent value="products">
+              <ProductManager isStoreProducts={true} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
