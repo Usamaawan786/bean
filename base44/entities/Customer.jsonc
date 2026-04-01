@@ -28,7 +28,7 @@
     "referral_bonus_awarded": {
       "type": "boolean",
       "default": false,
-      "description": "Whether the referral spend-based bonus has been awarded (to prevent double-awarding)"
+      "description": "Whether the referral spend-based bonus has been awarded"
     },
     "referral_count": {
       "type": "number",
@@ -60,6 +60,26 @@
       "type": "number",
       "default": 0,
       "description": "Total free cups redeemed"
+    },
+    "is_founding_member": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this customer was on the original waitlist"
+    },
+    "fm_discount_used": {
+      "type": "number",
+      "default": 0,
+      "description": "How many of the 3 FM 10% discounts have been used"
+    },
+    "is_eba": {
+      "type": "boolean",
+      "default": false,
+      "description": "Elite Bean Ambassador status"
+    },
+    "eba_discount_used": {
+      "type": "number",
+      "default": 0,
+      "description": "How many EBA discounts have been used"
     }
   },
   "required": [],

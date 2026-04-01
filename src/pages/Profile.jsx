@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPageUrl } from "@/utils";
-import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2, Users, MessageCircle } from "lucide-react";
+import { ArrowLeft, Camera, User, Mail, Award, Loader2, QrCode, Wallet, Gift, ChevronRight, Star, TrendingUp, Trash2, Users, MessageCircle, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,16 +67,34 @@ export default function Profile() {
       if (customers.length > 0) {
         setCustomer(customers[0]);
       } else {
-        // Create customer with welcome bonus and referral code
+        // Check if user was on the waitlist (founding member)
+        const waitlistMatches = await base44.entities.WaitlistSignup.filter({ email: u.email });
+        const isFoundingMember = waitlistMatches.length > 0;
+        const welcomePoints = isFoundingMember ? 100 : 50; // 50 welcome + 50 FM bonus
+
         const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
         const newCustomer = await base44.entities.Customer.create({
           referral_code: refCode,
-          points_balance: 50,
-          total_points_earned: 50,
+          points_balance: welcomePoints,
+          total_points_earned: welcomePoints,
           tier: "Bronze",
           referral_count: 0,
-          cups_redeemed: 0
+          cups_redeemed: 0,
+          is_founding_member: isFoundingMember,
+          fm_discount_used: 0,
         });
+
+        // Also mark waitlist record as joined
+        if (isFoundingMember) {
+          await base44.entities.WaitlistSignup.update(waitlistMatches[0].id, { status: "joined" });
+          // Log the FM bonus activity
+          await base44.entities.Activity.create({
+            user_email: u.email,
+            action_type: "points_earned",
+            description: "🌟 Founding Member bonus — 50 extra welcome points!",
+            points_amount: 50,
+          });
+        }
         setCustomer(newCustomer);
       }
 
@@ -253,6 +271,16 @@ export default function Profile() {
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold text-[#5C4A3A]">{user.full_name}</h2>
           <p className="text-sm text-[#8B7355]">{user.email}</p>
+          {customer?.is_founding_member && (
+            <div className="inline-flex items-center gap-1.5 mt-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+              <Shield className="h-3 w-3" /> FM · Founding Member
+            </div>
+          )}
+          {customer?.is_eba && (
+            <div className="inline-flex items-center gap-1.5 mt-2 ml-2 bg-gradient-to-r from-purple-600 to-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
+              ⭐ EBA · Elite Ambassador
+            </div>
+          )}
         </div>
 
         {/* Followers/Following */}
