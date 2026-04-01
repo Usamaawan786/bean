@@ -1,75 +1,117 @@
-import { useState, useEffect, useRef } from "react";
-import { Bell, MessageCircle } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Bell, MessageCircle, Megaphone, Gift, CheckCheck, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
-import { Link } from "react-router-dom";
+import { formatDistanceToNow, format } from "date-fns";
+import { Link, useNavigate } from "react-router-dom";
+
+function msgIcon(type) {
+  if (type === "announcement") return <Megaphone className="h-4 w-4 text-amber-500" />;
+  if (type === "offer") return <Gift className="h-4 w-4 text-green-500" />;
+  return <MessageCircle className="h-4 w-4 text-[#8B7355]" />;
+}
+
+function msgBg(type) {
+  if (type === "announcement") return "bg-amber-50";
+  if (type === "offer") return "bg-green-50";
+  return "bg-blue-50";
+}
 
 export default function NotificationBell({ userEmail }) {
-  const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
+  const [conversation, setConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
   const ref = useRef(null);
+  const navigate = useNavigate();
+
+  // Load conversation + unread admin messages
+  const loadMessages = useCallback(async () => {
+    if (!userEmail) return;
+    const convs = await base44.entities.Conversation.filter({ user_email: userEmail });
+    if (!convs.length) return;
+    const conv = convs[0];
+    setConversation(conv);
+    // Fetch last 30 admin messages
+    const msgs = await base44.entities.ChatMessage.filter({ conversation_id: conv.id }, "-created_date", 30);
+    const adminMsgs = msgs.filter(m => m.sender_role === "admin");
+    setMessages(adminMsgs);
+  }, [userEmail]);
 
   useEffect(() => {
     if (!userEmail) return;
-    loadNotifications();
-    const unsub = base44.entities.Notification.subscribe((event) => {
-      if (event.data?.to_email === userEmail) {
-        loadNotifications();
+    loadMessages();
+    // Real-time subscription on ChatMessage
+    const unsub = base44.entities.ChatMessage.subscribe((event) => {
+      if (event.type === "create" && event.data?.sender_role === "admin") {
+        loadMessages();
+      } else if (event.type === "update") {
+        setMessages(prev => prev.map(m => m.id === event.id ? { ...m, ...event.data } : m));
       }
     });
-    return unsub;
-  }, [userEmail]);
+    // Also poll every 15s as fallback
+    const interval = setInterval(loadMessages, 15000);
+    return () => { unsub(); clearInterval(interval); };
+  }, [userEmail, loadMessages]);
 
+  // Click outside closes
   useEffect(() => {
-    const handleClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
   }, []);
 
-  const loadNotifications = async () => {
-    const data = await base44.entities.Notification.filter({ to_email: userEmail }, "-created_date", 20);
-    setNotifications(data);
+  const unreadMsgs = messages.filter(m => !m.is_read);
+  const totalUnread = unreadMsgs.length;
+
+  const markOneRead = async (msg) => {
+    if (msg.is_read) return;
+    await base44.entities.ChatMessage.update(msg.id, { is_read: true });
+    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, is_read: true } : m));
+    // Update conversation counter
+    if (conversation) {
+      const newCount = Math.max(0, (conversation.unread_by_user || 0) - 1);
+      await base44.entities.Conversation.update(conversation.id, { unread_by_user: newCount });
+      setConversation(prev => ({ ...prev, unread_by_user: newCount }));
+    }
   };
-
-  const [unreadMessages, setUnreadMessages] = useState(0);
-
-  useEffect(() => {
-    if (!userEmail) return;
-    const checkMessages = async () => {
-      const convs = await base44.entities.Conversation.filter({ user_email: userEmail });
-      const total = convs.reduce((s, c) => s + (c.unread_by_user || 0), 0);
-      setUnreadMessages(total);
-    };
-    checkMessages();
-    const interval = setInterval(checkMessages, 15000);
-    return () => clearInterval(interval);
-  }, [userEmail]);
-
-  const unreadCount = notifications.filter(n => !n.is_read).length;
-  const totalBadge = unreadCount + unreadMessages;
 
   const markAllRead = async () => {
-    const unread = notifications.filter(n => !n.is_read);
-    await Promise.all(unread.map(n => base44.entities.Notification.update(n.id, { is_read: true })));
-    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    const unread = messages.filter(m => !m.is_read);
+    if (!unread.length) return;
+    await Promise.all(unread.map(m => base44.entities.ChatMessage.update(m.id, { is_read: true })));
+    setMessages(prev => prev.map(m => ({ ...m, is_read: true })));
+    if (conversation) {
+      await base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 });
+      setConversation(prev => ({ ...prev, unread_by_user: 0 }));
+    }
   };
 
-  const typeIcons = { follow: "👤", like: "❤️", comment: "💬", mention: "📢", reply: "↩️" };
+  const handleOpen = () => {
+    setOpen(v => !v);
+  };
+
+  const handleGoToMessages = async () => {
+    await markAllRead();
+    setOpen(false);
+    navigate("/messages");
+  };
 
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={() => { setOpen(!open); if (!open && unreadCount > 0) markAllRead(); }}
+        onClick={handleOpen}
         className="relative p-2 rounded-xl text-[#8B7355] hover:bg-[#F5EBE8] transition-colors"
+        aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
-        {totalBadge > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-            {totalBadge > 9 ? "9+" : totalBadge}
-          </span>
+        {totalUnread > 0 && (
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1"
+          >
+            {totalUnread > 9 ? "9+" : totalUnread}
+          </motion.span>
         )}
       </button>
 
@@ -79,33 +121,86 @@ export default function NotificationBell({ userEmail }) {
             initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 8 }}
-            className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-[#E8DED8] z-50 overflow-hidden"
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 top-full mt-2 w-[340px] bg-white rounded-2xl shadow-2xl border border-[#E8DED8] z-[100] overflow-hidden"
           >
-            <div className="px-4 py-3 border-b border-[#E8DED8] flex items-center justify-between">
-              <h3 className="font-bold text-[#5C4A3A]">Notifications</h3>
-              {unreadMessages > 0 && (
-                <Link to="/messages" onClick={() => setOpen(false)} className="flex items-center gap-1.5 bg-[#8B7355] text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-[#6B5744] transition-colors">
-                  <MessageCircle className="h-3 w-3" /> {unreadMessages} new message{unreadMessages > 1 ? "s" : ""}
-                </Link>
-              )}
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-[#E8DED8] flex items-center justify-between bg-[#F9F6F3]">
+              <div className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-[#8B7355]" />
+                <h3 className="font-bold text-[#5C4A3A] text-sm">Messages from Bean</h3>
+                {totalUnread > 0 && (
+                  <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {totalUnread} new
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {totalUnread > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    className="text-[10px] text-[#8B7355] hover:text-[#5C4A3A] font-semibold flex items-center gap-1"
+                  >
+                    <CheckCheck className="h-3 w-3" /> Mark all read
+                  </button>
+                )}
+                <button onClick={() => setOpen(false)} className="text-[#C9B8A6] hover:text-[#8B7355]">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="px-4 py-8 text-center text-[#C9B8A6] text-sm">No notifications yet</div>
+
+            {/* Message list */}
+            <div className="max-h-[360px] overflow-y-auto divide-y divide-[#F5EBE8]">
+              {messages.length === 0 ? (
+                <div className="px-4 py-10 text-center">
+                  <MessageCircle className="h-8 w-8 mx-auto mb-2 text-[#C9B8A6]" />
+                  <p className="text-[#C9B8A6] text-sm">No messages from Bean yet</p>
+                </div>
               ) : (
-                notifications.map(n => (
-                  <div key={n.id} className={`px-4 py-3 border-b border-[#F5EBE8] last:border-0 flex gap-3 items-start ${!n.is_read ? "bg-amber-50/50" : ""}`}>
-                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#F5EBE8] flex items-center justify-center text-base">
-                      {n.from_picture ? <img src={n.from_picture} className="w-full h-full object-cover" /> : typeIcons[n.type] || "🔔"}
+                messages.map(msg => (
+                  <div
+                    key={msg.id}
+                    className={`px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-[#F9F6F3] transition-colors ${!msg.is_read ? msgBg(msg.message_type) : ""}`}
+                    onClick={() => { markOneRead(msg); setOpen(false); navigate("/messages"); }}
+                  >
+                    {/* Icon */}
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${msg.message_type === "announcement" ? "bg-amber-100" : msg.message_type === "offer" ? "bg-green-100" : "bg-[#F5EBE8]"}`}>
+                      {msgIcon(msg.message_type)}
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-[#5C4A3A] leading-snug">{n.message}</p>
-                      <p className="text-xs text-[#C9B8A6] mt-0.5">{n.created_date ? format(new Date(n.created_date), "MMM d, h:mm a") : ""}</p>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-xs font-bold text-[#5C4A3A]">
+                          {msg.message_type === "announcement" ? "📢 Announcement" : msg.message_type === "offer" ? "🎁 Special Offer" : "☕ Bean Support"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-[#5C4A3A] leading-snug line-clamp-2">{msg.content}</p>
+                      <p className="text-[10px] text-[#C9B8A6] mt-1">
+                        {msg.created_date
+                          ? formatDistanceToNow(new Date(msg.created_date), { addSuffix: true })
+                          : ""}
+                      </p>
                     </div>
-                    {!n.is_read && <div className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />}
+
+                    {/* Unread dot */}
+                    {!msg.is_read && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#8B7355] flex-shrink-0 mt-1.5" />
+                    )}
                   </div>
                 ))
               )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-[#E8DED8] p-3">
+              <button
+                onClick={handleGoToMessages}
+                className="w-full flex items-center justify-center gap-2 bg-[#8B7355] hover:bg-[#6B5744] text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
+              >
+                <MessageCircle className="h-4 w-4" /> Open Messages
+              </button>
             </div>
           </motion.div>
         )}
