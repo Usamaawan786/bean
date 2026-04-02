@@ -43,15 +43,14 @@ export default function StaffPortal() {
 
   useEffect(() => {
     base44.auth.me().then(u => {
-      // Regular customers should not be here
-      if (!u || u.role === "user") {
-        window.location.href = "/Home";
+      if (!u) {
+        base44.auth.redirectToLogin("/StaffPortal");
         return;
       }
       setUser(u);
       setLoading(false);
     }).catch(() => {
-      base44.auth.redirectToLogin(window.location.href);
+      base44.auth.redirectToLogin("/StaffPortal");
     });
   }, []);
 
@@ -59,8 +58,40 @@ export default function StaffPortal() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#D4C4B0] border-t-[#8B7355] rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // User is authenticated but has no staff role assigned yet
+  if (!user || user.role === "user") {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-5">
+        <div className="w-20 h-20 bg-amber-400/10 border-2 border-amber-400/30 rounded-3xl flex items-center justify-center mb-6">
+          <Coffee className="h-10 w-10 text-amber-400" />
+        </div>
+        <h1 className="text-2xl font-bold mb-3 text-center">No Staff Access Yet</h1>
+        <p className="text-gray-400 text-sm text-center max-w-sm leading-relaxed mb-6">
+          Your account <strong className="text-white">{user?.email}</strong> has been created but hasn't been assigned a staff role yet.
+          <br /><br />
+          Please ask your manager or admin to assign your role from the Staff Management dashboard.
+        </p>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-sm text-center text-gray-400 mb-6 max-w-sm w-full">
+          Once your role is assigned, refresh this page or sign in again.
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold px-8 py-3 rounded-2xl text-sm mb-4"
+        >
+          Refresh
+        </button>
+        <button
+          onClick={() => base44.auth.logout("/staff")}
+          className="text-gray-500 hover:text-gray-300 text-xs underline"
+        >
+          Sign out
+        </button>
       </div>
     );
   }
