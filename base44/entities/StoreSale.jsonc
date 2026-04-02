@@ -1,0 +1,125 @@
+{
+  "name": "StoreSale",
+  "type": "object",
+  "properties": {
+    "bill_number": {
+      "type": "string",
+      "description": "Unique invoice number"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name (optional)"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Customer phone (optional)"
+    },
+    "items": {
+      "type": "array",
+      "description": "Purchased items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "description": "Amount before tax"
+    },
+    "tax": {
+      "type": "number",
+      "description": "GST amount"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Final amount paid"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "Cash",
+        "Card",
+        "Mobile Payment"
+      ],
+      "default": "Cash",
+      "description": "Payment method used"
+    },
+    "qr_code_id": {
+      "type": "string",
+      "description": "Unique QR code identifier for rewards scanning"
+    },
+    "is_scanned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether QR code has been scanned for points"
+    },
+    "scanned_by": {
+      "type": "string",
+      "description": "Email of customer who scanned the QR code"
+    },
+    "scanned_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the QR code was scanned"
+    },
+    "points_awarded": {
+      "type": "number",
+      "description": "Points awarded from this sale"
+    }
+  },
+  "required": [
+    "bill_number",
+    "items",
+    "total_amount"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": [
+          "admin",
+          "super_admin",
+          "manager",
+          "cashier"
+        ]
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": [
+          "admin",
+          "super_admin",
+          "manager",
+          "cashier"
+        ]
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": [
+          "admin",
+          "super_admin",
+          "manager",
+          "cashier"
+        ]
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

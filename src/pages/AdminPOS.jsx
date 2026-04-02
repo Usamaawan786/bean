@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function AdminPOS() {
   const [paymentMethod, setPaymentMethod] = useState("Cash");
   const [showBill, setShowBill] = useState(false);
   const [generatedBill, setGeneratedBill] = useState(null);
+  const [completing, setCompleting] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -76,40 +78,47 @@ export default function AdminPOS() {
   const total = subtotal + tax;
 
   const completeSale = async () => {
-    const billNumber = "INV-" + Date.now().toString().slice(-8);
-    const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
-    
-    // Save sale to database
-    const sale = await base44.entities.StoreSale.create({
-      bill_number: billNumber,
-      customer_name: customerInfo.name || null,
-      customer_phone: customerInfo.phone || null,
-      items: cart.map(item => ({
-        product_id: item.id,
-        product_name: item.name,
-        quantity: item.quantity,
-        price: item.price
-      })),
-      subtotal,
-      tax,
-      total_amount: total,
-      payment_method: paymentMethod,
-      qr_code_id: qrCodeId,
-      is_scanned: false
-    });
+    if (completing) return;
+    setCompleting(true);
+    try {
+      const billNumber = "INV-" + Date.now().toString().slice(-8);
+      const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+      
+      await base44.entities.StoreSale.create({
+        bill_number: billNumber,
+        customer_name: customerInfo.name || null,
+        customer_phone: customerInfo.phone || null,
+        items: cart.map(item => ({
+          product_id: item.id,
+          product_name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        subtotal,
+        tax,
+        total_amount: total,
+        payment_method: paymentMethod,
+        qr_code_id: qrCodeId,
+        is_scanned: false
+      });
 
-    const bill = {
-      items: cart,
-      customerInfo,
-      subtotal,
-      tax,
-      total,
-      billNumber,
-      qrCodeId,
-      date: new Date().toISOString()
-    };
-    setGeneratedBill(bill);
-    setShowBill(true);
+      const bill = {
+        items: cart,
+        customerInfo,
+        subtotal,
+        tax,
+        total,
+        billNumber,
+        qrCodeId,
+        date: new Date().toISOString()
+      };
+      setGeneratedBill(bill);
+      setShowBill(true);
+    } catch (err) {
+      toast.error("Failed to save sale: " + (err?.message || "Unknown error"));
+    } finally {
+      setCompleting(false);
+    }
   };
 
   const clearCart = () => {
@@ -337,10 +346,11 @@ export default function AdminPOS() {
                     <div className="space-y-2">
                       <Button
                         onClick={completeSale}
+                        disabled={completing}
                         className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
                       >
-                        <Receipt className="h-4 w-4 mr-2" />
-                        Complete Sale & Print Bill
+                        {completing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Receipt className="h-4 w-4 mr-2" />}
+                        {completing ? "Processing..." : "Complete Sale & Print Bill"}
                       </Button>
                       <Button
                         onClick={clearCart}
