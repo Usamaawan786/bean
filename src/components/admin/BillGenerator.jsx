@@ -1,45 +1,20 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
 
 export default function BillGenerator({ bill, onClose, autoDownload = false }) {
-  const billRef = useRef(null);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [autoDownloaded, setAutoDownloaded] = useState(false);
+  const [qrReady, setQrReady] = useState(!bill.qrCodeId); // true immediately if no QR needed
 
-  useEffect(() => {
-    if (bill.qrCodeId) {
-      QRCode.toDataURL(bill.qrCodeId, { width: 200, margin: 1 })
-        .then(url => {
-          setQrCodeUrl(url);
-        });
-    } else if (autoDownload) {
-      // No QR code needed, download immediately
-      setTimeout(() => handleDownloadPDF(), 300);
-    }
-  }, [bill.qrCodeId]);
-
-  useEffect(() => {
-    if (!autoDownload || !qrCodeUrl) return;
-    // QR code is ready, now download
-    handleDownloadPDF();
-  }, [qrCodeUrl]);
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleDownloadPDF = () => {
+  const generatePDF = useCallback((qrUrl) => {
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const margin = 20;
     let y = 20;
 
-    // Header
     pdf.setFontSize(22);
     pdf.setFont("helvetica", "bold");
     pdf.text("BEAN", 105, y, { align: "center" });
@@ -49,12 +24,10 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     pdf.text("More than just coffee, it's a community!", 105, y, { align: "center" });
     y += 10;
 
-    // Divider
     pdf.setDrawColor(200, 180, 160);
     pdf.line(margin, y, 190, y);
     y += 6;
 
-    // Invoice details
     pdf.setFontSize(10);
     pdf.setFont("helvetica", "bold");
     pdf.text(`Invoice: ${bill.billNumber}`, margin, y);
@@ -71,7 +44,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     }
     y += 3;
 
-    // Items header
     pdf.line(margin, y, 190, y);
     y += 6;
     pdf.setFont("helvetica", "bold");
@@ -83,7 +55,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     pdf.line(margin, y, 190, y);
     y += 6;
 
-    // Items
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
     bill.items.forEach(item => {
@@ -94,7 +65,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
       y += 7;
     });
 
-    // Totals
     y += 2;
     pdf.line(margin, y, 190, y);
     y += 6;
@@ -116,22 +86,37 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     pdf.text(`Reward Points Earned: ${Math.floor(bill.subtotal / 100)} pts`, margin, y);
     y += 10;
 
-    // QR code
-    if (qrCodeUrl) {
-      pdf.addImage(qrCodeUrl, "PNG", 82, y, 46, 46);
+    if (qrUrl) {
+      pdf.addImage(qrUrl, "PNG", 82, y, 46, 46);
       y += 50;
       pdf.text("Scan in the Bean app to earn reward points", 105, y, { align: "center" });
       y += 8;
     }
 
-    // Footer
     pdf.line(margin, y, 190, y);
     y += 6;
     pdf.setFontSize(9);
     pdf.text("Thank you for your purchase!", 105, y, { align: "center" });
 
     pdf.save(`bill-${bill.billNumber}.pdf`);
-  };
+  }, [bill]);
+
+  // Generate QR code if needed
+  useEffect(() => {
+    if (bill.qrCodeId) {
+      QRCode.toDataURL(bill.qrCodeId, { width: 200, margin: 1 }).then(url => {
+        setQrCodeUrl(url);
+        setQrReady(true);
+      });
+    }
+  }, [bill.qrCodeId]);
+
+  // Auto-download once QR is ready
+  useEffect(() => {
+    if (autoDownload && qrReady) {
+      generatePDF(qrCodeUrl);
+    }
+  }, [autoDownload, qrReady, qrCodeUrl, generatePDF]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -143,47 +128,31 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
         <div className="sticky top-0 bg-white border-b border-[#E8DED8] p-4 flex items-center justify-between rounded-t-3xl">
           <h2 className="text-xl font-bold text-[#5C4A3A]">Invoice</h2>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handlePrint}
-              className="rounded-xl"
-            >
+            <Button size="sm" variant="outline" onClick={() => window.print()} className="rounded-xl">
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDownloadPDF}
-              className="rounded-xl"
-            >
+            <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl)} className="rounded-xl">
               <Download className="h-4 w-4 mr-2" />
               PDF
             </Button>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-[#F5EBE8] rounded-full transition-colors"
-            >
+            <button onClick={onClose} className="p-2 hover:bg-[#F5EBE8] rounded-full transition-colors">
               <X className="h-5 w-5 text-[#8B7355]" />
             </button>
           </div>
         </div>
 
-        {/* Bill Content */}
-        <div ref={billRef} className="p-6 bg-white">
-          {/* Header */}
+        <div className="p-6 bg-white">
           <div className="text-center mb-4">
-            <img 
-              src="https://media.base44.com/images/public/6976cd7fe6e4b20fcb30cf61/f3d3c0edf_Group1302.png" 
-              alt="Bean Logo" 
+            <img
+              src="https://media.base44.com/images/public/6976cd7fe6e4b20fcb30cf61/f3d3c0edf_Group1302.png"
+              alt="Bean Logo"
               className="w-20 h-20 mx-auto mb-2 object-contain"
             />
             <h1 className="text-2xl font-bold text-[#5C4A3A]">Bean</h1>
             <p className="text-[#8B7355] text-xs">More than just coffee, it's a community!</p>
           </div>
 
-          {/* Invoice Details */}
           <div className="grid grid-cols-2 gap-2 mb-4 pb-4 border-b-2 border-[#E8DED8]">
             <div>
               <p className="text-xs text-[#8B7355] mb-1">Invoice Number</p>
@@ -191,17 +160,15 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
             </div>
             <div className="text-right">
               <p className="text-xs text-[#8B7355] mb-1">Date</p>
-              <p className="font-medium text-[#5C4A3A]">
-                {format(new Date(bill.date), "MMM dd, yyyy HH:mm")}
-              </p>
+              <p className="font-medium text-[#5C4A3A]">{format(new Date(bill.date), "MMM dd, yyyy HH:mm")}</p>
             </div>
-            {bill.customerInfo.name && (
+            {bill.customerInfo?.name && (
               <div>
                 <p className="text-xs text-[#8B7355] mb-1">Customer Name</p>
                 <p className="font-medium text-[#5C4A3A]">{bill.customerInfo.name}</p>
               </div>
             )}
-            {bill.customerInfo.phone && (
+            {bill.customerInfo?.phone && (
               <div className="text-right">
                 <p className="text-xs text-[#8B7355] mb-1">Phone</p>
                 <p className="font-medium text-[#5C4A3A]">{bill.customerInfo.phone}</p>
@@ -209,7 +176,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
             )}
           </div>
 
-          {/* Items Table */}
           <table className="w-full mb-4">
             <thead>
               <tr className="border-b-2 border-[#E8DED8]">
@@ -225,22 +191,19 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
                   <td className="py-3 text-[#5C4A3A]">{item.name}</td>
                   <td className="text-center py-3 text-[#8B7355]">{item.quantity}</td>
                   <td className="text-right py-3 text-[#8B7355]">PKR {item.price.toFixed(2)}</td>
-                  <td className="text-right py-3 font-medium text-[#5C4A3A]">
-                    PKR {(item.price * item.quantity).toFixed(2)}
-                  </td>
+                  <td className="text-right py-3 font-medium text-[#5C4A3A]">PKR {(item.price * item.quantity).toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          {/* Totals */}
           <div className="space-y-1.5 mb-4">
             <div className="flex justify-between text-[#8B7355]">
               <span>Subtotal</span>
               <span>PKR {bill.subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-[#8B7355]">
-              <span>GST (17%)</span>
+              <span>GST ({bill.paymentMethod === "Card" ? "5%" : "17%"})</span>
               <span>PKR {bill.tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-xl font-bold text-[#5C4A3A] pt-3 border-t-2 border-[#E8DED8]">
@@ -253,40 +216,20 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
             </div>
           </div>
 
-          {/* QR Code for Rewards */}
           {qrCodeUrl && (
             <div className="text-center py-3 border-t border-[#E8DED8]">
               <p className="text-xs font-semibold text-[#5C4A3A] mb-2">Earn Rewards</p>
               <img src={qrCodeUrl} alt="Rewards QR Code" className="w-32 h-32 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
-              <p className="text-xs text-[#8B7355] mt-2">
-                Scan in the Bean app to add points to your account
-              </p>
+              <p className="text-xs text-[#8B7355] mt-2">Scan in the Bean app to add points to your account</p>
             </div>
           )}
 
-          {/* Footer */}
           <div className="text-center pt-3 border-t border-[#E8DED8]">
             <p className="text-sm text-[#8B7355] mb-1">Thank you for your purchase!</p>
             <p className="text-xs text-[#C9B8A6]">Bean — More than just coffee, it's a community!</p>
           </div>
         </div>
       </motion.div>
-
-      <style jsx>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .print-content, .print-content * {
-            visibility: visible;
-          }
-          .print-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-          }
-        }
-      `}</style>
     </div>
   );
 }
