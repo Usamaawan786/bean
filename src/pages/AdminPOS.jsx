@@ -83,24 +83,28 @@ export default function AdminPOS() {
     try {
       const billNumber = "INV-" + Date.now().toString().slice(-8);
       const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
-      
-      await base44.entities.StoreSale.create({
-        bill_number: billNumber,
-        customer_name: customerInfo.name || null,
-        customer_phone: customerInfo.phone || null,
-        items: cart.map(item => ({
-          product_id: item.id,
-          product_name: item.name,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        subtotal,
-        tax,
-        total_amount: total,
-        payment_method: paymentMethod,
-        qr_code_id: qrCodeId,
-        is_scanned: false
-      });
+
+      try {
+        await base44.entities.StoreSale.create({
+          bill_number: billNumber,
+          customer_name: customerInfo.name || null,
+          customer_phone: customerInfo.phone || null,
+          items: cart.map(item => ({
+            product_id: item.id,
+            product_name: item.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          subtotal,
+          tax,
+          total_amount: total,
+          payment_method: paymentMethod,
+          qr_code_id: qrCodeId,
+          is_scanned: false
+        });
+      } catch (saveErr) {
+        console.warn("Sale save failed (bill will still print):", saveErr?.message);
+      }
 
       const bill = {
         items: cart,
@@ -108,6 +112,7 @@ export default function AdminPOS() {
         subtotal,
         tax,
         total,
+        paymentMethod,
         billNumber,
         qrCodeId,
         date: new Date().toISOString()
@@ -115,7 +120,7 @@ export default function AdminPOS() {
       setGeneratedBill(bill);
       setShowBill(true);
     } catch (err) {
-      toast.error("Failed to save sale: " + (err?.message || "Unknown error"));
+      toast.error("Failed to complete sale: " + (err?.message || "Unknown error"));
     } finally {
       setCompleting(false);
     }
