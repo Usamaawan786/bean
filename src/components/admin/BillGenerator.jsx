@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import html2canvas from "html2canvas";
+
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
@@ -34,41 +34,102 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     window.print();
   };
 
-  const handleDownloadPDF = async () => {
-    const element = billRef.current;
-    const canvas = await html2canvas(element, { 
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      windowHeight: element.scrollHeight
-    });
-    const imgData = canvas.toDataURL("image/png");
-    
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4"
-    });
+  const handleDownloadPDF = () => {
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const margin = 20;
+    let y = 20;
 
-    const imgWidth = 210; // A4 width in mm
-    const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    let heightLeft = imgHeight;
-    let position = 0;
+    // Header
+    pdf.setFontSize(22);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("BEAN", 105, y, { align: "center" });
+    y += 8;
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.text("More than just coffee, it's a community!", 105, y, { align: "center" });
+    y += 10;
 
-    // Add first page
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    // Divider
+    pdf.setDrawColor(200, 180, 160);
+    pdf.line(margin, y, 190, y);
+    y += 6;
 
-    // Add additional pages if content is longer than one page
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+    // Invoice details
+    pdf.setFontSize(10);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`Invoice: ${bill.billNumber}`, margin, y);
+    pdf.text(format(new Date(bill.date), "MMM dd, yyyy HH:mm"), 190, y, { align: "right" });
+    y += 6;
+    if (bill.customerInfo?.name) {
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Customer: ${bill.customerInfo.name}`, margin, y);
+      y += 5;
     }
-    
+    if (bill.customerInfo?.phone) {
+      pdf.text(`Phone: ${bill.customerInfo.phone}`, margin, y);
+      y += 5;
+    }
+    y += 3;
+
+    // Items header
+    pdf.line(margin, y, 190, y);
+    y += 6;
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Item", margin, y);
+    pdf.text("Qty", 120, y, { align: "right" });
+    pdf.text("Price", 150, y, { align: "right" });
+    pdf.text("Total", 190, y, { align: "right" });
+    y += 4;
+    pdf.line(margin, y, 190, y);
+    y += 6;
+
+    // Items
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    bill.items.forEach(item => {
+      pdf.text(item.name, margin, y);
+      pdf.text(String(item.quantity), 120, y, { align: "right" });
+      pdf.text(`PKR ${item.price.toFixed(2)}`, 150, y, { align: "right" });
+      pdf.text(`PKR ${(item.price * item.quantity).toFixed(2)}`, 190, y, { align: "right" });
+      y += 7;
+    });
+
+    // Totals
+    y += 2;
+    pdf.line(margin, y, 190, y);
+    y += 6;
+    pdf.text("Subtotal", 140, y, { align: "right" });
+    pdf.text(`PKR ${bill.subtotal.toFixed(2)}`, 190, y, { align: "right" });
+    y += 6;
+    pdf.text(`GST (${bill.paymentMethod === "Card" ? "5%" : "17%"})`, 140, y, { align: "right" });
+    pdf.text(`PKR ${bill.tax.toFixed(2)}`, 190, y, { align: "right" });
+    y += 4;
+    pdf.line(margin, y, 190, y);
+    y += 7;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13);
+    pdf.text("TOTAL", 140, y, { align: "right" });
+    pdf.text(`PKR ${bill.total.toFixed(2)}`, 190, y, { align: "right" });
+    y += 8;
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.text(`Reward Points Earned: ${Math.floor(bill.subtotal / 100)} pts`, margin, y);
+    y += 10;
+
+    // QR code
+    if (qrCodeUrl) {
+      pdf.addImage(qrCodeUrl, "PNG", 82, y, 46, 46);
+      y += 50;
+      pdf.text("Scan in the Bean app to earn reward points", 105, y, { align: "center" });
+      y += 8;
+    }
+
+    // Footer
+    pdf.line(margin, y, 190, y);
+    y += 6;
+    pdf.setFontSize(9);
+    pdf.text("Thank you for your purchase!", 105, y, { align: "center" });
+
     pdf.save(`bill-${bill.billNumber}.pdf`);
   };
 
