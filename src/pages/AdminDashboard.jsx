@@ -54,12 +54,13 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  // Live data with auto-refresh every 30s
-  const { data: sales = [], dataUpdatedAt: salesUpdatedAt } = useQuery({
+  // Live data with auto-refresh every 15s + refetch on window focus
+  const { data: sales = [] } = useQuery({
     queryKey: ["sales-analytics"],
     queryFn: () => base44.entities.StoreSale.list("-created_date", 1000),
     enabled: !!user,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
     staleTime: 0,
   });
 
@@ -67,7 +68,8 @@ export default function AdminDashboard() {
     queryKey: ["expenses-analytics"],
     queryFn: () => base44.entities.Expense.list("-created_date", 500),
     enabled: !!user,
-    refetchInterval: 60000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: inventory = [] } = useQuery({
@@ -84,14 +86,18 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
-  // Real-time subscription for new sales
+  // Real-time subscription for new sales (with safe fallback)
   useEffect(() => {
     if (!user) return;
-    const unsub = base44.entities.StoreSale.subscribe((event) => {
-      queryClient.invalidateQueries({ queryKey: ["sales-analytics"] });
-      setLastRefresh(new Date());
-    });
-    return unsub;
+    try {
+      const unsub = base44.entities.StoreSale.subscribe(() => {
+        queryClient.invalidateQueries({ queryKey: ["sales-analytics"] });
+        setLastRefresh(new Date());
+      });
+      return unsub;
+    } catch (e) {
+      // subscription not available, polling will handle updates
+    }
   }, [user, queryClient]);
 
   const threshold = useMemo(() => {
