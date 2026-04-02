@@ -70,6 +70,8 @@ export default function StaffManagement() {
   });
 
   const staffUsers = allUsers.filter(u => ["cashier", "manager", "super_admin", "admin"].includes(u.role));
+  // Also show regular users who were recently invited (so admin can assign their role)
+  const pendingUsers = allUsers.filter(u => u.role === "user");
   const roleCounts = staffUsers.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {});
 
   // Invite fix: Base44 inviteUser only accepts "user" or "admin"
@@ -216,7 +218,7 @@ export default function StaffManagement() {
           </h2>
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#8B7355]" /></div>
-          ) : staffUsers.length === 0 ? (
+          ) : staffUsers.length === 0 && pendingUsers.length === 0 ? (
             <p className="text-center text-[#8B7355] py-8">No staff members yet.</p>
           ) : (
             <div className="space-y-3">
@@ -255,6 +257,39 @@ export default function StaffManagement() {
                   </div>
                 );
               })}
+              {/* Pending users — invited but not yet assigned a staff role */}
+              {pendingUsers.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 pt-2 pb-1">
+                    <div className="h-px flex-1 bg-[#E8DED8]" />
+                    <span className="text-xs text-[#C9B8A6] font-medium">Awaiting Role Assignment</span>
+                    <div className="h-px flex-1 bg-[#E8DED8]" />
+                  </div>
+                  {pendingUsers.map(u => (
+                    <div key={u.id} className="flex items-center gap-3 p-3 rounded-2xl bg-amber-50 border border-amber-200">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-200 to-amber-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-[#5C4A3A] text-sm">{u.full_name || "—"}</p>
+                        <p className="text-xs text-[#8B7355] truncate">{u.email}</p>
+                        <p className="text-xs text-amber-600 font-medium mt-0.5">⏳ No staff role yet — assign below</p>
+                      </div>
+                      <select
+                        defaultValue=""
+                        onChange={e => e.target.value && handleRoleChange(u, e.target.value)}
+                        className="text-xs border border-amber-300 rounded-lg px-2 py-1 bg-white text-[#5C4A3A] focus:outline-none"
+                      >
+                        <option value="" disabled>Assign role…</option>
+                        <option value="cashier">🧾 Cashier</option>
+                        <option value="manager">📊 Manager</option>
+                        <option value="admin">🔴 Admin</option>
+                        {user.role === "super_admin" && <option value="super_admin">👑 Super Admin</option>}
+                      </select>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>
