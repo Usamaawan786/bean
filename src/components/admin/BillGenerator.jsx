@@ -15,20 +15,20 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   useEffect(() => {
     if (bill.qrCodeId) {
       QRCode.toDataURL(bill.qrCodeId, { width: 200, margin: 1 })
-        .then(url => setQrCodeUrl(url));
+        .then(url => {
+          setQrCodeUrl(url);
+        });
+    } else if (autoDownload) {
+      // No QR code needed, download immediately
+      setTimeout(() => handleDownloadPDF(), 300);
     }
   }, [bill.qrCodeId]);
 
   useEffect(() => {
-    if (!autoDownload) return;
-    // Wait for QR code + DOM to fully render, then download
-    const timer = setTimeout(async () => {
-      if (billRef.current) {
-        await handleDownloadPDF();
-      }
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!autoDownload || !qrCodeUrl) return;
+    // QR code is ready, now download
+    handleDownloadPDF();
+  }, [qrCodeUrl]);
 
   const handlePrint = () => {
     window.print();
