@@ -24,7 +24,7 @@ export default function StaffLogin() {
   }, []);
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin("/StaffPortal");
+    base44.auth.redirectToLogin("/StaffPortal?staff=1");
   };
 
   if (checking) {

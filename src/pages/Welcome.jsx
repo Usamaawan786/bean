@@ -23,8 +23,15 @@ export default function Welcome() {
       if (isAuth) {
         const u = await base44.auth.me();
         const isStaff = ["cashier", "manager", "admin", "super_admin"].includes(u?.role);
-        if (isStaff) navigate("/StaffPortal", { replace: true });
-        else navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
+        if (isStaff) {
+          navigate("/StaffPortal", { replace: true });
+        } else {
+          // Check if this looks like a staff invite (came from /staff or no ref)
+          // Always route through StaffPortal so newly-invited staff see the right screen
+          const fromStaff = document.referrer.includes("/staff") || params.get("staff") === "1";
+          if (fromStaff) navigate("/StaffPortal", { replace: true });
+          else navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
+        }
       }
     });
   }, []);
