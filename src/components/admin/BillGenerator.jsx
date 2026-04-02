@@ -83,7 +83,7 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     y += 8;
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(10);
-    pdf.text(`Reward Points Earned: ${Math.floor(bill.subtotal / 100)} pts`, margin, y);
+    pdf.text(`Reward Points Earned: ${bill.pointsToAward ?? Math.floor(bill.subtotal / 100)} pts`, margin, y);
     y += 10;
 
     if (qrUrl) {
@@ -212,7 +212,7 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
             </div>
             <div className="flex justify-between items-center text-[#8B7355] pt-3 border-t border-[#E8DED8]">
               <span className="font-semibold">🎁 Reward Points Earned</span>
-              <span className="text-xl font-bold text-[#8B7355]">{Math.floor(bill.subtotal / 100)} pts</span>
+              <span className="text-xl font-bold text-[#8B7355]">{bill.pointsToAward ?? Math.floor(bill.subtotal / 100)} pts</span>
             </div>
           </div>
 

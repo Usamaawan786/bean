@@ -61,6 +61,11 @@
       "type": "string",
       "description": "Unique QR code identifier for rewards scanning"
     },
+    "qr_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the QR code expires (7 days after sale)"
+    },
     "is_scanned": {
       "type": "boolean",
       "default": false,
@@ -77,7 +82,7 @@
     },
     "points_awarded": {
       "type": "number",
-      "description": "Points awarded from this sale"
+      "description": "Points awarded from this sale (pre-calculated at time of sale)"
     }
   },
   "required": [

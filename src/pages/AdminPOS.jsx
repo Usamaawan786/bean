@@ -84,6 +84,18 @@ export default function AdminPOS() {
       const billNumber = "INV-" + Date.now().toString().slice(-8);
       const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
 
+      // Fetch reward settings for dynamic points calculation
+      let pkrPerPoint = 100; // default fallback
+      try {
+        const settings = await base44.entities.RewardSettings.list("-created_date", 1);
+        if (settings.length > 0 && settings[0].pkr_per_point) {
+          pkrPerPoint = settings[0].pkr_per_point;
+        }
+      } catch (e) { /* use default */ }
+
+      const pointsToAward = Math.floor(subtotal / pkrPerPoint);
+      const qrExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
+
       try {
         await base44.entities.StoreSale.create({
           bill_number: billNumber,
@@ -100,7 +112,9 @@ export default function AdminPOS() {
           total_amount: total,
           payment_method: paymentMethod,
           qr_code_id: qrCodeId,
-          is_scanned: false
+          is_scanned: false,
+          points_awarded: pointsToAward,
+          qr_expires_at: qrExpiresAt
         });
       } catch (saveErr) {
         console.warn("Sale save failed (bill will still print):", saveErr?.message);
@@ -115,6 +129,7 @@ export default function AdminPOS() {
         paymentMethod,
         billNumber,
         qrCodeId,
+        pointsToAward,
         date: new Date().toISOString()
       };
       setGeneratedBill(bill);
