@@ -379,6 +379,7 @@ export default function AdminPOS() {
         <BillGenerator
           bill={generatedBill}
           onClose={clearCart}
+          autoDownload={true}
         />
       )}
     </div>

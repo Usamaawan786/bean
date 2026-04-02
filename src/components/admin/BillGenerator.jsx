@@ -7,9 +7,10 @@ import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
 
-export default function BillGenerator({ bill, onClose }) {
+export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const billRef = useRef(null);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [autoDownloaded, setAutoDownloaded] = useState(false);
 
   useEffect(() => {
     if (bill.qrCodeId) {
@@ -17,6 +18,14 @@ export default function BillGenerator({ bill, onClose }) {
         .then(url => setQrCodeUrl(url));
     }
   }, [bill.qrCodeId]);
+
+  useEffect(() => {
+    if (autoDownload && !autoDownloaded && billRef.current) {
+      setAutoDownloaded(true);
+      // Small delay to let QR code render
+      setTimeout(() => handleDownloadPDF(), 800);
+    }
+  }, [autoDownload, autoDownloaded, billRef.current]);
 
   const handlePrint = () => {
     window.print();
