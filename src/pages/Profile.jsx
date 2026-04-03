@@ -174,26 +174,26 @@ export default function Profile() {
     setShowQRScanner(false);
 
     try {
+      const oldBalance = customer?.points_balance || 0;
       const response = await base44.functions.invoke('processBillScan', { qrCodeId });
-      
-      if (response.data.success) {
-        // Show animation only on success
-        setPointsData({
-          old: customer.points_balance,
-          new: response.data.new_balance
-        });
+      const data = response?.data;
+
+      if (data?.success) {
+        const newBalance = data.new_balance;
+        // Show animation
+        setPointsData({ old: oldBalance, new: newBalance });
         setShowPointsAnimation(true);
-        await loadUserData();
-        
+        // Refresh customer data in background
+        loadUserData();
         // Show referral bonus notification
-        if (response.data.referral_bonus > 0) {
-          toast.success(`🎉 Referral bonus unlocked! +${response.data.referral_bonus} points!`, { duration: 5000 });
+        if (data.referral_bonus > 0) {
+          toast.success(`🎉 Referral bonus unlocked! +${data.referral_bonus} points!`, { duration: 5000 });
         }
       } else {
-        toast.error(response.data.error || "Failed to process QR code");
+        toast.error(data?.error || "Failed to process QR code");
       }
     } catch (error) {
-      toast.error("Failed to scan QR code");
+      toast.error("Failed to scan QR code: " + (error?.message || "Unknown error"));
     }
   };
 

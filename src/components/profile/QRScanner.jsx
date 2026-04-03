@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { X, QrCode, CheckCircle, AlertCircle } from "lucide-react";
@@ -16,6 +15,35 @@ export default function QRScanner({ onScan, onClose }) {
   useEffect(() => {
     const qrScanner = new Html5Qrcode("qr-reader");
     setScanner(qrScanner);
+
+    // Auto-start scanning on mount
+    const autoStart = async () => {
+      try {
+        setIsScanning(true);
+        setError("");
+        await qrScanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          async (decodedText) => {
+            await qrScanner.stop();
+            setIsScanning(false);
+            onScan(decodedText);
+          },
+          () => {}
+        );
+      } catch (err) {
+        const msg = err?.message || String(err);
+        if (msg.includes("Permission") || msg.includes("NotAllowed") || msg.includes("denied")) {
+          setError("Camera permission required. Enable it in settings.");
+        } else if (msg.includes("NotFoundError") || msg.includes("No camera")) {
+          setError("No camera found.");
+        } else {
+          setError("Failed to start camera. Tap \"Start Scanning\" to retry.");
+        }
+        setIsScanning(false);
+      }
+    };
+    autoStart();
 
     return () => {
       if (qrScanner.isScanning) {
