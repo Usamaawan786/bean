@@ -92,16 +92,7 @@
   ],
   "rls": {
     "create": {},
-    "read": {
-      "user_condition": {
-        "role": [
-          "admin",
-          "super_admin",
-          "manager",
-          "cashier"
-        ]
-      }
-    },
+    "read": {},
     "update": {},
     "delete": {
       "user_condition": {

@@ -1,0 +1,63 @@
+{
+  "name": "Activity",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user who performed the action"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "points_earned",
+        "reward_redeemed",
+        "referral",
+        "flash_drop_claimed",
+        "tier_upgraded"
+      ],
+      "description": "Type of activity"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the action"
+    },
+    "points_amount": {
+      "type": "number",
+      "description": "Points involved in the action (if applicable)"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional data about the activity"
+    }
+  },
+  "required": [
+    "user_email",
+    "action_type",
+    "description"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
