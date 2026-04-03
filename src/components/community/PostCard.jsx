@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import UserBadge from "./UserBadge";
+import { Pin } from "lucide-react";
 import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,7 @@ function renderContent(content) {
   });
 }
 
-export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], onLike, onReaction, onBlock, onReport, onFollow, onSave }) {
+export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave }) {
   const [isLiking, setIsLiking] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -67,9 +69,14 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`rounded-3xl bg-white border p-5 shadow-sm ${
-        isFlagged ? "border-orange-300 bg-orange-50/30" : "border-[#E8DED8]"
+        post.is_pinned ? "border-amber-300 bg-amber-50/20" : isFlagged ? "border-orange-300 bg-orange-50/30" : "border-[#E8DED8]"
       }`}
     >
+      {post.is_pinned && (
+        <div className="flex items-center gap-1.5 mb-2 text-amber-600 text-xs font-bold">
+          <Pin className="h-3 w-3" /> PINNED {post.admin_label && `· ${post.admin_label}`}
+        </div>
+      )}
       {isFlagged && (
         <div className="flex items-center gap-2 mb-3 text-orange-600 text-sm">
           <AlertTriangle className="h-4 w-4" />
@@ -96,6 +103,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
             <Link to={`/UserProfile?email=${encodeURIComponent(post.author_email)}`} className="font-semibold text-[#5C4A3A] hover:text-[#8B7355] transition-colors">
               {post.author_name || "Coffee Lover"}
             </Link>
+            {authorBadges.map(b => <UserBadge key={b} badgeKey={b} />)}
             {currentUserEmail && post.author_email !== currentUserEmail && onFollow && (
               <button
                 onClick={() => onFollow(post.author_email)}

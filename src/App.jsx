@@ -8,6 +8,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import usePushNotifications from './hooks/usePushNotifications';
 import AdminEmails from './pages/AdminEmails';
+import AdminCommunity from './pages/AdminCommunity';
 import StaffManagement from './pages/StaffManagement';
 import StaffLogin from './pages/StaffLogin';
 import StaffPortal from './pages/StaffPortal';
@@ -72,6 +73,7 @@ function App() {
             <Route path="/StaffManagement" element={<StaffManagement />} />
             <Route path="/StaffPortal" element={<StaffPortal />} />
             <Route path="/staff" element={<StaffLogin />} />
+            <Route path="/AdminCommunity" element={<AdminCommunity />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

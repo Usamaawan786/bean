@@ -1,0 +1,184 @@
+{
+  "name": "CommunityPost",
+  "type": "object",
+  "properties": {
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the author"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the author"
+    },
+    "author_profile_picture": {
+      "type": "string",
+      "description": "Profile picture URL of the author"
+    },
+    "content": {
+      "type": "string",
+      "description": "Post content"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image attachment"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "Optional video attachment"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of likes"
+    },
+    "liked_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of emails who liked the post"
+    },
+    "post_type": {
+      "type": "string",
+      "enum": [
+        "general",
+        "review",
+        "photo",
+        "tip",
+        "video"
+      ],
+      "default": "general",
+      "description": "Type of post"
+    },
+    "moderation_status": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "pending",
+        "flagged",
+        "hidden",
+        "removed"
+      ],
+      "default": "approved",
+      "description": "Moderation status"
+    },
+    "flagged_reason": {
+      "type": "string",
+      "description": "AI-generated reason for flagging"
+    },
+    "reported_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of users who reported this post"
+    },
+    "moderation_notes": {
+      "type": "string",
+      "description": "Notes from moderators"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this post is pinned to the top by admin"
+    },
+    "admin_label": {
+      "type": "string",
+      "description": "Optional admin label shown on pinned posts, e.g. 'Announcement'"
+    },
+    "reactions": {
+      "type": "object",
+      "description": "Emoji reactions with counts",
+      "properties": {
+        "\u2615": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Coffee reaction"
+        },
+        "\u2764\ufe0f": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Heart reaction"
+        },
+        "\ud83d\ude0d": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Heart eyes reaction"
+        },
+        "\ud83d\udc4d": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Thumbs up reaction"
+        },
+        "\ud83d\udd25": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Fire reaction"
+        }
+      }
+    },
+    "comments_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of comments"
+    }
+  },
+  "required": [
+    "author_email",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "data.author_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.moderation_status": "approved"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.author_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

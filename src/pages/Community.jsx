@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/shared/PullToRefresh";
 import AppHeader from "@/components/shared/AppHeader";
+import { getBadgesForCustomer } from "@/components/community/UserBadge";
 
 export default function Community() {
   const [user, setUser] = useState(null);
@@ -75,10 +76,17 @@ export default function Community() {
 
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["community-posts"],
-    queryFn: () => {
-      return base44.entities.CommunityPost.list("-created_date", 50);
-    }
+    queryFn: () => base44.entities.CommunityPost.list("-created_date", 50)
   });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ["community-customers"],
+    queryFn: () => base44.entities.Customer.list("-created_date", 500),
+  });
+
+  // Map customer by email for badge lookups
+  const customerByEmail = {};
+  customers.forEach(c => { if (c.created_by) customerByEmail[c.created_by] = c; });
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["community-posts"] });
@@ -86,16 +94,21 @@ export default function Community() {
 
   // Filter out hidden/removed posts and posts from blocked users
   const blockedUsers = user?.blocked_users || [];
-  const allFilteredPosts = allPosts.filter(post => 
-    post.moderation_status !== "hidden" && 
+  const allFilteredPosts = allPosts.filter(post =>
+    post.moderation_status !== "hidden" &&
     post.moderation_status !== "removed" &&
     !blockedUsers.includes(post.author_email)
   );
 
   const following = user?.following || [];
-  const posts = feedTab === "following"
+  const feedFiltered = feedTab === "following"
     ? allFilteredPosts.filter(p => following.includes(p.author_email))
     : allFilteredPosts;
+
+  // Pinned posts first
+  const pinnedPosts = feedFiltered.filter(p => p.is_pinned);
+  const otherPosts = feedFiltered.filter(p => !p.is_pinned);
+  const posts = [...pinnedPosts, ...otherPosts];
 
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
@@ -254,11 +267,18 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
               <div className="flex items-center gap-2 flex-shrink-0">
                 {user && <NotificationBell userEmail={user.email} />}
                 {user?.role === "admin" && (
-                  <Link to={createPageUrl("Moderation")}>
-                    <button className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-3 py-2 rounded-xl text-xs font-medium text-[#5C4A3A] transition-colors shadow-md whitespace-nowrap">
-                      Moderation
-                    </button>
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link to="/AdminCommunity">
+                      <button className="bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 px-3 py-2 rounded-xl text-xs font-medium text-amber-900 transition-colors shadow-md whitespace-nowrap">
+                        📌 Manage
+                      </button>
+                    </Link>
+                    <Link to={createPageUrl("Moderation")}>
+                      <button className="bg-gradient-to-r from-[#EDE3DF] to-[#E0D5CE] hover:from-[#E8DED8] hover:to-[#DCCEC8] px-3 py-2 rounded-xl text-xs font-medium text-[#5C4A3A] transition-colors shadow-md whitespace-nowrap">
+                        Moderation
+                      </button>
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
@@ -328,6 +348,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                     currentUser={user}
                     currentUserFollowing={user?.following || []}
                     currentUserSavedPosts={user?.saved_posts || []}
+                    authorBadges={getBadgesForCustomer(customerByEmail[post.author_email])}
                     onLike={likeMutation.mutate}
                     onReport={reportPostMutation.mutate}
                     onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
