@@ -82,7 +82,7 @@
     },
     "points_awarded": {
       "type": "number",
-      "description": "Points awarded from this sale (pre-calculated at time of sale)"
+      "description": "Points awarded from this sale"
     }
   },
   "required": [
@@ -91,16 +91,7 @@
     "total_amount"
   ],
   "rls": {
-    "create": {
-      "user_condition": {
-        "role": [
-          "admin",
-          "super_admin",
-          "manager",
-          "cashier"
-        ]
-      }
-    },
+    "create": {},
     "read": {
       "user_condition": {
         "role": [
@@ -111,16 +102,7 @@
         ]
       }
     },
-    "update": {
-      "user_condition": {
-        "role": [
-          "admin",
-          "super_admin",
-          "manager",
-          "cashier"
-        ]
-      }
-    },
+    "update": {},
     "delete": {
       "user_condition": {
         "role": "admin"

@@ -96,8 +96,9 @@ export default function AdminPOS() {
       const pointsToAward = Math.floor(subtotal / pkrPerPoint);
       const qrExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
-      try {
-        await base44.entities.StoreSale.create({
+      // Use backend function (service role) to guarantee save
+      const saveResp = await base44.functions.invoke('saveSale', {
+        saleData: {
           bill_number: billNumber,
           customer_name: customerInfo.name || null,
           customer_phone: customerInfo.phone || null,
@@ -115,9 +116,10 @@ export default function AdminPOS() {
           is_scanned: false,
           points_awarded: pointsToAward,
           qr_expires_at: qrExpiresAt
-        });
-      } catch (saveErr) {
-        console.warn("Sale save failed (bill will still print):", saveErr?.message);
+        }
+      });
+      if (!saveResp.data?.success) {
+        throw new Error(saveResp.data?.error || 'Failed to save sale');
       }
 
       const bill = {
