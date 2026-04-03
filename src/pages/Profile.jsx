@@ -27,6 +27,7 @@ export default function Profile() {
   const [isLoading, setIsLoading] = useState(true);
   const [imageToEdit, setImageToEdit] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showWalletComingSoon, setShowWalletComingSoon] = useState(false);
   const [showPicConsentModal, setShowPicConsentModal] = useState(false);
   const [pendingPicFile, setPendingPicFile] = useState(null);
   const [formData, setFormData] = useState({
@@ -326,10 +327,13 @@ export default function Profile() {
         </Button>
 
         {/* Wallet Card */}
-        <Link to={createPageUrl("Wallet")}>
+        <div onClick={() => setShowWalletComingSoon(true)} className="cursor-pointer">
           <div className="bg-gradient-to-br from-amber-400 to-orange-500 text-white rounded-3xl p-6 mb-6 shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 opacity-20">
               <Star className="h-32 w-32" />
+            </div>
+            <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full border border-white/30">
+              Coming Soon
             </div>
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-4">
@@ -350,7 +354,7 @@ export default function Profile() {
               </div>
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Message Bean Support */}
         <Link to="/messages">
@@ -560,6 +564,56 @@ export default function Profile() {
         onOpenChange={setDeleteDialogOpen}
         userEmail={user?.email}
       />
+
+      {/* Wallet Coming Soon Modal */}
+      <AnimatePresence>
+        {showWalletComingSoon && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4"
+            onClick={() => setShowWalletComingSoon(false)}
+          >
+            <motion.div
+              initial={{ y: 80, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl w-full max-w-sm p-8 text-center shadow-2xl"
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-5 shadow-lg">
+                <Wallet className="h-10 w-10 text-white" />
+              </div>
+              <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+                ⏳ Coming Soon
+              </div>
+              <h3 className="text-2xl font-bold text-[#5C4A3A] mb-2">Bean Wallet</h3>
+              <p className="text-[#8B7355] text-sm leading-relaxed mb-6">
+                We're building an in-app wallet so you can top up, pay at the counter, and earn <span className="font-bold text-[#5C4A3A]">2× points</span> on every wallet purchase — exclusively at Bean ☕
+              </p>
+              <div className="bg-[#F5EBE8] rounded-2xl p-4 mb-6 text-left space-y-2">
+                <div className="flex items-center gap-2 text-sm text-[#5C4A3A]">
+                  <span className="text-base">⚡</span> Instant top-up via bank transfer
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#5C4A3A]">
+                  <span className="text-base">🎁</span> Send gift cards to friends
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#5C4A3A]">
+                  <span className="text-base">⭐</span> 2× loyalty points on wallet payments
+                </div>
+              </div>
+              <Button
+                onClick={() => setShowWalletComingSoon(false)}
+                className="w-full rounded-2xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] h-12"
+              >
+                Got it!
+              </Button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
