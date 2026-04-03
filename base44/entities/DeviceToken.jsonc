@@ -2,47 +2,70 @@
   "name": "DeviceToken",
   "type": "object",
   "properties": {
-    "user_email": {
-      "type": "string",
-      "description": "User email"
-    },
     "token": {
       "type": "string",
       "description": "FCM device token"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the user associated with the token"
     },
     "platform": {
       "type": "string",
       "enum": [
         "ios",
-        "android",
-        "web"
+        "android"
       ],
-      "description": "Device platform"
+      "description": "Platform (iOS or Android)"
     },
     "is_active": {
       "type": "boolean",
-      "default": true
-    },
-    "user_tier": {
-      "type": "string",
-      "description": "User loyalty tier for targeting"
+      "default": true,
+      "description": "Whether the token is active for sending notifications"
     }
   },
   "required": [
-    "token"
+    "token",
+    "user_email",
+    "platform"
   ],
   "rls": {
     "create": {},
     "read": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     },
-    "update": {},
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     }
   }
 }
