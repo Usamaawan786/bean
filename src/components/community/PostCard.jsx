@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -29,12 +29,16 @@ function renderContent(content) {
   });
 }
 
-export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave }) {
+export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit }) {
   const [isLiking, setIsLiking] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content || "");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const isOwnPost = post.author_email === currentUserEmail;
   const isFollowingAuthor = currentUserFollowing.includes(post.author_email);
   const isSaved = currentUserSavedPosts.includes(post.id);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
@@ -120,32 +124,61 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
             </span>
           </div>
 
-          {post.author_email !== currentUserEmail && (
-              <div className="flex items-center gap-1 flex-shrink-0 self-start">
+          <div className="flex items-center gap-1 flex-shrink-0 self-start">
+              {isOwnPost && onEdit && (
                 <motion.button
                   whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowReportConfirm(true)}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    hasReported ? "bg-orange-100 text-orange-600" : "text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-orange-500"
-                  }`}
-                  title="Flag post"
+                  onClick={() => setIsEditing(true)}
+                  className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-[#8B7355] transition-colors"
+                  title="Edit post"
                 >
-                  <Flag className="h-3.5 w-3.5" />
+                  <Edit2 className="h-3.5 w-3.5" />
                 </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowBlockConfirm(true)}
-                  className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-red-50 hover:text-red-500 transition-colors"
-                  title="Block user"
-                >
-                  <Ban className="h-3.5 w-3.5" />
-                </motion.button>
-              </div>
-            )}
+              )}
+              {!isOwnPost && (
+                <>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowReportConfirm(true)}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      hasReported ? "bg-orange-100 text-orange-600" : "text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-orange-500"
+                    }`} title="Flag post">
+                    <Flag className="h-3.5 w-3.5" />
+                  </motion.button>
+                  <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowBlockConfirm(true)}
+                    className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-red-50 hover:text-red-500 transition-colors" title="Block user">
+                    <Ban className="h-3.5 w-3.5" />
+                  </motion.button>
+                </>
+              )}
+            </div>
           </div>
-          <p className="mt-2 text-[#6B5744] whitespace-pre-wrap leading-relaxed">{renderContent(post.content)}</p>
+          {isEditing ? (
+            <div className="mt-2">
+              <textarea
+                value={editContent}
+                onChange={e => setEditContent(e.target.value)}
+                className="w-full border border-[#E8DED8] rounded-2xl p-3 text-sm text-[#6B5744] resize-none h-24 focus:outline-none focus:border-[#8B7355]"
+              />
+              <div className="flex gap-2 mt-2">
+                <button onClick={async () => {
+                  setSavingEdit(true);
+                  await onEdit(post.id, { content: editContent });
+                  setSavingEdit(false);
+                  setIsEditing(false);
+                }} disabled={savingEdit || !editContent.trim()}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#8B7355] text-white text-xs font-medium hover:bg-[#6B5744]">
+                  <Check className="h-3 w-3" /> Save
+                </button>
+                <button onClick={() => { setIsEditing(false); setEditContent(post.content); }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#F5EBE8] text-[#8B7355] text-xs font-medium">
+                  <X className="h-3 w-3" /> Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 text-[#6B5744] whitespace-pre-wrap leading-relaxed">{renderContent(post.content)}</p>
+          )}
           
           {post.image_url && (
             <div className="mt-3 rounded-2xl overflow-hidden">
@@ -254,7 +287,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
           </div>
 
           {/* Report Confirmation Dialog */}
-          {showReportConfirm && (
+          {showReportConfirm && post.author_email !== currentUserEmail && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}

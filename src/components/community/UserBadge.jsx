@@ -2,6 +2,20 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 
+// Color scheme map (keys match BadgeDefinition.color_scheme)
+export const COLOR_SCHEME_MAP = {
+  amber: "bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900",
+  purple: "bg-gradient-to-r from-purple-500 to-indigo-500 text-white",
+  gold: "bg-gradient-to-r from-yellow-400 to-amber-500 text-white",
+  slate: "bg-gradient-to-r from-slate-400 to-slate-600 text-white",
+  rose: "bg-gradient-to-r from-rose-400 to-pink-500 text-white",
+  blue: "bg-gradient-to-r from-blue-400 to-cyan-500 text-white",
+  green: "bg-gradient-to-r from-green-400 to-emerald-500 text-white",
+  teal: "bg-gradient-to-r from-teal-400 to-cyan-500 text-white",
+  orange: "bg-gradient-to-r from-orange-400 to-red-400 text-white",
+  brown: "bg-gradient-to-r from-amber-700 to-yellow-800 text-white",
+};
+
 export const BADGE_DEFINITIONS = {
   founding_member: {
     emoji: "🌟",
@@ -53,23 +67,28 @@ export function getBadgesForCustomer(customer, postCount = 0) {
   if (customer.tier === "Platinum") badges.push("platinum");
   else if (customer.tier === "Gold") badges.push("gold");
   if (postCount >= 10) badges.push("coffee_creator");
+  // Custom badges from DB
+  (customer.custom_badges || []).forEach(k => { if (!badges.includes(k)) badges.push(k); });
   return badges;
 }
 
-export default function UserBadge({ badgeKey, size = "sm" }) {
+// badgeDef: optional override from DB; falls back to BADGE_DEFINITIONS
+export default function UserBadge({ badgeKey, badgeDef, size = "sm" }) {
   const [showModal, setShowModal] = useState(false);
-  const def = BADGE_DEFINITIONS[badgeKey];
+  const def = badgeDef || BADGE_DEFINITIONS[badgeKey];
   if (!def) return null;
 
-  const sizeClass = size === "sm"
-    ? "text-xs px-1.5 py-0.5"
-    : "text-sm px-2.5 py-1";
+  const colorClass = badgeDef?.color_scheme
+    ? (COLOR_SCHEME_MAP[badgeDef.color_scheme] || COLOR_SCHEME_MAP.amber)
+    : def.color;
+
+  const sizeClass = size === "sm" ? "text-xs px-1.5 py-0.5" : "text-sm px-2.5 py-1";
 
   return (
     <>
       <button
         onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
-        className={`inline-flex items-center gap-1 rounded-full font-bold ${def.color} ${sizeClass} shadow-sm hover:opacity-90 transition-opacity`}
+        className={`inline-flex items-center gap-1 rounded-full font-bold ${colorClass} ${sizeClass} shadow-sm hover:opacity-90 transition-opacity`}
       >
         <span>{def.emoji}</span>
         <span>{def.label}</span>
@@ -92,9 +111,9 @@ export default function UserBadge({ badgeKey, size = "sm" }) {
               className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-bold text-base ${def.color} shadow`}>
+                <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-bold text-base ${colorClass} shadow`}>
                   <span className="text-xl">{def.emoji}</span>
-                  <span>{def.title}</span>
+                  <span>{def.title || def.label}</span>
                 </div>
                 <button onClick={() => setShowModal(false)} className="p-1.5 rounded-full hover:bg-[#F5EBE8] text-[#8B7355]">
                   <X className="h-4 w-4" />
@@ -103,7 +122,7 @@ export default function UserBadge({ badgeKey, size = "sm" }) {
               <p className="text-[#5C4A3A] text-sm leading-relaxed mb-4">{def.description}</p>
               <div className="bg-[#F5EBE8] rounded-2xl p-4">
                 <p className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1">How to earn</p>
-                <p className="text-sm text-[#5C4A3A]">{def.howToGet}</p>
+                <p className="text-sm text-[#5C4A3A]">{def.howToGet || def.how_to_get}</p>
               </div>
             </motion.div>
           </motion.div>

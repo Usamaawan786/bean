@@ -1,0 +1,99 @@
+{
+  "name": "BadgeDefinition",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Unique identifier for this badge (e.g. founding_member, eba)"
+    },
+    "emoji": {
+      "type": "string",
+      "description": "Emoji icon for the badge"
+    },
+    "label": {
+      "type": "string",
+      "description": "Short display label"
+    },
+    "title": {
+      "type": "string",
+      "description": "Full badge title"
+    },
+    "color_scheme": {
+      "type": "string",
+      "enum": [
+        "amber",
+        "purple",
+        "gold",
+        "slate",
+        "rose",
+        "blue",
+        "green",
+        "teal",
+        "orange",
+        "brown"
+      ],
+      "default": "amber",
+      "description": "Color scheme identifier"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this badge means"
+    },
+    "how_to_get": {
+      "type": "string",
+      "description": "How users can earn this badge"
+    },
+    "auto_criteria_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "points",
+        "tier",
+        "referrals",
+        "posts"
+      ],
+      "default": "none",
+      "description": "Automatic eligibility criteria type"
+    },
+    "auto_criteria_value": {
+      "type": "string",
+      "description": "Threshold value for auto-assignment (e.g. '500' for points, 'Gold' for tier)"
+    },
+    "is_builtin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a built-in badge that cannot be deleted"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "key",
+    "label",
+    "emoji"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

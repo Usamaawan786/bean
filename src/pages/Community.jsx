@@ -235,6 +235,11 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     setUser(updatedUser);
   };
 
+  const editPostMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.CommunityPost.update(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["community-posts"] })
+  });
+
 
 
   return (
@@ -355,7 +360,8 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                     onBlock={handleBlockUser}
                     onFollow={handleFollow}
                     onSave={handleSavePost}
-                  />
+                    onEdit={(id, data) => editPostMutation.mutate({ id, data })}
+                    />
                 </motion.div>
               ))}
             </AnimatePresence>
