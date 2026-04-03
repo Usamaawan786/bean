@@ -42,7 +42,7 @@ export default function Layout({ children, currentPageName }) {
     <div className="min-h-screen bg-[var(--bg-primary)] select-none" style={{ overscrollBehavior: 'none' }}>
       {/* Top-right notification bell for authenticated users */}
       {isAuthenticated && userEmail && (
-        <div className="fixed top-3 right-3 z-[60]">
+        <div className="absolute top-3 right-3 z-[60]">
           <NotificationBell userEmail={userEmail} />
         </div>
       )}
