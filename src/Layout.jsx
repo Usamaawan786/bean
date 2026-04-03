@@ -20,6 +20,8 @@ const authNavItems = [
 ];
 
 export default function Layout({ children, currentPageName }) {
+  const isAuth = true; // auth-agnostic layout — show full nav
+  const navItems = authNavItems;
   const showNav = !["waitlist", "Waitlist"].includes(currentPageName);
 
   return (

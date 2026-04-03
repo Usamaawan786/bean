@@ -20,12 +20,14 @@ import PullToRefresh from "@/components/shared/PullToRefresh";
 import OnboardingNameModal from "@/components/shared/OnboardingNameModal";
 import { useQueryClient } from "@tanstack/react-query";
 import NotificationBell from "@/components/community/NotificationBell";
+import PointsHistoryList from "@/components/dashboard/PointsHistoryList";
 
 export default function Home() {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
+  const [showPointsHistory, setShowPointsHistory] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -304,7 +306,8 @@ export default function Home() {
               <motion.div
                 whileHover={{ scale: 1.05, y: -5 }}
                 whileTap={{ scale: 0.95 }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 shadow-xl"
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 shadow-xl cursor-pointer"
+                onClick={() => setShowPointsHistory(true)}
               >
                 <div className="flex items-center justify-between mb-2">
                   <Star className="h-5 w-5 text-amber-300" />
@@ -326,6 +329,7 @@ export default function Home() {
                   {customer?.points_balance || 0}
                 </motion.div>
                 <div className="text-sm text-[#E8DED8]">Points Balance</div>
+                <div className="text-xs text-amber-200/70 mt-1">Tap to see history →</div>
               </motion.div>
 
               <motion.div
@@ -535,6 +539,59 @@ export default function Home() {
         </div>
       </div>
     </PullToRefresh>
+
+    {/* Points History Modal */}
+    <AnimatePresence>
+      {showPointsHistory && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center"
+          onClick={() => setShowPointsHistory(false)}
+        >
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="bg-white w-full max-w-lg rounded-t-3xl max-h-[80vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E8DED8]">
+              <div>
+                <h2 className="text-xl font-bold text-[#5C4A3A]">Points History</h2>
+                <p className="text-sm text-[#8B7355]">Total balance: <span className="font-bold text-[#5C4A3A]">{customer?.points_balance || 0} pts</span></p>
+              </div>
+              <button
+                onClick={() => setShowPointsHistory(false)}
+                className="w-9 h-9 rounded-full bg-[#F5EBE8] flex items-center justify-center text-[#8B7355] hover:bg-[#EDE3DF] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-2 gap-3 px-6 py-3 bg-[#F9F6F3]">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-[#5C4A3A]">{customer?.total_points_earned || 0}</div>
+                <div className="text-xs text-[#8B7355]">Total Earned</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-[#5C4A3A]">{(customer?.total_points_earned || 0) - (customer?.points_balance || 0)}</div>
+                <div className="text-xs text-[#8B7355]">Total Spent</div>
+              </div>
+            </div>
+
+            {/* Activity list */}
+            <div className="flex-1 overflow-y-auto">
+              <PointsHistoryList userEmail={user?.email} />
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
     </>
   );
 }
