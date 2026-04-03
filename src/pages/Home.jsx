@@ -329,7 +329,7 @@ export default function Home() {
                   {customer?.points_balance || 0}
                 </motion.div>
                 <div className="text-sm text-[#E8DED8]">Points Balance</div>
-                <div className="text-xs text-amber-200/70 mt-1">Tap to see history →</div>
+                <div className="text-xs text-amber-200/70 mt-1">Tap to see history</div>
               </motion.div>
 
               <motion.div
