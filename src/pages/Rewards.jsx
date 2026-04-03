@@ -55,6 +55,19 @@ export default function Rewards() {
     enabled: activeTab === "leaderboard"
   });
 
+  const { data: leaderboardUsers = [] } = useQuery({
+    queryKey: ["leaderboard-users"],
+    queryFn: () => base44.entities.User.list(),
+    enabled: activeTab === "leaderboard",
+    staleTime: 300000,
+  });
+
+  const leaderboardUserMap = leaderboardUsers.reduce((acc, u) => { acc[u.email] = u; return acc; }, {});
+  const getLeaderboardName = (c) => {
+    const u = leaderboardUserMap[c.created_by];
+    return u?.display_name || u?.full_name || c.created_by?.split("@")[0] || "Coffee Lover";
+  };
+
   const topCustomers = allCustomers.slice(0, 10);
   const userRank = allCustomers.findIndex(c => c.created_by === user?.email) + 1;
 
@@ -355,7 +368,7 @@ export default function Rewards() {
                       <span className="text-xl w-8 text-center">{medals[i]}</span>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-[#5C4A3A] text-sm truncate">
-                          {c.created_by?.split("@")[0]}{isMe && " (You)"}
+                          {getLeaderboardName(c)}{isMe && " (You)"}
                         </div>
                         <div className="text-xs text-[#C9B8A6]">{c.tier}</div>
                       </div>
