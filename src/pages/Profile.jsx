@@ -30,7 +30,7 @@ export default function Profile() {
   const [showPicConsentModal, setShowPicConsentModal] = useState(false);
   const [pendingPicFile, setPendingPicFile] = useState(null);
   const [formData, setFormData] = useState({
-    full_name: "",
+    display_name: "",
     bio: "",
     profile_picture: ""
   });
@@ -57,7 +57,7 @@ export default function Profile() {
       }
       setUser(u);
       setFormData({
-        full_name: u.full_name || "",
+        display_name: u.display_name || u.full_name || "",
         bio: u.bio || "",
         profile_picture: u.profile_picture || ""
       });
@@ -156,7 +156,7 @@ export default function Profile() {
     setIsSaving(true);
     try {
       await base44.auth.updateMe({
-        full_name: formData.full_name,
+        display_name: formData.display_name,
         bio: formData.bio,
         profile_picture: formData.profile_picture
       });
@@ -270,7 +270,7 @@ export default function Profile() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 pt-6 pb-24">
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-[#5C4A3A]">{user.full_name}</h2>
+          <h2 className="text-xl font-bold text-[#5C4A3A]">{user.display_name || user.full_name}</h2>
           <p className="text-sm text-[#8B7355]">{user.email}</p>
           {customer?.is_founding_member && (
             <div className="inline-flex items-center gap-1.5 mt-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
@@ -402,7 +402,7 @@ export default function Profile() {
                   onClick={() => {
                     setIsEditing(false);
                     setFormData({
-                      full_name: user.full_name || "",
+                      display_name: user.display_name || user.full_name || "",
                       bio: user.bio || "",
                       profile_picture: user.profile_picture || ""
                     });
@@ -425,15 +425,15 @@ export default function Profile() {
           </div>
 
           <div>
-            <Label className="text-[#5C4A3A]">Full Name</Label>
+            <Label className="text-[#5C4A3A]">Display Name</Label>
             {isEditing ? (
               <Input
-                value={formData.full_name}
-                onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                value={formData.display_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
                 className="mt-1 border-[#E8DED8] focus:border-[#8B7355] focus:ring-[#8B7355]"
               />
             ) : (
-              <p className="mt-1 text-[#6B5744]">{user.full_name || "Not set"}</p>
+              <p className="mt-1 text-[#6B5744]">{user.display_name || user.full_name || "Not set"}</p>
             )}
           </div>
 
