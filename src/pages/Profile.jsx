@@ -172,6 +172,7 @@ export default function Profile() {
   const handleQRScan = async (qrCodeId) => {
     // Close scanner first
     setShowQRScanner(false);
+    toast.info("Processing QR code...", { duration: 2000 });
 
     try {
       const oldBalance = customer?.points_balance || 0;

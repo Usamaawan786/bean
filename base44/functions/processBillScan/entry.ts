@@ -16,8 +16,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'QR code ID is required' }, { status: 400 });
     }
 
+    console.log('Processing QR scan for:', qrCodeId);
+
     // Find the sale with this QR code
     const sales = await base44.asServiceRole.entities.StoreSale.filter({ qr_code_id: qrCodeId });
+    console.log('Found sales:', sales.length);
 
     if (sales.length === 0) {
       return Response.json({ success: false, error: 'Invalid QR code — not found.' });
