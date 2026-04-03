@@ -21,8 +21,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'saleData is required' }, { status: 400 });
     }
 
-    // Use service role to bypass any RLS issues
-    const sale = await base44.asServiceRole.entities.StoreSale.create(saleData);
+    const sale = await base44.entities.StoreSale.create(saleData);
 
     return Response.json({ success: true, sale });
   } catch (error) {
