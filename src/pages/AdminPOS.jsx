@@ -122,6 +122,21 @@ export default function AdminPOS() {
         throw new Error(saveResp.data?.error || 'Failed to save sale');
       }
 
+      // Track analytics regardless of what happens next
+      try {
+        base44.analytics.track({
+          eventName: 'pos_sale_completed',
+          properties: {
+            total_amount: Math.round(total),
+            subtotal: Math.round(subtotal),
+            tax: Math.round(tax),
+            items_count: cart.reduce((s, i) => s + i.quantity, 0),
+            payment_method: paymentMethod,
+            points_awarded: pointsToAward,
+          }
+        });
+      } catch (e) { /* analytics failure should not block sale */ }
+
       const bill = {
         items: cart,
         customerInfo,
