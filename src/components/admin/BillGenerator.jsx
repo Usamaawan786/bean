@@ -220,7 +220,7 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
           <div className="text-center py-3 border-t border-[#E8DED8]">
               <p className="text-xs font-semibold text-[#5C4A3A] mb-2">Earn Rewards</p>
               <img src={qrCodeUrl} alt="Rewards QR Code" className="w-32 h-32 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
-              <p className="text-xs text-[#8B7355] mt-2">Scan in the Bean Pakis to add points to your account</p>
+              <p className="text-xs text-[#8B7355] mt-2">Scan in the Bean Pakistan to add points to your account</p>
             </div>
           }
 
