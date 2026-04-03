@@ -27,14 +27,17 @@ export default function NotificationBell({ userEmail }) {
   // Load conversation + unread admin messages
   const loadMessages = useCallback(async () => {
     if (!userEmail) return;
-    const convs = await base44.entities.Conversation.filter({ user_email: userEmail });
-    if (!convs.length) return;
-    const conv = convs[0];
-    setConversation(conv);
-    // Fetch last 30 admin messages
-    const msgs = await base44.entities.ChatMessage.filter({ conversation_id: conv.id }, "-created_date", 30);
-    const adminMsgs = msgs.filter(m => m.sender_role === "admin");
-    setMessages(adminMsgs);
+    try {
+      const convs = await base44.entities.Conversation.filter({ user_email: userEmail });
+      if (!convs.length) return;
+      const conv = convs[0];
+      setConversation(conv);
+      const msgs = await base44.entities.ChatMessage.filter({ conversation_id: conv.id }, "-created_date", 30);
+      const adminMsgs = msgs.filter(m => m.sender_role === "admin");
+      setMessages(adminMsgs);
+    } catch (e) {
+      // Network errors ignored silently
+    }
   }, [userEmail]);
 
   useEffect(() => {
