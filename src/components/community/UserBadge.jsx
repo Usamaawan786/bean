@@ -8,7 +8,7 @@ export const BADGE_DEFINITIONS = {
     label: "FM",
     title: "Founding Member",
     color: "bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900",
-    description: "Founding Members were among the very first to join Bean Coffee — they were on the original waitlist before the doors even opened.",
+    description: "Founding Members were among the very first to join Bean — they were on the original waitlist before the doors even opened.",
     howToGet: "This badge was awarded exclusively to early waitlist members and cannot be earned retroactively.",
   },
   eba: {
