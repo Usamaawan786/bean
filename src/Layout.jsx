@@ -25,6 +25,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] select-none">
+      {children}
 
       {/* Bottom Navigation */}
       {showNav && (
