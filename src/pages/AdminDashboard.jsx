@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, TrendingUp, ShoppingCart, DollarSign, Package, Bell,
   MessageSquare, RefreshCw, Users, Gift, CreditCard, Banknote,
-  TrendingDown, BarChart3, Clock, CheckCircle2, AlertTriangle
+  TrendingDown, BarChart3, Clock, CheckCircle2, AlertTriangle, Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -54,10 +54,25 @@ export default function AdminDashboard() {
     });
   }, []);
 
-  // Live data with auto-refresh every 15s + refetch on window focus
+  // Single backend function for all accurate metrics
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ["dashboard-stats"],
+    queryFn: async () => {
+      const res = await base44.functions.invoke('getDashboardStats', {});
+      return res.data;
+    },
+    enabled: !!user,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+  });
+
+  // Keep sales for real-time subscription & recent transactions table
   const { data: sales = [] } = useQuery({
     queryKey: ["sales-analytics"],
-    queryFn: () => base44.entities.StoreSale.list("-created_date", 1000),
+    queryFn: () => base44.asServiceRole
+      ? base44.entities.StoreSale.list("-created_date", 200)
+      : base44.entities.StoreSale.list("-created_date", 200),
     enabled: !!user,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
@@ -66,22 +81,14 @@ export default function AdminDashboard() {
 
   const { data: expenses = [] } = useQuery({
     queryKey: ["expenses-analytics"],
-    queryFn: () => base44.entities.Expense.list("-created_date", 500),
+    queryFn: () => base44.entities.Expense.list("-created_date", 100),
     enabled: !!user,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
+    refetchInterval: 60000,
   });
 
   const { data: inventory = [] } = useQuery({
     queryKey: ["inventory-dashboard"],
     queryFn: () => base44.entities.Inventory.list("-updated_date", 200),
-    enabled: !!user,
-    refetchInterval: 60000,
-  });
-
-  const { data: customers = [] } = useQuery({
-    queryKey: ["customers-dashboard"],
-    queryFn: () => base44.entities.Customer.list("-created_date", 500),
     enabled: !!user,
     refetchInterval: 60000,
   });
@@ -92,117 +99,61 @@ export default function AdminDashboard() {
     try {
       const unsub = base44.entities.StoreSale.subscribe(() => {
         queryClient.invalidateQueries({ queryKey: ["sales-analytics"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
         setLastRefresh(new Date());
       });
       return unsub;
     } catch (e) {
-      // subscription not available, polling will handle updates
+      // polling handles updates
     }
   }, [user, queryClient]);
 
-  const threshold = useMemo(() => {
-    const now = new Date();
-    switch (timeRange) {
-      case "today": return startOfDay(now);
-      case "7days": return subDays(now, 7);
-      case "30days": return subDays(now, 30);
-      case "90days": return subDays(now, 90);
-      default: return new Date(0);
-    }
-  }, [timeRange]);
+  // Pull from backend stats (accurate, service-role, no RLS limits)
+  const totalRevenue = stats?.allTimeRevenue || 0;
+  const todayRevenue = stats?.todayRevenue || 0;
+  const totalTransactions = stats?.allTimeTransactions || 0;
+  const todayTransactions = stats?.todayTransactions || 0;
+  const avgOrderValue = stats?.allTimeAvgOrder || 0;
+  const totalExpenses = stats?.allTimeExpenses || 0;
+  const netProfit = stats?.allTimeProfit || 0;
+  const totalItemsSold = stats?.todayItemsSold || 0;
+  const scannedBills = stats?.scannedTotal || 0;
+  const scanRate = stats?.scanRate || 0;
+  const totalCustomers = stats?.totalCustomers || 0;
 
-  const filteredSales = useMemo(() =>
-    sales.filter(s => isAfter(new Date(s.created_date), threshold)),
-    [sales, threshold]);
+  // Charts from backend stats
+  const salesTimeline = stats?.dailyRevenue?.map(d => ({
+    date: d.date.slice(5), // MM-DD
+    revenue: d.revenue,
+    orders: d.orders
+  })) || [];
 
-  const filteredExpenses = useMemo(() =>
-    expenses.filter(e => isAfter(new Date(e.created_date), threshold)),
-    [expenses, threshold]);
+  const topProducts = stats?.topProducts || [];
 
-  // Core metrics
-  const totalRevenue = filteredSales.reduce((s, sale) => s + (sale.total_amount || 0), 0);
-  const totalTransactions = filteredSales.length;
-  const avgOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
-  const totalExpenses = filteredExpenses.reduce((s, e) => s + (e.amount || 0), 0);
-  const netProfit = totalRevenue - totalExpenses;
-  const totalItemsSold = filteredSales.reduce((s, sale) =>
-    s + (sale.items?.reduce((a, i) => a + i.quantity, 0) || 0), 0);
-  const scannedBills = filteredSales.filter(s => s.is_scanned).length;
-  const scanRate = totalTransactions > 0 ? ((scannedBills / totalTransactions) * 100).toFixed(1) : 0;
+  const paymentData = stats?.paymentBreakdown
+    ? Object.entries(stats.paymentBreakdown).map(([name, value]) => ({ name, value }))
+    : [];
 
-  // Today's metrics
-  const todayStart = startOfDay(new Date());
-  const todaySales = sales.filter(s => isAfter(new Date(s.created_date), todayStart));
-  const todayRevenue = todaySales.reduce((s, sale) => s + (sale.total_amount || 0), 0);
+  const hourlySales = stats?.hourly || [];
 
-  // Sales timeline
-  const salesTimeline = useMemo(() => {
-    const byDate = {};
-    filteredSales.forEach(sale => {
-      const d = format(new Date(sale.created_date), "MMM dd");
-      if (!byDate[d]) byDate[d] = { date: d, revenue: 0, orders: 0, subtotal: 0 };
-      byDate[d].revenue += sale.total_amount || 0;
-      byDate[d].subtotal += sale.subtotal || 0;
-      byDate[d].orders += 1;
-    });
-    return Object.values(byDate);
-  }, [filteredSales]);
-
-  // Top products
-  const topProducts = useMemo(() => {
-    const map = {};
-    filteredSales.forEach(sale => {
-      sale.items?.forEach(item => {
-        if (!map[item.product_name]) map[item.product_name] = { name: item.product_name, quantity: 0, revenue: 0 };
-        map[item.product_name].quantity += item.quantity;
-        map[item.product_name].revenue += item.price * item.quantity;
-      });
-    });
-    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 8);
-  }, [filteredSales]);
-
-  // Expenses by category
+  // Expenses by category (from local fetch — smaller dataset)
   const expensesData = useMemo(() => {
     const map = {};
-    filteredExpenses.forEach(e => {
-      map[e.category] = (map[e.category] || 0) + e.amount;
-    });
+    expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + e.amount; });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [filteredExpenses]);
+  }, [expenses]);
 
-  // Payment methods
-  const paymentData = useMemo(() => {
-    const map = {};
-    filteredSales.forEach(s => {
-      const m = s.payment_method || "Unknown";
-      map[m] = (map[m] || 0) + 1;
-    });
-    return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [filteredSales]);
-
-  // Hourly sales heatmap (today)
-  const hourlySales = useMemo(() => {
-    const hours = Array.from({ length: 24 }, (_, h) => ({ hour: `${h}:00`, orders: 0, revenue: 0 }));
-    todaySales.forEach(s => {
-      const h = new Date(s.created_date).getHours();
-      hours[h].orders += 1;
-      hours[h].revenue += s.total_amount || 0;
-    });
-    return hours.filter((_, i) => i >= 7 && i <= 23); // 7am to 11pm
-  }, [todaySales]);
-
-  // Inventory alerts
+  // Inventory alerts (local fetch)
   const lowStockItems = inventory.filter(i => (i.quantity || 0) <= (i.reorder_level || 5));
   const outOfStock = inventory.filter(i => (i.quantity || 0) === 0);
 
-  // Recent sales
   const recentSales = sales.slice(0, 10);
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["sales-analytics"] });
     queryClient.invalidateQueries({ queryKey: ["expenses-analytics"] });
     queryClient.invalidateQueries({ queryKey: ["inventory-dashboard"] });
-    queryClient.invalidateQueries({ queryKey: ["customers-dashboard"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
     setLastRefresh(new Date());
   };
 
@@ -261,18 +212,18 @@ export default function AdminDashboard() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard icon={DollarSign} label="Total Revenue" value={`Rs. ${totalRevenue.toLocaleString()}`} sub={`Today: Rs. ${todayRevenue.toLocaleString()}`} delay={0} />
-            <StatCard icon={ShoppingCart} label="Transactions" value={totalTransactions} sub={`Items sold: ${totalItemsSold}`} delay={0.05} />
-            <StatCard icon={TrendingUp} label="Avg Order Value" value={`Rs. ${avgOrderValue.toFixed(0)}`} sub={`Total expenses: Rs. ${totalExpenses.toLocaleString()}`} delay={0.1} />
-            <StatCard icon={Package} label="Net Profit" value={`Rs. ${netProfit.toLocaleString()}`} color={netProfit >= 0 ? "text-green-300" : "text-red-300"} sub={`Margin: ${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0}%`} delay={0.15} />
+            <StatCard icon={DollarSign} label="Total Revenue" value={isLoadingStats ? '…' : `Rs. ${totalRevenue.toLocaleString()}`} sub={`Today: Rs. ${todayRevenue.toLocaleString()}`} delay={0} />
+            <StatCard icon={ShoppingCart} label="Transactions" value={isLoadingStats ? '…' : totalTransactions} sub={`Today: ${todayTransactions}`} delay={0.05} />
+            <StatCard icon={TrendingUp} label="Avg Order Value" value={isLoadingStats ? '…' : `Rs. ${avgOrderValue.toFixed(0)}`} sub={`Expenses: Rs. ${totalExpenses.toLocaleString()}`} delay={0.1} />
+            <StatCard icon={Package} label="Net Profit" value={isLoadingStats ? '…' : `Rs. ${netProfit.toLocaleString()}`} color={netProfit >= 0 ? "text-green-300" : "text-red-300"} sub={`Margin: ${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0}%`} delay={0.15} />
           </div>
 
           {/* Secondary KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-            <StatCard icon={Users} label="Total Customers" value={customers.length} delay={0.2} />
-            <StatCard icon={CheckCircle2} label="QR Scan Rate" value={`${scanRate}%`} sub={`${scannedBills} / ${totalTransactions} scanned`} delay={0.25} />
+            <StatCard icon={Users} label="Total Customers" value={isLoadingStats ? '…' : totalCustomers} sub={`+${stats?.newCustomersWeek || 0} this week`} delay={0.2} />
+            <StatCard icon={CheckCircle2} label="QR Scan Rate" value={isLoadingStats ? '…' : `${scanRate}%`} sub={`${scannedBills} / ${totalTransactions} scanned`} delay={0.25} />
             <StatCard icon={AlertTriangle} label="Low Stock Items" value={lowStockItems.length} color={lowStockItems.length > 0 ? "text-amber-300" : "text-white"} sub={`${outOfStock.length} out of stock`} delay={0.3} />
-            <StatCard icon={Clock} label="Today's Orders" value={todaySales.length} sub={`Revenue: Rs. ${todayRevenue.toLocaleString()}`} delay={0.35} />
+            <StatCard icon={Clock} label="Today's Orders" value={isLoadingStats ? '…' : todayTransactions} sub={`Revenue: Rs. ${todayRevenue.toLocaleString()}`} delay={0.35} />
           </div>
         </div>
       </div>
@@ -395,16 +346,19 @@ export default function AdminDashboard() {
           {/* Financial Summary */}
           <Card className="border-[#E8DED8]">
             <CardHeader>
-              <CardTitle className="text-[#5C4A3A]">Financial Summary</CardTitle>
+              <CardTitle className="text-[#5C4A3A]">Financial Summary (All Time)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
+              {isLoadingStats ? (
+                <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#8B7355]" /></div>
+              ) : [
                 { label: "Gross Revenue", value: `Rs. ${totalRevenue.toLocaleString()}`, color: "text-green-600" },
                 { label: "Total Expenses", value: `- Rs. ${totalExpenses.toLocaleString()}`, color: "text-red-600" },
                 { label: "Net Profit", value: `Rs. ${netProfit.toLocaleString()}`, color: netProfit >= 0 ? "text-green-600 font-bold text-lg" : "text-red-600 font-bold text-lg" },
                 { label: "Profit Margin", value: `${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0}%`, color: "text-[#5C4A3A]" },
                 { label: "Avg Order Value", value: `Rs. ${avgOrderValue.toFixed(0)}`, color: "text-[#5C4A3A]" },
-                { label: "Items Sold", value: totalItemsSold, color: "text-[#5C4A3A]" },
+                { label: "Total Customers", value: totalCustomers, color: "text-[#5C4A3A]" },
+                { label: "New Customers Today", value: stats?.newCustomersToday || 0, color: "text-[#8B7355]" },
                 { label: "QR Scans (Rewards)", value: `${scannedBills} (${scanRate}%)`, color: "text-[#8B7355]" },
               ].map(({ label, value, color }) => (
                 <div key={label} className="flex justify-between items-center pb-2 border-b border-[#F5EBE8] last:border-0">
@@ -417,12 +371,14 @@ export default function AdminDashboard() {
         </div>
 
         {/* Today's Hourly Activity */}
-        {timeRange === "today" || timeRange === "7days" ? (
-          <Card className="border-[#E8DED8]">
-            <CardHeader>
-              <CardTitle className="text-[#5C4A3A]">Today's Hourly Sales</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card className="border-[#E8DED8]">
+          <CardHeader>
+            <CardTitle className="text-[#5C4A3A]">Today's Hourly Sales (PKT)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {hourlySales.length === 0 || hourlySales.every(h => h.orders === 0) ? (
+              <div className="h-48 flex items-center justify-center text-[#8B7355] text-sm">No sales today yet</div>
+            ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={hourlySales}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#E8DED8" />
@@ -432,9 +388,9 @@ export default function AdminDashboard() {
                   <Bar dataKey="orders" fill="#8B7355" name="Orders" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        ) : null}
+            )}
+          </CardContent>
+        </Card>
 
         {/* Inventory Alerts */}
         {lowStockItems.length > 0 && (
