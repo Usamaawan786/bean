@@ -4,7 +4,7 @@ import { Home, Gift, Users, UserCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import NotificationBell from "@/components/community/NotificationBell";
+
 
 const guestNavItems = [
   { name: "Home", icon: Home, page: "Home" },
@@ -20,33 +20,10 @@ const authNavItems = [
 ];
 
 export default function Layout({ children, currentPageName }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [userEmail, setUserEmail] = useState(null);
-
-  useEffect(() => {
-    base44.auth.isAuthenticated().then(async auth => {
-      setIsAuthenticated(auth);
-      setAuthChecked(true);
-      if (auth) {
-        const u = await base44.auth.me();
-        setUserEmail(u?.email || null);
-      }
-    });
-  }, [currentPageName]);
-
-  const navItems = isAuthenticated ? authNavItems : guestNavItems;
   const showNav = !["waitlist", "Waitlist"].includes(currentPageName);
 
   return (
-    <div className="relative min-h-screen bg-[var(--bg-primary)] select-none" style={{ overscrollBehavior: 'none' }}>
-      {/* Top-right notification bell for authenticated users */}
-      {isAuthenticated && userEmail && (
-        <div className="absolute top-3 right-3 z-[60]">
-          <NotificationBell userEmail={userEmail} />
-        </div>
-      )}
-      {children}
+    <div className="min-h-screen bg-[var(--bg-primary)] select-none">
 
       {/* Bottom Navigation */}
       {showNav && (

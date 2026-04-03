@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-// useNavigate kept for Button navigation below
 import { createPageUrl } from "@/utils";
 import { 
   Coffee, Star, Gift, Users, Zap, ChevronRight, 
@@ -20,6 +19,7 @@ import PersonalizedOffers from "@/components/rewards/PersonalizedOffers";
 import PullToRefresh from "@/components/shared/PullToRefresh";
 import OnboardingNameModal from "@/components/shared/OnboardingNameModal";
 import { useQueryClient } from "@tanstack/react-query";
+import NotificationBell from "@/components/community/NotificationBell";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -55,7 +55,6 @@ export default function Home() {
       items_remaining: Math.max(0, (drop.items_remaining || drop.total_items) - 1)
     });
 
-    // Create unique QR claim
     const qrCode = `FD-${drop.id.slice(-5)}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     await base44.entities.FlashDropClaim.create({
       drop_id: drop.id,
@@ -66,7 +65,6 @@ export default function Home() {
       expires_at: drop.end_time,
     });
 
-    // Award points
     if (customer) {
       await base44.entities.Customer.update(customer.id, {
         points_balance: customer.points_balance + 25,
@@ -91,8 +89,8 @@ export default function Home() {
   const allDrops = [...activeDrops, ...upcomingDrops];
 
   const handleNameComplete = (name) => {
-  setShowNameModal(false);
-  setUser(prev => ({ ...prev, display_name: name }));
+    setShowNameModal(false);
+    setUser(prev => ({ ...prev, display_name: name }));
   };
 
   const getGreeting = () => {
@@ -113,7 +111,7 @@ export default function Home() {
     const loadUser = async () => {
       try {
         const isAuth = await base44.auth.isAuthenticated();
-        if (!isAuth) return; // Guest — render page immediately
+        if (!isAuth) return;
 
         const u = await base44.auth.me();
         if (!u || !u.email) return;
@@ -133,14 +131,12 @@ export default function Home() {
           });
           setCustomer(newCustomer);
 
-          // Track referral source — bonus points are awarded only when referred person spends PKR 2,000+
           const params = new URLSearchParams(window.location.search);
           const refParam = params.get('ref');
           if (refParam) {
             const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
             if (referrers.length > 0) {
               const referrer = referrers[0];
-              // Just store who referred them — no points yet
               await base44.entities.Customer.update(newCustomer.id, { referred_by: referrer.created_by });
             }
           }
@@ -154,7 +150,6 @@ export default function Home() {
     loadUser();
   }, []);
 
-  // Loading state — prevent guest flash
   if (!authChecked) {
     return (
       <div className="h-screen flex items-center justify-center bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
@@ -163,7 +158,7 @@ export default function Home() {
     );
   }
 
-  // Guest mode - show browse-friendly home
+  // Guest mode
   if (!user || !customer) {
     return (
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
@@ -179,7 +174,6 @@ export default function Home() {
         </div>
 
         <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-5">
-          {/* Shop teaser */}
           <Link to={createPageUrl("Shop")}>
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="rounded-2xl bg-gradient-to-br from-[#F5EBE8] to-[#EDE3DF] p-4">
@@ -193,7 +187,6 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Community teaser */}
           <Link to={createPageUrl("Community")}>
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-4">
@@ -207,7 +200,6 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Find Us on Maps */}
           <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
             <div className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="rounded-2xl bg-white/20 p-4">
@@ -220,7 +212,6 @@ export default function Home() {
               <ChevronRight className="h-5 w-5 text-white/70" />
             </div>
           </a>
-
         </div>
       </div>
     );
@@ -233,348 +224,315 @@ export default function Home() {
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Hero Section */}
         <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] dark:from-[#2a241e] dark:via-[#201b16] dark:to-[#1a1612] text-white overflow-hidden select-none">
-        {/* Animated Background */}
-        <div className="absolute inset-0 opacity-30">
-          <motion.div
-            animate={{ 
-              x: [0, 100, 0],
-              y: [0, 50, 0],
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute top-20 left-10 w-64 h-64 bg-[#D4C4B0]/40 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{ 
-              x: [0, -80, 0],
-              y: [0, -40, 0],
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-10 right-10 w-96 h-96 bg-[#C9B8A6]/30 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{ 
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-amber-400/10 rounded-full blur-3xl"
-          />
-        </div>
+          {/* Animated Background */}
+          <div className="absolute inset-0 opacity-30">
+            <motion.div
+              animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="absolute top-20 left-10 w-64 h-64 bg-[#D4C4B0]/40 rounded-full blur-3xl"
+            />
+            <motion.div
+              animate={{ x: [0, -80, 0], y: [0, -40, 0] }}
+              transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              className="absolute bottom-10 right-10 w-96 h-96 bg-[#C9B8A6]/30 rounded-full blur-3xl"
+            />
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-amber-400/10 rounded-full blur-3xl"
+            />
+          </div>
 
-        {/* Coffee Bean Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-10 left-20">☕</div>
-          <div className="absolute top-32 right-16">☕</div>
-          <div className="absolute bottom-20 left-32">☕</div>
-          <div className="absolute bottom-40 right-24">☕</div>
-        </div>
-        
-        <div className="relative max-w-lg mx-auto px-5 pt-12 pb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center gap-2 text-[#D4C4B0] text-sm font-medium mb-3"
+          {/* Coffee Bean Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute top-10 left-20">☕</div>
+            <div className="absolute top-32 right-16">☕</div>
+            <div className="absolute bottom-20 left-32">☕</div>
+            <div className="absolute bottom-40 right-24">☕</div>
+          </div>
+
+          <div className="relative max-w-lg mx-auto px-5 pt-12 pb-16">
+            {/* Notification Bell — top-right inside hero */}
+            <div className="absolute top-4 right-5">
+              <NotificationBell userEmail={user.email} />
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
             >
               <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-2 text-[#D4C4B0] text-sm font-medium mb-3"
               >
-                <Coffee className="h-4 w-4" />
-              </motion.div>
-              <span>Bean Rewards</span>
-            </motion.div>
-            <motion.h1 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-4xl font-bold mb-2"
-            >
-              {getGreeting()}, {(user?.display_name || user?.full_name)?.split(" ")[0]}! ☕
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-              className="text-[#E8DED8] text-base"
-            >
-              Your daily dose of rewards awaits
-            </motion.p>
-          </motion.div>
-          
-          {/* Enhanced Quick Stats */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="grid grid-cols-2 gap-4 mt-8"
-          >
-            <motion.div
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 shadow-xl"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <Star className="h-5 w-5 text-amber-300" />
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.7, type: "spring" }}
-                  className="text-xs bg-amber-400/20 text-amber-200 px-2 py-0.5 rounded-full"
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
-                  Active
-                </motion.span>
-              </div>
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.8, type: "spring" }}
-                className="text-3xl font-bold mb-1"
-              >
-                {customer?.points_balance || 0}
+                  <Coffee className="h-4 w-4" />
+                </motion.div>
+                <span>Bean Rewards</span>
               </motion.div>
-              <div className="text-sm text-[#E8DED8]">Points Balance</div>
+              <motion.h1
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-4xl font-bold mb-2"
+              >
+                {getGreeting()}, {(user?.display_name || user?.full_name)?.split(" ")[0]}! ☕
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-[#E8DED8] text-base"
+              >
+                Your daily dose of rewards awaits
+              </motion.p>
             </motion.div>
-            
+
+            {/* Quick Stats */}
             <motion.div
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 shadow-xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="grid grid-cols-2 gap-4 mt-8"
             >
-              <div className="flex items-center justify-between mb-2">
-                <Gift className="h-5 w-5 text-green-300" />
-                <Sparkles className="h-4 w-4 text-green-200" />
-              </div>
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.9, type: "spring" }}
-                className="text-3xl font-bold mb-1"
+              <motion.div
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 shadow-xl"
               >
-                {customer?.cups_redeemed || 0}
+                <div className="flex items-center justify-between mb-2">
+                  <Star className="h-5 w-5 text-amber-300" />
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.7, type: "spring" }}
+                    className="text-xs bg-amber-400/20 text-amber-200 px-2 py-0.5 rounded-full"
+                  >
+                    Active
+                  </motion.span>
+                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.8, type: "spring" }}
+                  className="text-3xl font-bold mb-1"
+                >
+                  {customer?.points_balance || 0}
+                </motion.div>
+                <div className="text-sm text-[#E8DED8]">Points Balance</div>
               </motion.div>
-              <div className="text-sm text-[#E8DED8]">Cups Redeemed</div>
+
+              <motion.div
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-5 border border-white/20 shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <Gift className="h-5 w-5 text-green-300" />
+                  <Sparkles className="h-4 w-4 text-green-200" />
+                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.9, type: "spring" }}
+                  className="text-3xl font-bold mb-1"
+                >
+                  {customer?.cups_redeemed || 0}
+                </motion.div>
+                <div className="text-sm text-[#E8DED8]">Cups Redeemed</div>
+              </motion.div>
             </motion.div>
+          </div>
+        </div>
+
+        {/* Enhanced Branding Logo - Overlapping Hero */}
+        <div className="relative z-10 flex justify-center -mt-12">
+          <motion.div
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            className="bg-white rounded-full p-4 shadow-2xl border-4 border-white"
+          >
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4C4B0] via-[#C9B8A6] to-[#B5A593] flex items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 bg-gradient-to-br from-amber-200/30 to-transparent"
+              />
+              <Coffee className="h-8 w-8 text-[#5C4A3A] relative z-10" />
+            </div>
           </motion.div>
         </div>
-      </div>
 
-      {/* Enhanced Branding Logo - Overlapping Hero */}
-      <div className="relative z-10 flex justify-center -mt-12">
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          className="bg-white rounded-full p-4 shadow-2xl border-4 border-white"
-        >
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4C4B0] via-[#C9B8A6] to-[#B5A593] flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent" />
+        {/* Main Content */}
+        <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
+          {user && (
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 bg-gradient-to-br from-amber-200/30 to-transparent"
-            />
-            <Coffee className="h-8 w-8 text-[#5C4A3A] relative z-10" />
-          </div>
-        </motion.div>
-      </div>
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <PersonalizedOffers userEmail={user.email} />
+            </motion.div>
+          )}
 
-      {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
-        {/* Personalized AI Offers - Premium First */}
-        {user && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <PersonalizedOffers userEmail={user.email} />
-          </motion.div>
-        )}
+          {customer && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.75 }}
+            >
+              <TierBadge tier={customer.tier || "Bronze"} totalPoints={customer.total_points_earned || 0} />
+            </motion.div>
+          )}
 
-        {/* Tier Badge */}
-        {customer && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.75 }}
-          >
-            <TierBadge 
-              tier={customer.tier || "Bronze"} 
-              totalPoints={customer.total_points_earned || 0} 
-            />
-          </motion.div>
-        )}
+          {customer && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              <RewardProgress currentPoints={customer.points_balance || 0} />
+            </motion.div>
+          )}
 
-        {/* Reward Progress */}
-        {customer && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            <RewardProgress currentPoints={customer.points_balance || 0} />
-          </motion.div>
-        )}
+          {allDrops.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
+                    <Zap className="h-5 w-5 text-amber-500" />
+                  </motion.div>
+                  <h2 className="text-lg font-bold text-[#5C4A3A]">Flash Drops</h2>
+                  {activeDrops.length > 0 && (
+                    <motion.span
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-lg"
+                    >
+                      LIVE
+                    </motion.span>
+                  )}
+                </div>
+                <Link to={createPageUrl("FlashDrops")} className="text-[#8B7355] text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
+                  See all <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
 
-        {/* Flash Drops Alert */}
-        {allDrops.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Zap className="h-5 w-5 text-amber-500" />
-                </motion.div>
-                <h2 className="text-lg font-bold text-[#5C4A3A]">Flash Drops</h2>
-                {activeDrops.length > 0 && (
-                  <motion.span
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                    className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-lg"
+              <div className="space-y-4">
+                {allDrops.slice(0, 2).map((drop, index) => (
+                  <motion.div
+                    key={drop.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 + index * 0.1 }}
                   >
-                    LIVE
-                  </motion.span>
-                )}
+                    <FlashDropCard drop={drop} currentUserEmail={user?.email} onClaim={handleClaimDrop} />
+                  </motion.div>
+                ))}
               </div>
-              <Link 
-                to={createPageUrl("FlashDrops")}
-                className="text-[#8B7355] text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
+            </motion.div>
+          )}
+
+          {customer?.referral_code && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.1 }}
+            >
+              <ReferralCard referralCode={customer.referral_code} referralCount={customer.referral_count || 0} />
+            </motion.div>
+          )}
+
+          {/* Quick Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className="grid grid-cols-2 gap-4"
+          >
+            <Link to={createPageUrl("Rewards")}>
+              <motion.div
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-lg hover:shadow-xl transition-shadow group relative overflow-hidden"
               >
-                See all <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-            
-            <div className="space-y-4">
-              {allDrops.slice(0, 2).map((drop, index) => (
-                <motion.div
-                  key={drop.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 1 + index * 0.1 }}
-                >
-                  <FlashDropCard
-                    drop={drop}
-                    currentUserEmail={user?.email}
-                    onClaim={handleClaimDrop}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#F5EBE8] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative">
+                  <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.6 }} className="rounded-2xl bg-gradient-to-br from-[#F5EBE8] to-[#EDE3DF] p-4 w-fit mb-4 shadow-sm">
+                    <Gift className="h-7 w-7 text-[#8B7355]" />
+                  </motion.div>
+                  <h3 className="font-bold text-[#5C4A3A] text-lg">Rewards</h3>
+                  <p className="text-xs text-[#8B7355] mt-1.5 leading-relaxed">Redeem your points</p>
+                </div>
+              </motion.div>
+            </Link>
 
-        {/* Referral Card */}
-        {customer?.referral_code && (
+            <Link to={createPageUrl("Community")}>
+              <motion.div
+                whileHover={{ scale: 1.05, y: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-lg hover:shadow-xl transition-shadow group relative overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-[#EDE3DF] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative">
+                  <motion.div whileHover={{ scale: 1.1 }} transition={{ duration: 0.3 }} className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-4 w-fit mb-4 shadow-sm">
+                    <Users className="h-7 w-7 text-[#8B7355]" />
+                  </motion.div>
+                  <h3 className="font-bold text-[#5C4A3A] text-lg">Community</h3>
+                  <p className="text-xs text-[#8B7355] mt-1.5 leading-relaxed">Join the conversation</p>
+                </div>
+              </motion.div>
+            </Link>
+          </motion.div>
+
+          {/* Find Us on Maps */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.1 }}
+            transition={{ delay: 1.25 }}
           >
-            <ReferralCard 
-              referralCode={customer.referral_code}
-              referralCount={customer.referral_count || 0}
-            />
+            <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
+              <motion.div
+                whileHover={{ scale: 1.02, y: -3 }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-lg flex items-center gap-4"
+              >
+                <div className="rounded-2xl bg-white/20 p-4">
+                  <MapPin className="h-7 w-7 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-white text-lg">Find Us on Maps</h3>
+                  <p className="text-xs text-[#E8DED8] mt-1">Get directions to our store</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white/70" />
+              </motion.div>
+            </a>
           </motion.div>
-        )}
 
-        {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2 }}
-          className="grid grid-cols-2 gap-4"
-        >
-          <Link to={createPageUrl("Rewards")}>
+          {/* Activity Feed */}
+          {user && (
             <motion.div
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-lg hover:shadow-xl transition-shadow group relative overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.3 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#F5EBE8] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative">
-                <motion.div 
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                  className="rounded-2xl bg-gradient-to-br from-[#F5EBE8] to-[#EDE3DF] p-4 w-fit mb-4 shadow-sm"
-                >
-                  <Gift className="h-7 w-7 text-[#8B7355]" />
-                </motion.div>
-                <h3 className="font-bold text-[#5C4A3A] text-lg">Rewards</h3>
-                <p className="text-xs text-[#8B7355] mt-1.5 leading-relaxed">Redeem your points</p>
-              </div>
+              <ActivityFeed userEmail={user.email} limit={5} />
             </motion.div>
-          </Link>
-          
-          <Link to={createPageUrl("Community")}>
-            <motion.div
-              whileHover={{ scale: 1.05, y: -5 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-lg hover:shadow-xl transition-shadow group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#EDE3DF] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative">
-                <motion.div 
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.3 }}
-                  className="rounded-2xl bg-gradient-to-br from-[#EDE3DF] to-[#E0D5CE] p-4 w-fit mb-4 shadow-sm"
-                >
-                  <Users className="h-7 w-7 text-[#8B7355]" />
-                </motion.div>
-                <h3 className="font-bold text-[#5C4A3A] text-lg">Community</h3>
-                <p className="text-xs text-[#8B7355] mt-1.5 leading-relaxed">Join the conversation</p>
-              </div>
-            </motion.div>
-          </Link>
-        </motion.div>
-
-        {/* Find Us on Maps */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.25 }}
-        >
-          <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
-            <motion.div
-              whileHover={{ scale: 1.02, y: -3 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-lg flex items-center gap-4"
-            >
-              <div className="rounded-2xl bg-white/20 p-4">
-                <MapPin className="h-7 w-7 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-white text-lg">Find Us on Maps</h3>
-                <p className="text-xs text-[#E8DED8] mt-1">Get directions to our store</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white/70" />
-            </motion.div>
-          </a>
-        </motion.div>
-
-        {/* Activity Feed */}
-        {user && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.3 }}
-          >
-            <ActivityFeed userEmail={user.email} limit={5} />
-          </motion.div>
-        )}
-      </div>
+          )}
+        </div>
       </div>
     </PullToRefresh>
     </>
