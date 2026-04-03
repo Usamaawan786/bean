@@ -170,32 +170,32 @@ export default function Profile() {
   };
 
   const handleQRScan = async (qrCodeId) => {
-    // Close scanner first
-    setShowQRScanner(false);
-    toast.info("Processing QR code...", { duration: 2000 });
+  // Close scanner first
+  setShowQRScanner(false);
+  toast.info("Processing QR code...", { duration: 2000 });
 
-    try {
-      const oldBalance = customer?.points_balance || 0;
-      const response = await base44.functions.invoke('processBillScan', { qrCodeId });
-      const data = response?.data;
+  try {
+    const oldBalance = customer?.points_balance || 0;
+    const response = await base44.functions.invoke('processBillScan', { qrCodeId });
+    const data = response?.data;
 
-      if (data?.success) {
-        const newBalance = data.new_balance;
-        // Show animation
-        setPointsData({ old: oldBalance, new: newBalance });
-        setShowPointsAnimation(true);
-        // Refresh customer data in background
-        loadUserData();
-        // Show referral bonus notification
-        if (data.referral_bonus > 0) {
-          toast.success(`🎉 Referral bonus unlocked! +${data.referral_bonus} points!`, { duration: 5000 });
-        }
-      } else {
-        toast.error(data?.error || "Failed to process QR code");
+    if (data?.success) {
+      // Use old_balance from server for accuracy, fall back to local
+      const before = data.old_balance !== undefined ? data.old_balance : oldBalance;
+      const after = data.new_balance;
+      setPointsData({ old: before, new: after });
+      setShowPointsAnimation(true);
+      // Refresh customer data in background
+      loadUserData();
+      if (data.referral_bonus > 0) {
+        toast.success(`🎉 Referral bonus unlocked! +${data.referral_bonus} points!`, { duration: 5000 });
       }
-    } catch (error) {
-      toast.error("Failed to scan QR code: " + (error?.message || "Unknown error"));
+    } else {
+      toast.error(data?.error || "Failed to process QR code");
     }
+  } catch (error) {
+    toast.error("Failed to scan QR code: " + (error?.message || "Unknown error"));
+  }
   };
 
   if (isLoading) {
