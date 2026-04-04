@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Coffee, User, Phone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function OnboardingNameModal({ onComplete }) {
+export default function OnboardingNameModal({ onComplete, userEmail }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
@@ -23,6 +23,16 @@ export default function OnboardingNameModal({ onComplete }) {
     setError("");
     setSaving(true);
     await base44.auth.updateMe({ display_name: name.trim(), phone: phone.trim() });
+    // Send user data to GHL via webhook
+    try {
+      await base44.functions.invoke('sendUserToGHL', {
+        name: name.trim(),
+        email: userEmail || "",
+        phone: phone.trim()
+      });
+    } catch (e) {
+      console.error('GHL webhook error:', e);
+    }
     onComplete(name.trim());
   };
 

@@ -221,7 +221,7 @@ export default function Home() {
 
   return (
     <>
-    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} />}
+    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} userEmail={user?.email} />}
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Hero Section */}
