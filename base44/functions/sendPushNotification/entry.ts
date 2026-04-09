@@ -90,6 +90,7 @@ async function sendBatch(tokens, notification, data, accessToken, projectId) {
       if (res.ok) {
         return { success: true };
       } else {
+        console.error("FCM error for token:", token.substring(0, 20), JSON.stringify(result));
         const errorCode = result?.error?.details?.[0]?.errorCode || result?.error?.status;
         if (errorCode === "UNREGISTERED" || errorCode === "INVALID_ARGUMENT") {
           return { success: false, invalidToken: token };
