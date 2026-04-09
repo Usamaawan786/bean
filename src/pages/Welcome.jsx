@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router-dom";
-import { Coffee, Gift, Users, Shield, FileText, ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Coffee, Gift, Users, ShoppingBag, Shield, FileText, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
@@ -9,8 +10,6 @@ const fadeUp = (delay = 0) => ({
   animate: { opacity: 1, y: 0 },
   transition: { delay, duration: 0.5 }
 });
-
-const goSignIn = () => { base44.auth.redirectToLogin('/Home'); };
 
 export default function Welcome() {
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -27,6 +26,8 @@ export default function Welcome() {
         if (isStaff) {
           navigate("/StaffPortal", { replace: true });
         } else {
+          // Check if this looks like a staff invite (came from /staff or no ref)
+          // Always route through StaffPortal so newly-invited staff see the right screen
           const fromStaff = document.referrer.includes("/staff") || params.get("staff") === "1";
           if (fromStaff) navigate("/StaffPortal", { replace: true });
           else navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
@@ -40,6 +41,7 @@ export default function Welcome() {
 
       {/* ── HERO ── */}
       <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden min-h-[45vh] flex items-center">
+        {/* ambient blobs */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div animate={{ x: [0, 80, 0], y: [0, 40, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
@@ -48,6 +50,7 @@ export default function Welcome() {
         </div>
 
         <div className="relative max-w-lg mx-auto px-6 py-16 text-left w-full">
+          {/* Small logo */}
           <motion.div {...fadeUp(0)} className="flex items-center gap-2 mb-8">
             <Coffee className="h-5 w-5 text-white" />
             <span className="text-sm font-medium">Bean</span>
@@ -63,14 +66,25 @@ export default function Welcome() {
           </motion.p>
 
           <motion.div {...fadeUp(0.3)} className="flex flex-wrap gap-2">
-            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Rewards</span>
-            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Community</span>
-            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Premium Coffee</span>
+            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Rewards
+
+            </span>
+            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Community
+
+            </span>
+            <span className="bg-white/10 backdrop-blur text-white text-sm px-4 py-2 rounded-full border border-white/20">Premium Coffee
+
+            </span>
           </motion.div>
 
-          <motion.button
-            {...fadeUp(0.4)}
-            onClick={goSignIn}
+          <motion.button 
+            {...fadeUp(0.4)} 
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              const ref = params.get("ref");
+              // Redirect to StaffPortal after login — it handles routing for both staff and regular users
+              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal");
+            }}
             className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >
             Join the Club →
@@ -81,8 +95,9 @@ export default function Welcome() {
       <div className="max-w-lg mx-auto px-5 pt-12 pb-24 space-y-4">
 
         {/* ── ACTION CARDS ── */}
-        <div onClick={goSignIn} className="cursor-pointer">
+        <Link to={createPageUrl("Community")}>
           <motion.div {...fadeUp(0.1)} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
               <Users className="h-6 w-6 text-white" />
             </div>
@@ -92,47 +107,52 @@ export default function Welcome() {
             </div>
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </motion.div>
-        </div>
+        </Link>
 
-        <div onClick={goSignIn} className="cursor-pointer">
+        <Link to={createPageUrl("Rewards")}>
           <motion.div {...fadeUp(0.15)} className="bg-white my-2 p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
+
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shrink-0">
               <Gift className="h-6 w-6 text-white" />
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-[#5C4A3A]">Explore Rewards</h3>
-              <p className="text-xs text-[#8B7355]">Redeem points for free coffee &amp; treats</p>
+              <p className="text-xs text-[#8B7355]">Redeem points for free coffee & treats</p>
             </div>
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </motion.div>
-        </div>
+        </Link>
 
         {/* ── SIGN IN CTA ── */}
-        <motion.div
-          {...fadeUp(0.2)}
-          onClick={goSignIn}
+        <motion.div 
+          {...fadeUp(0.2)} 
+          onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              const ref = params.get("ref");
+              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal");
+            }}
           className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
         >
           <Coffee className="h-6 w-6 mx-auto mb-3" />
           <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>
-          <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee &amp; more</p>
+          <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee & more</p>
         </motion.div>
 
         {/* ── LEGAL ── */}
         <div className="flex justify-center gap-6 pt-2">
-          <button onClick={() => { setShowPrivacy(!showPrivacy); setShowTerms(false); }}
+          <button onClick={() => {setShowPrivacy(!showPrivacy);setShowTerms(false);}}
           className="flex items-center gap-1.5 text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors font-medium">
             <Shield className="h-4 w-4" /> Privacy Policy
           </button>
-          <button onClick={() => { setShowTerms(!showTerms); setShowPrivacy(false); }}
+          <button onClick={() => {setShowTerms(!showTerms);setShowPrivacy(false);}}
           className="flex items-center gap-1.5 text-sm text-[#8B7355] hover:text-[#5C4A3A] transition-colors font-medium">
             <FileText className="h-4 w-4" /> Terms of Use
           </button>
         </div>
 
-        {showPrivacy && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
+        {showPrivacy &&
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
             <h3 className="font-bold text-lg flex items-center gap-2"><Shield className="h-5 w-5 text-[#8B7355]" /> Privacy Policy</h3>
             <p><strong>Last updated:</strong> March 2026</p>
             <p>Bean Coffee ("we", "us", or "our") is committed to protecting your privacy.</p>
@@ -142,11 +162,11 @@ export default function Welcome() {
             <p><strong>Security:</strong> We implement appropriate technical measures to protect your information against unauthorised access.</p>
             <p><strong>Your Rights:</strong> You may request access to, correction of, or deletion of your personal data by contacting us at support@beancoffee.co.</p>
           </motion.div>
-        )}
+        }
 
-        {showTerms && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
+        {showTerms &&
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-sm text-[#5C4A3A] space-y-3">
             <h3 className="font-bold text-lg flex items-center gap-2"><FileText className="h-5 w-5 text-[#8B7355]" /> Terms of Use</h3>
             <p><strong>Last updated:</strong> March 2026</p>
             <p>By using the Bean app, you agree to these Terms of Use.</p>
@@ -157,10 +177,10 @@ export default function Welcome() {
             <p><strong>Changes to Terms:</strong> We reserve the right to update these terms at any time. Continued use constitutes acceptance.</p>
             <p><strong>Contact:</strong> support@beancoffee.co</p>
           </motion.div>
-        )}
+        }
 
         <p className="text-center text-xs text-[#C9B8A6] pb-2">© 2026 Bean Coffee · Pakistan · All rights reserved</p>
       </div>
-    </div>
-  );
+    </div>);
+
 }

@@ -38,8 +38,8 @@ export default function OnboardingNameModal({ onComplete, userEmail }) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center px-0 sm:px-5"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-5"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
     >
       <motion.div
         initial={{ opacity: 0, y: 50 }}
