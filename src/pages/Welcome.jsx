@@ -10,7 +10,7 @@ const fadeUp = (delay = 0) => ({
   transition: { delay, duration: 0.5 }
 });
 
-const goSignIn = () => { window.location.href = '/SignIn'; };
+const goSignIn = () => { base44.auth.redirectToLogin('/Home'); };
 
 export default function Welcome() {
   const [showPrivacy, setShowPrivacy] = useState(false);
