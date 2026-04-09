@@ -18,7 +18,8 @@ async function getAccessToken(serviceAccount) {
   const signingInput = `${headerB64}.${payloadB64}`;
 
   // Import private key
-  const pemContents = serviceAccount.private_key
+  const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
+  const pemContents = privateKey
     .replace("-----BEGIN PRIVATE KEY-----", "")
     .replace("-----END PRIVATE KEY-----", "")
     .replace(/\n/g, "");
@@ -44,6 +45,8 @@ async function getAccessToken(serviceAccount) {
     body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
   });
   const tokenData = await tokenRes.json();
+  console.log('Token response status:', tokenRes.status);
+  console.log('Token response:', JSON.stringify(tokenData));
   return tokenData.access_token;
 }
 
@@ -132,8 +135,18 @@ Deno.serve(async (req) => {
 
     // Load service account and get access token
     const serviceAccountStr = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
-    const serviceAccount = JSON.parse(serviceAccountStr);
+    console.log('Service account string starts with:', serviceAccountStr?.substring(0, 50));
+    let serviceAccount;
+    try {
+      serviceAccount = JSON.parse(serviceAccountStr);
+      console.log('Parsed project_id:', serviceAccount.project_id);
+      console.log('Private key starts with:', serviceAccount.private_key?.substring(0, 40));
+    } catch(e) {
+      console.error('JSON parse error:', e.message);
+      return Response.json({ error: 'Failed to parse service account: ' + e.message }, { status: 500 });
+    }
     const accessToken = await getAccessToken(serviceAccount);
+    console.log('Got access token:', accessToken ? 'YES' : 'NO');
 
     // Load device tokens based on audience
     let allTokens = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
