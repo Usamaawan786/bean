@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Coffee, Gift, Users, ShoppingBag, Shield, FileText, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -82,8 +82,7 @@ export default function Welcome() {
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
               const ref = params.get("ref");
-              // Redirect to StaffPortal after login — it handles routing for both staff and regular users
-              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal");
+              window.location.href = `/auth/login?next=${encodeURIComponent(ref ? `/Home?ref=${ref}` : "/StaffPortal")}`;
             }}
             className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >
@@ -95,9 +94,8 @@ export default function Welcome() {
       <div className="max-w-lg mx-auto px-5 pt-12 pb-24 space-y-4">
 
         {/* ── ACTION CARDS ── */}
-        <Link to={createPageUrl("Community")}>
+        <div onClick={() => { const p = new URLSearchParams(window.location.search); const ref = p.get("ref"); base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal"); }} className="cursor-pointer">
           <motion.div {...fadeUp(0.1)} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
-
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
               <Users className="h-6 w-6 text-white" />
             </div>
@@ -107,9 +105,9 @@ export default function Welcome() {
             </div>
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </motion.div>
-        </Link>
+        </div>
 
-        <Link to={createPageUrl("Rewards")}>
+        <div onClick={() => { const p = new URLSearchParams(window.location.search); const ref = p.get("ref"); base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/StaffPortal"); }} className="cursor-pointer">
           <motion.div {...fadeUp(0.15)} className="bg-white my-2 p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
 
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shrink-0">
@@ -117,15 +115,15 @@ export default function Welcome() {
             </div>
             <div className="flex-1">
               <h3 className="font-bold text-[#5C4A3A]">Explore Rewards</h3>
-              <p className="text-xs text-[#8B7355]">Redeem points for free coffee & treats</p>
+              <p className="text-xs text-[#8B7355]">Redeem points for free coffee &amp; treats</p>
             </div>
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </motion.div>
-        </Link>
+        </div>
 
         {/* ── SIGN IN CTA ── */}
-        <motion.div 
-          {...fadeUp(0.2)} 
+        <motion.div
+          {...fadeUp(0.2)}
           onClick={() => {
               const params = new URLSearchParams(window.location.search);
               const ref = params.get("ref");
@@ -135,7 +133,7 @@ export default function Welcome() {
         >
           <Coffee className="h-6 w-6 mx-auto mb-3" />
           <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>
-          <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee & more</p>
+          <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee &amp; more</p>
         </motion.div>
 
         {/* ── LEGAL ── */}
