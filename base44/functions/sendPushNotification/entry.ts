@@ -87,11 +87,12 @@ async function sendBatch(tokens, notification, data, accessToken, projectId) {
         }
       );
       const result = await res.json();
+      console.log("FCM response status:", res.status, "body:", JSON.stringify(result));
       if (res.ok) {
         return { success: true };
       } else {
-        console.error("FCM error for token:", token.substring(0, 20), JSON.stringify(result));
         const errorCode = result?.error?.details?.[0]?.errorCode || result?.error?.status;
+        console.error("FCM error code:", errorCode, "for token:", token.substring(0, 30));
         if (errorCode === "UNREGISTERED" || errorCode === "INVALID_ARGUMENT") {
           return { success: false, invalidToken: token };
         }
