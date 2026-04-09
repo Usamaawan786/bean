@@ -9,14 +9,13 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Missing token or platform' }, { status: 400 });
         }
 
-        let userEmail = "";
+        let userEmail = null;
         try {
             const user = await base44.auth.me();
             if (user && user.email) {
                 userEmail = user.email;
             }
         } catch (_) {
-            // Not authenticated — save token without user email
             console.log("No authenticated user, saving token anonymously");
         }
 
@@ -24,18 +23,17 @@ Deno.serve(async (req) => {
         const existing = await base44.asServiceRole.entities.DeviceToken.filter({ token });
 
         if (existing.length > 0) {
-            await base44.asServiceRole.entities.DeviceToken.update(existing[0].id, {
-                user_email: userEmail || existing[0].user_email,
-                is_active: true
-            });
-            console.log("Updated existing token for:", userEmail);
+            const updateData = { is_active: true };
+            // Only update email if we have one and the existing record doesn't
+            if (userEmail && !existing[0].user_email) {
+                updateData.user_email = userEmail;
+            }
+            await base44.asServiceRole.entities.DeviceToken.update(existing[0].id, updateData);
+            console.log("Updated existing token for:", userEmail || "anonymous");
         } else {
-            await base44.asServiceRole.entities.DeviceToken.create({
-                token,
-                user_email: userEmail,
-                platform,
-                is_active: true
-            });
+            const createData = { token, platform, is_active: true };
+            if (userEmail) createData.user_email = userEmail;
+            await base44.asServiceRole.entities.DeviceToken.create(createData);
             console.log("Saved new token for:", userEmail || "anonymous");
         }
 

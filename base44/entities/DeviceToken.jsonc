@@ -26,7 +26,6 @@
   },
   "required": [
     "token",
-    "user_email",
     "platform"
   ],
   "rls": {
