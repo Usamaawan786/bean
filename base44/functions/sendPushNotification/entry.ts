@@ -67,7 +67,22 @@ async function sendBatch(tokens, notification, data, accessToken, projectId) {
           },
           data: data || {},
           apns: {
-            payload: { aps: { sound: "default", badge: 1 } }
+            headers: {
+              "apns-push-type": "alert",
+              "apns-priority": "10"
+            },
+            payload: {
+              aps: {
+                alert: {
+                  title: notification.title,
+                  body: notification.body
+                },
+                sound: "default",
+                badge: 1,
+                "mutable-content": 1,
+                "content-available": 1
+              }
+            }
           },
           android: {
             notification: { sound: "default", channel_id: "default" }
