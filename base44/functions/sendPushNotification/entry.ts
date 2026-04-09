@@ -17,7 +17,6 @@ async function getAccessToken(serviceAccount) {
   const payloadB64 = encode(payload);
   const signingInput = `${headerB64}.${payloadB64}`;
 
-  // Import private key
   const privateKey = serviceAccount.private_key.replace(/\\n/g, '\n');
   const pemContents = privateKey
     .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -46,7 +45,6 @@ async function getAccessToken(serviceAccount) {
   });
   const tokenData = await tokenRes.json();
   console.log('Token response status:', tokenRes.status);
-  console.log('Token response:', JSON.stringify(tokenData));
   return tokenData.access_token;
 }
 
@@ -55,7 +53,6 @@ async function sendBatch(tokens, notification, data, accessToken, projectId) {
   let failureCount = 0;
   const invalidTokens = [];
 
-  // FCM v1 API sends one message at a time, batch in parallel groups of 100
   const batchSize = 100;
   for (let i = 0; i < tokens.length; i += batchSize) {
     const batch = tokens.slice(i, i + batchSize);
@@ -124,80 +121,112 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { notification_id } = await req.json();
+    const reqBody = await req.json();
+    const { notification_id, title, body: msgBody, target, deep_link } = reqBody;
 
-    // Load notification record
-    const notifications = await base44.asServiceRole.entities.PushNotification.filter({ id: notification_id });
-    if (!notifications.length) {
-      return Response.json({ error: 'Notification not found' }, { status: 404 });
+    // Support direct mode (title + body + target) OR record-based mode (notification_id)
+    let notification;
+    if (notification_id) {
+      const records = await base44.asServiceRole.entities.PushNotification.filter({ id: notification_id });
+      if (!records.length) {
+        return Response.json({ error: 'Notification not found' }, { status: 404 });
+      }
+      notification = records[0];
+    } else if (title && msgBody) {
+      notification = { title, body: msgBody, audience: 'all', deep_link: deep_link || null, image_url: null };
+    } else {
+      return Response.json({ error: 'Provide notification_id, or title + body' }, { status: 400 });
     }
-    const notification = notifications[0];
 
-    // Load service account and get access token
+    // Load Firebase service account and get OAuth token
     const serviceAccountStr = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
-    console.log('Service account string starts with:', serviceAccountStr?.substring(0, 50));
     let serviceAccount;
     try {
       serviceAccount = JSON.parse(serviceAccountStr);
-      console.log('Parsed project_id:', serviceAccount.project_id);
-      console.log('Private key starts with:', serviceAccount.private_key?.substring(0, 40));
-    } catch(e) {
-      console.error('JSON parse error:', e.message);
-      return Response.json({ error: 'Failed to parse service account: ' + e.message }, { status: 500 });
+      console.log('Project ID:', serviceAccount.project_id);
+    } catch (e) {
+      return Response.json({ error: 'Failed to parse FIREBASE_SERVICE_ACCOUNT: ' + e.message }, { status: 500 });
     }
+
     const accessToken = await getAccessToken(serviceAccount);
-    console.log('Got access token:', accessToken ? 'YES' : 'NO');
-
-    // Load device tokens based on audience
-    let allTokens = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
-
-    if (notification.audience && notification.audience !== "all") {
-      const tier = notification.audience.replace("tier_", ""); // e.g. "bronze"
-      const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
-      allTokens = allTokens.filter(t => t.user_tier === tierCapitalized);
+    if (!accessToken) {
+      return Response.json({ error: 'Failed to obtain Firebase access token' }, { status: 500 });
     }
 
-    const tokens = allTokens.map(t => t.token).filter(Boolean);
+    // Resolve target tokens
+    let allTokenRecords = [];
+
+    if (target && target !== 'all' && !target.startsWith('tier_')) {
+      const isEmail = target.includes('@');
+      if (isEmail) {
+        // Send to all active tokens for a specific user
+        allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: target, is_active: true });
+      } else {
+        // Treat as a raw FCM token string
+        allTokenRecords = [{ token: target }];
+      }
+    } else {
+      allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
+      const audience = target || notification.audience;
+      if (audience && audience !== 'all' && audience.startsWith('tier_')) {
+        const tier = audience.replace('tier_', '');
+        const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
+        allTokenRecords = allTokenRecords.filter(t => t.user_tier === tierCapitalized);
+      }
+    }
+
+    const tokens = allTokenRecords.map(t => t.token).filter(Boolean);
+    console.log(`Sending to ${tokens.length} device(s)`);
 
     if (tokens.length === 0) {
-      await base44.asServiceRole.entities.PushNotification.update(notification_id, {
-        status: "sent",
-        sent_at: new Date().toISOString(),
-        sent_count: 0,
-        failure_count: 0,
-        sent_by: user.email
-      });
+      if (notification_id) {
+        await base44.asServiceRole.entities.PushNotification.update(notification_id, {
+          status: "sent",
+          sent_at: new Date().toISOString(),
+          sent_count: 0,
+          failure_count: 0,
+          sent_by: user.email
+        });
+      }
       return Response.json({ success: true, sent_count: 0, failure_count: 0, message: "No registered devices found" });
     }
 
+    // Build optional data payload
     const data = {};
-    if (notification.deep_link) data.deep_link = notification.deep_link;
+    const deepLinkValue = notification.deep_link || deep_link;
+    if (deepLinkValue) data.deep_link = deepLinkValue;
 
     const { successCount, failureCount, invalidTokens } = await sendBatch(
       tokens, notification, data, accessToken, serviceAccount.project_id
     );
 
-    // Deactivate invalid tokens
+    // Deactivate invalid/expired tokens
     if (invalidTokens.length > 0) {
+      console.log(`Deactivating ${invalidTokens.length} invalid token(s)`);
       for (const token of invalidTokens) {
-        const tokenRecords = allTokens.filter(t => t.token === token);
-        for (const record of tokenRecords) {
+        const records = allTokenRecords.filter(t => t.token === token && t.id);
+        for (const record of records) {
           await base44.asServiceRole.entities.DeviceToken.update(record.id, { is_active: false });
         }
       }
     }
 
-    // Update notification record
-    await base44.asServiceRole.entities.PushNotification.update(notification_id, {
-      status: "sent",
-      sent_at: new Date().toISOString(),
-      sent_count: successCount,
-      failure_count: failureCount,
-      sent_by: user.email
-    });
+    // Update PushNotification record if record-based
+    if (notification_id) {
+      await base44.asServiceRole.entities.PushNotification.update(notification_id, {
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+        sent_count: successCount,
+        failure_count: failureCount,
+        sent_by: user.email
+      });
+    }
 
+    console.log(`Done — success: ${successCount}, failed: ${failureCount}`);
     return Response.json({ success: true, sent_count: successCount, failure_count: failureCount });
+
   } catch (error) {
+    console.error('sendPushNotification error:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
