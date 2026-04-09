@@ -45,18 +45,9 @@ export default function usePushNotifications() {
 
           const platform = Capacitor.getPlatform();
 
-          // Save token — try with user email if authenticated, else save anonymously
+          // Save token via backend function (handles dedup + user association)
           try {
-            const isAuth = await base44.auth.isAuthenticated();
-            const user = isAuth ? await base44.auth.me() : null;
-            console.log("[Push] User authenticated:", isAuth, "email:", user?.email);
-
-            await base44.entities.DeviceToken.create({
-              token,
-              user_email: user?.email || "",
-              platform,
-              is_active: true
-            });
+            await base44.functions.invoke('saveDeviceToken', { token, platform });
             console.log("[Push] Token saved successfully!");
           } catch (saveErr) {
             console.error("[Push] Failed to save token:", saveErr);
