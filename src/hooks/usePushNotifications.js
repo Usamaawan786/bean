@@ -32,11 +32,7 @@ export default function usePushNotifications() {
           return;
         }
 
-        // Register with FCM
-        await PushNotifications.register();
-        console.log("[Push] Registered with FCM, waiting for token...");
-
-        // Listen for token
+        // IMPORTANT: Attach listener BEFORE calling register() so token is never missed
         PushNotifications.addListener("registration", async (tokenData) => {
           const token = tokenData.value;
           console.log("[Push] Got FCM token:", token ? token.substring(0, 20) + "..." : "EMPTY");
@@ -54,7 +50,12 @@ export default function usePushNotifications() {
           }
         });
 
+        // Register with FCM
+        await PushNotifications.register();
+        console.log("[Push] Registered with FCM, waiting for token...");
+
         // Handle foreground notifications
+
         PushNotifications.addListener("pushNotificationReceived", (notification) => {
           console.log("[Push] Notification received in foreground:", notification);
         });
