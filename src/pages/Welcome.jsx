@@ -95,7 +95,7 @@ export default function Welcome() {
       <div className="max-w-lg mx-auto px-5 pt-12 pb-24 space-y-4">
 
         {/* ── ACTION CARDS ── */}
-        <Link to={createPageUrl("Community")}>
+        <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="cursor-pointer">
           <motion.div {...fadeUp(0.1)} className="bg-white p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
 
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8B7355] to-[#6B5744] flex items-center justify-center shrink-0">
@@ -107,9 +107,9 @@ export default function Welcome() {
             </div>
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </motion.div>
-        </Link>
+        </div>
 
-        <Link to={createPageUrl("Rewards")}>
+        <div onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="cursor-pointer">
           <motion.div {...fadeUp(0.15)} className="bg-white my-2 p-5 rounded-2xl shadow-sm border border-[#E8DED8] flex items-center gap-4 hover:shadow-md transition-shadow">
 
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 flex items-center justify-center shrink-0">
@@ -121,7 +121,7 @@ export default function Welcome() {
             </div>
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </motion.div>
-        </Link>
+        </div>
 
         {/* ── SIGN IN CTA ── */}
         <motion.div 
