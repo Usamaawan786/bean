@@ -6,68 +6,66 @@ export default function usePushNotifications() {
     const register = async () => {
       try {
         const { Capacitor } = await import("@capacitor/core");
-        console.log("[Push] isNativePlatform:", Capacitor.isNativePlatform());
         console.log("[Push] platform:", Capacitor.getPlatform());
 
         if (!Capacitor.isNativePlatform()) {
-          console.log("[Push] Not native, skipping registration");
+          console.log("[Push] Not native, skipping");
           return;
         }
 
         const { PushNotifications } = await import("@capacitor/push-notifications");
 
-        // Check current permission status first
-        const permissionStatus = await PushNotifications.checkPermissions();
-        console.log("[Push] Current permission status:", permissionStatus.receive);
+        // Remove any stale listeners first to avoid duplicates
+        await PushNotifications.removeAllListeners();
 
-        let finalStatus = permissionStatus.receive;
+        // Check/request permissions
+        const permStatus = await PushNotifications.checkPermissions();
+        console.log("[Push] Permission status:", permStatus.receive);
+
+        let finalStatus = permStatus.receive;
         if (finalStatus === "prompt" || finalStatus === "prompt-with-rationale") {
           const result = await PushNotifications.requestPermissions();
           finalStatus = result.receive;
-          console.log("[Push] Permission request result:", finalStatus);
+          console.log("[Push] Permission granted:", finalStatus);
         }
 
         if (finalStatus !== "granted") {
-          console.log("[Push] Permission not granted, skipping");
+          console.log("[Push] Permission denied");
           return;
         }
 
-        // IMPORTANT: Attach listener BEFORE calling register() so token is never missed
+        // Attach listeners BEFORE register()
         PushNotifications.addListener("registration", async (tokenData) => {
           const token = tokenData.value;
-          console.log("[Push] Got FCM token:", token ? token.substring(0, 20) + "..." : "EMPTY");
-
+          console.log("[Push] FCM token received:", token ? token.substring(0, 30) + "..." : "EMPTY");
           if (!token) return;
 
           const platform = Capacitor.getPlatform();
-
-          // Save token via backend function (handles dedup + user association)
           try {
             await base44.functions.invoke('saveDeviceToken', { token, platform });
-            console.log("[Push] Token saved successfully!");
-          } catch (saveErr) {
-            console.error("[Push] Failed to save token:", saveErr);
+            console.log("[Push] Token saved successfully");
+          } catch (err) {
+            console.error("[Push] Failed to save token:", err);
           }
         });
 
-        // Register with FCM
-        await PushNotifications.register();
-        console.log("[Push] Registered with FCM, waiting for token...");
-
-        // Handle foreground notifications
+        PushNotifications.addListener("registrationError", (err) => {
+          console.error("[Push] Registration ERROR:", JSON.stringify(err));
+        });
 
         PushNotifications.addListener("pushNotificationReceived", (notification) => {
-          console.log("[Push] Notification received in foreground:", notification);
+          console.log("[Push] Foreground notification:", JSON.stringify(notification));
         });
 
-        // Handle notification tap
         PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-          console.log("[Push] Notification tapped:", action);
+          console.log("[Push] Notification tapped:", JSON.stringify(action));
           const deepLink = action.notification?.data?.deep_link;
-          if (deepLink) {
-            window.location.hash = deepLink;
-          }
+          if (deepLink) window.location.hash = deepLink;
         });
+
+        await PushNotifications.register();
+        console.log("[Push] register() called, waiting for token...");
+
       } catch (e) {
         console.error("[Push] Registration error:", e);
       }
