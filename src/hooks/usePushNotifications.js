@@ -18,19 +18,25 @@ async function saveToken(token, platform) {
 export default function usePushNotifications() {
   const savedRef = useRef(false);
 
-  // Retry saving stored token once auth is available (handles case where user wasn't logged in during registration)
+  // Retry saving stored token — handles both fresh installs (no user yet) and re-logins
   useEffect(() => {
     const stored = localStorage.getItem(TOKEN_KEY);
     const platform = localStorage.getItem(PLATFORM_KEY);
     if (!stored || !platform) return;
 
-    // Try immediately, then retry a few times to catch post-login state
-    const attempts = [1000, 4000, 10000, 20000];
+    console.log('[Push] Found stored token, will retry saving for platform:', platform);
+
+    // Try at multiple intervals to catch post-login state
+    const attempts = [500, 2000, 5000, 10000, 20000, 40000];
     const timers = attempts.map(delay =>
       setTimeout(async () => {
         if (savedRef.current) return;
+        console.log('[Push] Retry attempt at', delay, 'ms...');
         const ok = await saveToken(stored, platform);
-        if (ok) savedRef.current = true;
+        if (ok) {
+          savedRef.current = true;
+          console.log('[Push] Token saved successfully on retry at', delay, 'ms');
+        }
       }, delay)
     );
     return () => timers.forEach(clearTimeout);
