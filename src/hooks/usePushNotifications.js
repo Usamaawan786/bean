@@ -6,8 +6,8 @@ const PLATFORM_KEY = "bean_fcm_platform";
 
 async function saveToken(token, platform) {
   try {
-    await base44.functions.invoke('saveDeviceToken', { token, platform });
-    console.log("[Push] Token saved successfully");
+    const res = await base44.functions.invoke('saveDeviceToken', { token, platform });
+    console.log("[Push] Token saved successfully for platform:", platform, "res:", JSON.stringify(res?.data));
     return true;
   } catch (err) {
     console.error("[Push] Failed to save token:", err?.message || err);
@@ -46,7 +46,10 @@ export default function usePushNotifications() {
     const register = async () => {
       try {
         const { Capacitor } = await import("@capacitor/core");
-        console.log("[Push] platform:", Capacitor.getPlatform());
+        const platform = Capacitor.getPlatform();
+        console.log("[Push] ===== Push Registration Start =====");
+        console.log("[Push] Platform:", platform);
+        console.log("[Push] isNativePlatform:", Capacitor.isNativePlatform());
 
         if (!Capacitor.isNativePlatform()) {
           console.log("[Push] Not native, skipping");
@@ -54,40 +57,32 @@ export default function usePushNotifications() {
         }
 
         const { PushNotifications } = await import("@capacitor/push-notifications");
+        console.log("[Push] PushNotifications loaded, removing old listeners...");
         await PushNotifications.removeAllListeners();
 
-        const permStatus = await PushNotifications.checkPermissions();
-        console.log("[Push] Permission status:", permStatus.receive);
-
-        let finalStatus = permStatus.receive;
-        if (finalStatus === "prompt" || finalStatus === "prompt-with-rationale") {
-          const result = await PushNotifications.requestPermissions();
-          finalStatus = result.receive;
-          console.log("[Push] Permission result:", finalStatus);
-        }
-
-        if (finalStatus !== "granted") {
-          console.log("[Push] Permission denied:", finalStatus);
-          return;
-        }
-
+        // Register listeners BEFORE calling register()
         PushNotifications.addListener("registration", async (tokenData) => {
           const token = tokenData.value;
-          console.log("[Push] FCM token received:", token ? token.substring(0, 40) + "..." : "EMPTY");
-          if (!token) return;
+          console.log("[Push] ===== TOKEN RECEIVED =====");
+          console.log("[Push] Platform:", platform);
+          console.log("[Push] Token (first 50):", token ? token.substring(0, 50) + "..." : "EMPTY/NULL");
+          console.log("[Push] Token length:", token ? token.length : 0);
+          if (!token) {
+            console.error("[Push] Token is empty, aborting save");
+            return;
+          }
 
-          const platform = Capacitor.getPlatform();
-
-          // Persist token locally so we can retry if backend save fails
           localStorage.setItem(TOKEN_KEY, token);
           localStorage.setItem(PLATFORM_KEY, platform);
+          console.log("[Push] Token stored in localStorage, attempting save...");
 
           const ok = await saveToken(token, platform);
           if (ok) savedRef.current = true;
         });
 
         PushNotifications.addListener("registrationError", (err) => {
-          console.error("[Push] Registration ERROR:", JSON.stringify(err));
+          console.error("[Push] ===== REGISTRATION ERROR =====");
+          console.error("[Push] Error details:", JSON.stringify(err));
         });
 
         PushNotifications.addListener("pushNotificationReceived", (notification) => {
@@ -100,8 +95,26 @@ export default function usePushNotifications() {
           if (deepLink) window.location.hash = deepLink;
         });
 
+        const permStatus = await PushNotifications.checkPermissions();
+        console.log("[Push] Permission status:", permStatus.receive);
+
+        let finalStatus = permStatus.receive;
+        // On Android < 13, permission is auto-granted
+        if (finalStatus === "prompt" || finalStatus === "prompt-with-rationale") {
+          console.log("[Push] Requesting permission...");
+          const result = await PushNotifications.requestPermissions();
+          finalStatus = result.receive;
+          console.log("[Push] Permission result:", finalStatus);
+        }
+
+        if (finalStatus !== "granted") {
+          console.log("[Push] Permission denied:", finalStatus);
+          return;
+        }
+
+        console.log("[Push] Permission granted, calling register()...");
         await PushNotifications.register();
-        console.log("[Push] register() called, waiting for token...");
+        console.log("[Push] register() called, waiting for token callback...");
 
       } catch (e) {
         console.error("[Push] Registration error:", e);
