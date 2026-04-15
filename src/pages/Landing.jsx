@@ -99,6 +99,50 @@ export default function Landing() {
           </motion.div>
         ))}
 
+        {/* Download the App */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm"
+        >
+          <p className="text-xs font-semibold uppercase tracking-widest text-[#C9B8A6] mb-1">Available on</p>
+          <h3 className="font-bold text-[#5C4A3A] text-lg mb-4">Download the App</h3>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a
+              href="https://apps.apple.com/pk/app/bean-pakistan/id6758788396"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center gap-3 bg-[#5C4A3A] hover:bg-[#4a3a2c] text-white px-5 py-3.5 rounded-xl transition-colors"
+            >
+              <svg viewBox="0 0 814 1000" className="h-7 w-7 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
+                <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 70.1 0 128.4 46.4 172.5 46.4 42.8 0 109.6-49 192.5-49 30.5-.1 104.5 5.6 162.1 64.4zm-170.4-195.6c43.2-51.4 73.1-122.6 73.1-193.8 0-9.9-.6-19.9-2.5-28.6-69.3 2.5-151.6 46.4-200.9 103.9-38.3 43.8-74.6 114.9-74.6 187.1 0 10.5 1.9 21.1 2.5 24.3 4.4.6 11.6 1.9 18.8 1.9 62.2.1 139.9-42 183.6-94.8z"/>
+              </svg>
+              <div>
+                <p className="text-[10px] text-white/70 leading-none mb-0.5">Download on the</p>
+                <p className="font-bold text-base leading-tight">App Store</p>
+              </div>
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center gap-3 bg-[#5C4A3A] hover:bg-[#4a3a2c] text-white px-5 py-3.5 rounded-xl transition-colors"
+            >
+              <svg viewBox="0 0 48 48" className="h-7 w-7 shrink-0" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#fff" d="M7.2 43.7c.4.3 1 .3 1.5 0L27 27 21 21 7.2 43.7z"/>
+                <path fill="#fff" d="M35.3 19.5 29.6 16l-8.6 8 8.6 8 5.7-3.5c1.6-1 1.6-3.1 0-4z"/>
+                <path fill="#ffffffcc" d="M8.7 4.3C8.2 4 7.6 4 7.2 4.3L21 21l6-6L8.7 4.3z"/>
+                <path fill="#ffffffaa" d="M7 5.5v37L21 27 7 5.5z"/>
+              </svg>
+              <div>
+                <p className="text-[10px] text-white/70 leading-none mb-0.5">Get it on</p>
+                <p className="font-bold text-base leading-tight">Google Play</p>
+              </div>
+            </a>
+          </div>
+        </motion.div>
+
         {/* Star rating / social proof */}
         <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-3xl p-6 text-white text-center">
           <div className="flex justify-center gap-1 mb-2">
