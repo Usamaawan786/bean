@@ -135,7 +135,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       return base44.entities.CommunityPost.create({
         ...postData,
         author_email: user.email,
-        author_name: user.full_name || user.email.split("@")[0],
+        author_name: user.display_name || user.full_name || user.email.split("@")[0],
         author_profile_picture: user.profile_picture || null,
         likes_count: 0,
         liked_by: [],
@@ -311,7 +311,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
           {user ? (
             <PostComposer 
               onPost={createPostMutation.mutate}
-              userName={user?.full_name}
+              userName={user?.display_name || user?.full_name}
             />
           ) : (
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-center">

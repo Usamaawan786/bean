@@ -101,7 +101,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
       const commentData = {
         post_id: postId,
         author_email: currentUser.email,
-        author_name: currentUser.full_name || currentUser.email.split("@")[0],
+        author_name: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
         author_profile_picture: currentUser.profile_picture || null,
         content,
         likes_count: 0,
@@ -115,10 +115,10 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         base44.entities.Notification.create({
           to_email: replyTo.author_email,
           from_email: currentUser.email,
-          from_name: currentUser.full_name || currentUser.email.split('@')[0],
+          from_name: currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0],
           from_picture: currentUser.profile_picture || null,
           type: 'reply',
-          message: `${currentUser.full_name || currentUser.email.split('@')[0]} replied to your comment`,
+          message: `${currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0]} replied to your comment`,
           post_id: postId,
           is_read: false
         }).catch(() => {});
@@ -129,10 +129,10 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         base44.entities.Notification.create({
           to_email: postAuthorEmail,
           from_email: currentUser.email,
-          from_name: currentUser.full_name || currentUser.email.split('@')[0],
+          from_name: currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0],
           from_picture: currentUser.profile_picture || null,
           type: 'mention',
-          message: `${currentUser.full_name || currentUser.email.split('@')[0]} mentioned you in a comment`,
+          message: `${currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0]} mentioned you in a comment`,
           post_id: postId,
           is_read: false
         }).catch(() => {});
@@ -153,7 +153,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         id: `temp-${Date.now()}`,
         post_id: postId,
         author_email: currentUser.email,
-        author_name: currentUser.full_name || currentUser.email.split("@")[0],
+        author_name: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
         author_profile_picture: currentUser.profile_picture || null,
         content,
         likes_count: 0,
@@ -258,7 +258,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
             </div>
           )}
           <form onSubmit={handleSubmit} className="flex items-center gap-2">
-            <Avatar src={currentUser.profile_picture} name={currentUser.full_name} size="sm" />
+            <Avatar src={currentUser.profile_picture} name={currentUser.display_name || currentUser.full_name} size="sm" />
             <input
               ref={inputRef}
               value={newComment}
