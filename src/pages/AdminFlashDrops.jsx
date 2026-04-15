@@ -340,9 +340,15 @@ export default function AdminFlashDrops() {
   };
 
   const handleActivate = async (drop) => {
-    await base44.entities.FlashDrop.update(drop.id, { status: "active" });
+    const now = new Date();
+    const end = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes
+    await base44.entities.FlashDrop.update(drop.id, {
+      status: "active",
+      start_time: now.toISOString(),
+      end_time: end.toISOString(),
+    });
     queryClient.invalidateQueries({ queryKey: ["admin-flash-drops"] });
-    showToast(`"${drop.title}" is now LIVE! ⚡`);
+    showToast(`"${drop.title}" is now LIVE for 30 min! ⚡`);
     setTab("active");
   };
 
@@ -386,7 +392,7 @@ export default function AdminFlashDrops() {
   const handleGoLiveTemplate = async (tpl) => {
     setSaving(true);
     const now = new Date();
-    const end = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const end = new Date(now.getTime() + 30 * 60 * 1000); // 30 minutes
     await base44.entities.FlashDrop.create({
       title: tpl.title,
       description: tpl.description,

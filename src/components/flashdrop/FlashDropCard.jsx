@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { base44 } from "@/api/base44Client";
 import QRCode from "qrcode";
 
+const FLASH_DROP_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
 export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
   const [timeLeft, setTimeLeft] = useState("");
   const [isClaiming, setIsClaiming] = useState(false);
@@ -13,11 +15,20 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
   const [claimLoaded, setClaimLoaded] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState(null);
   const [showQR, setShowQR] = useState(false);
-  const [dropExpired, setDropExpired] = useState(false);
 
-  const isActive = drop.status === "active";
-  const isUpcoming = drop.status === "upcoming";
-  const isEnded = drop.status === "ended" || (drop.items_remaining !== undefined && drop.items_remaining <= 0);
+  // Determine if the drop is within its live 30-min window
+  const isWithinWindow = useCallback(() => {
+    if (drop.status !== "active") return false;
+    const now = Date.now();
+    const start = drop.start_time ? new Date(drop.start_time).getTime() : null;
+    const end = drop.end_time ? new Date(drop.end_time).getTime() : null;
+    // If end_time set, use it; otherwise allow 30 min from start_time
+    if (end) return now <= end;
+    if (start) return now <= start + FLASH_DROP_DURATION_MS;
+    return true;
+  }, [drop]);
+
+  const [isLive, setIsLive] = useState(isWithinWindow);
 
   const loadClaim = useCallback(async () => {
     if (!currentUserEmail || !drop.id) { setClaimLoaded(true); return; }
@@ -42,43 +53,108 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
     else setClaimLoaded(true);
   }, [loadClaim, currentUserEmail]);
 
+  // Countdown + live-window check
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const target = isUpcoming ? new Date(drop.start_time) : new Date(drop.end_time);
-      const diff = target - now;
-      if (isActive && diff <= 0) { setDropExpired(true); setTimeLeft("Ended"); return; }
-      if (diff <= 0) { setTimeLeft(isUpcoming ? "Starting now!" : "Ended"); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`);
+      const live = isWithinWindow();
+      setIsLive(live);
+
+      if (drop.status === "upcoming" && drop.start_time) {
+        const diff = new Date(drop.start_time) - now;
+        if (diff <= 0) { setTimeLeft("Starting now!"); return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`);
+        return;
+      }
+
+      if (drop.status === "active") {
+        const end = drop.end_time
+          ? new Date(drop.end_time)
+          : drop.start_time
+          ? new Date(new Date(drop.start_time).getTime() + FLASH_DROP_DURATION_MS)
+          : null;
+        if (!end) { setTimeLeft(""); return; }
+        const diff = end - now;
+        if (diff <= 0) { setTimeLeft("Ended"); return; }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        setTimeLeft(h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`);
+        return;
+      }
+
+      setTimeLeft("Ended");
     };
     update();
     const iv = setInterval(update, 1000);
     return () => clearInterval(iv);
-  }, [drop, isUpcoming, isActive]);
+  }, [drop, isWithinWindow]);
 
   const handleClaim = async () => {
-    if (!currentUserEmail) return;
+    if (!currentUserEmail || isClaiming) return;
     setIsClaiming(true);
-    await onClaim(drop);
-    await loadClaim();
-    setIsClaiming(false);
-    setShowQR(true);
+
+    try {
+      // Check for existing claim first (issue #4: reuse same QR)
+      const existing = await base44.entities.FlashDropClaim.filter({ drop_id: drop.id, user_email: currentUserEmail });
+
+      if (existing.length > 0) {
+        // Reuse existing claim — regenerate QR image from existing code
+        const c = existing[0];
+        setClaim(c);
+        const url = await QRCode.toDataURL(c.qr_code, {
+          width: 220, margin: 2,
+          color: { dark: "#5C4A3A", light: "#FFFFFF" },
+        });
+        setQrDataUrl(url);
+        setShowQR(true);
+      } else {
+        // First claim — create record
+        const qrCode = `FD-${drop.id.slice(-6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+        const newClaim = await base44.entities.FlashDropClaim.create({
+          drop_id: drop.id,
+          drop_title: drop.title,
+          user_email: currentUserEmail,
+          qr_code: qrCode,
+          is_redeemed: false,
+          expires_at: drop.end_time || null
+        });
+        const url = await QRCode.toDataURL(qrCode, {
+          width: 220, margin: 2,
+          color: { dark: "#5C4A3A", light: "#FFFFFF" },
+        });
+        setClaim(newClaim);
+        setQrDataUrl(url);
+        // Call parent to update drop claimed_by + award points
+        await onClaim(drop);
+        setShowQR(true);
+      }
+    } catch (e) {
+      console.error("Claim error:", e);
+    } finally {
+      setIsClaiming(false);
+    }
   };
 
-  const isQRValid = claim && !claim.is_redeemed && isActive && !dropExpired && !isEnded;
+  const isUpcoming = drop.status === "upcoming";
+  const isActive = drop.status === "active";
+  const isEnded = drop.status === "ended";
   const hasClaimed = !!claim || drop.claimed_by?.includes(currentUserEmail);
+  const isRedeemed = claim?.is_redeemed;
+  // QR is valid only if claimed, not redeemed, and drop is still in live window
+  const isQRValid = claim && !isRedeemed && isActive && isLive;
 
   return (
     <>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className={`relative rounded-3xl overflow-hidden shadow-lg ${isActive ? "ring-2 ring-[#C9B8A6] ring-offset-2" : ""}`}
+        className={`relative rounded-3xl overflow-hidden shadow-lg ${isActive && isLive ? "ring-2 ring-[#C9B8A6] ring-offset-2" : ""}`}
       >
-        {isActive && (
+        {isActive && isLive && (
           <motion.div
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
@@ -87,7 +163,7 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
         )}
 
         <div className="relative bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white p-6">
-          {isActive && (
+          {isActive && isLive && (
             <div className="bg-red-500 px-2.5 py-1 rounded-full absolute top-3 right-3 flex items-center gap-1.5">
               <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1, repeat: Infinity }} className="h-2 w-2 rounded-full bg-white" />
               <span className="text-xs font-bold uppercase">Live</span>
@@ -96,6 +172,11 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
           {isUpcoming && (
             <div className="absolute top-3 right-3 bg-[#C9B8A6]/90 px-2.5 py-1 rounded-full">
               <span className="text-xs font-bold uppercase">Upcoming</span>
+            </div>
+          )}
+          {(isEnded || (isActive && !isLive)) && (
+            <div className="absolute top-3 right-3 bg-gray-500/80 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase">Ended</span>
             </div>
           )}
 
@@ -120,7 +201,9 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
             </div>
             <div className="flex items-center gap-2 text-[#E8DED8]">
               <Clock className="h-4 w-4" />
-              <span className="text-sm">{isUpcoming ? "Starts in " : isActive ? "Ends in " : ""}{timeLeft}</span>
+              <span className="text-sm">
+                {isUpcoming ? "Starts in " : (isActive && isLive) ? "Ends in " : ""}{timeLeft}
+              </span>
             </div>
             <div className="flex items-center gap-2 text-[#E8DED8]">
               <Users className="h-4 w-4" />
@@ -133,36 +216,43 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
               <div className="flex justify-center py-2">
                 <div className="h-5 w-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               </div>
-            ) : claim?.is_redeemed ? (
+            ) : isRedeemed ? (
+              // Already redeemed — permanently voided
               <div className="flex items-center justify-center gap-2 bg-green-500/20 border border-green-400/30 text-white py-3 rounded-xl">
                 <ShieldCheck className="h-5 w-5" />
                 <span className="font-semibold">Flash Drop Redeemed ✓</span>
               </div>
             ) : isQRValid ? (
+              // Has a live, unredeemed QR — show it
               <Button
                 onClick={() => setShowQR(true)}
                 className="w-full rounded-xl bg-white text-[#5C4A3A] hover:bg-[#F5F1ED] font-bold py-3 gap-2"
               >
                 <ScanLine className="h-5 w-5" /> Show My QR Code
               </Button>
-            ) : hasClaimed && (isEnded || dropExpired) ? (
+            ) : hasClaimed && !isLive && !isRedeemed ? (
+              // Had a claim but drop window expired
               <div className="flex items-center justify-center gap-2 bg-white/10 text-[#E8DED8] py-3 rounded-xl">
                 <AlertTriangle className="h-4 w-4" />
                 <span className="font-semibold text-sm">Drop Ended · QR Expired</span>
               </div>
-            ) : isEnded ? (
+            ) : isEnded || (isActive && !isLive) ? (
+              // Drop ended and user never claimed
               <Button disabled className="w-full rounded-xl bg-[#8B7355]/30 text-[#D4C4B0]">Drop Ended</Button>
             ) : isUpcoming ? (
               <Button disabled className="w-full rounded-xl bg-[#8B7355]/30 text-[#E8DED8]">
-                <Clock className="h-4 w-4 mr-2" />Starts {format(new Date(drop.start_time), "h:mm a")}
+                <Clock className="h-4 w-4 mr-2" />Starts {drop.start_time ? format(new Date(drop.start_time), "h:mm a") : "soon"}
               </Button>
+            ) : (drop.items_remaining !== undefined && drop.items_remaining <= 0) ? (
+              <Button disabled className="w-full rounded-xl bg-[#8B7355]/30 text-[#D4C4B0]">Fully Claimed</Button>
             ) : (
+              // Active, in window, not yet claimed
               <Button
                 onClick={handleClaim}
-                disabled={isClaiming || !currentUserEmail || (drop.items_remaining !== undefined && drop.items_remaining <= 0)}
+                disabled={isClaiming || !currentUserEmail}
                 className="w-full rounded-xl bg-gradient-to-r from-[#D4C4B0] to-[#C9B8A6] hover:from-[#C9B8A6] hover:to-[#B8AFA4] text-[#5C4A3A] font-bold py-3"
               >
-                {isClaiming ? "Claiming..." : "Claim Your Free Coffee! ☕"}
+                {isClaiming ? "Generating QR..." : "Claim Your Free Coffee! ☕"}
               </Button>
             )}
           </div>
@@ -186,10 +276,7 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
               className="bg-white rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl relative"
               onClick={e => e.stopPropagation()}
             >
-              <button
-                onClick={() => setShowQR(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-              >
+              <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
                 <X className="h-5 w-5" />
               </button>
 
@@ -201,7 +288,7 @@ export default function FlashDropCard({ drop, currentUserEmail, onClaim }) {
                 <p className="text-xs text-[#8B7355] mt-1">Show this to the barista at the counter</p>
               </div>
 
-              {claim.is_redeemed ? (
+              {isRedeemed ? (
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
                   <ShieldCheck className="h-10 w-10 text-green-500 mx-auto mb-2" />
                   <p className="text-green-700 font-bold">Already Redeemed</p>
