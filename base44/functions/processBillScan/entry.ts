@@ -80,7 +80,19 @@ Deno.serve(async (req) => {
     console.log('Customer old balance:', oldBalance, '→ new balance:', newPointsBalance, '| total earned:', newTotalEarned);
 
     // 6. Handle referral bonus logic
-    const REFERRAL_SPEND_THRESHOLD = 2000;
+    let REFERRAL_SPEND_THRESHOLD = 2000;
+    let REFERRAL_BONUS_REFERRER = 25;
+    let REFERRAL_BONUS_JOINEE = 25;
+    try {
+      const settings = await base44.asServiceRole.entities.RewardSettings.list('-created_date', 1);
+      if (settings.length > 0) {
+        if (settings[0].referral_spend_threshold) REFERRAL_SPEND_THRESHOLD = settings[0].referral_spend_threshold;
+        if (settings[0].referral_bonus_points) REFERRAL_BONUS_REFERRER = settings[0].referral_bonus_points;
+        if (settings[0].referral_joinee_bonus_points) REFERRAL_BONUS_JOINEE = settings[0].referral_joinee_bonus_points;
+      }
+    } catch (e) {
+      console.log('Could not fetch RewardSettings for referral, using defaults');
+    }
     const justCrossedThreshold =
       customer.referred_by &&
       !customer.referral_bonus_awarded &&
@@ -94,7 +106,7 @@ Deno.serve(async (req) => {
       const referrers = await base44.asServiceRole.entities.Customer.filter({ created_by: customer.referred_by });
       if (referrers.length > 0) {
         const referrer = referrers[0];
-        referralBonus = 25;
+        referralBonus = REFERRAL_BONUS_JOINEE;
 
         // Update current customer with points + referral bonus
         await base44.asServiceRole.entities.Customer.update(customer.id, {
@@ -106,17 +118,17 @@ Deno.serve(async (req) => {
 
         // Award referrer bonus
         await base44.asServiceRole.entities.Customer.update(referrer.id, {
-          points_balance: (referrer.points_balance || 0) + 25,
-          total_points_earned: (referrer.total_points_earned || 0) + 25,
+          points_balance: (referrer.points_balance || 0) + REFERRAL_BONUS_REFERRER,
+          total_points_earned: (referrer.total_points_earned || 0) + REFERRAL_BONUS_REFERRER,
           referral_conversions: (referrer.referral_conversions || 0) + 1,
-          referral_points_earned: (referrer.referral_points_earned || 0) + 25
+          referral_points_earned: (referrer.referral_points_earned || 0) + REFERRAL_BONUS_REFERRER
         });
 
         await base44.asServiceRole.entities.Activity.create({
           user_email: referrer.created_by,
           action_type: "referral",
-          description: `Your referral reached PKR 2,000 — bonus unlocked!`,
-          points_amount: 25,
+          description: `Your referral reached PKR ${REFERRAL_SPEND_THRESHOLD.toLocaleString()} — bonus unlocked!`,
+          points_amount: REFERRAL_BONUS_REFERRER,
           metadata: { referred_email: user.email }
         });
 
@@ -124,7 +136,7 @@ Deno.serve(async (req) => {
           user_email: user.email,
           action_type: "referral",
           description: `Referral milestone reached — bonus points awarded!`,
-          points_amount: 25,
+          points_amount: REFERRAL_BONUS_JOINEE,
           metadata: { referrer_email: customer.referred_by }
         });
       }

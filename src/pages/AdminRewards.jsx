@@ -21,6 +21,7 @@ const defaultSettings = {
   referral_bonus_points: 25,
   referral_joinee_bonus_points: 25,
   flash_drop_points: 25,
+  referral_spend_threshold: 2000,
   notes: ""
 };
 
@@ -496,9 +497,10 @@ export default function AdminRewards() {
               <div className="space-y-4">
                 {[
                   { key: "welcome_bonus_points", label: "Welcome Bonus (New Signup)", desc: "Points given to new users when they first join" },
-                  { key: "referral_bonus_points", label: "Referral Bonus (Referrer)", desc: "Points given to the person who referred" },
-                  { key: "referral_joinee_bonus_points", label: "Referral Bonus (Joinee)", desc: "Points given to the person who joined via referral" },
+                  { key: "referral_bonus_points", label: "Referral Bonus (Referrer)", desc: "Awarded to referrer once their joinee spends PKR 2,000+" },
+                  { key: "referral_joinee_bonus_points", label: "Referral Bonus (Joinee)", desc: "Awarded to joinee once they spend PKR 2,000+ (after welcome/EBA points)" },
                   { key: "flash_drop_points", label: "Flash Drop Claim Points", desc: "Points given when a flash drop is claimed" },
+                  { key: "referral_spend_threshold", label: "Referral Spend Threshold (PKR)", desc: "Minimum PKR the joinee must spend before referral bonuses unlock" },
                 ].map(({ key, label, desc }) => (
                   <div key={key} className="flex items-center justify-between gap-4">
                     <div className="flex-1">
