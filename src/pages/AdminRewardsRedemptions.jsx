@@ -7,8 +7,9 @@ import {
   Star, TrendingUp, Users, Zap, PackageCheck, ArrowLeft,
   DollarSign, RefreshCw, Check, Search, CheckCircle, XCircle,
   Clock, AlertTriangle, Shield, Tag, ChevronDown, ChevronUp,
-  Loader2, ToggleLeft, ToggleRight, Filter, Eye
+  Loader2, ToggleLeft, ToggleRight, Filter, Eye, ScanLine
 } from "lucide-react";
+import FlashDropScannerModal from "../components/admin/FlashDropScannerModal";
 import UsersLeaderboard from "../components/admin/UsersLeaderboard";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -255,6 +256,7 @@ export default function AdminRewardsRedemptions() {
   const [codeInput, setCodeInput] = useState("");
   const [lookedUp, setLookedUp] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [showFDScanner, setShowFDScanner] = useState(false);
 
   // Discount state
   const [searchFM, setSearchFM] = useState("");
@@ -638,12 +640,40 @@ export default function AdminRewardsRedemptions() {
           </div>
         )}
 
+        {/* Flash Drop Scanner Modal */}
+        {showFDScanner && (
+          <FlashDropScannerModal
+            onClose={() => setShowFDScanner(false)}
+            onRedeemed={() => queryClient.invalidateQueries({ queryKey: ["admin-redemptions-all"] })}
+          />
+        )}
+
         {/* ─── VERIFY CODE ─── */}
         {activeTab === "verify" && (
           <div className="space-y-5">
+
+            {/* Flash Drop QR Scanner Card */}
+            <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] rounded-3xl p-5 text-white shadow-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <Zap className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Flash Drop QR Scanner</h3>
+                  <p className="text-white/70 text-xs">Scan customer's Flash Drop QR to auto-redeem</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFDScanner(true)}
+                className="w-full bg-white text-[#5C4A3A] font-bold rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-[#F5F1ED] transition-colors"
+              >
+                <ScanLine className="h-5 w-5" /> Open Scanner
+              </button>
+            </div>
+
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm">
               <h2 className="font-bold text-[#5C4A3A] mb-1 flex items-center gap-2">
-                <Search className="h-5 w-5 text-[#8B7355]" /> Look Up Redemption Code
+                <Search className="h-5 w-5 text-[#8B7355]" /> Look Up Reward Redemption Code
               </h2>
               <p className="text-sm text-[#8B7355] mb-4">Enter the code shown on the customer's reward screen to verify and honour.</p>
               <div className="flex gap-3">

@@ -45,6 +45,23 @@ export default function FlashDrops() {
   const handleClaimDrop = async (drop) => {
     if (!user) return;
     
+    // Check not already claimed
+    const existing = await base44.entities.FlashDropClaim.filter({ drop_id: drop.id, user_email: user.email });
+    if (existing.length > 0) return; // already claimed
+
+    // Generate unique QR code string
+    const qrCode = `FD-${drop.id.slice(-6).toUpperCase()}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    
+    // Create the claim record with QR code
+    await base44.entities.FlashDropClaim.create({
+      drop_id: drop.id,
+      drop_title: drop.title,
+      user_email: user.email,
+      qr_code: qrCode,
+      is_redeemed: false,
+      expires_at: drop.end_time || null
+    });
+
     const newClaimedBy = [...(drop.claimed_by || []), user.email];
     await base44.entities.FlashDrop.update(drop.id, {
       claimed_by: newClaimedBy,
