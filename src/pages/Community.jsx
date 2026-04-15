@@ -101,8 +101,11 @@ export default function Community() {
   );
 
   const following = user?.following || [];
+  const savedPostIds = user?.saved_posts || [];
   const feedFiltered = feedTab === "following"
     ? allFilteredPosts.filter(p => following.includes(p.author_email))
+    : feedTab === "saved"
+    ? allFilteredPosts.filter(p => savedPostIds.includes(p.id))
     : allFilteredPosts;
 
   // Pinned posts first
@@ -301,6 +304,12 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                     feedTab === "following" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
                   }`}
                 >Following</button>
+                <button
+                  onClick={() => setFeedTab("saved")}
+                  className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                    feedTab === "saved" ? "bg-[#8B7355] text-white" : "bg-[#F5EBE8] text-[#8B7355] hover:bg-[#EDE8E3]"
+                  }`}
+                >Saved</button>
               </div>
             )}
           </div>
