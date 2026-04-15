@@ -30,7 +30,8 @@ function renderContent(content) {
 }
 
 export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit }) {
-  const [isLiking, setIsLiking] = useState(false);
+  const [optimisticLiked, setOptimisticLiked] = useState(null);
+  const [optimisticCount, setOptimisticCount] = useState(null);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
@@ -43,15 +44,17 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isSaved = currentUserSavedPosts.includes(post.id);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
-  const isLiked = post.liked_by?.includes(currentUserEmail);
+  const isLiked = optimisticLiked !== null ? optimisticLiked : (post.liked_by?.includes(currentUserEmail) ?? false);
+  const displayLikesCount = optimisticCount !== null ? optimisticCount : (post.likes_count || 0);
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
 
-  const handleLike = async () => {
-    if (isLiking) return;
-    setIsLiking(true);
-    await onLike(post);
-    setIsLiking(false);
+  const handleLike = () => {
+    const newLiked = !isLiked;
+    const newCount = displayLikesCount + (newLiked ? 1 : -1);
+    setOptimisticLiked(newLiked);
+    setOptimisticCount(newCount);
+    onLike(post);
   };
 
   const handleReaction = (emoji) => {
@@ -229,13 +232,12 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                 onHoverStart={() => currentUserEmail && setShowReactions(true)}
                 onHoverEnd={() => setShowReactions(false)}
                 onClick={handleLike}
-                disabled={isLiking}
                 className={`flex items-center gap-1.5 text-sm transition-colors ${
                   isLiked ? "text-rose-500" : "text-[#C9B8A6] hover:text-rose-400"
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-                <span>{post.likes_count || 0}</span>
+                <span>{displayLikesCount}</span>
               </motion.button>
 
               <AnimatePresence>

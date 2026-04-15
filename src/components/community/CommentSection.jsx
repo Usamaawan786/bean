@@ -264,6 +264,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={replyTo ? `Reply to ${replyTo.author_name}...` : "Add a comment..."}
+              style={{ fontSize: '16px' }}
               className="flex-1 min-w-0 bg-[#F5EBE8] rounded-full px-4 py-2 text-sm text-[#5C4A3A] placeholder-[#C9B8A6] outline-none border-none focus:ring-0"
             />
             <button
