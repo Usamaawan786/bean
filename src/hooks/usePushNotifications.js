@@ -60,6 +60,25 @@ export default function usePushNotifications() {
         console.log("[Push] PushNotifications loaded, removing old listeners...");
         await PushNotifications.removeAllListeners();
 
+        // Create notification channel for Android 8+ (required for notifications to show)
+        if (platform === "android") {
+          try {
+            await PushNotifications.createChannel({
+              id: "default",
+              name: "Default Notifications",
+              description: "Bean app notifications",
+              importance: 5, // IMPORTANCE_HIGH
+              visibility: 1, // PUBLIC
+              sound: "default",
+              vibration: true,
+              lights: true,
+            });
+            console.log("[Push] Android notification channel created");
+          } catch (e) {
+            console.log("[Push] Channel creation error (may already exist):", e.message);
+          }
+        }
+
         // Register listeners BEFORE calling register()
         PushNotifications.addListener("registration", async (tokenData) => {
           const token = tokenData.value;

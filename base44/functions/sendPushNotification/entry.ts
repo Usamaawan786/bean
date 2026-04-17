@@ -83,7 +83,16 @@ async function sendBatch(tokens, notification, data, accessToken, projectId) {
             }
           },
           android: {
-            notification: { sound: "default", channel_id: "default" }
+            priority: "high",
+            notification: {
+              sound: "default",
+              channel_id: "default",
+              default_sound: true,
+              default_vibrate_timings: true,
+              default_light_settings: true,
+              notification_priority: "PRIORITY_HIGH",
+              visibility: "PUBLIC"
+            }
           }
         }
       };
