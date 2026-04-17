@@ -87,6 +87,13 @@ export default function usePushNotifications() {
 
         PushNotifications.addListener("pushNotificationReceived", (notification) => {
           console.log("[Push] Foreground notification:", JSON.stringify(notification));
+          // Force-display on Android when app is in foreground
+          if (platform === "android" && "Notification" in window && Notification.permission === "granted") {
+            new Notification(notification.title || "Bean", {
+              body: notification.body || "",
+              icon: "/icons/icon-192.png",
+            });
+          }
         });
 
         PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
