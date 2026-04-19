@@ -7,24 +7,49 @@ async function pushContactToGHL(contact) {
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
 
-  const payload = {
-    "First name": firstName,
-    "Last name": lastName,
-    "Email": contact.email || '',
-    "Phone number": contact.phone || ''
+  const locationId = Deno.env.get("GHL_LOCATION_ID") || '';
+  const apiKey = Deno.env.get("GHL_API_KEY") || '';
+
+  const contactPayload = {
+    firstName,
+    lastName,
+    name: contact.name || `${firstName} ${lastName}`.trim(),
+    email: contact.email || '',
+    phone: contact.phone || '',
+    locationId,
+    source: "Bean App"
   };
 
-  console.log('Pushing to GHL:', JSON.stringify(payload));
+  console.log('Pushing to GHL Contacts API:', JSON.stringify(contactPayload));
 
-  const response = await fetch(GHL_WEBHOOK, {
+  // 1. Create/upsert contact via GHL Contacts API
+  const contactsRes = await fetch('https://services.leadconnectorhq.com/contacts/', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'Version': '2021-07-28'
+    },
+    body: JSON.stringify(contactPayload)
   });
 
-  const responseText = await response.text();
-  console.log('GHL response status:', response.status, 'body:', responseText);
-  return { status: response.status, response: responseText };
+  const contactsText = await contactsRes.text();
+  console.log('GHL Contacts API status:', contactsRes.status, 'body:', contactsText);
+
+  // 2. Also fire the webhook for workflow enrollment
+  const webhookRes = await fetch(GHL_WEBHOOK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(contactPayload)
+  });
+
+  const webhookText = await webhookRes.text();
+  console.log('GHL Webhook status:', webhookRes.status, 'body:', webhookText);
+
+  return {
+    contacts_api: { status: contactsRes.status, response: contactsText },
+    webhook: { status: webhookRes.status, response: webhookText }
+  };
 }
 
 Deno.serve(async (req) => {
@@ -65,8 +90,7 @@ Deno.serve(async (req) => {
           console.error('Failed for user:', u.email, e.message);
           failCount++;
         }
-        // Small delay to avoid rate limiting
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 300));
       }
 
       return Response.json({ success: true, pushed: successCount, failed: failCount });
@@ -78,7 +102,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Use body data if provided, fallback to user object fields
     const name = body.name || user.display_name || user.full_name || '';
     const email = body.email || user.email || '';
     const phone = body.phone || user.phone || '';
