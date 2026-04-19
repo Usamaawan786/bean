@@ -90,9 +90,17 @@ export default function Home() {
 
   const allDrops = [...activeDrops, ...upcomingDrops];
 
-  const handleNameComplete = (name) => {
+  const handleNameComplete = (name, phone) => {
     setShowNameModal(false);
     setUser(prev => ({ ...prev, display_name: name }));
+    // Update customer record with name and phone so it's fully populated
+    if (customer) {
+      base44.entities.Customer.update(customer.id, {
+        display_name: name,
+        phone: phone,
+        user_email: user?.email || ''
+      }).catch(console.error);
+    }
   };
 
   const getGreeting = () => {
@@ -126,6 +134,7 @@ export default function Home() {
         } else {
           const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
           const newCustomer = await base44.entities.Customer.create({
+            user_email: u.email,
             referral_code: refCode,
             points_balance: 50,
             total_points_earned: 50,

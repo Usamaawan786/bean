@@ -22,18 +22,16 @@ export default function OnboardingNameModal({ onComplete, userEmail }) {
     }
     setError("");
     setSaving(true);
-    await base44.auth.updateMe({ display_name: name.trim(), phone: phone.trim() });
-    // Send user data to GHL via webhook
-    try {
-      await base44.functions.invoke('sendUserToGHL', {
-        name: name.trim(),
-        email: userEmail || "",
-        phone: phone.trim()
-      });
-    } catch (e) {
-      console.error('GHL webhook error:', e);
-    }
-    onComplete(name.trim());
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    await base44.auth.updateMe({ display_name: trimmedName, phone: trimmedPhone });
+    // Send user data to GHL (fire and forget — don't block onboarding)
+    base44.functions.invoke('sendUserToGHL', {
+      name: trimmedName,
+      email: userEmail || "",
+      phone: trimmedPhone
+    }).catch(e => console.error('GHL webhook error:', e));
+    onComplete(trimmedName, trimmedPhone);
   };
 
   return (

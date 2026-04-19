@@ -2,6 +2,18 @@
   "name": "Customer",
   "type": "object",
   "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email of the customer (mirrors created_by)"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Customer's display name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Customer's phone number"
+    },
     "points_balance": {
       "type": "number",
       "default": 0,
