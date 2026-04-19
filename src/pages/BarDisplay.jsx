@@ -1,8 +1,27 @@
 import { useEffect, useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Coffee, AlertTriangle, Wifi, Lock, LogOut, Loader2 } from "lucide-react";
+import { CheckCircle2, Coffee, AlertTriangle, Wifi, Lock, LogOut, Loader2, BarChart3, Clock, TrendingUp, ShoppingBag } from "lucide-react";
 import { format } from "date-fns";
+
+function durationMins(start, end) {
+  if (!start || !end) return null;
+  return Math.round((new Date(end) - new Date(start)) / 60000);
+}
+
+function StatCard({ icon: Icon, label, value, color }) {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-4">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+        <Icon className="h-5 w-5 text-white" />
+      </div>
+      <div>
+        <div className="text-2xl font-black text-white">{value}</div>
+        <div className="text-xs text-gray-400">{label}</div>
+      </div>
+    </div>
+  );
+}
 
 const STATION = "bar";
 const STAFF_ROLES = ["cashier", "manager", "admin", "super_admin"];
@@ -115,6 +134,8 @@ export default function BarDisplay() {
   const [orders, setOrders] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [historyOrders, setHistoryOrders] = useState([]);
+  const [filterType, setFilterType] = useState("all"); // all | dine_in | takeaway
+  const [filterDate, setFilterDate] = useState("today"); // today | week | all
   const [tapCount, setTapCount] = useState(0);
   const tapTimerRef = useRef(null);
 
@@ -143,8 +164,8 @@ export default function BarDisplay() {
   const loadHistory = async () => {
     const data = await base44.entities.KitchenOrder.filter(
       { overall_status: ["ready", "completed", "cancelled"] },
-      "-completed_at",
-      20
+      "-placed_at",
+      200
     );
     setHistoryOrders(data);
   };
@@ -268,6 +289,28 @@ export default function BarDisplay() {
         </button>
       </div>
 
+      {/* History Filters */}
+      {showHistory && (
+        <div className="border-b border-gray-800 px-6 py-4 flex flex-wrap gap-3">
+          <div className="flex gap-1 bg-gray-900 rounded-xl p-1 border border-gray-800">
+            {[["today", "Today"], ["week", "This Week"], ["all", "All Time"]].map(([val, label]) => (
+              <button key={val} onClick={() => setFilterDate(val)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterDate === val ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 bg-gray-900 rounded-xl p-1 border border-gray-800">
+            {[["all", "All Types"], ["takeaway", "🛍 Takeaway"], ["dine_in", "🪑 Dine In"]].map(([val, label]) => (
+              <button key={val} onClick={() => setFilterType(val)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filterType === val ? "bg-blue-600 text-white" : "text-gray-400 hover:text-white"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Order Grid */}
       <div className="p-5">
         {!showHistory && activeOrders.length === 0 ? (
@@ -277,27 +320,122 @@ export default function BarDisplay() {
             <p className="text-gray-700 mt-2">No pending drink orders</p>
           </div>
         ) : showHistory ? (
-          <div className="space-y-3">
-            {historyOrders.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">No completed orders</p>
-            ) : (
-              historyOrders.map(order => (
-                <div key={order.id} className={`border-l-4 rounded-lg p-4 ${order.overall_status === "completed" ? "border-green-600 bg-green-900/20" : "border-red-600 bg-red-900/20"}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xl font-black text-white">{order.order_number}</span>
-                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${order.overall_status === "completed" ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
-                      {order.overall_status === "completed" ? "✓ Completed" : "✗ Cancelled"}
-                    </span>
+          <div className="space-y-6">
+            {(() => {
+              const now = new Date();
+              const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+              
+              const filtered = historyOrders.filter(o => {
+                const placed = new Date(o.placed_at);
+                if (filterDate === "today" && placed < todayStart) return false;
+                if (filterDate === "week" && placed < weekStart) return false;
+                if (filterType === "dine_in" && o.order_type !== "dine_in") return false;
+                if (filterType === "takeaway" && o.order_type !== "takeaway") return false;
+                return true;
+              });
+
+              const completed = filtered.filter(o => o.overall_status === "ready" || o.overall_status === "completed");
+              const withTimes = completed.filter(o => o.placed_at && o.ready_at);
+              const durations = withTimes.map(o => durationMins(o.placed_at, o.ready_at));
+              const avgTime = durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null;
+              const fastOrders = durations.filter(d => d <= 5).length;
+              const slowOrders = durations.filter(d => d > 10).length;
+
+              return (
+                <>
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <StatCard icon={BarChart3} label="Total Orders" value={filtered.length} color="bg-blue-600" />
+                    <StatCard icon={Clock} label="Avg. Completion" value={avgTime !== null ? `${avgTime}m` : "—"} color="bg-blue-600" />
+                    <StatCard icon={TrendingUp} label="Under 5 mins" value={fastOrders} color="bg-green-600" />
+                    <StatCard icon={ShoppingBag} label="Takeaway" value={filtered.filter(o => o.order_type === "takeaway").length} color="bg-orange-600" />
                   </div>
-                  {order.customer_name && <p className="text-sm text-gray-300 mb-1">{order.customer_name}</p>}
-                  <p className="text-xs text-gray-400">
-                    {order.placed_at && order.completed_at && (
-                      <>Time: {Math.round((new Date(order.completed_at) - new Date(order.placed_at)) / 60000)}m</>
+
+                  {/* Efficiency breakdown */}
+                  {durations.length > 0 && (
+                    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                      <h2 className="font-bold text-white mb-4 flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-blue-400" /> Efficiency Breakdown
+                      </h2>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <div className="text-3xl font-black text-green-400">{fastOrders}</div>
+                          <div className="text-xs text-gray-400 mt-1">Fast (≤5 min)</div>
+                          <div className="text-xs text-green-500">{Math.round(fastOrders / durations.length * 100)}%</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl font-black text-yellow-400">{durations.filter(d => d > 5 && d <= 10).length}</div>
+                          <div className="text-xs text-gray-400 mt-1">On-Time (6–10 min)</div>
+                          <div className="text-xs text-yellow-500">{Math.round(durations.filter(d => d > 5 && d <= 10).length / durations.length * 100)}%</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl font-black text-red-400">{slowOrders}</div>
+                          <div className="text-xs text-gray-400 mt-1">Slow ({">"}10 min)</div>
+                          <div className="text-xs text-red-500">{Math.round(slowOrders / durations.length * 100)}%</div>
+                        </div>
+                      </div>
+                      <div className="mt-4 h-2 rounded-full bg-gray-800 flex overflow-hidden">
+                        <div className="bg-green-500 h-full transition-all" style={{ width: `${fastOrders / durations.length * 100}%` }} />
+                        <div className="bg-yellow-500 h-full transition-all" style={{ width: `${durations.filter(d => d > 5 && d <= 10).length / durations.length * 100}%` }} />
+                        <div className="bg-red-500 h-full transition-all" style={{ width: `${slowOrders / durations.length * 100}%` }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Order list */}
+                  <div className="space-y-2">
+                    {filtered.length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">No orders found for this period</p>
+                    ) : (
+                      filtered.map(order => {
+                        const dur = durationMins(order.placed_at, order.ready_at);
+                        const isTakeaway = order.order_type === "takeaway";
+                        const isCancelled = order.overall_status === "cancelled";
+                        const speedColor = dur === null ? "text-gray-500" : dur <= 5 ? "text-green-400" : dur <= 10 ? "text-yellow-400" : "text-red-400";
+
+                        return (
+                          <motion.div key={order.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                            className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4">
+                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${isCancelled ? "bg-red-600" : "bg-green-500"}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-black text-white text-base">{order.order_number}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isTakeaway ? "bg-orange-900/60 text-orange-300" : "bg-blue-900/60 text-blue-300"}`}>
+                                  {isTakeaway ? "🛍 Takeaway" : "🪑 Dine In"}
+                                </span>
+                                {order.customer_name && <span className="text-gray-400 text-xs">{order.customer_name}</span>}
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isCancelled ? "bg-red-900/60 text-red-300" : "bg-green-900/60 text-green-300"}`}>
+                                  {isCancelled ? "Cancelled" : "Completed"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-1 flex-wrap text-xs text-gray-500">
+                                <span>Placed: {order.placed_at ? format(new Date(order.placed_at), "HH:mm") : "—"}</span>
+                                {order.ready_at && <span>Ready: {format(new Date(order.ready_at), "HH:mm")}</span>}
+                                <span className="text-gray-600">{order.items?.length} item{order.items?.length !== 1 ? "s" : ""}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {order.items?.slice(0, 3).map((item, i) => (
+                                  <span key={i} className="text-xs text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded">
+                                    {item.quantity > 1 ? `×${item.quantity} ` : ""}{item.product_name}
+                                  </span>
+                                ))}
+                                {(order.items?.length || 0) > 3 && <span className="text-xs text-gray-600">+{order.items.length - 3} more</span>}
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              {dur !== null ? <div className={`text-2xl font-black ${speedColor}`}>{dur}m</div> : <div className="text-lg font-bold text-gray-600">—</div>}
+                              <div className="text-xs text-gray-600">total time</div>
+                              {dur !== null && <div className={`text-xs font-semibold mt-0.5 ${speedColor}`}>{dur <= 5 ? "⚡ Fast" : dur <= 10 ? "✓ On time" : "⚠ Slow"}</div>}
+                            </div>
+                          </motion.div>
+                        );
+                      })
                     )}
-                  </p>
-                </div>
-              ))
-            )}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
