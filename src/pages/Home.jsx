@@ -93,14 +93,7 @@ export default function Home() {
   const handleNameComplete = (name, phone) => {
     setShowNameModal(false);
     setUser(prev => ({ ...prev, display_name: name }));
-    // Update customer record with name and phone so it's fully populated
-    if (customer) {
-      base44.entities.Customer.update(customer.id, {
-        display_name: name,
-        phone: phone,
-        user_email: user?.email || ''
-      }).catch(console.error);
-    }
+    setCustomer(prev => prev ? { ...prev, display_name: name, phone } : prev);
   };
 
   const getGreeting = () => {
@@ -230,7 +223,7 @@ export default function Home() {
 
   return (
     <>
-    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} userEmail={user?.email} />}
+    {showNameModal && <OnboardingNameModal onComplete={handleNameComplete} userEmail={user?.email} customerId={customer?.id} />}
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
         {/* Hero Section */}

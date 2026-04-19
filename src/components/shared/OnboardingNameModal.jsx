@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Coffee, User, Phone } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
-export default function OnboardingNameModal({ onComplete, userEmail }) {
+export default function OnboardingNameModal({ onComplete, userEmail, customerId }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
@@ -24,13 +24,26 @@ export default function OnboardingNameModal({ onComplete, userEmail }) {
     setSaving(true);
     const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
+
+    // 1. Update user auth profile
     await base44.auth.updateMe({ display_name: trimmedName, phone: trimmedPhone });
-    // Send user data to GHL (fire and forget — don't block onboarding)
+
+    // 2. Update Customer record in DB immediately
+    if (customerId) {
+      await base44.entities.Customer.update(customerId, {
+        display_name: trimmedName,
+        phone: trimmedPhone,
+        user_email: userEmail || ""
+      });
+    }
+
+    // 3. Push to GHL
     base44.functions.invoke('sendUserToGHL', {
       name: trimmedName,
       email: userEmail || "",
       phone: trimmedPhone
-    }).catch(e => console.error('GHL webhook error:', e));
+    }).catch(e => console.error('GHL error:', e));
+
     onComplete(trimmedName, trimmedPhone);
   };
 
