@@ -123,43 +123,89 @@ export default function Welcome() {
         </div>
 
         {/* ── DOWNLOAD THE APP ── */}
-        <motion.div id="download-section" {...fadeUp(0.18)} className="bg-white rounded-2xl border border-[#E8DED8] p-6 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#C9B8A6] mb-1">Available on</p>
-          <h3 className="font-bold text-[#5C4A3A] text-lg mb-4">Download the App</h3>
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* iOS */}
-            <a
-              href="https://apps.apple.com/pk/app/bean-pakistan/id6758788396"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center gap-3 bg-[#5C4A3A] hover:bg-[#4a3a2c] text-white px-5 py-3.5 rounded-xl transition-colors group"
-            >
-              <svg viewBox="0 0 814 1000" className="h-7 w-7 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
-                <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 70.1 0 128.4 46.4 172.5 46.4 42.8 0 109.6-49 192.5-49 30.5-.1 104.5 5.6 162.1 64.4zm-170.4-195.6c43.2-51.4 73.1-122.6 73.1-193.8 0-9.9-.6-19.9-2.5-28.6-69.3 2.5-151.6 46.4-200.9 103.9-38.3 43.8-74.6 114.9-74.6 187.1 0 10.5 1.9 21.1 2.5 24.3 4.4.6 11.6 1.9 18.8 1.9 62.2.1 139.9-42 183.6-94.8z"/>
-              </svg>
-              <div>
-                <p className="text-[10px] text-white/70 leading-none mb-0.5">Download on the</p>
-                <p className="font-bold text-base leading-tight">App Store</p>
+        <motion.div id="download-section" {...fadeUp(0.18)} className="relative overflow-hidden rounded-3xl shadow-xl">
+          {/* Premium dark background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1a1208] via-[#2d1f0e] to-[#3d2b12]" />
+          {/* Subtle ambient glow */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4C4B0]/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl" />
+
+          <div className="relative p-7">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#8B7355] flex items-center justify-center shadow-lg">
+                <Coffee className="h-6 w-6 text-[#1a1208]" />
               </div>
-            </a>
-            {/* Android */}
-            <a
-              href="https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center gap-3 bg-[#5C4A3A] hover:bg-[#4a3a2c] text-white px-5 py-3.5 rounded-xl transition-colors group"
-            >
-              <svg viewBox="0 0 48 48" className="h-7 w-7 shrink-0" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#fff" d="M7.2 43.7c.4.3 1 .3 1.5 0L27 27 21 21 7.2 43.7z"/>
-                <path fill="#fff" d="M35.3 19.5 29.6 16l-8.6 8 8.6 8 5.7-3.5c1.6-1 1.6-3.1 0-4z"/>
-                <path fill="#ffffffcc" d="M8.7 4.3C8.2 4 7.6 4 7.2 4.3L21 21l6-6L8.7 4.3z"/>
-                <path fill="#ffffffaa" d="M7 5.5v37L21 27 7 5.5z"/>
-              </svg>
               <div>
-                <p className="text-[10px] text-white/70 leading-none mb-0.5">Get it on</p>
-                <p className="font-bold text-base leading-tight">Google Play</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#8B7355] mb-0.5">Bean Pakistan</p>
+                <h3 className="font-bold text-white text-xl leading-tight">Get the App</h3>
               </div>
-            </a>
+            </div>
+
+            <p className="text-[#C9B8A6] text-sm mb-6 leading-relaxed">
+              Earn rewards, catch flash drops & connect with Islamabad's coffee community — all in one place.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              {/* iOS */}
+              <a
+                href="https://apps.apple.com/pk/app/bean-pakistan/id6758788396"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 bg-white hover:bg-[#f0ede8] text-[#1a1208] px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg group"
+              >
+                {/* Apple logo */}
+                <svg viewBox="0 0 814 1000" className="h-8 w-8 fill-[#1a1208] shrink-0" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-57.8-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.3 269-317.3 70.1 0 128.4 46.4 172.5 46.4 42.8 0 109.6-49 192.5-49 30.5-.1 104.5 5.6 162.1 64.4zm-170.4-195.6c43.2-51.4 73.1-122.6 73.1-193.8 0-9.9-.6-19.9-2.5-28.6-69.3 2.5-151.6 46.4-200.9 103.9-38.3 43.8-74.6 114.9-74.6 187.1 0 10.5 1.9 21.1 2.5 24.3 4.4.6 11.6 1.9 18.8 1.9 62.2.1 139.9-42 183.6-94.8z"/>
+                </svg>
+                <div className="flex-1">
+                  <p className="text-[10px] text-[#5C4A3A] font-medium leading-none mb-0.5">Download on the</p>
+                  <p className="font-bold text-lg leading-tight">App Store</p>
+                </div>
+                <div className="text-[#8B7355] text-xs font-semibold bg-[#F5EBE8] px-2.5 py-1 rounded-full">iOS</div>
+              </a>
+
+              {/* Android */}
+              <a
+                href="https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] group"
+              >
+                {/* Google Play logo */}
+                <svg viewBox="0 0 48 48" className="h-8 w-8 shrink-0" xmlns="http://www.w3.org/2000/svg">
+                  <linearGradient id="gp1" x1="5.16" y1="23.98" x2="42.83" y2="23.98" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#32a071"/><stop offset=".07" stopColor="#2da771"/><stop offset=".48" stopColor="#15cf74"/><stop offset=".8" stopColor="#06e775"/><stop offset="1" stopColor="#00f076"/>
+                  </linearGradient>
+                  <linearGradient id="gp2" x1="23.81" y1="25.63" x2="41.29" y2="8.14" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#ffd800"/><stop offset="1" stopColor="#ff8a00"/>
+                  </linearGradient>
+                  <linearGradient id="gp3" x1="12.58" y1="26.77" x2="28.09" y2="42.28" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#ff3a44"/><stop offset="1" stopColor="#c31162"/>
+                  </linearGradient>
+                  <linearGradient id="gp4" x1="4.23" y1="8.68" x2="14.34" y2="18.79" gradientUnits="userSpaceOnUse">
+                    <stop offset="0" stopColor="#32a071"/><stop offset=".07" stopColor="#2da771"/><stop offset=".48" stopColor="#15cf74"/><stop offset=".8" stopColor="#06e775"/><stop offset="1" stopColor="#00f076"/>
+                  </linearGradient>
+                  <path fill="url(#gp1)" d="M5.16 5.47C4.6 6.05 4.27 6.97 4.27 8.2v31.6c0 1.23.33 2.15.9 2.73l.14.13L24.1 23.98v-.43L5.3 5.33l-.14.14z"/>
+                  <path fill="url(#gp2)" d="M30.38 30.26l-6.28-6.28v-.44l6.28-6.28.14.08 7.44 4.23c2.13 1.21 2.13 3.18 0 4.39l-7.44 4.22-.14.08z"/>
+                  <path fill="url(#gp3)" d="M30.52 30.18L24.1 23.77 5.16 42.72c.7.74 1.86.83 3.16.09l22.2-12.63"/>
+                  <path fill="url(#gp4)" d="M30.52 17.36L8.32 4.73C7.02 3.99 5.86 4.08 5.16 4.82L24.1 23.77l6.42-6.41z"/>
+                </svg>
+                <div className="flex-1">
+                  <p className="text-[10px] text-white/50 font-medium leading-none mb-0.5">Get it on</p>
+                  <p className="font-bold text-lg leading-tight">Google Play</p>
+                </div>
+                <div className="text-white/60 text-xs font-semibold bg-white/10 px-2.5 py-1 rounded-full">Android</div>
+              </a>
+            </div>
+
+            {/* Rating row */}
+            <div className="flex items-center justify-center gap-1.5 mt-5">
+              {[1,2,3,4,5].map(i => (
+                <svg key={i} className="h-4 w-4 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              ))}
+              <span className="text-[#8B7355] text-xs ml-1 font-medium">5.0 · Islamabad's #1 Coffee App</span>
+            </div>
           </div>
         </motion.div>
 
