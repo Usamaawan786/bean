@@ -16,6 +16,10 @@ export default function Welcome() {
   const [showTerms, setShowTerms] = useState(false);
   const navigate = useNavigate();
 
+  const scrollToDownload = () => {
+    document.getElementById("download-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
@@ -79,11 +83,7 @@ export default function Welcome() {
 
           <motion.button 
             {...fadeUp(0.4)} 
-            onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const ref = params.get("ref");
-              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/Home");
-            }}
+            onClick={scrollToDownload}
             className="mt-8 bg-white text-[#5C4A3A] px-8 py-4 rounded-full font-bold text-base shadow-lg hover:shadow-xl transition-all hover:scale-105"
           >
             Join the Club →
@@ -123,7 +123,7 @@ export default function Welcome() {
         </div>
 
         {/* ── DOWNLOAD THE APP ── */}
-        <motion.div {...fadeUp(0.18)} className="bg-white rounded-2xl border border-[#E8DED8] p-6 shadow-sm">
+        <motion.div id="download-section" {...fadeUp(0.18)} className="bg-white rounded-2xl border border-[#E8DED8] p-6 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-widest text-[#C9B8A6] mb-1">Available on</p>
           <h3 className="font-bold text-[#5C4A3A] text-lg mb-4">Download the App</h3>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -166,11 +166,7 @@ export default function Welcome() {
         {/* ── SIGN IN CTA ── */}
         <motion.div 
           {...fadeUp(0.2)} 
-          onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const ref = params.get("ref");
-              base44.auth.redirectToLogin(ref ? `/Home?ref=${ref}` : "/Home");
-            }}
+          onClick={scrollToDownload}
           className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
         >
           <Coffee className="h-6 w-6 mx-auto mb-3" />
