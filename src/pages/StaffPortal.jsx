@@ -2,21 +2,24 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
   cashier: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
+    { icon: ClipboardList, label: "Order Manager", desc: "Live orders — mark ready & served", link: "/OrderManager", color: "from-yellow-600 to-amber-700" },
     { icon: Wrench, label: "Customer Tools", desc: "Scan bills, check points, verify rewards & discounts", link: "/CashierTools", color: "from-emerald-600 to-emerald-700" },
   ],
   manager: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
+    { icon: ClipboardList, label: "Order Manager", desc: "Live orders — mark ready & served", link: "/OrderManager", color: "from-yellow-600 to-amber-700" },
     { icon: Wrench, label: "Customer Tools", desc: "Scan bills, check points, verify rewards & discounts", link: "/CashierTools", color: "from-emerald-600 to-emerald-700" },
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
   ],
   admin: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
+    { icon: ClipboardList, label: "Order Manager", desc: "Live orders — mark ready & served", link: "/OrderManager", color: "from-yellow-600 to-amber-700" },
     { icon: Wrench, label: "Customer Tools", desc: "Scan bills, check points, verify rewards & discounts", link: "/CashierTools", color: "from-emerald-600 to-emerald-700" },
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
     { icon: Gift, label: "Rewards & Redemptions", desc: "Manage rewards & verify codes", link: "/AdminRewardsRedemptions", color: "from-amber-600 to-amber-700" },
@@ -25,6 +28,7 @@ const ROLE_FEATURES = {
   ],
   super_admin: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
+    { icon: ClipboardList, label: "Order Manager", desc: "Live orders — mark ready & served", link: "/OrderManager", color: "from-yellow-600 to-amber-700" },
     { icon: Wrench, label: "Customer Tools", desc: "Scan bills, check points, verify rewards & discounts", link: "/CashierTools", color: "from-emerald-600 to-emerald-700" },
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
     { icon: Gift, label: "Rewards & Redemptions", desc: "Manage rewards & verify codes", link: "/AdminRewardsRedemptions", color: "from-amber-600 to-amber-700" },

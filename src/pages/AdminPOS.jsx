@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductManager from "@/components/admin/ProductManager";
 import BillGenerator from "@/components/admin/BillGenerator";
+import { buildKitchenOrder } from "@/lib/kitchenOrderUtils";
 
 export default function AdminPOS() {
   const [user, setUser] = useState(null);
@@ -21,6 +22,8 @@ export default function AdminPOS() {
   const [showBill, setShowBill] = useState(false);
   const [generatedBill, setGeneratedBill] = useState(null);
   const [completing, setCompleting] = useState(false);
+  const [orderType, setOrderType] = useState("dine_in"); // "dine_in" | "takeaway"
+  const [counter, setCounter] = useState("counter_1");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -137,6 +140,20 @@ export default function AdminPOS() {
         });
       } catch (e) { /* analytics failure should not block sale */ }
 
+      // Send order to kitchen display system
+      try {
+        const kitchenOrder = buildKitchenOrder({
+          cart,
+          customerInfo,
+          billNumber,
+          orderType,
+          counter,
+          total,
+          paymentMethod
+        });
+        await base44.entities.KitchenOrder.create(kitchenOrder);
+      } catch (e) { /* kitchen order failure should not block sale */ }
+
       const bill = {
         items: cart,
         customerInfo,
@@ -162,6 +179,7 @@ export default function AdminPOS() {
     setCart([]);
     setCustomerInfo({ name: "", phone: "" });
     setPaymentMethod("Cash");
+    setOrderType("dine_in");
     setShowBill(false);
     setGeneratedBill(null);
   };
@@ -273,6 +291,59 @@ export default function AdminPOS() {
                 <div className="flex items-center gap-2 mb-4">
                   <ShoppingCart className="h-5 w-5 text-[#8B7355]" />
                   <h2 className="font-semibold text-[#5C4A3A]">Current Sale</h2>
+                </div>
+
+                {/* Order Type */}
+                <div className="mb-4">
+                  <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Order Type</label>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setOrderType("dine_in")}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                        orderType === "dine_in"
+                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      🪑 Dine In
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOrderType("takeaway")}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                        orderType === "takeaway"
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      🛍 Takeaway
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCounter("counter_1")}
+                      className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
+                        counter === "counter_1"
+                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      Counter 1 (Takeaway)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCounter("counter_2")}
+                      className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
+                        counter === "counter_2"
+                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      Counter 2 (Dine In)
+                    </button>
+                  </div>
                 </div>
 
                 {/* Customer Info */}

@@ -1,0 +1,161 @@
+{
+  "name": "KitchenOrder",
+  "type": "object",
+  "properties": {
+    "order_number": {
+      "type": "string",
+      "description": "Display order number (e.g. #42)"
+    },
+    "bill_number": {
+      "type": "string",
+      "description": "Linked POS bill number"
+    },
+    "order_type": {
+      "type": "string",
+      "enum": [
+        "dine_in",
+        "takeaway"
+      ],
+      "default": "dine_in",
+      "description": "Dine in or takeaway"
+    },
+    "counter": {
+      "type": "string",
+      "enum": [
+        "counter_1",
+        "counter_2"
+      ],
+      "default": "counter_1",
+      "description": "Which cashier counter placed this order"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name for calling out"
+    },
+    "items": {
+      "type": "array",
+      "description": "All order items with per-item status",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "price": {
+            "type": "number"
+          },
+          "category": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "station": {
+            "type": "string",
+            "enum": [
+              "bar",
+              "kitchen"
+            ],
+            "description": "Which station handles this item"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "in_progress",
+              "done"
+            ],
+            "default": "pending"
+          }
+        }
+      }
+    },
+    "kitchen_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "done",
+        "not_applicable"
+      ],
+      "default": "pending",
+      "description": "Overall kitchen station status"
+    },
+    "bar_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "done",
+        "not_applicable"
+      ],
+      "default": "pending",
+      "description": "Overall bar station status"
+    },
+    "overall_status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "in_progress",
+        "ready",
+        "completed",
+        "cancelled"
+      ],
+      "default": "queued",
+      "description": "Overall order status"
+    },
+    "priority": {
+      "type": "number",
+      "default": 0,
+      "description": "Higher number = higher priority. Takeaway auto gets higher priority."
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Order total"
+    },
+    "payment_method": {
+      "type": "string",
+      "description": "Cash / Card / Mobile Payment"
+    },
+    "placed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was placed"
+    },
+    "ready_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was marked ready"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was picked up / served"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Special instructions"
+    }
+  },
+  "required": [
+    "order_number",
+    "items",
+    "order_type"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {},
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

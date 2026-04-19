@@ -20,6 +20,9 @@ import AdminRewards from './pages/AdminRewards';
 import AdminRewardsRedemptions from './pages/AdminRewardsRedemptions';
 import AdminWhatsApp from './pages/AdminWhatsApp';
 import AdminPushNotifications from './pages/AdminPushNotifications.jsx';
+import KitchenDisplay from './pages/KitchenDisplay';
+import BarDisplay from './pages/BarDisplay';
+import OrderManager from './pages/OrderManager';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
 import Welcome from './pages/Welcome';
@@ -76,6 +79,9 @@ function App() {
             <Route path="/staff" element={<StaffLogin />} />
             <Route path="/AdminCommunity" element={<AdminCommunity />} />
             <Route path="/CashierTools" element={<CashierTools />} />
+            <Route path="/KitchenDisplay" element={<KitchenDisplay />} />
+            <Route path="/BarDisplay" element={<BarDisplay />} />
+            <Route path="/OrderManager" element={<OrderManager />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
