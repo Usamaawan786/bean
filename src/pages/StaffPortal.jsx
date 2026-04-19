@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
@@ -10,12 +10,16 @@ const ROLE_FEATURES = {
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
     { icon: ClipboardList, label: "Order Manager", desc: "Live orders — mark ready & served", link: "/OrderManager", color: "from-yellow-600 to-amber-700" },
     { icon: Wrench, label: "Customer Tools", desc: "Scan bills, check points, verify rewards & discounts", link: "/CashierTools", color: "from-emerald-600 to-emerald-700" },
+    { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
+    { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
   ],
   manager: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
     { icon: ClipboardList, label: "Order Manager", desc: "Live orders — mark ready & served", link: "/OrderManager", color: "from-yellow-600 to-amber-700" },
     { icon: Wrench, label: "Customer Tools", desc: "Scan bills, check points, verify rewards & discounts", link: "/CashierTools", color: "from-emerald-600 to-emerald-700" },
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
+    { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
+    { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
   ],
   admin: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
@@ -24,6 +28,8 @@ const ROLE_FEATURES = {
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
     { icon: Gift, label: "Rewards & Redemptions", desc: "Manage rewards & verify codes", link: "/AdminRewardsRedemptions", color: "from-amber-600 to-amber-700" },
     { icon: Package, label: "Inventory", desc: "Manage stock levels", link: "/AdminInventory", color: "from-orange-600 to-orange-700" },
+    { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
+    { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
     { icon: Users, label: "Referrals", desc: "View referral activity", link: "/AdminReferrals", color: "from-purple-600 to-purple-700" },
   ],
   super_admin: [
@@ -33,6 +39,8 @@ const ROLE_FEATURES = {
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
     { icon: Gift, label: "Rewards & Redemptions", desc: "Manage rewards & verify codes", link: "/AdminRewardsRedemptions", color: "from-amber-600 to-amber-700" },
     { icon: Package, label: "Inventory", desc: "Manage stock levels", link: "/AdminInventory", color: "from-orange-600 to-orange-700" },
+    { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
+    { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
     { icon: Users, label: "Staff Management", desc: "Invite & manage team access", link: "/StaffManagement", color: "from-purple-600 to-purple-700" },
   ],
 };
