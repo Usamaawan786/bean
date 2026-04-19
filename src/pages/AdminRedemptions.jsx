@@ -173,7 +173,7 @@ export default function AdminRedemptions() {
 
   useEffect(() => {
     base44.auth.me().then(u => {
-      if (u?.role !== "admin") { window.location.href = "/"; return; }
+      if (!["admin", "super_admin", "manager"].includes(u?.role)) { window.location.href = "/StaffPortal"; return; }
       setUser(u);
     });
   }, []);
