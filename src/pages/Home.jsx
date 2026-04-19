@@ -141,7 +141,20 @@ export default function Home() {
             const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
             if (referrers.length > 0) {
               const referrer = referrers[0];
+              // Store referrer on new customer
               await base44.entities.Customer.update(newCustomer.id, { referred_by: referrer.created_by });
+              // Increment referrer's referral_count
+              await base44.entities.Customer.update(referrer.id, {
+                referral_count: (referrer.referral_count || 0) + 1
+              });
+              // Log activity for referrer
+              await base44.entities.Activity.create({
+                user_email: referrer.created_by,
+                action_type: "referral",
+                description: `A new friend joined using your referral link!`,
+                points_amount: 0,
+                metadata: { referred_email: u.email }
+              });
             }
           }
         }

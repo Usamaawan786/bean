@@ -37,17 +37,14 @@ export default function Referral() {
       const params = new URLSearchParams(window.location.search);
       const refCode = params.get('ref');
       
-      if (refCode && customers.length > 0) {
-        // This is a new user with a referral code
+      if (refCode && customers.length > 0 && !customers[0].referred_by) {
         const referrers = await base44.entities.Customer.filter({ referral_code: refCode });
-        if (referrers.length > 0 && !customers[0].referred_by) {
+        if (referrers.length > 0) {
           const referrer = referrers[0];
-          
-          // Store referrer info (points awarded on first purchase)
-          await base44.entities.Customer.update(customers[0].id, {
-            referred_by: referrer.created_by
+          await base44.entities.Customer.update(customers[0].id, { referred_by: referrer.created_by });
+          await base44.entities.Customer.update(referrer.id, {
+            referral_count: (referrer.referral_count || 0) + 1
           });
-          
           toast.success("Welcome! Scan your first bill to unlock referral bonus! 🎉");
         }
       }
@@ -87,8 +84,8 @@ export default function Referral() {
   const handleShare = async () => {
     if (navigator.share) {
       await navigator.share({
-        title: "Join BrewCrew!",
-        text: `Join me on BrewCrew and get free coffee! Use my code: ${customer?.referral_code}`,
+        title: "Join Bean! ☕",
+        text: `Join me on Bean — Islamabad's coffee rewards app! Use my referral link to sign up and we both get bonus points.`,
         url: referralLink
       });
     } else {

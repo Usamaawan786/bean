@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const { qrCodeId } = body;
+    const qrCodeId = body.qrCodeId || body.qr_code_id;
 
     if (!qrCodeId) {
       return Response.json({ success: false, error: 'QR code ID is required' }, { status: 400 });
