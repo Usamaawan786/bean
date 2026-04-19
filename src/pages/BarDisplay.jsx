@@ -180,7 +180,7 @@ export default function BarDisplay() {
     const updatedItems = order.items.map(it => it.station === "bar" ? { ...it, status: "done" } : it);
     const kitchenItems = updatedItems.filter(i => i.station === "kitchen");
     const allKitchenDone = kitchenItems.length === 0 || kitchenItems.every(i => i.status === "done");
-    const updates = { items: updatedItems, bar_status: "done", ...(allKitchenDone && { overall_status: "ready" }) };
+    const updates = { items: updatedItems, bar_status: "done", ...(allKitchenDone && { overall_status: "ready", ready_at: new Date().toISOString() }) };
     setOrders(prev => prev.filter(o => o.id !== orderId));
     await base44.entities.KitchenOrder.update(orderId, updates);
   };

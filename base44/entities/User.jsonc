@@ -5,41 +5,23 @@
     "role": {
       "type": "string",
       "enum": [
-        "admin",
-        "super_admin",
-        "manager",
+        "user",
         "cashier",
-        "user"
+        "manager",
+        "admin",
+        "super_admin"
       ],
       "default": "user",
-      "description": "User role controlling access level"
+      "description": "Staff role"
     },
-    "display_name": {
+    "counter": {
       "type": "string",
-      "description": "Display name shown in the app"
-    },
-    "phone": {
-      "type": "string",
-      "description": "Phone number"
-    },
-    "profile_picture": {
-      "type": "string",
-      "description": "Profile picture URL"
-    },
-    "following": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "description": "List of emails this user follows"
-    },
-    "followers_count": {
-      "type": "number",
-      "default": 0
-    },
-    "following_count": {
-      "type": "number",
-      "default": 0
+      "enum": [
+        "counter_1",
+        "counter_2",
+        ""
+      ],
+      "description": "For cashiers: which counter they are assigned to (counter_1=Takeaway, counter_2=Dine In)"
     }
   }
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserPlus, Users, Shield, ChevronDown, Loader2, Mail, Lock } from "lucide-react";
+import { ArrowLeft, UserPlus, Users, Shield, ChevronDown, Loader2, Mail, Lock, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,9 +113,18 @@ export default function StaffManagement() {
       toast.error("Only a Super Admin can grant Super Admin access.");
       return;
     }
-    await base44.entities.User.update(targetUser.id, { role: newRole });
+    // Clear counter if no longer a cashier
+    const updates = { role: newRole };
+    if (newRole !== "cashier") updates.counter = "";
+    await base44.entities.User.update(targetUser.id, updates);
     queryClient.invalidateQueries({ queryKey: ["all-staff-users"] });
     toast.success(`Role updated to ${ROLE_CONFIG[newRole]?.label || newRole}`);
+  };
+
+  const handleCounterChange = async (targetUser, newCounter) => {
+    await base44.entities.User.update(targetUser.id, { counter: newCounter });
+    queryClient.invalidateQueries({ queryKey: ["all-staff-users"] });
+    toast.success(`Counter assigned: ${newCounter === "counter_1" ? "Counter 1 (Takeaway)" : newCounter === "counter_2" ? "Counter 2 (Dine In)" : "Unassigned"}`);
   };
 
   const toggleMatrixCell = (featureKey, role) => {
@@ -239,21 +248,42 @@ export default function StaffManagement() {
                       </div>
                       <p className="text-xs text-[#8B7355] truncate">{u.email}</p>
                     </div>
-                    {locked ? (
-                      <Badge className={`${cfg.color} border text-xs`}>{cfg.icon} {cfg.label}</Badge>
-                    ) : (
-                      <select
-                        value={u.role}
-                        onChange={e => handleRoleChange(u, e.target.value)}
-                        className="text-xs border border-[#E8DED8] rounded-lg px-2 py-1 bg-white text-[#5C4A3A] focus:outline-none"
-                      >
-                        <option value="cashier">🧾 Cashier</option>
-                        <option value="manager">📊 Manager</option>
-                        <option value="admin">🔴 Admin</option>
-                        {user.role === "super_admin" && <option value="super_admin">👑 Super Admin</option>}
-                        <option value="user">👤 Remove Staff Access</option>
-                      </select>
-                    )}
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {/* Counter assignment for cashiers */}
+                      {u.role === "cashier" && !locked && (
+                        <select
+                          value={u.counter || ""}
+                          onChange={e => handleCounterChange(u, e.target.value)}
+                          className="text-xs border border-blue-200 bg-blue-50 text-blue-700 rounded-lg px-2 py-1 focus:outline-none"
+                          title="Assign counter"
+                        >
+                          <option value="">🖥 No Counter</option>
+                          <option value="counter_1">Counter 1 — Takeaway</option>
+                          <option value="counter_2">Counter 2 — Dine In</option>
+                        </select>
+                      )}
+                      {u.role === "cashier" && u.counter && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                          <Monitor className="h-3 w-3 inline mr-0.5" />
+                          {u.counter === "counter_1" ? "C1" : "C2"}
+                        </span>
+                      )}
+                      {locked ? (
+                        <Badge className={`${cfg.color} border text-xs`}>{cfg.icon} {cfg.label}</Badge>
+                      ) : (
+                        <select
+                          value={u.role}
+                          onChange={e => handleRoleChange(u, e.target.value)}
+                          className="text-xs border border-[#E8DED8] rounded-lg px-2 py-1 bg-white text-[#5C4A3A] focus:outline-none"
+                        >
+                          <option value="cashier">🧾 Cashier</option>
+                          <option value="manager">📊 Manager</option>
+                          <option value="admin">🔴 Admin</option>
+                          {user.role === "super_admin" && <option value="super_admin">👑 Super Admin</option>}
+                          <option value="user">👤 Remove Staff Access</option>
+                        </select>
+                      )}
+                    </div>
                   </div>
                 );
               })}

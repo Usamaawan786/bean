@@ -34,6 +34,14 @@ export default function AdminPOS() {
         return;
       }
       setUser(u);
+      // Auto-set counter & order type based on assigned counter
+      if (u.counter === "counter_1") {
+        setCounter("counter_1");
+        setOrderType("takeaway");
+      } else if (u.counter === "counter_2") {
+        setCounter("counter_2");
+        setOrderType("dine_in");
+      }
     };
     loadUser();
   }, []);
@@ -185,6 +193,7 @@ export default function AdminPOS() {
   };
 
   const canManageProducts = ["admin", "super_admin", "manager"].includes(user?.role);
+  const isCashierLocked = user?.role === "cashier" && !!user?.counter;
 
   if (!user) return null;
 
@@ -296,54 +305,40 @@ export default function AdminPOS() {
                 {/* Order Type */}
                 <div className="mb-4">
                   <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Order Type</label>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    <button
-                      type="button"
-                      onClick={() => setOrderType("dine_in")}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                        orderType === "dine_in"
-                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
-                          : "border-[#E8DED8] bg-white text-[#8B7355]"
-                      }`}
-                    >
-                      🪑 Dine In
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setOrderType("takeaway")}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                        orderType === "takeaway"
-                          ? "border-orange-500 bg-orange-50 text-orange-700"
-                          : "border-[#E8DED8] bg-white text-[#8B7355]"
-                      }`}
-                    >
-                      🛍 Takeaway
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setCounter("counter_1")}
-                      className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
-                        counter === "counter_1"
-                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
-                          : "border-[#E8DED8] bg-white text-[#8B7355]"
-                      }`}
-                    >
-                      Counter 1 (Takeaway)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCounter("counter_2")}
-                      className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
-                        counter === "counter_2"
-                          ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
-                          : "border-[#E8DED8] bg-white text-[#8B7355]"
-                      }`}
-                    >
-                      Counter 2 (Dine In)
-                    </button>
-                  </div>
+                  {isCashierLocked ? (
+                    // Locked cashier — show readonly badge
+                    <div className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 text-sm font-bold ${
+                      orderType === "takeaway" ? "border-orange-400 bg-orange-50 text-orange-700" : "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
+                    }`}>
+                      {orderType === "takeaway" ? "🛍 Takeaway" : "🪑 Dine In"}
+                      <span className="text-xs font-normal opacity-60 ml-1">
+                        ({counter === "counter_1" ? "Counter 1" : "Counter 2"} — locked)
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <button type="button" onClick={() => setOrderType("dine_in")}
+                          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${orderType === "dine_in" ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
+                          🪑 Dine In
+                        </button>
+                        <button type="button" onClick={() => setOrderType("takeaway")}
+                          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${orderType === "takeaway" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
+                          🛍 Takeaway
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" onClick={() => setCounter("counter_1")}
+                          className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${counter === "counter_1" ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
+                          Counter 1 (Takeaway)
+                        </button>
+                        <button type="button" onClick={() => setCounter("counter_2")}
+                          className={`px-3 py-2 rounded-xl border text-xs font-medium transition-all ${counter === "counter_2" ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
+                          Counter 2 (Dine In)
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Customer Info */}

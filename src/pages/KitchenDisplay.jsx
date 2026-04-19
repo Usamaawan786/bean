@@ -230,7 +230,7 @@ export default function KitchenDisplay() {
     const updates = {
       items: updatedItems,
       kitchen_status: "done",
-      ...(allBarDone && { overall_status: "ready" })
+      ...(allBarDone && { overall_status: "ready", ready_at: new Date().toISOString() })
     };
     setOrders(prev => prev.filter(o => o.id !== orderId));
     await base44.entities.KitchenOrder.update(orderId, updates);

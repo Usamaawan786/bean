@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList, CheckCircle2, Clock, AlertTriangle, ChefHat,
-  Coffee, X, Wifi, ArrowLeft, BarChart3, RefreshCw
+  Coffee, X, Wifi, ArrowLeft, BarChart3, RefreshCw, History
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
@@ -258,20 +258,18 @@ export default function OrderManager() {
         </div>
 
         {/* Links to display screens */}
-        <div className="flex gap-3 mb-6">
-          <Link
-            to="/KitchenDisplay"
-            target="_blank"
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 transition-colors"
-          >
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Link to="/KitchenDisplay" target="_blank"
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 transition-colors">
             <ChefHat className="h-4 w-4 text-amber-400" /> Kitchen Display ↗
           </Link>
-          <Link
-            to="/BarDisplay"
-            target="_blank"
-            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 transition-colors"
-          >
+          <Link to="/BarDisplay" target="_blank"
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 transition-colors">
             <Coffee className="h-4 w-4 text-blue-400" /> Bar Display ↗
+          </Link>
+          <Link to="/OrderHistory"
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl px-4 py-2.5 text-sm text-gray-300 transition-colors">
+            <History className="h-4 w-4 text-purple-400" /> Order History
           </Link>
         </div>
 
