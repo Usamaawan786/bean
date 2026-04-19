@@ -19,7 +19,7 @@ import AdminFlashDrops from './pages/AdminFlashDrops';
 import AdminRewards from './pages/AdminRewards';
 import AdminRewardsRedemptions from './pages/AdminRewardsRedemptions';
 import AdminWhatsApp from './pages/AdminWhatsApp';
-import AdminPushNotifications from './pages/AdminPushNotifications';
+import AdminPushNotifications from './pages/AdminPushNotifications.jsx';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
 import Welcome from './pages/Welcome';
