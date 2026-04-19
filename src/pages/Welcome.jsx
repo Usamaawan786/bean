@@ -23,6 +23,14 @@ export default function Welcome() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get("ref");
+    const staffParam = params.get("staff");
+
+    // If URL has ?staff=1, redirect immediately to /staff regardless of auth state
+    if (staffParam === "1") {
+      navigate("/staff", { replace: true });
+      return;
+    }
+
     base44.auth.isAuthenticated().then(async isAuth => {
       if (isAuth) {
         const u = await base44.auth.me();
@@ -30,11 +38,7 @@ export default function Welcome() {
         if (isStaff) {
           navigate("/StaffPortal", { replace: true });
         } else {
-          // Check if this looks like a staff invite (came from /staff or no ref)
-          // Always route through StaffPortal so newly-invited staff see the right screen
-          const fromStaff = document.referrer.includes("/staff") || params.get("staff") === "1";
-          if (fromStaff) navigate("/StaffPortal", { replace: true });
-          else navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
+          navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });
         }
       }
     });

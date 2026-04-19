@@ -4,30 +4,30 @@ import { Coffee, Shield, Users, BarChart3, ShoppingCart, Loader2, Lock } from "l
 import { motion } from "framer-motion";
 
 export default function StaffLogin() {
-  const [checking, setChecking] = useState(true);
+  const [status, setStatus] = useState("checking"); // "checking" | "unauthenticated" | "waiting_role"
 
   useEffect(() => {
     base44.auth.isAuthenticated().then(async (isAuth) => {
-      if (isAuth) {
-        const u = await base44.auth.me();
-        const isStaff = ["cashier", "manager", "admin", "super_admin"].includes(u?.role);
-        if (isStaff) {
-          window.location.href = "/StaffPortal";
-        } else {
-          // Regular customer who accidentally landed here
-          window.location.href = "/Home";
-        }
+      if (!isAuth) {
+        setStatus("unauthenticated");
+        return;
+      }
+      const u = await base44.auth.me();
+      const isStaff = ["cashier", "manager", "admin", "super_admin"].includes(u?.role);
+      if (isStaff) {
+        window.location.href = "/StaffPortal";
       } else {
-        setChecking(false);
+        // Signed in but no staff role yet
+        setStatus("waiting_role");
       }
     });
   }, []);
 
   const handleLogin = () => {
-    base44.auth.redirectToLogin("/StaffPortal?staff=1");
+    base44.auth.redirectToLogin("/staff");
   };
 
-  if (checking) {
+  if (status === "checking") {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
@@ -35,6 +35,35 @@ export default function StaffLogin() {
     );
   }
 
+  if (status === "waiting_role") {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center px-5">
+        <div className="w-20 h-20 bg-amber-400/10 border-2 border-amber-400/30 rounded-3xl flex items-center justify-center mb-6">
+          <Coffee className="h-10 w-10 text-amber-400" />
+        </div>
+        <h1 className="text-2xl font-bold mb-3 text-center">Account Created!</h1>
+        <p className="text-gray-400 text-sm text-center max-w-sm leading-relaxed mb-6">
+          You're signed in. A manager needs to assign your staff role before you can access the portal.
+          <br /><br />
+          Once assigned, tap <strong className="text-white">Refresh</strong> below.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold px-8 py-3 rounded-2xl text-sm mb-4"
+        >
+          Refresh
+        </button>
+        <button
+          onClick={() => base44.auth.logout("/staff")}
+          className="text-gray-500 hover:text-gray-300 text-xs underline"
+        >
+          Sign out
+        </button>
+      </div>
+    );
+  }
+
+  // unauthenticated — show login screen
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       {/* Top bar */}
@@ -61,10 +90,10 @@ export default function StaffLogin() {
             <div className="w-20 h-20 bg-amber-400/10 border-2 border-amber-400/30 rounded-3xl flex items-center justify-center mx-auto mb-6">
               <Shield className="h-10 w-10 text-amber-400" />
             </div>
-            <h1 className="text-3xl font-bold mb-3">Staff Login</h1>
+            <h1 className="text-3xl font-bold mb-3">Staff Portal</h1>
             <p className="text-gray-400 text-sm leading-relaxed">
               This portal is exclusively for Bean Coffee team members.<br />
-              Sign in with your invited email address.
+              Sign in or create an account with your invited email address.
             </p>
           </motion.div>
 
@@ -94,7 +123,7 @@ export default function StaffLogin() {
             onClick={handleLogin}
             className="w-full bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold py-4 rounded-2xl text-base transition-all hover:scale-[1.02] shadow-lg shadow-amber-400/20"
           >
-            Sign in to Staff Portal →
+            Sign in / Sign up →
           </motion.button>
 
           <p className="text-center text-xs text-gray-600 mt-6">

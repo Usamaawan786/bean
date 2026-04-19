@@ -178,7 +178,7 @@ export default function StaffManagement() {
           <h2 className="font-bold text-[#5C4A3A] mb-1 flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-[#8B7355]" /> Invite New Staff Member
           </h2>
-          <p className="text-xs text-[#8B7355] mb-4">They'll receive an email to create their account. Assign their role from the staff list once they sign up.</p>
+          <p className="text-xs text-[#8B7355] mb-4">Send them the Staff Portal link below — they sign up there directly and land on the staff portal (not the customer app).</p>
           <div className="grid md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
               <Input
@@ -380,19 +380,20 @@ export default function StaffManagement() {
           <p className="font-bold mb-2">📋 How to onboard staff</p>
           <ol className="list-decimal ml-4 space-y-1 text-xs">
             <li>Enter their email above and click <strong>Send Invite</strong></li>
-            <li>They receive an email — the link takes them to the <strong>Staff Login page</strong></li>
-            <li>They sign in at <code className="bg-amber-100 px-1 rounded">beancoffee.co/staff</code></li>
+            <li>Share the <strong>Staff Portal URL</strong> below with the new member</li>
+            <li>They open that link, sign up / sign in — they land on the <strong>Staff Portal</strong> (not the customer app)</li>
             <li>Once they appear in the <strong>Current Staff</strong> list below, assign their role</li>
-            <li>They log back in and land on the <strong>Staff Portal</strong> with their permitted features</li>
+            <li>They tap Refresh on their screen and get full access</li>
           </ol>
           <div className="mt-3 flex items-center gap-2 bg-white border border-amber-300 rounded-xl px-3 py-2">
-            <span className="text-xs font-bold text-amber-900">Staff Login URL:</span>
-            <code className="text-xs text-amber-700 flex-1">beancoffee.co/staff</code>
+            <span className="text-xs font-bold text-amber-900">Staff Sign-up URL:</span>
+            <code className="text-xs text-amber-700 flex-1">{window.location.origin}/staff</code>
             <button
-              onClick={() => { navigator.clipboard.writeText(window.location.origin + "/staff"); }}
+              onClick={() => { navigator.clipboard.writeText(window.location.origin + "/staff"); toast.success("Copied!"); }}
               className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-lg hover:bg-amber-600"
             >Copy</button>
           </div>
+          <p className="text-xs text-amber-700 mt-2">⚠️ Make sure new staff use this link — <strong>not</strong> the default app link — so they don't land on the customer welcome page.</p>
         </div>
       </div>
     </div>
