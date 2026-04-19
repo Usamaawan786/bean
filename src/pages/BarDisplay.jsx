@@ -113,6 +113,8 @@ function LoginScreen() {
 export default function BarDisplay() {
   const [authState, setAuthState] = useState("checking");
   const [orders, setOrders] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyOrders, setHistoryOrders] = useState([]);
   const [tapCount, setTapCount] = useState(0);
   const tapTimerRef = useRef(null);
 
@@ -138,9 +140,19 @@ export default function BarDisplay() {
     setOrders(sortOrders(data));
   };
 
+  const loadHistory = async () => {
+    const data = await base44.entities.KitchenOrder.filter(
+      { overall_status: ["ready", "completed", "cancelled"] },
+      "-completed_at",
+      20
+    );
+    setHistoryOrders(data);
+  };
+
   useEffect(() => {
     if (authState !== "ready") return;
     loadOrders();
+    if (showHistory) loadHistory();
     const unsub = base44.entities.KitchenOrder.subscribe((event) => {
       if (event.type === "create") {
         const o = event.data;
@@ -236,13 +248,56 @@ export default function BarDisplay() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="border-b border-gray-800 px-6 flex gap-2">
+        <button
+          onClick={() => setShowHistory(false)}
+          className={`px-4 py-3 text-sm font-medium transition-colors ${
+            !showHistory ? "text-white border-b-2 border-blue-400" : "text-gray-400 hover:text-gray-300"
+          }`}
+        >
+          Active Orders
+        </button>
+        <button
+          onClick={() => { setShowHistory(true); loadHistory(); }}
+          className={`px-4 py-3 text-sm font-medium transition-colors ${
+            showHistory ? "text-white border-b-2 border-blue-400" : "text-gray-400 hover:text-gray-300"
+          }`}
+        >
+          History
+        </button>
+      </div>
+
       {/* Order Grid */}
       <div className="p-5">
-        {activeOrders.length === 0 ? (
+        {!showHistory && activeOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-[70vh] text-center">
             <Coffee className="h-20 w-20 text-gray-700 mb-4" />
             <h2 className="text-2xl font-bold text-gray-600">All Clear!</h2>
             <p className="text-gray-700 mt-2">No pending drink orders</p>
+          </div>
+        ) : showHistory ? (
+          <div className="space-y-3">
+            {historyOrders.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No completed orders</p>
+            ) : (
+              historyOrders.map(order => (
+                <div key={order.id} className={`border-l-4 rounded-lg p-4 ${order.overall_status === "completed" ? "border-green-600 bg-green-900/20" : "border-red-600 bg-red-900/20"}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xl font-black text-white">{order.order_number}</span>
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${order.overall_status === "completed" ? "bg-green-600 text-white" : "bg-red-600 text-white"}`}>
+                      {order.overall_status === "completed" ? "✓ Completed" : "✗ Cancelled"}
+                    </span>
+                  </div>
+                  {order.customer_name && <p className="text-sm text-gray-300 mb-1">{order.customer_name}</p>}
+                  <p className="text-xs text-gray-400">
+                    {order.placed_at && order.completed_at && (
+                      <>Time: {Math.round((new Date(order.completed_at) - new Date(order.placed_at)) / 60000)}m</>
+                    )}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
