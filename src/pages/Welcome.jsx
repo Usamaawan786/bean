@@ -209,17 +209,6 @@ export default function Welcome() {
           </div>
         </motion.div>
 
-        {/* ── SIGN IN CTA ── */}
-        <motion.div 
-          {...fadeUp(0.2)} 
-          onClick={scrollToDownload}
-          className="bg-gradient-to-r text-white my-4 px-6 py-6 text-center rounded-2xl from-[#8B7355] to-[#6B5744] shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
-        >
-          <Coffee className="h-6 w-6 mx-auto mb-3" />
-          <h3 className="font-bold text-lg mb-1">Sign in to unlock rewards</h3>
-          <p className="text-sm text-[#E8DED8]">Earn points, redeem free coffee & more</p>
-        </motion.div>
-
         {/* ── LEGAL ── */}
         <div className="flex justify-center gap-6 pt-2">
           <button onClick={() => {setShowPrivacy(!showPrivacy);setShowTerms(false);}}
