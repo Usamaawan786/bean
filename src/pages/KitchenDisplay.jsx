@@ -146,7 +146,7 @@ export default function KitchenDisplay() {
   const loadOrders = async () => {
     const data = await base44.entities.KitchenOrder.filter(
       { kitchen_status: ["pending", "in_progress"] },
-      "-priority,-placed_at",
+      "-placed_at",
       50
     );
     // Sort: takeaway first, then by time
