@@ -214,29 +214,46 @@ export default function Welcome() {
         </motion.div>
 
         {/* ── SIGN IN / SIGN UP ── */}
-        <motion.div {...fadeUp(0.22)} className="rounded-3xl overflow-hidden border border-[#E8DED8] shadow-sm">
-          <div className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] p-6">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 text-[#F4D35E]" />
-              <span className="text-[#F4D35E] text-xs font-bold uppercase tracking-widest">Already a member?</span>
+        <motion.div {...fadeUp(0.22)} className="relative overflow-hidden rounded-3xl bg-[#F5F1ED] border border-[#DDD0C4]">
+          {/* decorative coffee ring */}
+          <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full border-[12px] border-[#E8DED8] opacity-60 pointer-events-none" />
+          <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full border-[8px] border-[#E8DED8] opacity-40 pointer-events-none" />
+
+          <div className="relative p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-xl bg-[#8B7355] flex items-center justify-center">
+                <Coffee className="h-4 w-4 text-white" />
+              </div>
+              <p className="text-[#8B7355] text-xs font-bold uppercase tracking-widest">Already have the app?</p>
             </div>
-            <h3 className="text-white text-xl font-bold leading-tight">Sign in to your Bean account</h3>
-            <p className="text-white/60 text-sm mt-1">Access your rewards, points & community</p>
-          </div>
-          <div className="bg-white p-5 flex flex-col sm:flex-row gap-3">
+
+            <h3 className="text-[#3d2b12] text-2xl font-bold leading-tight mb-1">
+              Welcome back ☕
+            </h3>
+            <p className="text-[#8B7355] text-sm mb-5">
+              Sign in to access your rewards, points balance & community.
+            </p>
+
             <button
               onClick={() => base44.auth.redirectToLogin("/Home")}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#5C4A3A] hover:bg-[#3d2b12] text-white font-bold px-6 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md"
+              className="w-full flex items-center justify-center gap-2.5 bg-[#5C4A3A] hover:bg-[#3d2b12] text-white font-bold px-6 py-4 rounded-2xl transition-all hover:scale-[1.01] active:scale-[0.98] shadow-md text-base mb-3"
             >
               <LogIn className="h-5 w-5" />
-              Sign In
+              Sign In to Bean
             </button>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 h-px bg-[#DDD0C4]" />
+              <span className="text-[#C9B8A6] text-xs font-medium">or</span>
+              <div className="flex-1 h-px bg-[#DDD0C4]" />
+            </div>
+
             <button
               onClick={() => base44.auth.redirectToLogin("/Home")}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#F5F1ED] hover:bg-[#EBE5DF] text-[#5C4A3A] font-bold px-6 py-4 rounded-2xl border border-[#E8DED8] transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-[#F5EBE8] text-[#5C4A3A] font-semibold px-6 py-3.5 rounded-2xl border border-[#DDD0C4] transition-all hover:scale-[1.01] active:scale-[0.98] text-sm"
             >
-              <UserPlus className="h-5 w-5" />
-              Create Account
+              <UserPlus className="h-4 w-4" />
+              New here? Create a free account
             </button>
           </div>
         </motion.div>
