@@ -13,7 +13,8 @@ const PERKS = [
 
 export default function SignIn() {
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState("signin"); // "signin" | "signup"
+  const urlParams = new URLSearchParams(window.location.search);
+  const [mode, setMode] = useState(urlParams.get("mode") === "signup" ? "signup" : "signin");
 
   useEffect(() => {
     base44.auth.isAuthenticated().then((auth) => {

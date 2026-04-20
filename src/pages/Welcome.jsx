@@ -249,7 +249,7 @@ export default function Welcome() {
             </div>
 
             <button
-              onClick={() => base44.auth.redirectToLogin("/Home?signup=1")}
+              onClick={() => { window.location.href = "/SignIn?mode=signup"; }}
               className="w-full flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
             >
               <UserPlus className="h-4 w-4" />
