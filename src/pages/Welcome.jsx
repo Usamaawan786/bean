@@ -95,7 +95,7 @@ export default function Welcome() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-5 pt-12 pb-24 space-y-4">
+      <div className="max-w-lg mx-auto px-5 pt-12 pb-12 space-y-4">
 
         {/* ── ACTION CARDS ── */}
         <div onClick={scrollToDownload} className="cursor-pointer">
@@ -214,7 +214,7 @@ export default function Welcome() {
         </motion.div>
 
         {/* ── SIGN IN / SIGN UP ── */}
-        <motion.div {...fadeUp(0.22)} className="relative overflow-hidden rounded-3xl bg-[#F5F1ED] border border-[#DDD0C4]">
+        <motion.div {...fadeUp(0.22)} className="relative overflow-hidden rounded-3xl bg-white border border-[#DDD0C4] shadow-sm">
           {/* decorative coffee ring */}
           <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full border-[12px] border-[#E8DED8] opacity-60 pointer-events-none" />
           <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full border-[8px] border-[#E8DED8] opacity-40 pointer-events-none" />
