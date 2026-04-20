@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Coffee, Gift, Users, ShoppingBag, Shield, FileText, ChevronRight, LogIn, UserPlus, Sparkles } from "lucide-react";
+import { Coffee, Gift, Users, ShoppingBag, Shield, FileText, ChevronRight, LogIn } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
@@ -231,29 +231,15 @@ export default function Welcome() {
             </div>
 
             <p className="text-[#C9B8A6] text-sm mb-6 leading-relaxed">
-              Sign in to access your rewards, points balance & community.
+              Sign in or create a free account to access your rewards, points balance & community.
             </p>
 
             <button
-              onClick={() => base44.auth.redirectToLogin("/Home")}
-              className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-[#f0ede8] text-[#1a1208] font-bold px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg text-base mb-3"
+              onClick={() => navigate("/SignIn")}
+              className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-[#f0ede8] text-[#1a1208] font-bold px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg text-base"
             >
               <LogIn className="h-5 w-5" />
-              Sign In to Bean
-            </button>
-
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1 h-px bg-white/20" />
-              <span className="text-white/40 text-xs font-medium">or</span>
-              <div className="flex-1 h-px bg-white/20" />
-            </div>
-
-            <button
-              onClick={() => navigate("/SignIn?mode=signup")}
-              className="w-full flex items-center justify-center gap-2.5 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] text-sm"
-            >
-              <UserPlus className="h-4 w-4" />
-              New here? Create a free account
+              Sign In / Sign Up
             </button>
           </div>
         </motion.div>
