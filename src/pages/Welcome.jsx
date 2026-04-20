@@ -235,7 +235,7 @@ export default function Welcome() {
             </p>
 
             <button
-              onClick={() => navigate("/SignIn")}
+              onClick={() => base44.auth.redirectToLogin("/Home")}
               className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-[#f0ede8] text-[#1a1208] font-bold px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg text-base"
             >
               <LogIn className="h-5 w-5" />
