@@ -8,7 +8,7 @@ import { createPageUrl } from "@/utils";
 import RewardCard from "@/components/rewards/RewardCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import TierBenefits, { calculateTier, getTierData } from "@/components/rewards/TierBenefits";
+import TierBenefits, { calculateTier, getTierData, AllTiersPanel } from "@/components/rewards/TierBenefits";
 import TierBadge from "@/components/dashboard/TierBadge";
 
 export default function Rewards() {
@@ -16,7 +16,7 @@ export default function Rewards() {
   const [customer, setCustomer] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [successDialog, setSuccessDialog] = useState({ open: false, reward: null, code: "" });
-  const [activeTab, setActiveTab] = useState("rewards"); // "rewards" or "leaderboard"
+  const [activeTab, setActiveTab] = useState("rewards"); // "rewards" | "tiers" | "leaderboard"
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -184,33 +184,36 @@ export default function Rewards() {
         transition={{ delay: 0.2 }}
         className="max-w-lg mx-auto px-5 py-4"
       >
-        <div className="flex gap-2 bg-white rounded-2xl p-1.5 border border-[#E8DED8] shadow-lg">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setActiveTab("rewards")}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === "rewards"
-                ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
+        <div className="flex gap-1.5 bg-white rounded-2xl p-1.5 border border-[#E8DED8] shadow-sm">
+          {[
+            { key: "rewards", label: "Rewards", icon: Gift },
+            { key: "tiers", label: "Tiers", icon: Medal },
+            { key: "leaderboard", label: "Top", icon: Trophy },
+          ].map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${activeTab === key
+                ? "bg-[#8B7355] text-white shadow-sm"
                 : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
               }`}
-          >
-            <Gift className="h-4 w-4" />
-            Rewards
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setActiveTab("leaderboard")}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${activeTab === "leaderboard"
-                ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
-                : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
-              }`}
-          >
-            <Trophy className="h-4 w-4" />
-            Leaderboard
-          </motion.button>
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
         </div>
       </motion.div>
+
+      {/* Tiers tab content */}
+      {activeTab === "tiers" && (
+        <div className="max-w-lg mx-auto px-5 pb-24 pt-2">
+          <AllTiersPanel
+            currentTier={customer?.tier || "Bronze"}
+            totalPoints={customer?.total_points_earned || 0}
+          />
+        </div>
+      )}
 
       {/* Categories - Only show for rewards tab */}
       {activeTab === "rewards" && (
@@ -240,7 +243,7 @@ export default function Rewards() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-lg mx-auto px-5 pb-24 space-y-6">
+      {activeTab !== "tiers" && <div className="max-w-lg mx-auto px-5 pb-24 space-y-6">
         {activeTab === "rewards" ? (
           <>
             {/* Tier Benefits */}
@@ -394,7 +397,7 @@ export default function Rewards() {
             </Link>
           </motion.div>
         )}
-      </div>
+      </div>}
 
       {/* Success Dialog */}
       <Dialog open={successDialog.open} onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}>
