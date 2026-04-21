@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, ArrowLeft, Loader2, MessageCircle, Coffee,
-  CheckCheck, Check, Megaphone, Gift, Pin, Pencil, Trash2, X, MoreVertical
+  CheckCheck, Check, Megaphone, Gift, Pin, Pencil, Trash2, X, MoreVertical, Paperclip, FileText, Image
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
@@ -16,6 +16,26 @@ function formatMsgTime(dateStr) {
   } catch {
     return "";
   }
+}
+
+function FileAttachment({ url }) {
+  if (!url) return null;
+  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url);
+  if (isImage) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="block mt-1">
+        <img src={url} alt="attachment" className="max-w-[220px] rounded-xl border border-white/20 shadow" />
+      </a>
+    );
+  }
+  const filename = url.split("/").pop().split("?")[0] || "File";
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className="flex items-center gap-2 mt-1 bg-white/20 hover:bg-white/30 rounded-xl px-3 py-2 text-xs font-medium transition-colors">
+      <FileText className="h-4 w-4 flex-shrink-0" />
+      <span className="truncate max-w-[160px]">{decodeURIComponent(filename)}</span>
+    </a>
+  );
 }
 
 function ReadReceipt({ msg, isUser }) {
@@ -111,6 +131,7 @@ function MessageBubble({ msg, onEdit, onDelete, onPin, currentUserEmail }) {
             {msg.is_edited && (
               <span className={`text-[10px] ml-1 ${isFromAdmin ? "text-gray-400" : "text-white/60"}`}>edited</span>
             )}
+            {msg.file_url && <FileAttachment url={msg.file_url} />}
           </div>
         )}
 
@@ -163,7 +184,9 @@ export default function UserMessages() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pinnedMsg, setPinnedMsg] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -219,6 +242,32 @@ export default function UserMessages() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !conversation) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.entities.ChatMessage.create({
+      conversation_id: conversation.id,
+      sender_role: "user",
+      sender_email: user.email,
+      sender_name: user.display_name || user.full_name || "Customer",
+      content: file.name,
+      file_url,
+      message_type: "text",
+      is_read: false,
+    });
+    await base44.entities.Conversation.update(conversation.id, {
+      last_message: `📎 ${file.name}`,
+      last_message_at: new Date().toISOString(),
+      last_sender: "user",
+      unread_by_admin: (conversation.unread_by_admin || 0) + 1,
+    });
+    queryClient.invalidateQueries({ queryKey: ["user-messages", conversation.id] });
+    setUploading(false);
+    e.target.value = "";
+  };
 
   const handleSend = async () => {
     if (!message.trim() || !conversation || sending) return;
@@ -355,6 +404,14 @@ export default function UserMessages() {
 
       {/* Input */}
       <div className="bg-[#F0F2F5] px-3 pt-2.5 flex items-end gap-2 flex-shrink-0" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 10px)" }}>
+        <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" onChange={handleFileUpload} />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[#8B7355] hover:bg-[#E8DED8] disabled:opacity-40 transition-colors flex-shrink-0"
+        >
+          {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Paperclip className="h-5 w-5" />}
+        </button>
         <div className="flex-1 bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-gray-100">
           <textarea
             value={message}

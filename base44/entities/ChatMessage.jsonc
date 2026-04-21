@@ -24,7 +24,19 @@
       "type": "string",
       "description": "Message text"
     },
+    "file_url": {
+      "type": "string",
+      "description": "URL of attached file or image"
+    },
     "is_read": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_edited": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_pinned": {
       "type": "boolean",
       "default": false
     },

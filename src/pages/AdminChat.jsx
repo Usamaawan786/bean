@@ -7,7 +7,7 @@ import {
   MessageCircle, Search, Send, ArrowLeft, MoreVertical,
   CheckCheck, Check, Circle, Users, Bell, BellOff, Trash2,
   Archive, Star, ChevronDown, Loader2, Coffee, Megaphone,
-  RefreshCw, X, Filter, Pin, Pencil
+  RefreshCw, X, Filter, Pin, Pencil, Paperclip, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow } from "date-fns";
@@ -15,6 +15,26 @@ import { format, formatDistanceToNow } from "date-fns";
 function formatMsgTime(dateStr) {
   if (!dateStr) return "";
   try { return format(new Date(dateStr), "h:mm a"); } catch { return ""; }
+}
+
+function FileAttachment({ url, isFromAdmin }) {
+  if (!url) return null;
+  const isImage = /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(url);
+  if (isImage) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="block mt-1">
+        <img src={url} alt="attachment" className="max-w-[220px] rounded-xl border shadow" />
+      </a>
+    );
+  }
+  const filename = url.split("/").pop().split("?")[0] || "File";
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer"
+      className={`flex items-center gap-2 mt-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${isFromAdmin ? "bg-blue-400/30 hover:bg-blue-400/50 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}>
+      <FileText className="h-4 w-4 flex-shrink-0" />
+      <span className="truncate max-w-[160px]">{decodeURIComponent(filename)}</span>
+    </a>
+  );
 }
 
 function Avatar({ name, size = "md" }) {
@@ -70,6 +90,7 @@ function MessageBubble({ msg, isAdmin, onEdit, onDelete, onPin }) {
             }`}>
             {msg.content}
             {msg.is_edited && <span className={`text-[10px] ml-1 ${isFromAdmin ? "text-blue-200" : "text-gray-400"}`}>edited</span>}
+            {msg.file_url && <FileAttachment url={msg.file_url} isFromAdmin={isFromAdmin} />}
           </div>
         )}
         <div className={`flex items-center gap-1 px-1 ${isFromAdmin ? "flex-row-reverse" : "flex-row"}`}>
@@ -111,7 +132,9 @@ export default function AdminChat() {
   const [broadcastType, setBroadcastType] = useState("announcement");
   const [broadcasting, setBroadcasting] = useState(false);
   const [filter, setFilter] = useState("all"); // all | unread | archived
+  const [uploading, setUploading] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -173,6 +196,32 @@ export default function AdminChat() {
     });
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
     setSelectedConv(conv);
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedConv) return;
+    setUploading(true);
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    await base44.entities.ChatMessage.create({
+      conversation_id: selectedConv.id,
+      sender_role: "admin",
+      sender_email: user.email,
+      sender_name: "Bean Admin",
+      content: file.name,
+      file_url,
+      message_type: messageType,
+    });
+    await base44.entities.Conversation.update(selectedConv.id, {
+      last_message: `📎 ${file.name}`,
+      last_message_at: new Date().toISOString(),
+      last_sender: "admin",
+      unread_by_user: (selectedConv.unread_by_user || 0) + 1,
+    });
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv.id] });
+    queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+    setUploading(false);
+    e.target.value = "";
   };
 
   const handleSend = async () => {
@@ -436,6 +485,15 @@ export default function AdminChat() {
 
             {/* Input */}
             <div className="bg-white px-4 py-3 flex items-end gap-3">
+              <input ref={fileInputRef} type="file" accept="image/*,.pdf,.doc,.docx,.txt" className="hidden" onChange={handleFileUpload} />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-9 h-9 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-40 transition-colors flex-shrink-0"
+                title="Attach file"
+              >
+                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Paperclip className="h-5 w-5" />}
+              </button>
               <div className="flex-1 bg-gray-100 rounded-2xl px-4 py-2.5">
                 <textarea
                   value={message}
