@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
 import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X } from "lucide-react";
-import { format } from "date-fns";
+import { formatDateTime } from "@/utils/timeUtils";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
@@ -129,7 +129,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
               </button>
             )}
             <span className="text-xs text-[#C9B8A6]">
-              {post.created_date && format(new Date(post.created_date), "MMM d, h:mm a")}
+              {formatDateTime(post.created_date)}
             </span>
           </div>
 

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { Star, Gift, Users, Zap, TrendingUp, Award, ChevronDown, ChevronUp } from "lucide-react";
-import { format } from "date-fns";
+import { timeAgo, formatDateTime } from "@/utils/timeUtils";
 
 const activityIcons = {
   points_earned: Star,
@@ -21,16 +21,7 @@ const activityColors = {
   tier_upgraded: "text-purple-600 bg-purple-50"
 };
 
-function formatTime(dateStr) {
-  const date = new Date(dateStr);
-  const diffMs = Date.now() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  return format(date, 'dd MMM yyyy, h:mm a');
-}
+
 
 export default function ActivityFeed({ userEmail, limit = 20 }) {
   const [expanded, setExpanded] = useState(false);
@@ -108,7 +99,7 @@ export default function ActivityFeed({ userEmail, limit = 20 }) {
                     +{activity.points_amount} points
                   </p>
                 )}
-                <p className="text-xs text-[#C9B8A6] mt-1">{formatTime(activity.created_date)}</p>
+                <p className="text-xs text-[#C9B8A6] mt-1">{timeAgo(activity.created_date)}</p>
               </div>
             </motion.div>
           );

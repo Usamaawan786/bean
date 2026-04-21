@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, MessageCircle, Megaphone, Gift, CheckCheck, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatDistanceToNow, format } from "date-fns";
+import { timeAgo } from "@/utils/timeUtils";
 import { Link, useNavigate } from "react-router-dom";
 
 function msgIcon(type) {
@@ -181,9 +181,7 @@ export default function NotificationBell({ userEmail }) {
                       </div>
                       <p className="text-sm text-[#5C4A3A] leading-snug line-clamp-2">{msg.content}</p>
                       <p className="text-[10px] text-[#C9B8A6] mt-1">
-                        {msg.created_date ?
-                  formatDistanceToNow(new Date(msg.created_date), { addSuffix: true }) :
-                  ""}
+                        {timeAgo(msg.created_date)}
                       </p>
                     </div>
 

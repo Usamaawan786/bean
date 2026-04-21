@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Send, Loader2, X } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { timeAgo } from "@/utils/timeUtils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -19,9 +19,7 @@ function Avatar({ src, name, size = "md" }) {
 
 function CommentBubble({ comment, currentUser, onLike, onReply, isReply = false }) {
   const isLiked = comment.liked_by?.includes(currentUser?.email);
-  const timeAgo = comment.created_date
-    ? formatDistanceToNow(new Date(comment.created_date), { addSuffix: true })
-    : "";
+  const timeAgoStr = timeAgo(comment.created_date);
   const profileUrl = `/UserProfile?email=${encodeURIComponent(comment.author_email || "")}`;
 
   return (
@@ -49,7 +47,7 @@ function CommentBubble({ comment, currentUser, onLike, onReply, isReply = false 
         </div>
         {/* Actions row */}
         <div className="flex items-center gap-4 mt-1 px-1">
-          <span className="text-[10px] text-[#C9B8A6]">{timeAgo}</span>
+          <span className="text-[10px] text-[#C9B8A6]">{timeAgoStr}</span>
           {currentUser && (
             <>
               <button
