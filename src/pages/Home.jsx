@@ -217,7 +217,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
+          <a href="https://maps.app.goo.gl/f4dy4jkQ9cbrFq7VA?g_st=ic" target="_blank" rel="noopener noreferrer">
             <div className="bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="rounded-2xl bg-white/20 p-4">
                 <MapPin className="h-7 w-7 text-white" />
@@ -523,7 +523,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.25 }}
           >
-            <a href="https://maps.google.com/?q=BEAN+Coffee+Islamabad" target="_blank" rel="noopener noreferrer">
+            <a href="https://maps.app.goo.gl/f4dy4jkQ9cbrFq7VA?g_st=ic" target="_blank" rel="noopener noreferrer">
               <motion.div
                 whileHover={{ scale: 1.02, y: -3 }}
                 whileTap={{ scale: 0.98 }}
