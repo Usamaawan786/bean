@@ -20,6 +20,7 @@ import AdminRewards from './pages/AdminRewards';
 import AdminRewardsRedemptions from './pages/AdminRewardsRedemptions';
 import AdminWhatsApp from './pages/AdminWhatsApp';
 import AdminPushNotifications from './pages/AdminPushNotifications.jsx';
+import AdminAppUsers from './pages/AdminAppUsers';
 import KitchenDisplay from './pages/KitchenDisplay';
 import OrderHistory from './pages/OrderHistory';
 import BarDisplay from './pages/BarDisplay';
@@ -67,6 +68,7 @@ function App() {
             <Route path="/AdminReferrals" element={<AdminReferrals />} />
             <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
             <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
+            <Route path="/AdminAppUsers" element={<AdminAppUsers />} />
             <Route path="/AdminRewards" element={<AdminRewards />} />
             <Route path="/AdminRewardsRedemptions" element={<AdminRewardsRedemptions />} />
             <Route path="/AdminWhatsApp" element={<AdminWhatsApp />} />
