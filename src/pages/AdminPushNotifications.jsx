@@ -30,15 +30,7 @@ const AUDIENCE_OPTIONS = [
   { value: "tier_platinum", label: "Platinum Tier" },
 ];
 
-function ComposeTab({ onSent }) {
-  const [form, setForm] = useState({
-    title: "",
-    body: "",
-    audience: "all",
-    deep_link: "",
-    image_url: "",
-    notes: "",
-  });
+function ComposeTab({ onSent, form, setForm }) {
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
@@ -68,16 +60,6 @@ function ComposeTab({ onSent }) {
     } finally {
       setSending(false);
     }
-  };
-
-  const applyTemplate = (tpl) => {
-    setForm(f => ({
-      ...f,
-      title: tpl.title,
-      body: tpl.body,
-      deep_link: tpl.deepLink || "",
-      audience: tpl.audience || "all",
-    }));
   };
 
   return (
@@ -242,6 +224,14 @@ function HistoryTab() {
 export default function AdminPushNotifications() {
   const [tab, setTab] = useState("compose");
   const navigate = useNavigate();
+  const [form, setForm] = useState({
+    title: "",
+    body: "",
+    audience: "all",
+    deep_link: "",
+    image_url: "",
+    notes: "",
+  });
 
   const { data: deviceCount = 0 } = useQuery({
     queryKey: ["device-count"],
@@ -252,8 +242,14 @@ export default function AdminPushNotifications() {
   });
 
   const applyTemplate = (tpl) => {
+    setForm(f => ({
+      ...f,
+      title: tpl.title,
+      body: tpl.body,
+      deep_link: tpl.deepLink || "",
+      audience: tpl.audience || "all",
+    }));
     setTab("compose");
-    // Handled inside compose tab via key trick — just switch tab for now
   };
 
   return (
@@ -303,7 +299,7 @@ export default function AdminPushNotifications() {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-5 pb-24">
-        {tab === "compose" && <ComposeTab onSent={() => {}} />}
+        {tab === "compose" && <ComposeTab onSent={() => {}} form={form} setForm={setForm} />}
         {tab === "templates" && <TemplateLibrary onApply={(tpl) => { setTab("compose"); }} />}
         {tab === "users" && <UserExplorer />}
         {tab === "automations" && <AutomationCenter />}
