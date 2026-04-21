@@ -76,8 +76,22 @@ export default function Community() {
 
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["community-posts"],
-    queryFn: () => base44.entities.CommunityPost.list("-created_date", 50)
+    queryFn: () => base44.entities.CommunityPost.list("-created_date", 50),
+    refetchInterval: 15000, // poll every 15s so all users see fresh like counts
   });
+
+  // Real-time subscription so likes/comments from other users appear instantly
+  useEffect(() => {
+    const unsub = base44.entities.CommunityPost.subscribe((event) => {
+      queryClient.setQueryData(["community-posts"], (prev = []) => {
+        if (event.type === "create") return [event.data, ...prev.filter(p => p.id !== event.data.id)];
+        if (event.type === "update") return prev.map(p => p.id === event.id ? event.data : p);
+        if (event.type === "delete") return prev.filter(p => p.id !== event.id);
+        return prev;
+      });
+    });
+    return () => unsub();
+  }, [queryClient]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ["community-customers"],
@@ -159,10 +173,24 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         ? post.liked_by.filter(e => e !== user.email)
         : [...(post.liked_by || []), user.email];
       
-      return base44.entities.CommunityPost.update(post.id, {
+      await base44.entities.CommunityPost.update(post.id, {
         liked_by: newLikedBy,
         likes_count: newLikedBy.length
       });
+
+      // Send notification only when liking (not unliking) and not your own post
+      if (!isLiked && post.author_email && post.author_email !== user.email) {
+        await base44.entities.Notification.create({
+          to_email: post.author_email,
+          from_email: user.email,
+          from_name: user.display_name || user.full_name || user.email.split("@")[0],
+          from_picture: user.profile_picture || null,
+          type: "like",
+          message: `${user.display_name || user.full_name || user.email.split("@")[0]} liked your post`,
+          post_id: post.id,
+          is_read: false,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
