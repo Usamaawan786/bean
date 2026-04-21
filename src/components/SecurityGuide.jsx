@@ -1,1 +1,1 @@
-export default function SecurityGuideMd() { return null; }
+export default function SecurityGuide() { return null; }
