@@ -279,7 +279,8 @@ export default function UserMessages() {
   return (
     <div className="flex flex-col bg-[#ECE5DD]" style={{ height: "100dvh", backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9b8a6' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }}>
       {/* Header */}
-      <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3 flex-shrink-0 shadow-md">
+      <div className="bg-[#075E54] text-white px-4 pt-safe flex-shrink-0 shadow-md" style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}>
+        <div className="flex items-center gap-3 py-3">
         <Link to="/" className="text-white/80 hover:text-white p-1">
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -292,6 +293,7 @@ export default function UserMessages() {
             <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
             <span className="text-xs text-white/70">Always here for you</span>
           </div>
+        </div>
         </div>
       </div>
 
@@ -352,7 +354,7 @@ export default function UserMessages() {
       </div>
 
       {/* Input */}
-      <div className="bg-[#F0F2F5] px-3 py-2.5 flex items-end gap-2 flex-shrink-0">
+      <div className="bg-[#F0F2F5] px-3 pt-2.5 flex items-end gap-2 flex-shrink-0" style={{ paddingBottom: "max(env(safe-area-inset-bottom), 10px)" }}>
         <div className="flex-1 bg-white rounded-2xl px-4 py-2.5 shadow-sm border border-gray-100">
           <textarea
             value={message}
