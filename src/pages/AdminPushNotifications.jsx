@@ -300,7 +300,7 @@ export default function AdminPushNotifications() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-5 pb-24">
         {tab === "compose" && <ComposeTab onSent={() => {}} form={form} setForm={setForm} />}
-        {tab === "templates" && <TemplateLibrary onApply={(tpl) => { setTab("compose"); }} />}
+        {tab === "templates" && <TemplateLibrary onApply={applyTemplate} />}
         {tab === "users" && <UserExplorer />}
         {tab === "automations" && <AutomationCenter />}
         {tab === "history" && <HistoryTab />}
