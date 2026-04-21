@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
     try {
@@ -32,16 +32,14 @@ Deno.serve(async (req) => {
                 }
             }
 
-            // Create notification
-            await base44.asServiceRole.entities.Notification.create({
-                to_email: targetEmail,
-                from_email: user.email,
-                from_name: user.full_name || user.email.split('@')[0],
-                from_picture: user.profile_picture || null,
-                type: 'follow',
-                message: `${user.full_name || user.email.split('@')[0]} started following you`,
-                is_read: false
-            });
+            // Create notification + push via community activity handler (warm tone, deep link)
+            base44.asServiceRole.functions.invoke("notifyCommunityActivity", {
+                type: "follow",
+                toEmail: targetEmail,
+                fromEmail: user.email,
+                fromName: user.display_name || user.full_name || user.email.split('@')[0],
+                fromPicture: user.profile_picture || null,
+            }).catch(() => {});
 
             return Response.json({ success: true, action: 'followed' });
         } else if (action === 'unfollow') {

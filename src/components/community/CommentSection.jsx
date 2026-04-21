@@ -109,30 +109,31 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
       };
       const comment = await base44.entities.Comment.create(commentData);
 
+      const fromName = currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0];
+
+      // Reply notification with push
       if (replyTo?.author_email && replyTo.author_email !== currentUser.email) {
-        base44.entities.Notification.create({
-          to_email: replyTo.author_email,
-          from_email: currentUser.email,
-          from_name: currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0],
-          from_picture: currentUser.profile_picture || null,
-          type: 'reply',
-          message: `${currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0]} replied to your comment`,
-          post_id: postId,
-          is_read: false
+        base44.functions.invoke("notifyCommunityActivity", {
+          type: "reply",
+          toEmail: replyTo.author_email,
+          fromEmail: currentUser.email,
+          fromName,
+          fromPicture: currentUser.profile_picture || null,
+          postId,
+          message: `${fromName} replied to your comment 💬`,
         }).catch(() => {});
       }
 
-      const mentions = [...(content.matchAll(/@(\w+)/g))].map(m => m[1]);
-      if (mentions.length > 0 && postAuthorEmail && postAuthorEmail !== currentUser.email) {
-        base44.entities.Notification.create({
-          to_email: postAuthorEmail,
-          from_email: currentUser.email,
-          from_name: currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0],
-          from_picture: currentUser.profile_picture || null,
-          type: 'mention',
-          message: `${currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0]} mentioned you in a comment`,
-          post_id: postId,
-          is_read: false
+      // Comment on post notification (notify post author if not replying to them already)
+      if (postAuthorEmail && postAuthorEmail !== currentUser.email && postAuthorEmail !== replyTo?.author_email) {
+        base44.functions.invoke("notifyCommunityActivity", {
+          type: "comment",
+          toEmail: postAuthorEmail,
+          fromEmail: currentUser.email,
+          fromName,
+          fromPicture: currentUser.profile_picture || null,
+          postId,
+          message: `${fromName} commented on your post ☕`,
         }).catch(() => {});
       }
 

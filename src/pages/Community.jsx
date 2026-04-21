@@ -178,18 +178,17 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         likes_count: newLikedBy.length
       });
 
-      // Send notification only when liking (not unliking) and not your own post
+      // Batched like notification + trending nudge — only when liking, not your own post
       if (!isLiked && post.author_email && post.author_email !== user.email) {
-        await base44.entities.Notification.create({
-          to_email: post.author_email,
-          from_email: user.email,
-          from_name: user.display_name || user.full_name || user.email.split("@")[0],
-          from_picture: user.profile_picture || null,
+        base44.functions.invoke("notifyCommunityActivity", {
           type: "like",
-          message: `${user.display_name || user.full_name || user.email.split("@")[0]} liked your post`,
-          post_id: post.id,
-          is_read: false,
-        });
+          toEmail: post.author_email,
+          fromEmail: user.email,
+          fromName: user.display_name || user.full_name || user.email.split("@")[0],
+          fromPicture: user.profile_picture || null,
+          postId: post.id,
+          postLikesCount: newLikedBy.length, // triggers trending nudge at milestones
+        }).catch(() => {});
       }
     },
     onSuccess: () => {

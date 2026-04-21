@@ -1,0 +1,100 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "to_email": {
+      "type": "string",
+      "description": "Recipient email"
+    },
+    "from_email": {
+      "type": "string",
+      "description": "Sender email"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "Sender display name"
+    },
+    "from_picture": {
+      "type": "string",
+      "description": "Sender profile picture"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "follow",
+        "like",
+        "comment",
+        "mention",
+        "reply"
+      ],
+      "description": "Notification type"
+    },
+    "message": {
+      "type": "string",
+      "description": "Notification message"
+    },
+    "post_id": {
+      "type": "string",
+      "description": "Related post ID if applicable"
+    },
+    "is_read": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether notification has been read"
+    },
+    "like_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Batched like count for like notifications"
+    },
+    "last_push_at": {
+      "type": "string",
+      "description": "ISO timestamp of last push sent for this notification (for batching)"
+    }
+  },
+  "required": [
+    "to_email",
+    "from_email",
+    "type",
+    "message"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.to_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.to_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.to_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
