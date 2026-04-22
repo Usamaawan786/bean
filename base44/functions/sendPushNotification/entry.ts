@@ -215,8 +215,16 @@ Deno.serve(async (req) => {
         customers.forEach(c => { if (c.user_email) customerMap[c.user_email] = c; });
         users.forEach(u => {
           const customer = customerMap[u.email];
-          const firstName = (customer?.display_name || u.display_name || u.full_name || "").split(" ")[0] || "there";
-          userNameMap[u.email] = firstName;
+          const rawName = customer?.display_name || u.full_name || "";
+          const firstName = rawName.trim().split(" ")[0] || null;
+          if (firstName) userNameMap[u.email] = firstName;
+        });
+        // Also build from customers not matched to a user record
+        customers.forEach(c => {
+          if (!userNameMap[c.user_email] && c.display_name) {
+            const firstName = c.display_name.trim().split(" ")[0];
+            if (firstName) userNameMap[c.user_email] = firstName;
+          }
         });
       }
     }
@@ -248,7 +256,7 @@ Deno.serve(async (req) => {
       // Send per-user with personalized name substitution
       for (const tokenRecord of allTokenRecords) {
         if (!tokenRecord.token) continue;
-        const firstName = userNameMap[tokenRecord.user_email] || "there";
+        const firstName = (tokenRecord.user_email && userNameMap[tokenRecord.user_email]) || "friend";
         const personalizedNotification = {
           ...notification,
           title: notification.title.replace(/\{\{first_name\}\}/g, firstName),
