@@ -3,6 +3,8 @@ import { Html5Qrcode } from "html5-qrcode";
 import { X, QrCode, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Capacitor } from "@capacitor/core";
+import { Camera } from "@capacitor/camera";
 
 export default function QRScanner({ onScan, onClose }) {
   const onScanRef = useRef(onScan);
@@ -18,6 +20,20 @@ export default function QRScanner({ onScan, onClose }) {
     try {
       setIsScanning(true);
       setError("");
+
+      // Request camera permission on native platforms
+      if (Capacitor.isNativePlatform()) {
+        const permissions = await Camera.checkPermissions();
+        if (permissions.camera !== 'granted') {
+          const result = await Camera.requestPermissions({ permissions: ['camera'] });
+          if (result.camera !== 'granted') {
+            setError("Camera permission required. Please enable it in your app settings.");
+            setIsScanning(false);
+            return;
+          }
+        }
+      }
+
       await instance.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },

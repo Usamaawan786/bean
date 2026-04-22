@@ -9,6 +9,13 @@ import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { motion, AnimatePresence } from "framer-motion";
 
+const MEDIA_OPTIONS = {
+  CAPTURE_PHOTO: "capture_photo",
+  PHOTO_GALLERY: "photo_gallery",
+  RECORD_VIDEO: "record_video",
+  VIDEO_GALLERY: "video_gallery"
+};
+
 export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -17,7 +24,7 @@ export default function PostComposer({ onPost, userName }) {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showVideoOptions, setShowVideoOptions] = useState(false);
+  const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => {
     return localStorage.getItem("bean_terms_accepted") === "true";
@@ -85,8 +92,47 @@ export default function PostComposer({ onPost, userName }) {
     }
   };
 
+  const doCapturePhoto = async () => {
+    if (isUploadingImage) return;
+    setIsUploadingImage(true);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const permissions = await Camera.checkPermissions();
+        if (permissions.camera !== 'granted') {
+          const result = await Camera.requestPermissions({ permissions: ['camera'] });
+          if (result.camera !== 'granted') {
+            toast.error("Camera access is required to take photos");
+            return;
+          }
+        }
+      }
+      const photo = await Camera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera,
+        direction: CameraDirection.Rear,
+        saveToGallery: false,
+        webUseInput: false,
+      });
+      if (!photo?.webPath) return;
+      const response = await fetch(photo.webPath);
+      const blob = await response.blob();
+      const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${photo.format || 'jpg'}`);
+      setImageUrl(url);
+      toast.success("Photo captured!");
+    } catch (error) {
+      const msg = error?.message || String(error);
+      if (!msg.toLowerCase().includes("cancel")) {
+        toast.error("Failed to capture photo. Please try again.");
+      }
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const doVideoFromGallery = async () => {
-    setShowVideoOptions(false);
+    setShowMediaOptions(false);
     if (isUploadingVideo) return;
     setIsUploadingVideo(true);
     try {
@@ -137,7 +183,7 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   const doRecordVideo = async () => {
-    setShowVideoOptions(false);
+    setShowMediaOptions(false);
     if (isUploadingVideo) return;
     setIsUploadingVideo(true);
     try {
@@ -192,8 +238,14 @@ export default function PostComposer({ onPost, userName }) {
     }
   };
 
-  const handleImageUpload = () => withTermsCheck(doImageUpload);
-  const handleVideoClick = () => withTermsCheck(() => setShowVideoOptions(true));
+  const handleImageClick = () => withTermsCheck(() => setShowMediaOptions(true));
+  const handleVideoClick = () => withTermsCheck(() => {
+    if (Capacitor.isNativePlatform()) {
+      setShowMediaOptions(true);
+    } else {
+      doRecordVideo();
+    }
+  });
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -241,10 +293,10 @@ export default function PostComposer({ onPost, userName }) {
         )}
       </AnimatePresence>
 
-      {/* Video Options Modal */}
+      {/* Media Options Modal */}
       <AnimatePresence>
-        {showVideoOptions && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowVideoOptions(false)}>
+        {showMediaOptions && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowMediaOptions(false)}>
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -252,34 +304,66 @@ export default function PostComposer({ onPost, userName }) {
               onClick={e => e.stopPropagation()}
               className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl"
             >
-              <h3 className="text-base font-bold text-[#5C4A3A] mb-4 text-center">Add Video</h3>
+              <h3 className="text-base font-bold text-[#5C4A3A] mb-4 text-center">Add Media</h3>
               <div className="flex flex-col gap-3">
-                <button
-                  onClick={doVideoFromGallery}
-                  className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
-                >
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                    <FolderOpen className="h-5 w-5 text-[#8B7355]" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-[#5C4A3A] text-sm">Choose from Gallery</div>
-                    <div className="text-xs text-[#C9B8A6]">Pick a photo or video</div>
-                  </div>
-                </button>
-                <button
-                  onClick={doRecordVideo}
-                  className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
-                >
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                    <CameraIcon className="h-5 w-5 text-[#8B7355]" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-[#5C4A3A] text-sm">Record Video</div>
-                    <div className="text-xs text-[#C9B8A6]">Use your camera</div>
-                  </div>
-                </button>
+                {imageUrl === "" && (
+                  <>
+                    <button
+                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doCapturePhoto); }}
+                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                        <CameraIcon className="h-5 w-5 text-[#8B7355]" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[#5C4A3A] text-sm">Capture Photo</div>
+                        <div className="text-xs text-[#C9B8A6]">Take a picture now</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doImageUpload); }}
+                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                        <FolderOpen className="h-5 w-5 text-[#8B7355]" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[#5C4A3A] text-sm">Choose Photo</div>
+                        <div className="text-xs text-[#C9B8A6]">Pick from gallery</div>
+                      </div>
+                    </button>
+                  </>
+                )}
+                {videoUrl === "" && (
+                  <>
+                    <button
+                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doRecordVideo); }}
+                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                        <CameraIcon className="h-5 w-5 text-[#8B7355]" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[#5C4A3A] text-sm">Record Video</div>
+                        <div className="text-xs text-[#C9B8A6]">Use your camera</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doVideoFromGallery); }}
+                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
+                    >
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                        <FolderOpen className="h-5 w-5 text-[#8B7355]" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[#5C4A3A] text-sm">Choose Video</div>
+                        <div className="text-xs text-[#C9B8A6]">Pick from gallery</div>
+                      </div>
+                    </button>
+                  </>
+                )}
               </div>
-              <button onClick={() => setShowVideoOptions(false)} className="w-full mt-3 py-2 text-sm text-[#C9B8A6]">Cancel</button>
+              <button onClick={() => setShowMediaOptions(false)} className="w-full mt-3 py-2 text-sm text-[#C9B8A6]">Cancel</button>
             </motion.div>
           </div>
         )}
@@ -319,7 +403,7 @@ export default function PostComposer({ onPost, userName }) {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handleImageUpload}
+              onClick={handleImageClick}
               disabled={isUploadingImage || !!videoUrl}
               className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
             >
