@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PostCard from "@/components/community/PostCard";
 import { getBadgesForCustomer } from "@/components/community/UserBadge";
+import UserBadge from "@/components/community/UserBadge";
 
 export default function UserProfile() {
   const params = new URLSearchParams(window.location.search);
@@ -130,13 +131,7 @@ export default function UserProfile() {
           {targetCustomer && getBadgesForCustomer(targetCustomer).length > 0 && (
             <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
               {getBadgesForCustomer(targetCustomer).map(badgeKey => (
-                <div key={badgeKey} className="inline-flex items-center gap-1 rounded-full text-xs px-2 py-0.5 font-bold bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900">
-                  {badgeKey === 'founding_member' && '🌟 FM'}
-                  {badgeKey === 'eba' && '⭐ EBA'}
-                  {badgeKey === 'platinum' && '💎 Platinum'}
-                  {badgeKey === 'gold' && '🥇 Gold'}
-                  {badgeKey === 'coffee_creator' && '✍️ Creator'}
-                </div>
+                <UserBadge key={badgeKey} badgeKey={badgeKey} size="sm" />
               ))}
             </div>
           )}
