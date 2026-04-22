@@ -15,6 +15,20 @@ async function saveToken(token, platform) {
   }
 }
 
+async function saveTokenWithRetry(token, platform, retries = 5, delayMs = 2000) {
+  for (let i = 0; i < retries; i++) {
+    const email = await saveToken(token, platform);
+    if (email) {
+      console.log("[Push] Token saved with user email:", email);
+      return email;
+    }
+    console.log(`[Push] No user email yet, retrying in ${delayMs}ms (attempt ${i + 1}/${retries})...`);
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+  console.warn("[Push] Could not associate token with user after retries");
+  return null;
+}
+
 export default function usePushNotifications() {
   // On every mount: re-save stored token to attach user email if not already set
   useEffect(() => {
@@ -23,7 +37,7 @@ export default function usePushNotifications() {
     if (!stored || !platform) return;
 
     console.log('[Push] Found stored token, re-saving to sync user email...');
-    saveToken(stored, platform);
+    saveTokenWithRetry(stored, platform, 3, 1000);
   }, []);
 
   useEffect(() => {
@@ -77,9 +91,9 @@ export default function usePushNotifications() {
 
           localStorage.setItem(TOKEN_KEY, token);
           localStorage.setItem(PLATFORM_KEY, platform);
-          console.log("[Push] Token stored in localStorage, attempting save...");
+          console.log("[Push] Token stored in localStorage, attempting save with retry...");
 
-          await saveToken(token, platform);
+          await saveTokenWithRetry(token, platform);
         });
 
         PushNotifications.addListener("registrationError", (err) => {
