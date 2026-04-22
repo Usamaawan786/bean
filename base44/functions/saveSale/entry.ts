@@ -31,6 +31,14 @@ Deno.serve(async (req) => {
 
     const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
 
+    // Process referral rewards if customer email exists
+    if (saleData.scanned_by) {
+      await base44.asServiceRole.functions.invoke('processSaleReferralRewards', {
+        customerEmail: saleData.scanned_by,
+        totalSpend: saleData.total_amount || 0
+      }).catch(err => console.error('Referral rewards failed:', err));
+    }
+
     return Response.json({ success: true, sale });
   } catch (error) {
     console.error('Error saving sale:', error);
