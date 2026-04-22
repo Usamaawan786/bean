@@ -118,6 +118,15 @@ Deno.serve(async (req) => {
 
     let tokenRecords = [];
 
+    // Helper: get tokens by email — checks both user_email field AND created_by
+    const getTokensByEmail = async (email) => {
+      const allActive = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
+      return allActive.filter(t =>
+        t.user_email === email ||
+        (!t.user_email && t.created_by && t.created_by === email)
+      );
+    };
+
     if (sender_role === "admin") {
       // Admin sent → notify the user of this conversation
       const convs = await base44.asServiceRole.entities.Conversation.filter({ id: conversation_id });
@@ -126,7 +135,7 @@ Deno.serve(async (req) => {
       const userEmail = conv.user_email;
       if (!userEmail) return Response.json({ success: true, message: "No user email on conversation" });
 
-      tokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: userEmail, is_active: true });
+      tokenRecords = await getTokensByEmail(userEmail);
       console.log(`[notifyChatMessage] Admin→User: notifying ${userEmail}, ${tokenRecords.length} device(s)`);
     } else if (sender_role === "user") {
       // User sent → notify all admins
@@ -135,12 +144,8 @@ Deno.serve(async (req) => {
       console.log(`[notifyChatMessage] User→Admin: found ${adminEmails.length} admin(s)`);
 
       if (adminEmails.length > 0) {
-        const allAdminTokens = await Promise.all(
-          adminEmails.map(email =>
-            base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true })
-          )
-        );
-        tokenRecords = allAdminTokens.flat();
+        const results = await Promise.all(adminEmails.map(email => getTokensByEmail(email)));
+        tokenRecords = results.flat();
       }
     }
 
