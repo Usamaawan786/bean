@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Rocket, Send, Clock, Bell, Users, Sparkles, Coffee, Gift, Star, ChevronRight, Info } from "lucide-react";
+import { Rocket, Send, Clock, Coffee, ChevronRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -11,7 +11,7 @@ const LAUNCH_SEQUENCES = [
     phase: "T-3 Days",
     phaseColor: "from-violet-500 to-purple-600",
     label: "👀 Teaser #1 — The Mystery",
-    title: "Something big is brewing, {{first_name}}… ☕",
+    title: "Something big is brewing… ☕",
     body: "We can't say much yet, but something really special is coming to Islamabad. Stay tuned — you won't want to miss this.",
     deepLink: "/Home",
     audience: "all",
@@ -22,7 +22,7 @@ const LAUNCH_SEQUENCES = [
     phase: "T-2 Days",
     phaseColor: "from-indigo-500 to-blue-600",
     label: "☕ Teaser #2 — The Hint",
-    title: "{{first_name}}, your mornings are about to change ☕",
+    title: "Your mornings are about to change ☕",
     body: "Two days away. Premium coffee. Real rewards. A community unlike any other. Bean Islamabad opens very soon — and you're on the list.",
     deepLink: "/Home",
     audience: "all",
@@ -33,7 +33,7 @@ const LAUNCH_SEQUENCES = [
     phase: "T-1 Day",
     phaseColor: "from-amber-500 to-orange-500",
     label: "🔥 Launch Eve — Tomorrow It's Happening",
-    title: "{{first_name}} — tomorrow is the day! 🔥",
+    title: "Tomorrow is the day! 🔥",
     body: "Bean Islamabad opens TOMORROW. Be one of the first through the door, earn founding member rewards, and enjoy a cup on us. See you there! ☕",
     deepLink: "/Home",
     audience: "all",
@@ -44,7 +44,7 @@ const LAUNCH_SEQUENCES = [
     phase: "Launch Day 🌅",
     phaseColor: "from-yellow-400 to-amber-500",
     label: "🚀 Launch Morning — We're OPEN",
-    title: "{{first_name}}, Bean is officially OPEN! ☕🎉",
+    title: "Bean is officially OPEN! ☕🎉",
     body: "The wait is over! Bean Islamabad is NOW open. Walk in today, earn bonus points on your first visit, and be part of something special from day one.",
     deepLink: "/Home",
     audience: "all",
@@ -55,7 +55,7 @@ const LAUNCH_SEQUENCES = [
     phase: "Launch Day ☀️",
     phaseColor: "from-orange-400 to-red-400",
     label: "⚡ Launch Flash Drop — Midday Surprise",
-    title: "⚡ LIVE NOW — Flash Drop at Bean, {{first_name}}!",
+    title: "⚡ LIVE NOW — Flash Drop at Bean!",
     body: "A surprise Flash Drop just went live to celebrate our opening! Come in right now and claim your free reward — limited quantities, first come first served! 🏃",
     deepLink: "/FlashDrops",
     audience: "all",
@@ -66,7 +66,7 @@ const LAUNCH_SEQUENCES = [
     phase: "Launch Evening 🌙",
     phaseColor: "from-slate-600 to-slate-800",
     label: "🌙 Launch Evening — Last Chance Today",
-    title: "{{first_name}}, today's your last chance for opening day perks 🌙",
+    title: "Last chance for opening day perks 🌙",
     body: "Bean has been buzzing all day — but there's still time! Come by before closing and earn your opening day bonus points. Today only. ☕",
     deepLink: "/Home",
     audience: "all",
@@ -77,7 +77,7 @@ const LAUNCH_SEQUENCES = [
     phase: "Day 2+",
     phaseColor: "from-emerald-500 to-teal-600",
     label: "🎁 Post-Launch — FOMO Push",
-    title: "{{first_name}}, did you hear what happened at Bean? 🎁",
+    title: "Did you hear what happened at Bean? 🎁",
     body: "Our opening day was incredible — hundreds of cups, happy faces, and rewards flying. If you missed it, don't worry. We're open daily and your points are waiting!",
     deepLink: "/Home",
     audience: "all",
@@ -88,7 +88,7 @@ const LAUNCH_SEQUENCES = [
     phase: "VIP Only",
     phaseColor: "from-yellow-600 to-amber-600",
     label: "👑 Founding Members — Your Exclusive Invite",
-    title: "{{first_name}}, you're a Founding Member 👑",
+    title: "You're a Founding Member 👑",
     body: "As one of Bean's earliest supporters, you have an exclusive 10% discount waiting — valid on your first 3 orders. Thank you for believing in us from the start. ☕",
     deepLink: "/Rewards",
     audience: "all",
@@ -96,20 +96,9 @@ const LAUNCH_SEQUENCES = [
   },
 ];
 
-function MergeTagBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-xs font-bold px-2.5 py-1 rounded-full border border-purple-200">
-      <Sparkles className="h-3 w-3" /> {"{{first_name}}"}
-    </span>
-  );
-}
-
 export default function LaunchCampaign({ onApply }) {
   const [sending, setSending] = useState(null);
   const [sentIds, setSentIds] = useState([]);
-  const [previewName, setPreviewName] = useState("Sarah");
-
-  const preview = (text) => text.replace(/\{\{first_name\}\}/g, previewName || "there");
 
   const handleSend = async (seq) => {
     setSending(seq.id);
@@ -119,7 +108,6 @@ export default function LaunchCampaign({ onApply }) {
         body: seq.body,
         audience: seq.audience,
         deep_link: seq.deepLink,
-        personalize_first_name: true,
       });
       if (res.data?.success !== false) {
         toast.success(`Sent! Reached ${res.data?.sent_count || 0} devices.`);
@@ -143,33 +131,13 @@ export default function LaunchCampaign({ onApply }) {
           <div>
             <p className="font-bold text-purple-800 text-sm">Bean Launch Campaign — {LAUNCH_SEQUENCES.length} Notifications</p>
             <p className="text-xs text-purple-600 mt-1 leading-relaxed">
-              A complete launch sequence from teaser to post-launch. Each notification supports <strong>personalised first names</strong> — we automatically replace <code className="bg-purple-100 px-1 rounded">{"{{first_name}}"}</code> with each user's actual name before sending.
+              A complete launch sequence from teaser to post-launch. Fire each one at the right time for maximum impact.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Merge tag explainer */}
-      <div className="bg-white border border-[#E8DED8] rounded-2xl p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#8B7355]" />
-          <p className="font-bold text-sm text-[#5C4A3A]">Personalisation — First Name Merge Tag</p>
-        </div>
-        <p className="text-xs text-[#8B7355] leading-relaxed">
-          Just like GHL's <code className="bg-gray-100 px-1 rounded">{"{{contact.first_name}}"}</code>, you can use <MergeTagBadge /> anywhere in the title or message. When sent, each user receives their own name — making the notification feel personal and dramatically increasing open rates.
-        </p>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-[#8B7355]">Preview with name:</span>
-          <input
-            value={previewName}
-            onChange={e => setPreviewName(e.target.value)}
-            placeholder="e.g. Sarah"
-            className="border border-[#E8DED8] rounded-lg px-2 py-1 text-xs w-28 focus:outline-none focus:ring-1 focus:ring-[#8B7355]/30"
-          />
-        </div>
-      </div>
-
-      {/* Also apply to composer */}
+      {/* Info */}
       <div className="flex items-center gap-2 text-xs text-[#8B7355]">
         <Info className="h-3.5 w-3.5" />
         <span>Tap <strong>"Use Template"</strong> to load into Compose, or <strong>"Send Now"</strong> to fire immediately.</span>
@@ -207,8 +175,8 @@ export default function LaunchCampaign({ onApply }) {
                       <span className="text-[10px] text-white/60 font-medium">Bean</span>
                       <span className="text-[10px] text-white/40">now</span>
                     </div>
-                    <p className="text-xs font-semibold text-white leading-tight">{preview(seq.title)}</p>
-                    <p className="text-[10px] text-white/70 mt-0.5 leading-relaxed line-clamp-2">{preview(seq.body)}</p>
+                    <p className="text-xs font-semibold text-white leading-tight">{seq.title}</p>
+                    <p className="text-[10px] text-white/70 mt-0.5 leading-relaxed line-clamp-2">{seq.body}</p>
                   </div>
                 </div>
 
