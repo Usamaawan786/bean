@@ -14,7 +14,12 @@ import { format, formatDistanceToNow } from "date-fns";
 
 function formatMsgTime(dateStr) {
   if (!dateStr) return "";
-  try { return format(new Date(dateStr), "h:mm a"); } catch { return ""; }
+  try {
+    const msgDate = new Date(dateStr);
+    const today = new Date();
+    const isToday = msgDate.toDateString() === today.toDateString();
+    return isToday ? format(msgDate, "h:mm a") : format(msgDate, "MMM d, h:mm a");
+  } catch { return ""; }
 }
 
 function FileAttachment({ url, isFromAdmin }) {
