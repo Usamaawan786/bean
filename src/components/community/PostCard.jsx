@@ -7,6 +7,7 @@ import { formatDateTime } from "@/utils/timeUtils";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
+import { base44 } from "@/api/base44Client";
 
 const postTypeConfig = {
   general: { icon: Coffee, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
@@ -32,6 +33,30 @@ function renderContent(content) {
 export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit }) {
   const [optimisticLiked, setOptimisticLiked] = useState(null);
   const [optimisticCount, setOptimisticCount] = useState(null);
+  const [commentCount, setCommentCount] = useState(0);
+
+  // Fetch actual comment count from database and subscribe to updates
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      try {
+        const comments = await base44.entities.Comment.filter({ post_id: post.id });
+        setCommentCount(comments.length);
+      } catch (err) {
+        console.error('Failed to fetch comment count:', err);
+      }
+    };
+    
+    fetchCommentCount();
+    
+    // Subscribe to real-time comment changes
+    const unsub = base44.entities.Comment.subscribe((event) => {
+      if (event.data?.post_id === post.id || (event.type === 'delete' && event.data?.post_id === post.id)) {
+        fetchCommentCount();
+      }
+    });
+    
+    return () => unsub();
+  }, [post.id]);
 
   // Reset optimistic state once the server data catches up
   useEffect(() => {
@@ -277,7 +302,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
               className="flex items-center gap-1.5 text-sm text-[#C9B8A6] hover:text-[#8B7355] transition-colors"
             >
               <MessageCircle className="h-4 w-4" />
-              <span>{post.comments_count || 0}</span>
+              <span>{commentCount}</span>
             </button>
 
 
