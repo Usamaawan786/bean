@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 
 const TOKEN_KEY = "bean_fcm_token";
@@ -7,39 +7,23 @@ const PLATFORM_KEY = "bean_fcm_platform";
 async function saveToken(token, platform) {
   try {
     const res = await base44.functions.invoke('saveDeviceToken', { token, platform });
-    console.log("[Push] Token saved successfully for platform:", platform, "res:", JSON.stringify(res?.data));
-    return true;
+    console.log("[Push] Token saved, user_email:", res?.data?.user_email || 'none');
+    return res?.data?.user_email || null;
   } catch (err) {
     console.error("[Push] Failed to save token:", err?.message || err);
-    return false;
+    return null;
   }
 }
 
 export default function usePushNotifications() {
-  const savedRef = useRef(false);
-
-  // Retry saving stored token — handles both fresh installs (no user yet) and re-logins
+  // On every mount: re-save stored token to attach user email if not already set
   useEffect(() => {
     const stored = localStorage.getItem(TOKEN_KEY);
     const platform = localStorage.getItem(PLATFORM_KEY);
     if (!stored || !platform) return;
 
-    console.log('[Push] Found stored token, will retry saving for platform:', platform);
-
-    // Try at multiple intervals to catch post-login state
-    const attempts = [500, 2000, 5000, 10000, 20000, 40000];
-    const timers = attempts.map(delay =>
-      setTimeout(async () => {
-        if (savedRef.current) return;
-        console.log('[Push] Retry attempt at', delay, 'ms...');
-        const ok = await saveToken(stored, platform);
-        if (ok) {
-          savedRef.current = true;
-          console.log('[Push] Token saved successfully on retry at', delay, 'ms');
-        }
-      }, delay)
-    );
-    return () => timers.forEach(clearTimeout);
+    console.log('[Push] Found stored token, re-saving to sync user email...');
+    saveToken(stored, platform);
   }, []);
 
   useEffect(() => {
@@ -95,8 +79,7 @@ export default function usePushNotifications() {
           localStorage.setItem(PLATFORM_KEY, platform);
           console.log("[Push] Token stored in localStorage, attempting save...");
 
-          const ok = await saveToken(token, platform);
-          if (ok) savedRef.current = true;
+          await saveToken(token, platform);
         });
 
         PushNotifications.addListener("registrationError", (err) => {

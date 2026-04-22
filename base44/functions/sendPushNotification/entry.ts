@@ -175,31 +175,36 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Failed to obtain Firebase access token' }, { status: 500 });
     }
 
-    // Resolve target tokens
-    let allTokenRecords = [];
+    // Resolve target tokens — fetch ALL active tokens first, then enrich + filter
+    let allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
+
+    // Enrich tokens: if user_email is null but created_by is a real user email, use that
+    allTokenRecords = allTokenRecords.map(t => {
+      if (!t.user_email && t.created_by && !t.created_by.includes('service+') && t.created_by.includes('@')) {
+        return { ...t, user_email: t.created_by };
+      }
+      return t;
+    });
 
     const audience = target || notification.audience;
 
     if (specific_emails && specific_emails.length > 0) {
       // Send to specific users by email
-      for (const email of specific_emails) {
-        const records = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true });
-        allTokenRecords = [...allTokenRecords, ...records];
-      }
+      console.log('specific_emails requested:', specific_emails);
+      console.log('All token user_emails before filter:', allTokenRecords.map(t => t.user_email));
+      allTokenRecords = allTokenRecords.filter(t => t.user_email && specific_emails.includes(t.user_email));
+      console.log('Tokens after specific_email filter:', allTokenRecords.length);
     } else if (target && target !== 'all' && !target.startsWith('tier_')) {
       const isEmail = target.includes('@');
       if (isEmail) {
-        allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: target, is_active: true });
+        allTokenRecords = allTokenRecords.filter(t => t.user_email === target);
       } else {
         allTokenRecords = [{ token: target }];
       }
-    } else {
-      allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
-      if (audience && audience !== 'all' && audience !== 'specific' && audience.startsWith('tier_')) {
-        const tier = audience.replace('tier_', '');
-        const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
-        allTokenRecords = allTokenRecords.filter(t => t.user_tier === tierCapitalized);
-      }
+    } else if (audience && audience !== 'all' && audience !== 'specific' && audience.startsWith('tier_')) {
+      const tier = audience.replace('tier_', '');
+      const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
+      allTokenRecords = allTokenRecords.filter(t => t.user_tier === tierCapitalized);
     }
 
     const needsPersonalization = notification.title.includes('{{first_name}}') || notification.body.includes('{{first_name}}');
