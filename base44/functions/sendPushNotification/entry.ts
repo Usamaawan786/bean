@@ -202,21 +202,27 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If personalized, load user names per token
+    const needsPersonalization = notification.title.includes('{{first_name}}') || notification.body.includes('{{first_name}}');
+
+    // If {{first_name}} is used, always build a user name map
     let userNameMap = {};
-    if (personalize_first_name) {
+    if (needsPersonalization) {
       const emails = [...new Set(allTokenRecords.map(t => t.user_email).filter(Boolean))];
       if (emails.length > 0) {
         const users = await base44.asServiceRole.entities.User.list();
+        const customers = await base44.asServiceRole.entities.Customer.list();
+        const customerMap = {};
+        customers.forEach(c => { if (c.user_email) customerMap[c.user_email] = c; });
         users.forEach(u => {
-          const firstName = (u.display_name || u.full_name || "").split(" ")[0] || "there";
+          const customer = customerMap[u.email];
+          const firstName = (customer?.display_name || u.display_name || u.full_name || "").split(" ")[0] || "there";
           userNameMap[u.email] = firstName;
         });
       }
     }
 
     const tokens = allTokenRecords.map(t => t.token).filter(Boolean);
-    console.log(`Sending to ${tokens.length} device(s)`);
+    console.log(`Sending to ${tokens.length} device(s), personalized: ${needsPersonalization}`);
 
     if (tokens.length === 0) {
       if (notification_id) {
@@ -238,8 +244,8 @@ Deno.serve(async (req) => {
 
     let successCount = 0, failureCount = 0, invalidTokens = [];
 
-    if (personalize_first_name && Object.keys(userNameMap).length > 0) {
-      // Send per-user with personalized name
+    if (needsPersonalization) {
+      // Send per-user with personalized name substitution
       for (const tokenRecord of allTokenRecords) {
         if (!tokenRecord.token) continue;
         const firstName = userNameMap[tokenRecord.user_email] || "there";
@@ -254,7 +260,7 @@ Deno.serve(async (req) => {
         invalidTokens = [...invalidTokens, ...result.invalidTokens];
       }
     } else {
-      // Bulk send (no personalization)
+      // Bulk send (no personalization needed)
       const result = await sendBatch(tokens, notification, data, accessToken, serviceAccount.project_id);
       successCount = result.successCount;
       failureCount = result.failureCount;
