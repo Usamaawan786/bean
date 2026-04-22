@@ -127,6 +127,19 @@ export default function UserProfile() {
       <div className="max-w-lg mx-auto px-5 pt-4 pb-24">
         <div className="text-center mb-4">
           <h2 className="text-xl font-bold text-[#5C4A3A]">{targetUser?.full_name || targetEmail?.split("@")[0]}</h2>
+          {targetCustomer && getBadgesForCustomer(targetCustomer).length > 0 && (
+            <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+              {getBadgesForCustomer(targetCustomer).map(badgeKey => (
+                <div key={badgeKey} className="inline-flex items-center gap-1 rounded-full text-xs px-2 py-0.5 font-bold bg-gradient-to-r from-amber-400 to-yellow-300 text-amber-900">
+                  {badgeKey === 'founding_member' && '🌟 FM'}
+                  {badgeKey === 'eba' && '⭐ EBA'}
+                  {badgeKey === 'platinum' && '💎 Platinum'}
+                  {badgeKey === 'gold' && '🥇 Gold'}
+                  {badgeKey === 'coffee_creator' && '✍️ Creator'}
+                </div>
+              ))}
+            </div>
+          )}
           {userInfo?.bio && <p className="text-sm text-[#8B7355] mt-1">{userInfo.bio}</p>}
         </div>
 
