@@ -8,6 +8,7 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PostCard from "@/components/community/PostCard";
+import { getBadgesForCustomer } from "@/components/community/UserBadge";
 
 export default function UserProfile() {
   const params = new URLSearchParams(window.location.search);
@@ -60,6 +61,15 @@ export default function UserProfile() {
     queryFn: async () => {
       const users = await base44.entities.User.filter({ email: targetEmail });
       return users[0] || null;
+    },
+    enabled: !!targetEmail
+  });
+
+  const { data: targetCustomer } = useQuery({
+    queryKey: ["target-customer", targetEmail],
+    queryFn: async () => {
+      const customers = await base44.entities.Customer.filter({ created_by: targetEmail });
+      return customers[0] || null;
     },
     enabled: !!targetEmail
   });
@@ -165,6 +175,7 @@ export default function UserProfile() {
                 currentUser={currentUser}
                 currentUserFollowing={currentUser?.following || []}
                 currentUserSavedPosts={currentUser?.saved_posts || []}
+                authorBadges={getBadgesForCustomer(targetCustomer)}
                 onLike={async (p) => {
                   const isLiked = p.liked_by?.includes(currentUser?.email);
                   const newLikedBy = isLiked ? p.liked_by.filter(e => e !== currentUser.email) : [...(p.liked_by || []), currentUser.email];
