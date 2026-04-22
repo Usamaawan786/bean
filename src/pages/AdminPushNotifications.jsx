@@ -345,13 +345,14 @@ export default function AdminPushNotifications() {
   });
 
   const applyTemplate = (tpl) => {
-    setForm(f => ({
-      ...f,
-      title: tpl.title,
-      body: tpl.body,
+    setForm({
+      title: tpl.title || "",
+      body: tpl.body || "",
       deep_link: tpl.deepLink || "",
       audience: tpl.audience || "all",
-    }));
+      image_url: "",
+      notes: "",
+    });
     setTab("compose");
   };
 
@@ -403,7 +404,7 @@ export default function AdminPushNotifications() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-5 pb-24">
         {tab === "compose" && <ComposeTab onSent={() => {}} form={form} setForm={setForm} />}
-        {tab === "launch" && <LaunchCampaign onApply={(tpl) => { applyTemplate(tpl); setTab("compose"); }} />}
+        {tab === "launch" && <LaunchCampaign onApply={applyTemplate} />}
         {tab === "templates" && <TemplateLibrary onApply={applyTemplate} />}
         {tab === "users" && <UserExplorer />}
         {tab === "automations" && <AutomationCenter />}
