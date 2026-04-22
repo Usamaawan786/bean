@@ -60,8 +60,23 @@ export default function AdminReferrals() {
   const leaderboard = Object.values(referralStats)
     .sort((a, b) => b.count - a.count);
 
-  // Get EBA candidates (5+ referrals)
+  // Get EBA candidates (5+ referrals) — also auto-promote in WaitlistSignup if not already
   const ebaCandidates = leaderboard.filter(stat => stat.count >= 5);
+
+  // Auto-promote any EBA candidates whose WaitlistSignup record hasn't been marked yet
+  useEffect(() => {
+    if (!user || ebaCandidates.length === 0) return;
+    ebaCandidates.forEach(async (stat) => {
+      if (stat.referrer.eba_status !== 'EBA') {
+        try {
+          await base44.entities.WaitlistSignup.update(stat.referrer.id, {
+            eba_status: 'EBA',
+            eba_promoted_at: new Date().toISOString()
+          });
+        } catch (_) {}
+      }
+    });
+  }, [user, signups]);
 
   const sendEBAInvite = async (person) => {
     try {
@@ -167,9 +182,7 @@ export default function AdminReferrals() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-[#5C4A3A]">{stat.referrer.full_name}</h3>
-                          {stat.referrer.eba_status === 'EBA' && (
-                            <Badge className="bg-green-600 text-white">✓ EBA</Badge>
-                          )}
+                          <Badge className="bg-green-600 text-white">✓ EBA</Badge>
                           <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
                             {stat.count} referrals
                           </Badge>
@@ -221,7 +234,7 @@ export default function AdminReferrals() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h3 className="font-semibold text-[#5C4A3A]">{stat.referrer.full_name}</h3>
-                            {stat.referrer.eba_status === 'EBA' && (
+                            {stat.count >= 5 && (
                               <Badge className="bg-green-600 text-white text-xs">✓ EBA</Badge>
                             )}
                           </div>
