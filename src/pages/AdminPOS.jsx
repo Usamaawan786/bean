@@ -24,6 +24,7 @@ export default function AdminPOS() {
   const [completing, setCompleting] = useState(false);
   const [orderType, setOrderType] = useState("dine_in"); // "dine_in" | "takeaway"
   const [counter, setCounter] = useState("counter_1");
+  const [discountPct, setDiscountPct] = useState(0); // percentage discount 0-100
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -84,9 +85,11 @@ export default function AdminPOS() {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const discountAmount = subtotal * (discountPct / 100);
+  const discountedSubtotal = subtotal - discountAmount;
   const taxRate = paymentMethod === "Card" ? 0.05 : 0.17; // 5% for Card, 17% for Cash
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax;
+  const tax = discountedSubtotal * taxRate;
+  const total = discountedSubtotal + tax;
 
   const completeSale = async () => {
     if (completing) return;
@@ -104,7 +107,7 @@ export default function AdminPOS() {
         }
       } catch (e) { /* use default */ }
 
-      const pointsToAward = Math.floor(subtotal / pkrPerPoint);
+      const pointsToAward = Math.floor(discountedSubtotal / pkrPerPoint);
       const qrExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
       // Use backend function (service role) to guarantee save
@@ -119,7 +122,7 @@ export default function AdminPOS() {
             quantity: item.quantity,
             price: item.price
           })),
-          subtotal,
+          subtotal: discountedSubtotal,
           tax,
           total_amount: total,
           payment_method: paymentMethod,
@@ -165,7 +168,10 @@ export default function AdminPOS() {
       const bill = {
         items: cart,
         customerInfo,
-        subtotal,
+        subtotal: discountedSubtotal,
+        originalSubtotal: subtotal,
+        discountPct,
+        discountAmount,
         tax,
         total,
         paymentMethod,
@@ -188,6 +194,7 @@ export default function AdminPOS() {
     setCustomerInfo({ name: "", phone: "" });
     setPaymentMethod("Cash");
     setOrderType("dine_in");
+    setDiscountPct(0);
     setShowBill(false);
     setGeneratedBill(null);
   };
@@ -431,11 +438,36 @@ export default function AdminPOS() {
                 {/* Totals */}
                 {cart.length > 0 && (
                   <>
-                    <div className="space-y-2 border-t border-[#E8DED8] pt-4 mb-4">
+                    {/* Discount */}
+                    <div className="mb-3">
+                      <label className="text-sm font-medium text-[#5C4A3A] mb-2 block flex items-center gap-1">
+                        <TrendingDown className="h-4 w-4 text-red-500" /> Discount %
+                      </label>
+                      <div className="flex gap-2 flex-wrap">
+                        {[0, 5, 10, 15, 20].map(pct => (
+                          <button key={pct} type="button" onClick={() => setDiscountPct(pct)}
+                            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${discountPct === pct ? "border-red-400 bg-red-50 text-red-700" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
+                            {pct === 0 ? "None" : `${pct}%`}
+                          </button>
+                        ))}
+                        <input type="number" min="0" max="100" value={discountPct || ""}
+                          onChange={e => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value))))}
+                          placeholder="Custom"
+                          className="w-20 border border-[#E8DED8] rounded-xl px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30" />
+                      </div>
+                    </div>
+
+                  <div className="space-y-2 border-t border-[#E8DED8] pt-4 mb-4">
                       <div className="flex justify-between text-sm">
                         <span className="text-[#8B7355]">Subtotal</span>
                         <span className="text-[#5C4A3A] font-medium">PKR {subtotal.toFixed(2)}</span>
                       </div>
+                      {discountPct > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-red-500">Discount ({discountPct}%)</span>
+                          <span className="text-red-500 font-medium">- PKR {discountAmount.toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between text-sm">
                         <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "5%" : "17%"})</span>
                         <span className="text-[#5C4A3A] font-medium">PKR {tax.toFixed(2)}</span>

@@ -68,9 +68,18 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     y += 2;
     pdf.line(margin, y, 190, y);
     y += 6;
-    pdf.text("Subtotal", 140, y, { align: "right" });
-    pdf.text(`PKR ${bill.subtotal.toFixed(2)}`, 190, y, { align: "right" });
-    y += 6;
+    if (bill.discountPct > 0) {
+      pdf.text("Subtotal", 140, y, { align: "right" });
+      pdf.text(`PKR ${(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}`, 190, y, { align: "right" });
+      y += 6;
+      pdf.text(`Discount (${bill.discountPct}%)`, 140, y, { align: "right" });
+      pdf.text(`- PKR ${(bill.discountAmount ?? 0).toFixed(2)}`, 190, y, { align: "right" });
+      y += 6;
+    } else {
+      pdf.text("Subtotal", 140, y, { align: "right" });
+      pdf.text(`PKR ${bill.subtotal.toFixed(2)}`, 190, y, { align: "right" });
+      y += 6;
+    }
     pdf.text(`GST (${bill.paymentMethod === "Card" ? "5%" : "17%"})`, 140, y, { align: "right" });
     pdf.text(`PKR ${bill.tax.toFixed(2)}`, 190, y, { align: "right" });
     y += 4;
@@ -198,10 +207,23 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
           </table>
 
           <div className="space-y-1.5 mb-4">
-            <div className="flex justify-between text-[#8B7355]">
-              <span>Subtotal</span>
-              <span>PKR {bill.subtotal.toFixed(2)}</span>
-            </div>
+            {bill.discountPct > 0 ? (
+              <>
+                <div className="flex justify-between text-[#8B7355]">
+                  <span>Subtotal</span>
+                  <span>PKR {(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-red-500 font-medium">
+                  <span>Discount ({bill.discountPct}%)</span>
+                  <span>- PKR {(bill.discountAmount ?? 0).toFixed(2)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-[#8B7355]">
+                <span>Subtotal</span>
+                <span>PKR {bill.subtotal.toFixed(2)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-[#8B7355]">
               <span>GST ({bill.paymentMethod === "Card" ? "5%" : "17%"})</span>
               <span>PKR {bill.tax.toFixed(2)}</span>
