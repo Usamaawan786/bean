@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
@@ -21,7 +21,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'saleData is required' }, { status: 400 });
     }
 
-    const sale = await base44.entities.StoreSale.create(saleData);
+    // Stamp with cashier identity for audit trail
+    const enrichedSale = {
+      ...saleData,
+      cashier_email: user.email,
+      cashier_name: user.full_name || user.email,
+      cashier_role: user.role,
+    };
+
+    const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
 
     return Response.json({ success: true, sale });
   } catch (error) {

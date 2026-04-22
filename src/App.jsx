@@ -27,6 +27,7 @@ import BarDisplay from './pages/BarDisplay';
 import OrderManager from './pages/OrderManager';
 import AdminReferrals from './pages/AdminReferrals';
 import AdminRedemptions from './pages/AdminRedemptions';
+import AdminStaffScrutiny from './pages/AdminStaffScrutiny';
 import Welcome from './pages/Welcome';
 import Leaderboard from './pages/Leaderboard';
 import UserProfile from './pages/UserProfile';
@@ -86,6 +87,7 @@ function App() {
             <Route path="/BarDisplay" element={<BarDisplay />} />
             <Route path="/OrderManager" element={<OrderManager />} />
             <Route path="/OrderHistory" element={<OrderHistory />} />
+            <Route path="/AdminStaffScrutiny" element={<AdminStaffScrutiny />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

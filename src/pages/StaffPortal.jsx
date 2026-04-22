@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
@@ -44,6 +44,7 @@ const ROLE_FEATURES = {
     { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
     { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
     { icon: Users, label: "Staff Management", desc: "Invite & manage team access", link: "/StaffManagement", color: "from-purple-600 to-purple-700" },
+    { icon: Shield, label: "Staff Scrutiny", desc: "Audit trail, fraud detection & staff performance", link: "/AdminStaffScrutiny", color: "from-red-700 to-red-900" },
   ],
 };
 

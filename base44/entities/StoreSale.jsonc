@@ -37,7 +37,21 @@
     },
     "subtotal": {
       "type": "number",
-      "description": "Amount before tax"
+      "description": "Amount before tax (after discount)"
+    },
+    "original_subtotal": {
+      "type": "number",
+      "description": "Subtotal before discount applied"
+    },
+    "discount_pct": {
+      "type": "number",
+      "default": 0,
+      "description": "Discount percentage applied"
+    },
+    "discount_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "PKR discount amount"
     },
     "tax": {
       "type": "number",
@@ -83,6 +97,26 @@
     "points_awarded": {
       "type": "number",
       "description": "Points awarded from this sale"
+    },
+    "cashier_email": {
+      "type": "string",
+      "description": "Email of the staff member who processed the sale"
+    },
+    "cashier_name": {
+      "type": "string",
+      "description": "Display name of the staff member"
+    },
+    "cashier_role": {
+      "type": "string",
+      "description": "Role of the staff member at time of sale"
+    },
+    "counter": {
+      "type": "string",
+      "description": "Counter used (counter_1 / counter_2)"
+    },
+    "order_type": {
+      "type": "string",
+      "description": "dine_in or takeaway"
     }
   },
   "required": [

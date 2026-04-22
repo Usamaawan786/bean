@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2 } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -123,13 +123,18 @@ export default function AdminPOS() {
             price: item.price
           })),
           subtotal: discountedSubtotal,
+          original_subtotal: subtotal,
+          discount_pct: discountPct,
+          discount_amount: discountAmount,
           tax,
           total_amount: total,
           payment_method: paymentMethod,
           qr_code_id: qrCodeId,
           is_scanned: false,
           points_awarded: pointsToAward,
-          qr_expires_at: qrExpiresAt
+          qr_expires_at: qrExpiresAt,
+          order_type: orderType,
+          counter
         }
       });
       if (!saveResp.data?.success) {
@@ -259,6 +264,14 @@ export default function AdminPOS() {
                   Redemptions
                 </Button>
               </Link>
+              {["admin", "super_admin"].includes(user?.role) && (
+                <Link to="/AdminStaffScrutiny">
+                  <Button variant="outline" className="bg-red-500/20 text-red-200 border-red-400/30 hover:bg-red-500/30">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Scrutiny
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
