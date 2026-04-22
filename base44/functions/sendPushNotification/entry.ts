@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
     }
 
     const reqBody = await req.json();
-    const { notification_id, title, body: msgBody, target, deep_link } = reqBody;
+    const { notification_id, title, body: msgBody, target, deep_link, personalize_first_name } = reqBody;
 
     // Support direct mode (title + body + target) OR record-based mode (notification_id)
     let notification;
@@ -197,6 +197,19 @@ Deno.serve(async (req) => {
       }
     }
 
+    // If personalized, load user names per token
+    let userNameMap = {};
+    if (personalize_first_name) {
+      const emails = [...new Set(allTokenRecords.map(t => t.user_email).filter(Boolean))];
+      if (emails.length > 0) {
+        const users = await base44.asServiceRole.entities.User.list();
+        users.forEach(u => {
+          const firstName = (u.display_name || u.full_name || "").split(" ")[0] || "there";
+          userNameMap[u.email] = firstName;
+        });
+      }
+    }
+
     const tokens = allTokenRecords.map(t => t.token).filter(Boolean);
     console.log(`Sending to ${tokens.length} device(s)`);
 
@@ -218,9 +231,30 @@ Deno.serve(async (req) => {
     const deepLinkValue = notification.deep_link || deep_link;
     if (deepLinkValue) data.deep_link = deepLinkValue;
 
-    const { successCount, failureCount, invalidTokens } = await sendBatch(
-      tokens, notification, data, accessToken, serviceAccount.project_id
-    );
+    let successCount = 0, failureCount = 0, invalidTokens = [];
+
+    if (personalize_first_name && Object.keys(userNameMap).length > 0) {
+      // Send per-user with personalized name
+      for (const tokenRecord of allTokenRecords) {
+        if (!tokenRecord.token) continue;
+        const firstName = userNameMap[tokenRecord.user_email] || "there";
+        const personalizedNotification = {
+          ...notification,
+          title: notification.title.replace(/\{\{first_name\}\}/g, firstName),
+          body: notification.body.replace(/\{\{first_name\}\}/g, firstName),
+        };
+        const result = await sendBatch([tokenRecord.token], personalizedNotification, data, accessToken, serviceAccount.project_id);
+        successCount += result.successCount;
+        failureCount += result.failureCount;
+        invalidTokens = [...invalidTokens, ...result.invalidTokens];
+      }
+    } else {
+      // Bulk send (no personalization)
+      const result = await sendBatch(tokens, notification, data, accessToken, serviceAccount.project_id);
+      successCount = result.successCount;
+      failureCount = result.failureCount;
+      invalidTokens = result.invalidTokens;
+    }
 
     // Deactivate invalid/expired tokens
     if (invalidTokens.length > 0) {

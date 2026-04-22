@@ -13,9 +13,11 @@ import { format } from "date-fns";
 import TemplateLibrary from "@/components/admin/notif/TemplateLibrary";
 import UserExplorer from "@/components/admin/notif/UserExplorer";
 import AutomationCenter from "@/components/admin/notif/AutomationCenter";
+import LaunchCampaign from "@/components/admin/notif/LaunchCampaign";
 
 const TABS = [
   { id: "compose", label: "Compose", icon: Bell },
+  { id: "launch", label: "🚀 Launch", icon: Zap },
   { id: "templates", label: "Templates", icon: Zap },
   { id: "users", label: "Users", icon: Users },
   { id: "automations", label: "Automations", icon: BarChart2 },
@@ -300,6 +302,7 @@ export default function AdminPushNotifications() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-5 pb-24">
         {tab === "compose" && <ComposeTab onSent={() => {}} form={form} setForm={setForm} />}
+        {tab === "launch" && <LaunchCampaign onApply={(tpl) => { applyTemplate(tpl); setTab("compose"); }} />}
         {tab === "templates" && <TemplateLibrary onApply={applyTemplate} />}
         {tab === "users" && <UserExplorer />}
         {tab === "automations" && <AutomationCenter />}
