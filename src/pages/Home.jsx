@@ -393,6 +393,29 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
+
+          {/* Founding Member Bonus Banner */}
+          {customer?.is_founding_member && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.65 }}
+              className="bg-gradient-to-r from-amber-500 to-yellow-400 rounded-3xl p-5 shadow-lg relative overflow-hidden"
+            >
+              <div className="absolute -top-4 -right-4 text-6xl opacity-20 select-none">⭐</div>
+              <div className="absolute -bottom-4 -left-4 text-6xl opacity-10 select-none">☕</div>
+              <div className="relative flex items-start gap-3">
+                <div className="text-3xl">🎉</div>
+                <div>
+                  <p className="font-bold text-white text-base leading-tight">Founding Member Bonus!</p>
+                  <p className="text-white/90 text-sm mt-1 leading-relaxed">
+                    You received <span className="font-bold">+50 extra points</span> on top of the welcome 50 — that's <span className="font-bold">100 pts</span> to kick things off, just for being one of our earliest supporters. 🙌
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {user && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
