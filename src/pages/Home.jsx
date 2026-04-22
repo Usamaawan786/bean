@@ -126,12 +126,41 @@ export default function Home() {
           setCustomer(customers[0]);
         } else {
           const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+          // Check if this user was on the waitlist (Founding Member)
+          let isFM = false;
+          let isEBA = false;
+          let fmBonusPoints = 0;
+          try {
+            const waitlistMatches = await base44.entities.WaitlistSignup.filter({ email: u.email });
+            if (waitlistMatches.length > 0) {
+              isFM = true;
+              fmBonusPoints = 50; // extra 50 on top of welcome 50
+
+              // Check EBA: 5+ unique referrals using their referral_code
+              const signupRecord = waitlistMatches[0];
+              if (signupRecord.referral_code) {
+                const allSignups = await base44.entities.WaitlistSignup.list();
+                const referrals = allSignups.filter(s => s.referred_by === signupRecord.referral_code);
+                const uniqueReferralEmails = [...new Set(referrals.map(r => r.email))];
+                if (uniqueReferralEmails.length >= 5) {
+                  isEBA = true;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('FM/EBA check failed:', e);
+          }
+
+          const startingPoints = 50 + fmBonusPoints;
           const newCustomer = await base44.entities.Customer.create({
             user_email: u.email,
             referral_code: refCode,
-            points_balance: 50,
-            total_points_earned: 50,
-            tier: "Bronze"
+            points_balance: startingPoints,
+            total_points_earned: startingPoints,
+            tier: "Bronze",
+            is_founding_member: isFM,
+            is_eba: isEBA,
           });
           setCustomer(newCustomer);
 
