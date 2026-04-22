@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Bell, Send, Users, History, Zap, ChevronLeft,
-  Smartphone, BarChart2, CheckCircle2, XCircle, Clock
+  Smartphone, BarChart2, CheckCircle2, XCircle, Clock, X, Search, UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -26,18 +26,112 @@ const TABS = [
 
 const AUDIENCE_OPTIONS = [
   { value: "all", label: "All Users" },
+  { value: "specific", label: "Specific Users (by email)" },
   { value: "tier_bronze", label: "Bronze Tier" },
   { value: "tier_silver", label: "Silver Tier" },
   { value: "tier_gold", label: "Gold Tier" },
   { value: "tier_platinum", label: "Platinum Tier" },
 ];
 
+function UserEmailPicker({ selectedEmails, onChange }) {
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+
+  const handleSearch = async (val) => {
+    setSearch(val);
+    if (val.length < 2) { setResults([]); return; }
+    setSearching(true);
+    try {
+      const users = await base44.entities.User.list();
+      const filtered = users.filter(u =>
+        u.email?.toLowerCase().includes(val.toLowerCase()) ||
+        u.full_name?.toLowerCase().includes(val.toLowerCase())
+      ).slice(0, 8);
+      setResults(filtered);
+    } catch (e) {
+      setResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const addEmail = (email) => {
+    if (!selectedEmails.includes(email)) onChange([...selectedEmails, email]);
+    setSearch("");
+    setResults([]);
+  };
+
+  const removeEmail = (email) => onChange(selectedEmails.filter(e => e !== email));
+
+  return (
+    <div className="space-y-2">
+      {/* Selected tags */}
+      {selectedEmails.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selectedEmails.map(email => (
+            <span key={email} className="flex items-center gap-1 bg-[#F5EBE8] text-[#5C4A3A] text-xs px-2.5 py-1 rounded-full border border-[#E8DED8]">
+              <UserCheck className="h-3 w-3" />
+              {email}
+              <button onClick={() => removeEmail(email)} className="ml-0.5 hover:text-red-500 transition-colors">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+        <input
+          value={search}
+          onChange={e => handleSearch(e.target.value)}
+          placeholder="Search by email or name…"
+          className="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+        />
+      </div>
+
+      {/* Dropdown results */}
+      {results.length > 0 && (
+        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm bg-white">
+          {results.map(u => (
+            <button
+              key={u.email}
+              onClick={() => addEmail(u.email)}
+              disabled={selectedEmails.includes(u.email)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${selectedEmails.includes(u.email) ? "opacity-40 cursor-not-allowed" : ""}`}
+            >
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D4C4B0] to-[#8B7355] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {(u.full_name || u.email || "?")[0].toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-800 truncate">{u.full_name || "—"}</p>
+                <p className="text-xs text-gray-400 truncate">{u.email}</p>
+              </div>
+              {selectedEmails.includes(u.email) && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />}
+            </button>
+          ))}
+        </div>
+      )}
+      {selectedEmails.length === 0 && search.length < 2 && (
+        <p className="text-xs text-gray-400">Type at least 2 characters to search users</p>
+      )}
+    </div>
+  );
+}
+
 function ComposeTab({ onSent, form, setForm }) {
   const [sending, setSending] = useState(false);
+  const [specificEmails, setSpecificEmails] = useState([]);
 
   const handleSend = async () => {
     if (!form.title.trim() || !form.body.trim()) {
       toast.error("Title and body are required");
+      return;
+    }
+    if (form.audience === "specific" && specificEmails.length === 0) {
+      toast.error("Please select at least one user");
       return;
     }
     setSending(true);
@@ -46,6 +140,7 @@ function ComposeTab({ onSent, form, setForm }) {
         title: form.title,
         body: form.body,
         audience: form.audience,
+        specific_emails: form.audience === "specific" ? specificEmails : undefined,
         deep_link: form.deep_link || undefined,
         image_url: form.image_url || undefined,
         notes: form.notes || undefined,
@@ -53,6 +148,7 @@ function ComposeTab({ onSent, form, setForm }) {
       if (res.data?.success !== false) {
         toast.success(`Notification sent! Reached ${res.data?.sent_count || 0} devices.`);
         setForm({ title: "", body: "", audience: "all", deep_link: "", image_url: "", notes: "" });
+        setSpecificEmails([]);
         onSent && onSent();
       } else {
         toast.error(res.data?.error || "Failed to send");
@@ -122,6 +218,11 @@ function ComposeTab({ onSent, form, setForm }) {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+          {form.audience === "specific" && (
+            <div className="mt-2">
+              <UserEmailPicker selectedEmails={specificEmails} onChange={setSpecificEmails} />
+            </div>
+          )}
         </div>
 
         <div>

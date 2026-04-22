@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
     }
 
     const reqBody = await req.json();
-    const { notification_id, title, body: msgBody, target, deep_link, personalize_first_name } = reqBody;
+    const { notification_id, title, body: msgBody, target, deep_link, personalize_first_name, specific_emails } = reqBody;
 
     // Support direct mode (title + body + target) OR record-based mode (notification_id)
     let notification;
@@ -178,19 +178,24 @@ Deno.serve(async (req) => {
     // Resolve target tokens
     let allTokenRecords = [];
 
-    if (target && target !== 'all' && !target.startsWith('tier_')) {
+    const audience = target || notification.audience;
+
+    if (specific_emails && specific_emails.length > 0) {
+      // Send to specific users by email
+      for (const email of specific_emails) {
+        const records = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true });
+        allTokenRecords = [...allTokenRecords, ...records];
+      }
+    } else if (target && target !== 'all' && !target.startsWith('tier_')) {
       const isEmail = target.includes('@');
       if (isEmail) {
-        // Send to all active tokens for a specific user
         allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: target, is_active: true });
       } else {
-        // Treat as a raw FCM token string
         allTokenRecords = [{ token: target }];
       }
     } else {
       allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
-      const audience = target || notification.audience;
-      if (audience && audience !== 'all' && audience.startsWith('tier_')) {
+      if (audience && audience !== 'all' && audience !== 'specific' && audience.startsWith('tier_')) {
         const tier = audience.replace('tier_', '');
         const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
         allTokenRecords = allTokenRecords.filter(t => t.user_tier === tierCapitalized);
