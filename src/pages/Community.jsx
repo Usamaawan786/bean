@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -110,13 +110,7 @@ export default function Community() {
     return () => unsub();
   }, [queryClient]);
 
-  // Re-fetch posts every 10 seconds to ensure counts are always in sync
-  useEffect(() => {
-    const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [queryClient]);
+
 
   // Scroll to highlighted post when posts load
   useEffect(() => {
@@ -253,9 +247,6 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(["community-posts"], context.previous);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
   });
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
