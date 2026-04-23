@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Send, Loader2, X } from "lucide-react";
+import { Heart, Send, Loader2, X, Trash2 } from "lucide-react";
 import { timeAgo } from "@/utils/timeUtils";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,8 +17,9 @@ function Avatar({ src, name, size = "md" }) {
   );
 }
 
-function CommentBubble({ comment, currentUser, onLike, onReply, isReply = false }) {
+function CommentBubble({ comment, currentUser, onLike, onReply, onDelete, isReply = false }) {
   const isLiked = comment.liked_by?.includes(currentUser?.email);
+  const isOwn = comment.author_email === currentUser?.email;
   const timeAgoStr = timeAgo(comment.created_date);
   const profileUrl = `/UserProfile?email=${encodeURIComponent(comment.author_email || "")}`;
 
@@ -67,6 +68,14 @@ function CommentBubble({ comment, currentUser, onLike, onReply, isReply = false 
                   Reply
                 </button>
               )}
+              {isOwn && (
+                <button
+                  onClick={() => onDelete(comment)}
+                  className="text-xs font-medium text-[#C9B8A6] hover:text-red-400 transition-colors flex items-center gap-0.5"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              )}
             </>
           )}
         </div>
@@ -83,11 +92,14 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
 
   const { data: allComments = [] } = useQuery({
     queryKey: ["comments", postId],
-    queryFn: () => base44.entities.Comment.filter({ post_id: postId }, "created_date")
+    queryFn: () => base44.entities.Comment.filter({ post_id: postId }, "created_date"),
+    // No staleTime — always fresh, but no polling to avoid duplicates
   });
 
-  const topComments = allComments.filter(c => !c.parent_comment_id);
-  const getReplies = (commentId) => allComments.filter(c => c.parent_comment_id === commentId);
+  // Deduplicate by id in case of race conditions
+  const uniqueComments = allComments.filter((c, idx, arr) => arr.findIndex(x => x.id === c.id) === idx);
+  const topComments = uniqueComments.filter(c => !c.parent_comment_id);
+  const getReplies = (commentId) => uniqueComments.filter(c => c.parent_comment_id === commentId);
 
   const handleSetReply = (data) => {
     setReplyTo(data);
@@ -111,7 +123,6 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
 
       const fromName = currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0];
 
-      // Reply notification with push
       if (replyTo?.author_email && replyTo.author_email !== currentUser.email) {
         base44.functions.invoke("notifyCommunityActivity", {
           type: "reply",
@@ -124,7 +135,6 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         }).catch(() => {});
       }
 
-      // Comment on post notification (notify post author if not replying to them already)
       if (postAuthorEmail && postAuthorEmail !== currentUser.email && postAuthorEmail !== replyTo?.author_email) {
         base44.functions.invoke("notifyCommunityActivity", {
           type: "comment",
@@ -137,35 +147,15 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         }).catch(() => {});
       }
 
-      const post = await base44.entities.CommunityPost.filter({ id: postId });
-      if (post[0]) {
+      // Update post comment count
+      const posts = await base44.entities.CommunityPost.filter({ id: postId });
+      if (posts[0]) {
         await base44.entities.CommunityPost.update(postId, {
-          comments_count: (post[0].comments_count || 0) + 1
+          comments_count: (posts[0].comments_count || 0) + 1
         });
       }
+
       return comment;
-    },
-    onMutate: async (content) => {
-      await queryClient.cancelQueries({ queryKey: ["comments", postId] });
-      const previousComments = queryClient.getQueryData(["comments", postId]);
-      const optimisticComment = {
-        id: `temp-${Date.now()}`,
-        post_id: postId,
-        author_email: currentUser.email,
-        author_name: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
-        author_profile_picture: currentUser.profile_picture || null,
-        content,
-        likes_count: 0,
-        liked_by: [],
-        parent_comment_id: replyTo?.id || null,
-        reply_to_author: replyTo?.author_name || null,
-        created_date: new Date().toISOString()
-      };
-      queryClient.setQueryData(["comments", postId], old => [...(old || []), optimisticComment]);
-      return { previousComments };
-    },
-    onError: (err, variables, context) => {
-      queryClient.setQueryData(["comments", postId], context.previousComments);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -185,7 +175,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
     },
     onMutate: async (comment) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });
-      const previousComments = queryClient.getQueryData(["comments", postId]);
+      const previous = queryClient.getQueryData(["comments", postId]);
       const isLiked = comment.liked_by?.includes(currentUser.email);
       const newLikedBy = isLiked
         ? comment.liked_by.filter(e => e !== currentUser.email)
@@ -193,26 +183,51 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
       queryClient.setQueryData(["comments", postId], old =>
         old?.map(c => c.id === comment.id ? { ...c, liked_by: newLikedBy, likes_count: newLikedBy.length } : c)
       );
-      return { previousComments };
+      return { previous };
     },
     onError: (err, variables, context) => {
-      queryClient.setQueryData(["comments", postId], context.previousComments);
+      queryClient.setQueryData(["comments", postId], context.previous);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     }
   });
 
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (comment) => {
+      await base44.entities.Comment.delete(comment.id);
+      // Decrement post comment count
+      const posts = await base44.entities.CommunityPost.filter({ id: postId });
+      if (posts[0]) {
+        await base44.entities.CommunityPost.update(postId, {
+          comments_count: Math.max(0, (posts[0].comments_count || 1) - 1)
+        });
+      }
+    },
+    onMutate: async (comment) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", postId] });
+      const previous = queryClient.getQueryData(["comments", postId]);
+      queryClient.setQueryData(["comments", postId], old => old?.filter(c => c.id !== comment.id && c.parent_comment_id !== comment.id));
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["comments", postId], context.previous);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    }
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (newComment.trim()) {
+    if (newComment.trim() && !createCommentMutation.isPending) {
       createCommentMutation.mutate(newComment.trim());
     }
   };
 
   return (
     <div className="mt-3 pt-3 border-t border-[#E8DED8]">
-      {/* Comments List */}
       <div className="space-y-4 mb-3">
         <AnimatePresence>
           {topComments.map((comment) => {
@@ -224,6 +239,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
                   currentUser={currentUser}
                   onLike={likeCommentMutation.mutate}
                   onReply={handleSetReply}
+                  onDelete={deleteCommentMutation.mutate}
                 />
                 {replies.length > 0 && (
                   <div className="ml-10 mt-2 space-y-2">
@@ -234,6 +250,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
                         currentUser={currentUser}
                         onLike={likeCommentMutation.mutate}
                         onReply={handleSetReply}
+                        onDelete={deleteCommentMutation.mutate}
                         isReply
                       />
                     ))}
@@ -245,7 +262,6 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         </AnimatePresence>
       </div>
 
-      {/* Input area */}
       {currentUser && (
         <div className="border-t border-[#E8DED8] pt-3">
           {replyTo && (

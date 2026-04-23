@@ -168,17 +168,17 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   const likeMutation = useMutation({
     mutationFn: async (post) => {
-      const isLiked = post.liked_by?.includes(user.email);
+      const currentLikedBy = post.liked_by || [];
+      const isLiked = currentLikedBy.includes(user.email);
       const newLikedBy = isLiked
-        ? post.liked_by.filter(e => e !== user.email)
-        : [...(post.liked_by || []), user.email];
-      
+        ? currentLikedBy.filter(e => e !== user.email)
+        : [...currentLikedBy, user.email];
+
       await base44.entities.CommunityPost.update(post.id, {
         liked_by: newLikedBy,
         likes_count: newLikedBy.length
       });
 
-      // Batched like notification + trending nudge — only when liking, not your own post
       if (!isLiked && post.author_email && post.author_email !== user.email) {
         base44.functions.invoke("notifyCommunityActivity", {
           type: "like",
@@ -187,9 +187,46 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
           fromName: user.display_name || user.full_name || user.email.split("@")[0],
           fromPicture: user.profile_picture || null,
           postId: post.id,
-          postLikesCount: newLikedBy.length, // triggers trending nudge at milestones
+          postLikesCount: newLikedBy.length,
         }).catch(() => {});
       }
+    },
+    onMutate: async (post) => {
+      await queryClient.cancelQueries({ queryKey: ["community-posts"] });
+      const previous = queryClient.getQueryData(["community-posts"]);
+      const currentLikedBy = post.liked_by || [];
+      const isLiked = currentLikedBy.includes(user.email);
+      const newLikedBy = isLiked
+        ? currentLikedBy.filter(e => e !== user.email)
+        : [...currentLikedBy, user.email];
+      queryClient.setQueryData(["community-posts"], old =>
+        old?.map(p => p.id === post.id ? { ...p, liked_by: newLikedBy, likes_count: newLikedBy.length } : p)
+      );
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["community-posts"], context.previous);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    }
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async (post) => {
+      await base44.entities.CommunityPost.delete(post.id);
+      // Also delete all comments for this post
+      const comments = await base44.entities.Comment.filter({ post_id: post.id });
+      await Promise.all(comments.map(c => base44.entities.Comment.delete(c.id)));
+    },
+    onMutate: async (post) => {
+      await queryClient.cancelQueries({ queryKey: ["community-posts"] });
+      const previous = queryClient.getQueryData(["community-posts"]);
+      queryClient.setQueryData(["community-posts"], old => old?.filter(p => p.id !== post.id));
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(["community-posts"], context.previous);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
@@ -397,6 +434,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                     onFollow={handleFollow}
                     onSave={handleSavePost}
                     onEdit={(id, data) => editPostMutation.mutate({ id, data })}
+                    onDelete={deletePostMutation.mutate}
                     />
                 </motion.div>
               ))}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X, Trash2 } from "lucide-react";
 import { formatDateTime } from "@/utils/timeUtils";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -30,39 +30,33 @@ function renderContent(content) {
   });
 }
 
-export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit }) {
+export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit, onDelete }) {
   const [optimisticLiked, setOptimisticLiked] = useState(null);
   const [optimisticCount, setOptimisticCount] = useState(null);
-  const [commentCount, setCommentCount] = useState(0);
+  const [commentCount, setCommentCount] = useState(post.comments_count || 0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Fetch actual comment count from database and subscribe to updates
+  // Sync comment count from real-time subscription only (no polling to avoid duplicates)
   useEffect(() => {
-    const fetchCommentCount = async () => {
-      try {
-        const comments = await base44.entities.Comment.filter({ post_id: post.id });
-        setCommentCount(comments.length);
-      } catch (err) {
-        console.error('Failed to fetch comment count:', err);
-      }
-    };
-    
-    fetchCommentCount();
-    
-    // Subscribe to real-time comment changes
     const unsub = base44.entities.Comment.subscribe((event) => {
-      if (event.data?.post_id === post.id || (event.type === 'delete' && event.data?.post_id === post.id)) {
-        fetchCommentCount();
+      if (event.data?.post_id === post.id) {
+        if (event.type === 'create') setCommentCount(c => c + 1);
+        if (event.type === 'delete') setCommentCount(c => Math.max(0, c - 1));
       }
     });
-    
     return () => unsub();
   }, [post.id]);
 
-  // Reset optimistic state once the server data catches up
+  // Keep comment count in sync with post data
+  useEffect(() => {
+    if (post.comments_count !== undefined) setCommentCount(post.comments_count);
+  }, [post.comments_count]);
+
+  // Reset optimistic like state only after server data confirms the change
   useEffect(() => {
     setOptimisticLiked(null);
     setOptimisticCount(null);
-  }, [post.likes_count, post.liked_by?.length]);
+  }, [(post.liked_by || []).join(",")]);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
@@ -81,6 +75,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const hasReported = post.reported_by?.includes(currentUserEmail);
 
   const handleLike = () => {
+    if (!currentUserEmail) return;
     const newLiked = !isLiked;
     const newCount = displayLikesCount + (newLiked ? 1 : -1);
     setOptimisticLiked(newLiked);
@@ -159,15 +154,21 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0 self-start">
-              {isOwnPost && onEdit && (
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  onClick={() => setIsEditing(true)}
-                  className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-[#8B7355] transition-colors"
-                  title="Edit post"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                </motion.button>
+              {isOwnPost && (
+                <>
+                  {onEdit && (
+                    <motion.button whileHover={{ scale: 1.1 }} onClick={() => setIsEditing(true)}
+                      className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-[#8B7355] transition-colors" title="Edit post">
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </motion.button>
+                  )}
+                  {onDelete && (
+                    <motion.button whileHover={{ scale: 1.1 }} onClick={() => setShowDeleteConfirm(true)}
+                      className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-red-50 hover:text-red-500 transition-colors" title="Delete post">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </motion.button>
+                  )}
+                </>
               )}
               {!isOwnPost && (
                 <>
@@ -366,6 +367,26 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                 <div className="flex gap-3">
                   <Button onClick={() => setShowBlockConfirm(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
                   <Button onClick={() => { onBlock(post.author_email); setShowBlockConfirm(false); }} className="flex-1 rounded-xl bg-red-500 hover:bg-red-600">Block</Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Dialog */}
+          {showDeleteConfirm && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <Trash2 className="h-5 w-5 text-red-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#5C4A3A]">Delete Post?</h3>
+                </div>
+                <p className="text-sm text-[#8B7355] mb-6">This will permanently delete your post and all its comments. This cannot be undone.</p>
+                <div className="flex gap-3">
+                  <Button onClick={() => setShowDeleteConfirm(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
+                  <Button onClick={() => { onDelete(post); setShowDeleteConfirm(false); }} className="flex-1 rounded-xl bg-red-500 hover:bg-red-600 text-white">Delete</Button>
                 </div>
               </motion.div>
             </div>
