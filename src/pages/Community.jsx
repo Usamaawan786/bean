@@ -91,10 +91,16 @@ export default function Community() {
       queryClient.setQueryData(["community-posts"], (prev = []) => {
         if (event.type === "create") return [event.data, ...prev.filter(p => p.id !== event.data.id)];
         if (event.type === "update") {
-          // Merge update to preserve author_badges if not included in event payload
           return prev.map(p => {
             if (p.id !== event.id) return p;
-            return { ...p, ...event.data, author_badges: event.data.author_badges ?? p.author_badges };
+            // Merge all fields, ensure likes_count and comments_count stay in sync
+            return {
+              ...p,
+              ...event.data,
+              author_badges: event.data.author_badges ?? p.author_badges,
+              likes_count: event.data.liked_by?.length ?? p.likes_count,
+              comments_count: event.data.comments_count ?? p.comments_count
+            };
           });
         }
         if (event.type === "delete") return prev.filter(p => p.id !== event.id);
@@ -102,6 +108,14 @@ export default function Community() {
       });
     });
     return () => unsub();
+  }, [queryClient]);
+
+  // Re-fetch posts every 10 seconds to ensure counts are always in sync
+  useEffect(() => {
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    }, 10000);
+    return () => clearInterval(interval);
   }, [queryClient]);
 
   // Scroll to highlighted post when posts load
@@ -204,7 +218,6 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         ? currentLikedBy.filter(e => e !== user.email)
         : [...currentLikedBy, user.email];
 
-      // Always write both liked_by AND likes_count so they stay in sync
       await base44.entities.CommunityPost.update(post.id, {
         liked_by: newLikedBy,
         likes_count: newLikedBy.length,
@@ -223,7 +236,6 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       }
     },
     onMutate: async (post) => {
-      // Optimistic update: flip liked_by in cache immediately
       await queryClient.cancelQueries({ queryKey: ["community-posts"] });
       const previous = queryClient.getQueryData(["community-posts"]);
       const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
@@ -243,7 +255,6 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       queryClient.setQueryData(["community-posts"], context.previous);
     },
     onSettled: () => {
-      // Re-fetch after server confirms to sync liked_by with actual DB state
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
   });
