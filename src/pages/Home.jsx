@@ -96,6 +96,31 @@ export default function Home() {
     setCustomer(prev => prev ? { ...prev, display_name: name, phone } : prev);
   };
 
+  const processReferralParam = async (customerId, userEmail) => {
+    const params = new URLSearchParams(window.location.search);
+    const refParam = params.get('ref');
+    if (!refParam) return;
+    const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
+    if (referrers.length === 0) return;
+    const referrer = referrers[0];
+    // Don't self-refer
+    if (referrer.created_by === userEmail) return;
+    // Link referrer to this customer
+    await base44.entities.Customer.update(customerId, { referred_by: referrer.created_by });
+    // Increment referrer's referral_count
+    await base44.entities.Customer.update(referrer.id, {
+      referral_count: (referrer.referral_count || 0) + 1
+    });
+    // Log activity for referrer
+    await base44.entities.Activity.create({
+      user_email: referrer.created_by,
+      action_type: "referral",
+      description: `A new friend joined using your referral link!`,
+      points_amount: 0,
+      metadata: { referred_email: userEmail }
+    });
+  };
+
   const getGreeting = () => {
     const pkHour = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Karachi" })).getHours();
     if (pkHour >= 5 && pkHour < 12) return "Good morning";
@@ -124,6 +149,10 @@ export default function Home() {
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
           setCustomer(customers[0]);
+          // If existing customer has no referrer yet but there's a ref param, capture it now
+          if (!customers[0].referred_by) {
+            await processReferralParam(customers[0].id, u.email);
+          }
         } else {
           const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -164,28 +193,7 @@ export default function Home() {
           });
           setCustomer(newCustomer);
 
-          const params = new URLSearchParams(window.location.search);
-          const refParam = params.get('ref');
-          if (refParam) {
-            const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
-            if (referrers.length > 0) {
-              const referrer = referrers[0];
-              // Store referrer on new customer
-              await base44.entities.Customer.update(newCustomer.id, { referred_by: referrer.created_by });
-              // Increment referrer's referral_count
-              await base44.entities.Customer.update(referrer.id, {
-                referral_count: (referrer.referral_count || 0) + 1
-              });
-              // Log activity for referrer
-              await base44.entities.Activity.create({
-                user_email: referrer.created_by,
-                action_type: "referral",
-                description: `A new friend joined using your referral link!`,
-                points_amount: 0,
-                metadata: { referred_email: u.email }
-              });
-            }
-          }
+          await processReferralParam(newCustomer.id, u.email);
         }
       } catch (error) {
         console.error('Auth error:', error);
