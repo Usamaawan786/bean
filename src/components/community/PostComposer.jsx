@@ -49,6 +49,30 @@ export default function PostComposer({ onPost, userName }) {
 
   const doCapturePhoto = async () => {
     if (isUploadingImage) return;
+
+    // On web, use a plain file input — Camera API hangs on web
+    if (!Capacitor.isNativePlatform()) {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setIsUploadingImage(true);
+        try {
+          const { file_url } = await base44.integrations.Core.UploadFile({ file });
+          setImageUrl(file_url);
+          toast.success("Photo uploaded!");
+        } catch {
+          toast.error("Failed to upload photo. Please try again.");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      };
+      input.click();
+      return;
+    }
+
     setIsUploadingImage(true);
     try {
       const photo = await Camera.getPhoto({
