@@ -147,13 +147,13 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
         }).catch(() => {});
       }
 
-      // Update post comment count
-      const posts = await base44.entities.CommunityPost.filter({ id: postId });
-      if (posts[0]) {
-        await base44.entities.CommunityPost.update(postId, {
-          comments_count: (posts[0].comments_count || 0) + 1
-        });
-      }
+      // Recount actual comments from DB for accuracy (not arithmetic which drifts)
+      const [existingComments] = await Promise.all([
+        base44.entities.Comment.filter({ post_id: postId })
+      ]);
+      await base44.entities.CommunityPost.update(postId, {
+        comments_count: existingComments.length,
+      });
 
       return comment;
     },
@@ -196,13 +196,11 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
   const deleteCommentMutation = useMutation({
     mutationFn: async (comment) => {
       await base44.entities.Comment.delete(comment.id);
-      // Decrement post comment count
-      const posts = await base44.entities.CommunityPost.filter({ id: postId });
-      if (posts[0]) {
-        await base44.entities.CommunityPost.update(postId, {
-          comments_count: Math.max(0, (posts[0].comments_count || 1) - 1)
-        });
-      }
+      // Recount after deletion for accuracy
+      const remainingComments = await base44.entities.Comment.filter({ post_id: postId });
+      await base44.entities.CommunityPost.update(postId, {
+        comments_count: remainingComments.length,
+      });
     },
     onMutate: async (comment) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });

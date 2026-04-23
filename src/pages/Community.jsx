@@ -77,7 +77,7 @@ export default function Community() {
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["community-posts"],
     queryFn: () => base44.entities.CommunityPost.list("-created_date", 50),
-    refetchInterval: 15000, // poll every 15s so all users see fresh like counts
+    staleTime: 30000, // real-time subscription handles live updates
   });
 
   // Real-time subscription so likes/comments from other users appear instantly
@@ -179,15 +179,16 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   const likeMutation = useMutation({
     mutationFn: async (post) => {
-      const currentLikedBy = post.liked_by || [];
+      const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
       const isLiked = currentLikedBy.includes(user.email);
       const newLikedBy = isLiked
         ? currentLikedBy.filter(e => e !== user.email)
         : [...currentLikedBy, user.email];
 
+      // Always write both liked_by AND likes_count so they stay in sync
       await base44.entities.CommunityPost.update(post.id, {
         liked_by: newLikedBy,
-        likes_count: newLikedBy.length
+        likes_count: newLikedBy.length,
       });
 
       if (!isLiked && post.author_email && post.author_email !== user.email) {
@@ -203,24 +204,29 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       }
     },
     onMutate: async (post) => {
+      // Optimistic update: flip liked_by in cache immediately
       await queryClient.cancelQueries({ queryKey: ["community-posts"] });
       const previous = queryClient.getQueryData(["community-posts"]);
-      const currentLikedBy = post.liked_by || [];
+      const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
       const isLiked = currentLikedBy.includes(user.email);
       const newLikedBy = isLiked
         ? currentLikedBy.filter(e => e !== user.email)
         : [...currentLikedBy, user.email];
       queryClient.setQueryData(["community-posts"], old =>
-        old?.map(p => p.id === post.id ? { ...p, liked_by: newLikedBy, likes_count: newLikedBy.length } : p)
+        old?.map(p => p.id === post.id
+          ? { ...p, liked_by: newLikedBy, likes_count: newLikedBy.length }
+          : p
+        )
       );
       return { previous };
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(["community-posts"], context.previous);
     },
-    onSuccess: () => {
+    onSettled: () => {
+      // Always re-fetch to ensure server state is reflected
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-    }
+    },
   });
 
   const deletePostMutation = useMutation({

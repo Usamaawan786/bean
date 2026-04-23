@@ -33,32 +33,11 @@ function renderContent(content) {
 export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit, onDelete }) {
   // Use denormalized badges from the post itself; fall back to prop
   const badges = (post.author_badges && post.author_badges.length > 0) ? post.author_badges : authorBadges;
+
+  // Optimistic like state — null means "use server data"
   const [optimisticLiked, setOptimisticLiked] = useState(null);
-  const [optimisticCount, setOptimisticCount] = useState(null);
-  const [commentCount, setCommentCount] = useState(post.comments_count || 0);
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // Sync comment count from real-time subscription only (no polling to avoid duplicates)
-  useEffect(() => {
-    const unsub = base44.entities.Comment.subscribe((event) => {
-      if (event.data?.post_id === post.id) {
-        if (event.type === 'create') setCommentCount(c => c + 1);
-        if (event.type === 'delete') setCommentCount(c => Math.max(0, c - 1));
-      }
-    });
-    return () => unsub();
-  }, [post.id]);
-
-  // Keep comment count in sync with post data
-  useEffect(() => {
-    if (post.comments_count !== undefined) setCommentCount(post.comments_count);
-  }, [post.comments_count]);
-
-  // Reset optimistic like state only after server data confirms the change
-  useEffect(() => {
-    setOptimisticLiked(null);
-    setOptimisticCount(null);
-  }, [(post.liked_by || []).join(",")]);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
@@ -71,17 +50,29 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isSaved = currentUserSavedPosts.includes(post.id);
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
-  const isLiked = optimisticLiked !== null ? optimisticLiked : (post.liked_by?.includes(currentUserEmail) ?? false);
-  const displayLikesCount = optimisticCount !== null ? optimisticCount : (post.likes_count || 0);
+
+  // Always derive liked state and count from liked_by array — it's the single source of truth
+  const likedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
+  const isLiked = optimisticLiked !== null ? optimisticLiked : likedBy.includes(currentUserEmail);
+  // Optimistic count: if we have optimistic state, adjust from the real liked_by length
+  const displayLikesCount = optimisticLiked !== null
+    ? likedBy.length + (optimisticLiked === likedBy.includes(currentUserEmail) ? 0 : optimisticLiked ? 1 : -1)
+    : likedBy.length;
+
+  // Comment count: always from post.comments_count (kept accurate by server mutations)
+  const commentCount = post.comments_count || 0;
+
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
 
+  // Reset optimistic state when server data for this post's liked_by changes
+  useEffect(() => {
+    setOptimisticLiked(null);
+  }, [likedBy.join(",")]);
+
   const handleLike = () => {
     if (!currentUserEmail) return;
-    const newLiked = !isLiked;
-    const newCount = displayLikesCount + (newLiked ? 1 : -1);
-    setOptimisticLiked(newLiked);
-    setOptimisticCount(newCount);
+    setOptimisticLiked(!isLiked);
     onLike(post);
   };
 
