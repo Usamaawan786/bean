@@ -75,14 +75,28 @@ export default function PostComposer({ onPost, userName }) {
 
     setIsUploadingImage(true);
     try {
+      // Request both camera and photo permissions upfront
+      const perms = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
+      const cameraOk = perms.camera === 'granted';
+      const photosOk = perms.photos === 'granted' || perms.photos === 'limited';
+
+      // Choose source based on what's available
+      let source = CameraSource.Prompt;
+      if (!cameraOk && photosOk) source = CameraSource.Photos;
+      else if (cameraOk && !photosOk) source = CameraSource.Camera;
+      else if (!cameraOk && !photosOk) {
+        toast.error("Camera and gallery access are required. Please enable them in Settings.");
+        return;
+      }
+
       const photo = await Camera.getPhoto({
         quality: 80,
         allowEditing: false,
         resultType: CameraResultType.Base64,
-        source: CameraSource.Prompt,
+        source,
         saveToGallery: false,
       });
-      if (!photo?.base64String) { setIsUploadingImage(false); return; }
+      if (!photo?.base64String) return;
       const mimeType = photo.format === 'png' ? 'image/png' : 'image/jpeg';
       const byteCharacters = atob(photo.base64String);
       const byteArray = new Uint8Array(byteCharacters.length);
