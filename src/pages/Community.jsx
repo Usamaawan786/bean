@@ -416,7 +416,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         </div>
 
         {/* Main Content */}
-        <div className="max-w-lg mx-auto px-5 pb-24 space-y-4" style={{ paddingTop: headerHeight }}>
+        <div className="w-full max-w-lg mx-auto px-5 pb-24 space-y-4 overflow-hidden" style={{ paddingTop: headerHeight }}>
           {user ? (
             <PostComposer 
               onPost={createPostMutation.mutate}
