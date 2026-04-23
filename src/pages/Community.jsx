@@ -85,7 +85,13 @@ export default function Community() {
     const unsub = base44.entities.CommunityPost.subscribe((event) => {
       queryClient.setQueryData(["community-posts"], (prev = []) => {
         if (event.type === "create") return [event.data, ...prev.filter(p => p.id !== event.data.id)];
-        if (event.type === "update") return prev.map(p => p.id === event.id ? event.data : p);
+        if (event.type === "update") {
+          // Merge update to preserve author_badges if not included in event payload
+          return prev.map(p => {
+            if (p.id !== event.id) return p;
+            return { ...p, ...event.data, author_badges: event.data.author_badges ?? p.author_badges };
+          });
+        }
         if (event.type === "delete") return prev.filter(p => p.id !== event.id);
         return prev;
       });

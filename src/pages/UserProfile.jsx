@@ -8,7 +8,6 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PostCard from "@/components/community/PostCard";
-import { getBadgesForCustomer } from "@/components/community/UserBadge";
 import UserBadge from "@/components/community/UserBadge";
 
 export default function UserProfile() {
@@ -66,14 +65,9 @@ export default function UserProfile() {
     enabled: !!targetEmail
   });
 
-  const { data: targetCustomer } = useQuery({
-    queryKey: ["target-customer", targetEmail],
-    queryFn: async () => {
-      const customers = await base44.entities.Customer.filter({ created_by: targetEmail });
-      return customers[0] || null;
-    },
-    enabled: !!targetEmail
-  });
+  // Get badges from the user's own posts (author_badges is denormalized there)
+  // This avoids the Customer RLS restriction that blocks non-admin reads
+  const targetBadges = userPosts.length > 0 ? (userPosts[0].author_badges || []) : [];
 
   const handleFollow = async () => {
     if (!currentUser) {
@@ -128,9 +122,9 @@ export default function UserProfile() {
       <div className="max-w-lg mx-auto px-5 pt-4 pb-24">
         <div className="text-center mb-4">
           <h2 className="text-xl font-bold text-[#5C4A3A]">{targetUser?.full_name || targetEmail?.split("@")[0]}</h2>
-          {targetCustomer && getBadgesForCustomer(targetCustomer).length > 0 && (
+          {targetBadges.length > 0 && (
             <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-              {getBadgesForCustomer(targetCustomer).map(badgeKey => (
+              {targetBadges.map(badgeKey => (
                 <UserBadge key={badgeKey} badgeKey={badgeKey} size="sm" />
               ))}
             </div>
@@ -183,7 +177,7 @@ export default function UserProfile() {
                 currentUser={currentUser}
                 currentUserFollowing={currentUser?.following || []}
                 currentUserSavedPosts={currentUser?.saved_posts || []}
-                authorBadges={getBadgesForCustomer(targetCustomer)}
+                authorBadges={targetBadges}
                 onLike={async (p) => {
                   const isLiked = p.liked_by?.includes(currentUser?.email);
                   const newLikedBy = isLiked ? p.liked_by.filter(e => e !== currentUser.email) : [...(p.liked_by || []), currentUser.email];
