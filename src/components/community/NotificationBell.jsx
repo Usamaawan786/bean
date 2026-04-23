@@ -196,7 +196,8 @@ export default function NotificationBell({ userEmail }) {
                         } else {
                           await markNotifRead(item);
                           setOpen(false);
-                          if (item.post_id) navigate(`/Community`);
+                          if (item.post_id) navigate(`/Community?post=${item.post_id}`);
+                          else navigate("/Community");
                         }
                       }}
                     >

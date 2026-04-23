@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,9 +19,14 @@ export default function Community() {
   const [feedTab, setFeedTab] = useState("all");
   const [headerVisible, setHeaderVisible] = useState(true);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [highlightedPostId, setHighlightedPostId] = useState(null);
   const lastScrollY = useRef(0);
   const scrollRef = useRef(null);
   const headerRef = useRef(null);
+  const postRefs = useRef({});
+
+  // Read ?post= param on mount and scroll to it once posts load
+  const targetPostId = new URLSearchParams(window.location.search).get("post");
 
   const queryClient = useQueryClient();
 
@@ -98,6 +103,20 @@ export default function Community() {
     });
     return () => unsub();
   }, [queryClient]);
+
+  // Scroll to highlighted post when posts load
+  useEffect(() => {
+    if (!targetPostId || !allPosts.length) return;
+    setHighlightedPostId(targetPostId);
+    setTimeout(() => {
+      const el = postRefs.current[targetPostId];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      // Remove highlight after 3s
+      setTimeout(() => setHighlightedPostId(null), 3000);
+    }, 300);
+  }, [targetPostId, allPosts.length]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ["community-customers"],
@@ -433,9 +452,11 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
               {posts.map((post, i) => (
                 <motion.div
                   key={post.id}
+                  ref={(el) => { postRefs.current[post.id] = el; }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
+                  className={highlightedPostId === post.id ? "ring-2 ring-[#8B7355] rounded-3xl transition-all duration-500" : ""}
                 >
                   <PostCard
                     post={post}
