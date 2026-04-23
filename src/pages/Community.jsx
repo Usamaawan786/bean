@@ -93,13 +93,14 @@ export default function Community() {
         if (event.type === "update") {
           return prev.map(p => {
             if (p.id !== event.id) return p;
-            // Merge all fields, ensure likes_count and comments_count stay in sync
+            // Always use server data for liked_by and comments as single source of truth
             return {
               ...p,
               ...event.data,
-              author_badges: event.data.author_badges ?? p.author_badges,
-              likes_count: event.data.liked_by?.length ?? p.likes_count,
-              comments_count: event.data.comments_count ?? p.comments_count
+              liked_by: event.data.liked_by,
+              likes_count: event.data.liked_by?.length ?? 0,
+              comments_count: event.data.comments_count ?? p.comments_count,
+              author_badges: event.data.author_badges ?? p.author_badges
             };
           });
         }
@@ -247,6 +248,9 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(["community-posts"], context.previous);
+    },
+    onSuccess: () => {
+      // Let real-time subscription handle the update, don't invalidate
     },
   });
 
