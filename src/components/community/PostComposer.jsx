@@ -9,13 +9,6 @@ import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MEDIA_OPTIONS = {
-  CAPTURE_PHOTO: "capture_photo",
-  PHOTO_GALLERY: "photo_gallery",
-  RECORD_VIDEO: "record_video",
-  VIDEO_GALLERY: "video_gallery"
-};
-
 export default function PostComposer({ onPost, userName }) {
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -52,43 +45,6 @@ export default function PostComposer({ onPost, userName }) {
     const file = new File([blob], filename, { type: blob.type });
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     return file_url;
-  };
-
-  const doImageUpload = async () => {
-    if (isUploadingImage) return;
-    setIsUploadingImage(true);
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const permissions = await Camera.checkPermissions();
-        if (permissions.photos !== 'granted') {
-          const result = await Camera.requestPermissions({ permissions: ['photos'] });
-          if (result.photos !== 'granted' && result.photos !== 'limited') {
-            toast.error("Gallery access is required to upload photos");
-            return;
-          }
-        }
-      }
-      const image = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.Uri,
-        source: CameraSource.Photos,
-        saveToGallery: false
-      });
-      if (!image?.webPath) return;
-      const response = await fetch(image.webPath);
-      const blob = await response.blob();
-      const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${image.format || 'jpg'}`);
-      setImageUrl(url);
-      toast.success("Photo uploaded!");
-    } catch (error) {
-      const msg = error?.message || String(error);
-      if (!msg.toLowerCase().includes("cancel")) {
-        toast.error("Failed to upload photo. Please try again.");
-      }
-    } finally {
-      setIsUploadingImage(false);
-    }
   };
 
   const doCapturePhoto = async () => {
@@ -162,61 +118,6 @@ export default function PostComposer({ onPost, userName }) {
       const msg = error?.message || String(error);
       if (!msg.toLowerCase().includes("cancel")) {
         toast.error("Failed to upload video. Please try again.");
-      }
-    } finally {
-      setIsUploadingVideo(false);
-    }
-  };
-
-  const doRecordVideo = async () => {
-    if (isUploadingVideo) return;
-    setIsUploadingVideo(true);
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const permissions = await Camera.checkPermissions();
-        if (permissions.camera !== 'granted') {
-          const result = await Camera.requestPermissions({ permissions: ['camera'] });
-          if (result.camera !== 'granted') {
-            toast.error("Camera access is required to record video");
-            return;
-          }
-        }
-        const video = await Camera.getPhoto({
-          quality: 90,
-          allowEditing: false,
-          resultType: CameraResultType.Uri,
-          source: CameraSource.Camera,
-          saveToGallery: false,
-          presentationStyle: 'fullscreen',
-          webUseInput: false,
-        });
-        if (!video?.webPath) return;
-        const response = await fetch(video.webPath);
-        const blob = await response.blob();
-        const url = await uploadFileFromBlob(blob, `video_${Date.now()}.mp4`);
-        setVideoUrl(url);
-        toast.success("Video uploaded!");
-      } else {
-        // Web fallback: capture from camera
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "video/*";
-        input.capture = "environment";
-        input.onchange = async (e) => {
-          const file = e.target.files[0];
-          if (!file) { setIsUploadingVideo(false); return; }
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          setVideoUrl(file_url);
-          toast.success("Video uploaded!");
-          setIsUploadingVideo(false);
-        };
-        input.click();
-        return;
-      }
-    } catch (error) {
-      const msg = error?.message || String(error);
-      if (!msg.toLowerCase().includes("cancel")) {
-        toast.error("Failed to record video. Please try again.");
       }
     } finally {
       setIsUploadingVideo(false);
