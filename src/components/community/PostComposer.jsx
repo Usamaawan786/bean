@@ -58,7 +58,7 @@ export default function PostComposer({ onPost, userName }) {
         source: CameraSource.Prompt,
         saveToGallery: false,
       });
-      if (!photo?.webPath) return;
+      if (!photo?.webPath) { setIsUploadingImage(false); return; }
       const response = await fetch(photo.webPath);
       const blob = await response.blob();
       const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${photo.format || 'jpg'}`);
