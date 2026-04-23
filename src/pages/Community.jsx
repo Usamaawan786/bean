@@ -242,8 +242,8 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     onError: (err, variables, context) => {
       queryClient.setQueryData(["community-posts"], context.previous);
     },
-    onSuccess: () => {
-      // Re-fetch after server confirms to sync liked_by
+    onSettled: () => {
+      // Re-fetch after server confirms to sync liked_by with actual DB state
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
   });

@@ -34,9 +34,6 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   // Use denormalized badges from the post itself; fall back to prop
   const badges = (post.author_badges && post.author_badges.length > 0) ? post.author_badges : authorBadges;
 
-  // Optimistic like state — null means "use server data"
-  const [optimisticLiked, setOptimisticLiked] = useState(null);
-
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -51,15 +48,12 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const config = postTypeConfig[post.post_type] || postTypeConfig.general;
   const Icon = config.icon;
 
-  // Always derive liked state and count from liked_by array — it's the single source of truth
+  // Always derive liked state and count from liked_by array — single source of truth
   const likedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
-  // Use optimistic state if set, otherwise fall back to server data
-  const isLiked = optimisticLiked !== null ? optimisticLiked : likedBy.includes(currentUserEmail);
-  const displayLikesCount = optimisticLiked !== null
-    ? likedBy.length + (optimisticLiked ? 1 : -1) * (likedBy.includes(currentUserEmail) === optimisticLiked ? 0 : 1)
-    : likedBy.length;
+  const isLiked = likedBy.includes(currentUserEmail);
+  const displayLikesCount = likedBy.length;
 
-  // Comment count: always from post.comments_count (kept accurate by server mutations)
+  // Comment count: always from post.comments_count
   const commentCount = post.comments_count || 0;
 
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
@@ -67,8 +61,6 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
 
   const handleLike = () => {
     if (!currentUserEmail) return;
-    const currentlyLiked = likedBy.includes(currentUserEmail);
-    setOptimisticLiked(!currentlyLiked);
     onLike(post);
   };
 
