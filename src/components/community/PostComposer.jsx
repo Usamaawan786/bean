@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Image, X, Loader2, Video, Camera as CameraIcon, FolderOpen } from "lucide-react";
+import { Send, Image, X, Loader2, Video } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Camera, CameraResultType, CameraSource, CameraDirection } from "@capacitor/camera";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +24,6 @@ export default function PostComposer({ onPost, userName }) {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showMediaOptions, setShowMediaOptions] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => {
     return localStorage.getItem("bean_terms_accepted") === "true";
@@ -96,24 +95,12 @@ export default function PostComposer({ onPost, userName }) {
     if (isUploadingImage) return;
     setIsUploadingImage(true);
     try {
-      if (Capacitor.isNativePlatform()) {
-        const permissions = await Camera.checkPermissions();
-        if (permissions.camera !== 'granted') {
-          const result = await Camera.requestPermissions({ permissions: ['camera'] });
-          if (result.camera !== 'granted') {
-            toast.error("Camera access is required to take photos");
-            return;
-          }
-        }
-      }
       const photo = await Camera.getPhoto({
         quality: 90,
         allowEditing: false,
         resultType: CameraResultType.Uri,
-        source: CameraSource.Camera,
-        direction: CameraDirection.Rear,
+        source: CameraSource.Prompt,
         saveToGallery: false,
-        webUseInput: false,
       });
       if (!photo?.webPath) return;
       const response = await fetch(photo.webPath);
@@ -132,7 +119,6 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   const doVideoFromGallery = async () => {
-    setShowMediaOptions(false);
     if (isUploadingVideo) return;
     setIsUploadingVideo(true);
     try {
@@ -183,7 +169,6 @@ export default function PostComposer({ onPost, userName }) {
   };
 
   const doRecordVideo = async () => {
-    setShowMediaOptions(false);
     if (isUploadingVideo) return;
     setIsUploadingVideo(true);
     try {
@@ -238,14 +223,8 @@ export default function PostComposer({ onPost, userName }) {
     }
   };
 
-  const handleImageClick = () => withTermsCheck(() => setShowMediaOptions(true));
-  const handleVideoClick = () => withTermsCheck(() => {
-    if (Capacitor.isNativePlatform()) {
-      setShowMediaOptions(true);
-    } else {
-      doRecordVideo();
-    }
-  });
+  const handleImageClick = () => withTermsCheck(doCapturePhoto);
+  const handleVideoClick = () => withTermsCheck(doVideoFromGallery);
 
   const handleSubmit = async () => {
     if (!content.trim()) return;
@@ -293,81 +272,7 @@ export default function PostComposer({ onPost, userName }) {
         )}
       </AnimatePresence>
 
-      {/* Media Options Modal */}
-      <AnimatePresence>
-        {showMediaOptions && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setShowMediaOptions(false)}>
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 40 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-white rounded-3xl w-full max-w-sm p-5 shadow-2xl"
-            >
-              <h3 className="text-base font-bold text-[#5C4A3A] mb-4 text-center">Add Media</h3>
-              <div className="flex flex-col gap-3">
-                {imageUrl === "" && (
-                  <>
-                    <button
-                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doCapturePhoto); }}
-                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <CameraIcon className="h-5 w-5 text-[#8B7355]" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#5C4A3A] text-sm">Capture Photo</div>
-                        <div className="text-xs text-[#C9B8A6]">Take a picture now</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doImageUpload); }}
-                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <FolderOpen className="h-5 w-5 text-[#8B7355]" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#5C4A3A] text-sm">Choose Photo</div>
-                        <div className="text-xs text-[#C9B8A6]">Pick from gallery</div>
-                      </div>
-                    </button>
-                  </>
-                )}
-                {videoUrl === "" && (
-                  <>
-                    <button
-                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doRecordVideo); }}
-                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <CameraIcon className="h-5 w-5 text-[#8B7355]" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#5C4A3A] text-sm">Record Video</div>
-                        <div className="text-xs text-[#C9B8A6]">Use your camera</div>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => { setShowMediaOptions(false); withTermsCheck(doVideoFromGallery); }}
-                      className="flex items-center gap-3 p-4 rounded-2xl bg-[#F5EBE8] hover:bg-[#EDE3DF] transition-colors text-left"
-                    >
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <FolderOpen className="h-5 w-5 text-[#8B7355]" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-[#5C4A3A] text-sm">Choose Video</div>
-                        <div className="text-xs text-[#C9B8A6]">Pick from gallery</div>
-                      </div>
-                    </button>
-                  </>
-                )}
-              </div>
-              <button onClick={() => setShowMediaOptions(false)} className="w-full mt-3 py-2 text-sm text-[#C9B8A6]">Cancel</button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
 
       <div className="bg-white my-4 px-5 py-5 rounded-3xl border border-[#E8DED8] shadow-sm">
         <Textarea
