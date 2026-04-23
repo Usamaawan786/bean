@@ -14,6 +14,13 @@
       "type": "string",
       "description": "Profile picture URL of the author"
     },
+    "author_badges": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Denormalized badge keys for the author (e.g. founding_member, eba, gold, platinum)"
+    },
     "content": {
       "type": "string",
       "description": "Post content"

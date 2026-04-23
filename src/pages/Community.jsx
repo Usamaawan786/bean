@@ -149,11 +149,16 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       const moderationStatus = moderationResult.is_safe ? "approved" : "flagged";
       const flaggedReason = moderationResult.is_safe ? null : moderationResult.reason;
 
+      // Compute badges for this user from the customers cache
+      const myCustomer = customers.find(c => c.created_by === user.email || c.user_email === user.email);
+      const myBadges = getBadgesForCustomer(myCustomer);
+
       return base44.entities.CommunityPost.create({
         ...postData,
         author_email: user.email,
         author_name: user.display_name || user.full_name || user.email.split("@")[0],
         author_profile_picture: user.profile_picture || null,
+        author_badges: myBadges,
         likes_count: 0,
         liked_by: [],
         moderation_status: moderationStatus,

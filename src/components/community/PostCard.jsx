@@ -31,6 +31,8 @@ function renderContent(content) {
 }
 
 export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit, onDelete }) {
+  // Use denormalized badges from the post itself; fall back to prop
+  const badges = (post.author_badges && post.author_badges.length > 0) ? post.author_badges : authorBadges;
   const [optimisticLiked, setOptimisticLiked] = useState(null);
   const [optimisticCount, setOptimisticCount] = useState(null);
   const [commentCount, setCommentCount] = useState(post.comments_count || 0);
@@ -136,7 +138,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
             <Link to={`/UserProfile?email=${encodeURIComponent(post.author_email)}`} className="font-semibold text-[#5C4A3A] hover:text-[#8B7355] transition-colors">
               {post.author_name || "Coffee Lover"}
             </Link>
-            {authorBadges.map(b => <UserBadge key={b} badgeKey={b} />)}
+            {badges.map(b => <UserBadge key={b} badgeKey={b} />)}
             {currentUserEmail && post.author_email !== currentUserEmail && onFollow && (
               <button
                 onClick={() => onFollow(post.author_email)}
