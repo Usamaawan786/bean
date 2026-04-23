@@ -76,21 +76,26 @@ export default function PostComposer({ onPost, userName }) {
     setIsUploadingImage(true);
     try {
       const photo = await Camera.getPhoto({
-        quality: 90,
+        quality: 80,
         allowEditing: false,
-        resultType: CameraResultType.Uri,
+        resultType: CameraResultType.Base64,
         source: CameraSource.Prompt,
         saveToGallery: false,
       });
-      if (!photo?.webPath) { setIsUploadingImage(false); return; }
-      const response = await fetch(photo.webPath);
-      const blob = await response.blob();
+      if (!photo?.base64String) { setIsUploadingImage(false); return; }
+      const mimeType = photo.format === 'png' ? 'image/png' : 'image/jpeg';
+      const byteCharacters = atob(photo.base64String);
+      const byteArray = new Uint8Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteArray[i] = byteCharacters.charCodeAt(i);
+      }
+      const blob = new Blob([byteArray], { type: mimeType });
       const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${photo.format || 'jpg'}`);
       setImageUrl(url);
-      toast.success("Photo captured!");
+      toast.success("Photo uploaded!");
     } catch (error) {
       const msg = error?.message || String(error);
-      if (!msg.toLowerCase().includes("cancel")) {
+      if (!msg.toLowerCase().includes("cancel") && !msg.toLowerCase().includes("user cancelled")) {
         toast.error("Failed to capture photo. Please try again.");
       }
     } finally {
