@@ -53,10 +53,10 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
 
   // Always derive liked state and count from liked_by array — it's the single source of truth
   const likedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
+  // Use optimistic state if set, otherwise fall back to server data
   const isLiked = optimisticLiked !== null ? optimisticLiked : likedBy.includes(currentUserEmail);
-  // Optimistic count: if we have optimistic state, adjust from the real liked_by length
   const displayLikesCount = optimisticLiked !== null
-    ? likedBy.length + (optimisticLiked === likedBy.includes(currentUserEmail) ? 0 : optimisticLiked ? 1 : -1)
+    ? likedBy.length + (optimisticLiked ? 1 : -1) * (likedBy.includes(currentUserEmail) === optimisticLiked ? 0 : 1)
     : likedBy.length;
 
   // Comment count: always from post.comments_count (kept accurate by server mutations)
@@ -65,14 +65,10 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
 
-  // Reset optimistic state when server data for this post's liked_by changes
-  useEffect(() => {
-    setOptimisticLiked(null);
-  }, [likedBy.join(",")]);
-
   const handleLike = () => {
     if (!currentUserEmail) return;
-    setOptimisticLiked(!isLiked);
+    const currentlyLiked = likedBy.includes(currentUserEmail);
+    setOptimisticLiked(!currentlyLiked);
     onLike(post);
   };
 
