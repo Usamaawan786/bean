@@ -98,8 +98,11 @@ export default function Home() {
 
   const processReferralParam = async (customerId, userEmail) => {
     const params = new URLSearchParams(window.location.search);
-    const refParam = params.get('ref');
+    // Also check localStorage as fallback (survives login redirect)
+    const refParam = params.get('ref') || localStorage.getItem('pending_ref');
     if (!refParam) return;
+    // Clear it so it doesn't fire again on future visits
+    localStorage.removeItem('pending_ref');
     const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
     if (referrers.length === 0) return;
     const referrer = referrers[0];

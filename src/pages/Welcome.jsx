@@ -25,6 +25,11 @@ export default function Welcome() {
     const ref = params.get("ref");
     const staffParam = params.get("staff");
 
+    // Persist ref code so it survives login redirect
+    if (ref) {
+      localStorage.setItem("pending_ref", ref);
+    }
+
     // If URL has ?staff=1, redirect immediately to /staff regardless of auth state
     if (staffParam === "1") {
       navigate("/staff", { replace: true });
@@ -235,7 +240,14 @@ export default function Welcome() {
             </p>
 
             <button
-              onClick={() => base44.auth.redirectToLogin("/Home")}
+              onClick={() => {
+                const params = new URLSearchParams(window.location.search);
+                const ref = params.get("ref");
+                // Persist ref before leaving the page
+                if (ref) localStorage.setItem("pending_ref", ref);
+                const homeUrl = ref ? `/Home?ref=${ref}` : "/Home";
+                base44.auth.redirectToLogin(homeUrl);
+              }}
               className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-[#f0ede8] text-[#1a1208] font-bold px-5 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg text-base"
             >
               <LogIn className="h-5 w-5" />
