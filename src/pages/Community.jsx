@@ -347,7 +347,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div ref={scrollRef} className="h-screen overflow-y-auto bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)]">
+      <div ref={scrollRef} className="h-screen overflow-y-auto overflow-x-hidden bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)] w-screen">
         {/* Header */}
         <div
           ref={headerRef}
