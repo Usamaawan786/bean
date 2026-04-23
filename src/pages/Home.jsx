@@ -96,42 +96,20 @@ export default function Home() {
     setCustomer(prev => prev ? { ...prev, display_name: name, phone } : prev);
   };
 
-  const processReferralParam = async (customerId, userEmail) => {
+  const processReferralParam = async (customerId) => {
     const params = new URLSearchParams(window.location.search);
     // Check URL param first, then localStorage fallback (survives login redirect)
     const refParam = params.get('ref') || localStorage.getItem('pending_ref');
     if (!refParam) return;
 
-    const referrers = await base44.entities.Customer.filter({ referral_code: refParam });
-    if (referrers.length === 0) {
-      // Invalid code — clear it
-      localStorage.removeItem('pending_ref');
-      return;
-    }
-    const referrer = referrers[0];
-    // Don't self-refer
-    if (referrer.created_by === userEmail) {
-      localStorage.removeItem('pending_ref');
-      return;
-    }
-
-    // Clear AFTER we know it's valid and we're about to process it
+    // Clear immediately to prevent duplicate attempts
     localStorage.removeItem('pending_ref');
 
-    // Link referrer to this customer
-    await base44.entities.Customer.update(customerId, { referred_by: referrer.created_by });
-    // Increment referrer's referral_count
-    await base44.entities.Customer.update(referrer.id, {
-      referral_count: (referrer.referral_count || 0) + 1
-    });
-    // Log activity for referrer
-    await base44.entities.Activity.create({
-      user_email: referrer.created_by,
-      action_type: "referral",
-      description: `A new friend joined using your referral link!`,
-      points_amount: 0,
-      metadata: { referred_email: userEmail }
-    });
+    // Use backend function for reliable server-side processing
+    const result = await base44.functions.invoke('processReferral', { refCode: refParam, customerId });
+    if (result?.data?.success) {
+      console.log('Referral captured successfully');
+    }
   };
 
   const getGreeting = () => {
@@ -161,10 +139,11 @@ export default function Home() {
 
         const customers = await base44.entities.Customer.filter({ created_by: u.email });
         if (customers.length > 0) {
-          setCustomer(customers[0]);
+          let cust = customers[0];
+          setCustomer(cust);
           // If existing customer has no referrer yet but there's a ref param, capture it now
-          if (!customers[0].referred_by) {
-            await processReferralParam(customers[0].id, u.email);
+          if (!cust.referred_by) {
+            await processReferralParam(cust.id);
           }
         } else {
           const refCode = u.email.split("@")[0].toUpperCase() + Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -206,7 +185,7 @@ export default function Home() {
           });
           setCustomer(newCustomer);
 
-          await processReferralParam(newCustomer.id, u.email);
+          await processReferralParam(newCustomer.id);
         }
       } catch (error) {
         console.error('Auth error:', error);
