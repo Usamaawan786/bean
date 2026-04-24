@@ -248,7 +248,7 @@ export default function Home() {
 
           <a href="https://maps.app.goo.gl/f4dy4jkQ9cbrFq7VA?g_st=ic" target="_blank" rel="noopener noreferrer">
             <div className="relative bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow overflow-hidden">
-              <div className="absolute top-3 right-3 bg-amber-400 text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md tracking-wide uppercase">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1 rounded-full shadow-md tracking-wide uppercase whitespace-nowrap z-10">
                 🕐 Opening Soon
               </div>
               <div className="rounded-2xl bg-white/20 p-4">
@@ -592,7 +592,7 @@ export default function Home() {
                 whileTap={{ scale: 0.98 }}
                 className="relative bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-lg flex items-center gap-4 overflow-hidden"
               >
-                <div className="absolute top-3 right-3 bg-amber-400 text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md tracking-wide uppercase">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1 rounded-full shadow-md tracking-wide uppercase whitespace-nowrap z-10">
                   🕐 Opening Soon
                 </div>
                 <div className="rounded-2xl bg-white/20 p-4">
