@@ -29,6 +29,7 @@ export default function Community() {
   const targetPostId = new URLSearchParams(window.location.search).get("post");
 
   const queryClient = useQueryClient();
+  const pendingLikes = useRef(new Set());
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -93,7 +94,8 @@ export default function Community() {
         if (event.type === "update") {
           return prev.map(p => {
             if (p.id !== event.id) return p;
-            // Always use server data for liked_by and comments as single source of truth
+            // If a like mutation is in-flight for this post, skip overwriting liked_by
+            if (pendingLikes.current.has(event.id)) return p;
             return {
               ...p,
               ...event.data,
@@ -231,6 +233,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       }
     },
     onMutate: async (post) => {
+      pendingLikes.current.add(post.id);
       await queryClient.cancelQueries({ queryKey: ["community-posts"] });
       const previous = queryClient.getQueryData(["community-posts"]);
       const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
@@ -247,10 +250,12 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       return { previous };
     },
     onError: (err, variables, context) => {
+      pendingLikes.current.delete(context?.postId || variables?.id);
       queryClient.setQueryData(["community-posts"], context.previous);
     },
-    onSuccess: () => {
-      // Let real-time subscription handle the update, don't invalidate
+    onSettled: (data, error, post) => {
+      // Remove from pending and let subscription take over with server truth
+      pendingLikes.current.delete(post.id);
     },
   });
 
