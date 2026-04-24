@@ -74,6 +74,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const syncDeviceTokenForUser = async (userEmail) => {
+    try {
+      const storedToken = localStorage.getItem('bean_fcm_token');
+      const storedPlatform = localStorage.getItem('bean_fcm_platform');
+      if (!storedToken || !storedPlatform) return;
+      await base44.functions.invoke('saveDeviceToken', { token: storedToken, platform: storedPlatform });
+      console.log('[Auth] Device token synced for user:', userEmail);
+    } catch (e) {
+      console.warn('[Auth] Failed to sync device token:', e?.message);
+    }
+  };
+
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
@@ -83,6 +95,8 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthError(null);
+      // Sync stored device token now that we know the user
+      if (currentUser?.email) syncDeviceTokenForUser(currentUser.email);
     } catch (error) {
       console.error('User auth check failed:', error);
       setUser(null);

@@ -37,7 +37,7 @@ export default function usePushNotifications() {
     if (!stored || !platform) return;
 
     console.log('[Push] Found stored token, re-saving to sync user email...');
-    saveTokenWithRetry(stored, platform, 3, 1000);
+    saveTokenWithRetry(stored, platform, 8, 3000);
   }, []);
 
   useEffect(() => {
