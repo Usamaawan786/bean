@@ -208,34 +208,36 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
   });
 
   const likeMutation = useMutation({
-    mutationFn: async (post) => {
+    mutationFn: async ({ post, currentUser }) => {
+      if (!currentUser?.email) throw new Error("Not authenticated");
       const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
-      const isLiked = currentLikedBy.includes(user.email);
+      const isLiked = currentLikedBy.includes(currentUser.email);
 
-      // Use backend function to bypass RLS (regular users can't update others' posts directly)
+      // Use backend function to bypass RLS
       await base44.functions.invoke("likePost", { postId: post.id });
 
-      if (!isLiked && post.author_email && post.author_email !== user.email) {
+      if (!isLiked && post.author_email && post.author_email !== currentUser.email) {
         base44.functions.invoke("notifyCommunityActivity", {
           type: "like",
           toEmail: post.author_email,
-          fromEmail: user.email,
-          fromName: user.display_name || user.full_name || user.email.split("@")[0],
-          fromPicture: user.profile_picture || null,
+          fromEmail: currentUser.email,
+          fromName: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
+          fromPicture: currentUser.profile_picture || null,
           postId: post.id,
           postLikesCount: currentLikedBy.length + (isLiked ? -1 : 1),
         }).catch(() => {});
       }
     },
-    onMutate: async (post) => {
+    onMutate: async ({ post, currentUser }) => {
+      if (!currentUser?.email) return;
       pendingLikes.current.add(post.id);
       await queryClient.cancelQueries({ queryKey: ["community-posts"] });
       const previous = queryClient.getQueryData(["community-posts"]);
       const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
-      const isLiked = currentLikedBy.includes(user.email);
+      const isLiked = currentLikedBy.includes(currentUser.email);
       const newLikedBy = isLiked
-        ? currentLikedBy.filter(e => e !== user.email)
-        : [...currentLikedBy, user.email];
+        ? currentLikedBy.filter(e => e !== currentUser.email)
+        : [...currentLikedBy, currentUser.email];
       queryClient.setQueryData(["community-posts"], old =>
         old?.map(p => p.id === post.id
           ? { ...p, liked_by: newLikedBy, likes_count: newLikedBy.length }
@@ -245,11 +247,11 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       return { previous };
     },
     onError: (err, variables, context) => {
-      pendingLikes.current.delete(context?.postId || variables?.id);
-      queryClient.setQueryData(["community-posts"], context.previous);
+      pendingLikes.current.delete(variables?.post?.id);
+      if (context?.previous) queryClient.setQueryData(["community-posts"], context.previous);
     },
-    onSettled: (data, error, post) => {
-      pendingLikes.current.delete(post.id);
+    onSettled: (data, error, variables) => {
+      pendingLikes.current.delete(variables?.post?.id);
     },
   });
 
@@ -447,7 +449,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                     currentUserFollowing={user?.following || []}
                     currentUserSavedPosts={user?.saved_posts || []}
                     authorBadges={getBadgesForCustomer(customerByEmail[post.author_email])}
-                    onLike={likeMutation.mutate}
+                    onLike={(post) => likeMutation.mutate({ post, currentUser: user })}
                     onReport={reportPostMutation.mutate}
                     onReaction={(post, emoji) => reactionMutation.mutate({ post, emoji })}
                     onBlock={handleBlockUser}
