@@ -34,7 +34,8 @@ async function getAccessToken(serviceAccount) {
 async function sendPushToUser(userEmail, title, body, deepLink, base44, serviceAccount, accessToken) {
   const tokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: userEmail, is_active: true });
   const tokens = tokenRecords.map(t => t.token).filter(Boolean);
-  if (!tokens.length) return;
+  console.log(`[Push] sendPushToUser: email=${userEmail}, tokens found=${tokens.length}`);
+  if (!tokens.length) { console.log(`[Push] No tokens for ${userEmail}, skipping`); return; }
 
   const results = await Promise.all(tokens.map(async (token) => {
     const message = {
@@ -61,8 +62,10 @@ async function sendPushToUser(userEmail, title, body, deepLink, base44, serviceA
       }
     );
     const result = await res.json();
+    console.log(`[Push] FCM response status=${res.status}`, JSON.stringify(result).substring(0, 200));
     if (!res.ok) {
       const errorCode = result?.error?.details?.[0]?.errorCode || result?.error?.status;
+      console.log(`[Push] FCM error code: ${errorCode}`);
       if (errorCode === "UNREGISTERED" || errorCode === "INVALID_ARGUMENT") {
         const record = tokenRecords.find(t => t.token === token);
         if (record) await base44.asServiceRole.entities.DeviceToken.update(record.id, { is_active: false });
