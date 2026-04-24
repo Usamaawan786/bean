@@ -211,14 +211,9 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     mutationFn: async (post) => {
       const currentLikedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
       const isLiked = currentLikedBy.includes(user.email);
-      const newLikedBy = isLiked
-        ? currentLikedBy.filter(e => e !== user.email)
-        : [...currentLikedBy, user.email];
 
-      await base44.entities.CommunityPost.update(post.id, {
-        liked_by: newLikedBy,
-        likes_count: newLikedBy.length,
-      });
+      // Use backend function to bypass RLS (regular users can't update others' posts directly)
+      await base44.functions.invoke("likePost", { postId: post.id });
 
       if (!isLiked && post.author_email && post.author_email !== user.email) {
         base44.functions.invoke("notifyCommunityActivity", {
@@ -228,7 +223,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
           fromName: user.display_name || user.full_name || user.email.split("@")[0],
           fromPicture: user.profile_picture || null,
           postId: post.id,
-          postLikesCount: newLikedBy.length,
+          postLikesCount: currentLikedBy.length + (isLiked ? -1 : 1),
         }).catch(() => {});
       }
     },
@@ -281,18 +276,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   const reportPostMutation = useMutation({
     mutationFn: async (post) => {
-      const hasReported = post.reported_by?.includes(user.email);
-      const newReportedBy = hasReported
-        ? post.reported_by.filter(e => e !== user.email)
-        : [...(post.reported_by || []), user.email];
-      
-      // If 3+ reports, flag for review. If below 3, unflag
-      const shouldFlag = newReportedBy.length >= 3;
-      
-      return base44.entities.CommunityPost.update(post.id, {
-        reported_by: newReportedBy,
-        moderation_status: shouldFlag ? "flagged" : (newReportedBy.length === 0 ? "approved" : post.moderation_status)
-      });
+      return base44.functions.invoke("reportPost", { postId: post.id });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
@@ -301,20 +285,8 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
   const reactionMutation = useMutation({
     mutationFn: async ({ post, emoji }) => {
-      const currentReactions = post.reactions || {};
-      const emojiReactions = currentReactions[emoji] || [];
-      const hasReacted = emojiReactions.includes(user.email);
-      
-      const newEmojiReactions = hasReacted
-        ? emojiReactions.filter(e => e !== user.email)
-        : [...emojiReactions, user.email];
-      
-      return base44.entities.CommunityPost.update(post.id, {
-        reactions: {
-          ...currentReactions,
-          [emoji]: newEmojiReactions
-        }
-      });
+      // Use backend function to bypass RLS
+      return base44.functions.invoke("reactToPost", { postId: post.id, emoji });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });

@@ -7,6 +7,7 @@ export default [
   { ignores: ["dist", "**/*.md.jsx", "src/components/SecurityGuide.md.jsx", "components/SecurityGuide.md.jsx"] },
   {
     files: ["**/*.{js,jsx}"],
+    ignores: ["**/*.md.jsx"],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
