@@ -254,8 +254,9 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       queryClient.setQueryData(["community-posts"], context.previous);
     },
     onSettled: (data, error, post) => {
-      // Remove from pending and let subscription take over with server truth
       pendingLikes.current.delete(post.id);
+      // Re-fetch this post's fresh data from server after mutation settles
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
   });
 
