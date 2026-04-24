@@ -255,8 +255,6 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     },
     onSettled: (data, error, post) => {
       pendingLikes.current.delete(post.id);
-      // Re-fetch this post's fresh data from server after mutation settles
-      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
   });
 

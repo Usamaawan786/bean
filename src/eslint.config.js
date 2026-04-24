@@ -4,7 +4,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 
 export default [
-  { ignores: ["dist", "src/components/SecurityGuide.md.jsx"] },
+  { ignores: ["dist", "**/*.md.jsx", "src/components/SecurityGuide.md.jsx", "components/SecurityGuide.md.jsx"] },
   {
     files: ["**/*.{js,jsx}"],
     languageOptions: {
