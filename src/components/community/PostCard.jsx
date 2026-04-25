@@ -37,6 +37,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [liveCommentCount, setLiveCommentCount] = useState(null);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,8 +54,8 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isLiked = likedBy.includes(currentUserEmail);
   const displayLikesCount = likedBy.length;
 
-  // Comment count: always from post.comments_count
-  const commentCount = post.comments_count || 0;
+  // Comment count: use live count when available, fallback to stored
+  const commentCount = liveCommentCount !== null ? liveCommentCount : (post.comments_count || 0);
 
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
@@ -381,7 +382,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                <CommentSection postId={post.id} currentUser={currentUser} postAuthorEmail={post.author_email} />
+                <CommentSection postId={post.id} currentUser={currentUser} postAuthorEmail={post.author_email} onCountChange={setLiveCommentCount} />
               </motion.div>
             )}
           </AnimatePresence>

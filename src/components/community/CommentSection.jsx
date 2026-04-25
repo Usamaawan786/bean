@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Send, Loader2, X, Trash2 } from "lucide-react";
@@ -84,7 +84,7 @@ function CommentBubble({ comment, currentUser, onLike, onReply, onDelete, isRepl
   );
 }
 
-export default function CommentSection({ postId, currentUser, postAuthorEmail }) {
+export default function CommentSection({ postId, currentUser, postAuthorEmail, onCountChange }) {
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState(null);
   const inputRef = useRef(null);
@@ -98,6 +98,11 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail })
 
   // Deduplicate by id in case of race conditions
   const uniqueComments = allComments.filter((c, idx, arr) => arr.findIndex(x => x.id === c.id) === idx);
+
+  // Report live count up to parent
+  useEffect(() => {
+    if (onCountChange) onCountChange(uniqueComments.length);
+  }, [uniqueComments.length]);
   const topComments = uniqueComments.filter(c => !c.parent_comment_id);
   const getReplies = (commentId) => uniqueComments.filter(c => c.parent_comment_id === commentId);
 
