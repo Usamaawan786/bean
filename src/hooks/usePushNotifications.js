@@ -37,7 +37,25 @@ export default function usePushNotifications() {
     if (!stored || !platform) return;
 
     console.log('[Push] Found stored token, re-saving to sync user email...');
-    saveTokenWithRetry(stored, platform, 8, 3000);
+    // Wait for auth to be ready before attempting to link the token
+    const attemptResave = async () => {
+      for (let i = 0; i < 10; i++) {
+        try {
+          const isAuth = await base44.auth.isAuthenticated();
+          if (isAuth) {
+            console.log('[Push] User authenticated, re-saving token now...');
+            await saveTokenWithRetry(stored, platform, 5, 2000);
+            return;
+          }
+        } catch (e) {
+          // ignore
+        }
+        console.log(`[Push] Not authenticated yet, waiting... (attempt ${i + 1}/10)`);
+        await new Promise(r => setTimeout(r, 2000));
+      }
+      console.warn('[Push] Could not confirm auth for token re-save');
+    };
+    attemptResave();
   }, []);
 
   useEffect(() => {

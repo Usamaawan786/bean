@@ -118,13 +118,19 @@ Deno.serve(async (req) => {
 
     let tokenRecords = [];
 
-    // Helper: get tokens by email — checks both user_email field AND created_by
+    // Helper: get tokens by email — checks user_email field, created_by, AND unlinked tokens
     const getTokensByEmail = async (email) => {
-      const allActive = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
-      return allActive.filter(t =>
-        t.user_email === email ||
-        (!t.user_email && t.created_by && t.created_by === email)
-      );
+      const [byUserEmail, byCreatedBy] = await Promise.all([
+        base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true }),
+        base44.asServiceRole.entities.DeviceToken.filter({ created_by: email, is_active: true }),
+      ]);
+      // Deduplicate by token value
+      const seen = new Set();
+      return [...byUserEmail, ...byCreatedBy].filter(t => {
+        if (!t.token || seen.has(t.token)) return false;
+        seen.add(t.token);
+        return true;
+      });
     };
 
     if (sender_role === "admin") {
