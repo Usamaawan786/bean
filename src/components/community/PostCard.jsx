@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
@@ -60,8 +60,28 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
 
-  const handleLike = () => {
+  // Long-press for mobile reaction picker
+  const longPressTimer = useRef(null);
+  const longPressTriggered = useRef(false);
+
+  const handleLikeTouchStart = useCallback(() => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      if (currentUserEmail) setShowReactions(true);
+    }, 400);
+  }, [currentUserEmail]);
+
+  const handleLikeTouchEnd = useCallback((e) => {
+    clearTimeout(longPressTimer.current);
+    if (longPressTriggered.current) {
+      e.preventDefault(); // prevent click from firing after long press
+    }
+  }, []);
+
+  const handleLike = (e) => {
     if (!currentUserEmail) return;
+    if (longPressTriggered.current) return; // was a long press, not a tap
     onLike(post);
   };
 
@@ -246,6 +266,9 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                 onHoverStart={() => currentUserEmail && setShowReactions(true)}
                 onHoverEnd={() => setShowReactions(false)}
                 onClick={handleLike}
+                onTouchStart={handleLikeTouchStart}
+                onTouchEnd={handleLikeTouchEnd}
+                onTouchMove={() => clearTimeout(longPressTimer.current)}
                 className={`flex items-center gap-1.5 text-sm transition-colors ${
                   isLiked ? "text-rose-500" : "text-[#C9B8A6] hover:text-rose-400"
                 }`}
@@ -256,26 +279,30 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
 
               <AnimatePresence>
                 {showReactions && currentUserEmail && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                    onHoverStart={() => setShowReactions(true)}
-                    onHoverEnd={() => setShowReactions(false)}
-                    className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-lg border border-[#E8DED8] p-2 flex gap-1 z-10"
-                  >
-                    {reactionEmojis.map(emoji => (
-                      <motion.button
-                        key={emoji}
-                        whileHover={{ scale: 1.3, y: -4 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => { handleReaction(emoji); setShowReactions(false); }}
-                        className={`p-2 rounded-xl hover:bg-[#F5EBE8] transition-colors ${hasUserReacted(emoji) ? "bg-[#EDE8E3]" : ""}`}
-                      >
-                        <span className="text-xl">{emoji}</span>
-                      </motion.button>
-                    ))}
-                  </motion.div>
+                  <>
+                    {/* Backdrop to close on outside tap */}
+                    <div className="fixed inset-0 z-[9]" onClick={() => setShowReactions(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      onHoverStart={() => setShowReactions(true)}
+                      onHoverEnd={() => setShowReactions(false)}
+                      className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-lg border border-[#E8DED8] p-2 flex gap-1 z-10"
+                    >
+                      {reactionEmojis.map(emoji => (
+                        <motion.button
+                          key={emoji}
+                          whileHover={{ scale: 1.3, y: -4 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => { handleReaction(emoji); setShowReactions(false); }}
+                          className={`p-2 rounded-xl hover:bg-[#F5EBE8] transition-colors ${hasUserReacted(emoji) ? "bg-[#EDE8E3]" : ""}`}
+                        >
+                          <span className="text-xl">{emoji}</span>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
             </div>
