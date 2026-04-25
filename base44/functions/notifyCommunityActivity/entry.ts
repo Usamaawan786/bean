@@ -44,7 +44,7 @@ async function sendPushToUser(userEmail, title, body, deepLink, base44, serviceA
         notification: { title, body },
         data: deepLink ? { deep_link: deepLink } : {},
         apns: {
-          headers: { "apns-push-type": "alert", "apns-priority": "10" },
+          headers: { "apns-push-type": "alert", "apns-priority": "10", "apns-topic": "co.beancoffee.app" },
           payload: { aps: { alert: { title, body }, sound: "default", badge: 1 } }
         },
         android: {

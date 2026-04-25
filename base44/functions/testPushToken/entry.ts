@@ -84,7 +84,8 @@ Deno.serve(async (req) => {
         apns: {
           headers: {
             "apns-push-type": "alert",
-            "apns-priority": "10"
+            "apns-priority": "10",
+            "apns-topic": "co.beancoffee.app"
           },
           payload: {
             aps: {

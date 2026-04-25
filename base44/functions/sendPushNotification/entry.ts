@@ -69,7 +69,8 @@ async function sendBatch(tokens, notification, data, accessToken, projectId) {
           apns: {
             headers: {
               "apns-push-type": "alert",
-              "apns-priority": "10"
+              "apns-priority": "10",
+              "apns-topic": "co.beancoffee.app"
             },
             payload: {
               aps: {

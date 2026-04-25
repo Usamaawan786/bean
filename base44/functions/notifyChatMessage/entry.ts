@@ -57,12 +57,16 @@ async function sendToTokens(tokens, title, body, deepLink, accessToken, projectI
         notification: { title, body },
         data: deepLink ? { deep_link: deepLink, url: deepLink } : {},
         apns: {
-          headers: { "apns-push-type": "alert", "apns-priority": "10" },
+          headers: {
+            "apns-push-type": "alert",
+            "apns-priority": "10",
+            "apns-topic": "co.beancoffee.app"
+          },
           payload: { aps: { alert: { title, body }, sound: "default", badge: 1 } }
         },
         android: {
           priority: "high",
-          notification: { sound: "default", channel_id: "default", notification_priority: "PRIORITY_HIGH", click_action: deepLink || "" }
+          notification: { sound: "default", channel_id: "default", notification_priority: "PRIORITY_HIGH" }
         }
       }
     };
