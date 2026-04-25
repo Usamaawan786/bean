@@ -55,14 +55,14 @@ async function sendToTokens(tokens, title, body, deepLink, accessToken, projectI
       message: {
         token,
         notification: { title, body },
-        data: deepLink ? { deep_link: deepLink } : {},
+        data: deepLink ? { deep_link: deepLink, url: deepLink } : {},
         apns: {
           headers: { "apns-push-type": "alert", "apns-priority": "10" },
           payload: { aps: { alert: { title, body }, sound: "default", badge: 1 } }
         },
         android: {
           priority: "high",
-          notification: { sound: "default", channel_id: "default", notification_priority: "PRIORITY_HIGH" }
+          notification: { sound: "default", channel_id: "default", notification_priority: "PRIORITY_HIGH", click_action: deepLink || "" }
         }
       }
     };
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
 
     const senderLabel = sender_role === "admin" ? "Bean Support" : (sender_name || "Customer");
     const finalTitle = sender_role === "admin" ? "Bean Support 💬" : `New message from ${senderLabel}`;
-    const deepLink = sender_role === "admin" ? "/messages" : "/AdminChat";
+    const deepLink = sender_role === "admin" ? "https://beancoffee.co/messages" : "https://beancoffee.co/AdminChat";
 
     const results = await sendToTokens(tokens, finalTitle, notificationBody, deepLink, accessToken, serviceAccount.project_id);
     const sent = results.filter(r => r.success).length;

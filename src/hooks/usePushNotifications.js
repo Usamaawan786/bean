@@ -115,7 +115,10 @@ export default function usePushNotifications() {
         PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
           console.log("[Push] Notification tapped:", JSON.stringify(action));
           const deepLink = action.notification?.data?.deep_link;
-          if (deepLink) window.location.hash = deepLink;
+          if (deepLink) {
+            // Navigate to the deep link path using React Router compatible navigation
+            window.location.href = deepLink.startsWith("http") ? deepLink : window.location.origin + deepLink;
+          }
         });
 
         const permStatus = await PushNotifications.checkPermissions();
