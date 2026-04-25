@@ -199,22 +199,26 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
   const deleteCommentMutation = useMutation({
     mutationFn: async (comment) => {
       await base44.entities.Comment.delete(comment.id);
-      // Recount after deletion for accuracy
-      const remainingComments = await base44.entities.Comment.filter({ post_id: postId });
-      await base44.entities.CommunityPost.update(postId, {
-        comments_count: remainingComments.length,
-      });
+      // Also delete any replies to this comment
+      const replies = await base44.entities.Comment.filter({ parent_comment_id: comment.id });
+      await Promise.all(replies.map(r => base44.entities.Comment.delete(r.id)));
     },
     onMutate: async (comment) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });
       const previous = queryClient.getQueryData(["comments", postId]);
-      queryClient.setQueryData(["comments", postId], old => old?.filter(c => c.id !== comment.id && c.parent_comment_id !== comment.id));
+      // Optimistically remove the comment and its replies
+      queryClient.setQueryData(["comments", postId], old =>
+        old?.filter(c => c.id !== comment.id && c.parent_comment_id !== comment.id)
+      );
       return { previous };
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(["comments", postId], context.previous);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Recount after everything is deleted
+      const remaining = await base44.entities.Comment.filter({ post_id: postId });
+      await base44.entities.CommunityPost.update(postId, { comments_count: remaining.length });
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     }
