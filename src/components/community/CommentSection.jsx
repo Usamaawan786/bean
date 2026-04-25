@@ -165,8 +165,6 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-      setNewComment("");
-      setReplyTo(null);
     }
   });
 
@@ -224,9 +222,11 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (newComment.trim() && !createCommentMutation.isPending) {
-      createCommentMutation.mutate(newComment.trim());
-    }
+    const text = newComment.trim();
+    if (!text || createCommentMutation.isPending) return;
+    setNewComment("");
+    setReplyTo(null);
+    createCommentMutation.mutate(text);
   };
 
   return (
