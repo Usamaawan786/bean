@@ -196,8 +196,20 @@ export default function NotificationBell({ userEmail }) {
                         } else {
                           await markNotifRead(item);
                           setOpen(false);
-                          if (item.post_id) navigate(`/Community?post=${item.post_id}`);
-                          else navigate("/Community");
+                          const type = item.type;
+                          if ((type === "like" || type === "comment" || type === "reply") && item.post_id) {
+                            navigate(`/Community?post=${item.post_id}`);
+                          } else if (type === "follow" && item.from_email) {
+                            navigate(`/UserProfile?email=${encodeURIComponent(item.from_email)}`);
+                          } else if (type === "offer") {
+                            navigate("/Rewards");
+                          } else if (type === "announcement") {
+                            navigate("/Community");
+                          } else if (item.post_id) {
+                            navigate(`/Community?post=${item.post_id}`);
+                          } else {
+                            navigate("/Community");
+                          }
                         }
                       }}
                     >
