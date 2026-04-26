@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, Search, Users, Filter, RefreshCw } from "lucide-react";
+import { ChevronLeft, Search, Users, Filter, RefreshCw, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import UserListCard from "@/components/admin/users/UserListCard";
@@ -73,6 +73,48 @@ export default function AdminAppUsers() {
     return 0;
   });
 
+  function normalizePhone(phone) {
+    let p = (phone || '').trim();
+    if (p.startsWith('0')) return '+92' + p.slice(1);
+    if (p.startsWith('92') && !p.startsWith('+')) return '+' + p;
+    return p;
+  }
+
+  function exportCSV() {
+    const rows = customers.map(c => {
+      const email = c.user_email || c.created_by || '';
+      const u = userByEmail[email] || {};
+      const fullName = c.display_name || u.full_name || '';
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      const phone = normalizePhone(c.phone || u.phone || '');
+      return [
+        firstName,
+        lastName,
+        email,
+        phone,
+        c.tier || 'Bronze',
+        c.points_balance || 0,
+        c.total_spend_pkr || 0,
+        c.is_founding_member ? 'Yes' : 'No',
+        c.is_eba ? 'Yes' : 'No',
+        c.referral_code || '',
+        c.created_date ? format(new Date(c.created_date), 'yyyy-MM-dd') : '',
+      ];
+    });
+
+    const headers = ['First Name', 'Last Name', 'Email', 'Phone', 'Tier', 'Points Balance', 'Total Spend (PKR)', 'Founding Member', 'EBA', 'Referral Code', 'Joined Date'];
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bean-app-users-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // Summary stats
   const totalUsers = customers.length;
   const activeDevices = deviceTokens.length;
@@ -91,9 +133,14 @@ export default function AdminAppUsers() {
             <h1 className="text-2xl font-bold">App Users</h1>
             <p className="text-white/70 text-sm mt-0.5">Complete customer intelligence dashboard</p>
           </div>
-          <button onClick={() => refetch()} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors">
-            <RefreshCw className="h-4 w-4" />
-          </button>
+          <div className="flex gap-2">
+            <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium">
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+            <button onClick={() => refetch()} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors">
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* KPI strip */}
