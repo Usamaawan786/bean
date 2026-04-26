@@ -112,7 +112,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
   };
 
   const createCommentMutation = useMutation({
-    mutationFn: async (content) => {
+    mutationFn: async ({ content, replyToSnapshot }) => {
       const commentData = {
         post_id: postId,
         author_email: currentUser.email,
@@ -121,17 +121,17 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
         content,
         likes_count: 0,
         liked_by: [],
-        parent_comment_id: replyTo?.id || null,
-        reply_to_author: replyTo?.author_name || null
+        parent_comment_id: replyToSnapshot?.id || null,
+        reply_to_author: replyToSnapshot?.author_name || null
       };
       const comment = await base44.entities.Comment.create(commentData);
 
       const fromName = currentUser.display_name || currentUser.full_name || currentUser.email.split('@')[0];
 
-      if (replyTo?.author_email && replyTo.author_email !== currentUser.email) {
+      if (replyToSnapshot?.author_email && replyToSnapshot.author_email !== currentUser.email) {
         base44.functions.invoke("notifyCommunityActivity", {
           type: "reply",
-          toEmail: replyTo.author_email,
+          toEmail: replyToSnapshot.author_email,
           fromEmail: currentUser.email,
           fromName,
           fromPicture: currentUser.profile_picture || null,
@@ -140,7 +140,7 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
         }).catch(() => {});
       }
 
-      if (postAuthorEmail && postAuthorEmail !== currentUser.email && postAuthorEmail !== replyTo?.author_email) {
+      if (postAuthorEmail && postAuthorEmail !== currentUser.email && postAuthorEmail !== replyToSnapshot?.author_email) {
         base44.functions.invoke("notifyCommunityActivity", {
           type: "comment",
           toEmail: postAuthorEmail,
@@ -152,15 +152,37 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
         }).catch(() => {});
       }
 
-      // Recount actual comments from DB for accuracy (not arithmetic which drifts)
-      const [existingComments] = await Promise.all([
-        base44.entities.Comment.filter({ post_id: postId })
-      ]);
-      await base44.entities.CommunityPost.update(postId, {
-        comments_count: existingComments.length,
-      });
+      // Update comment count in background (don't await — comment already optimistically shown)
+      base44.entities.Comment.filter({ post_id: postId }).then(existing => {
+        base44.entities.CommunityPost.update(postId, { comments_count: existing.length });
+      }).catch(() => {});
 
       return comment;
+    },
+    onMutate: async ({ content, replyToSnapshot }) => {
+      await queryClient.cancelQueries({ queryKey: ["comments", postId] });
+      const previous = queryClient.getQueryData(["comments", postId]);
+
+      // Optimistically add the comment immediately
+      const optimisticComment = {
+        id: `optimistic-${Date.now()}`,
+        post_id: postId,
+        author_email: currentUser.email,
+        author_name: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
+        author_profile_picture: currentUser.profile_picture || null,
+        content,
+        likes_count: 0,
+        liked_by: [],
+        parent_comment_id: replyToSnapshot?.id || null,
+        reply_to_author: replyToSnapshot?.author_name || null,
+        created_date: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData(["comments", postId], old => [...(old || []), optimisticComment]);
+      return { previous };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previous) queryClient.setQueryData(["comments", postId], context.previous);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -228,9 +250,10 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
     e.preventDefault();
     const text = newComment.trim();
     if (!text || createCommentMutation.isPending) return;
+    const replyToSnapshot = replyTo;
     setNewComment("");
     setReplyTo(null);
-    createCommentMutation.mutate(text);
+    createCommentMutation.mutate({ content: text, replyToSnapshot });
   };
 
   return (
