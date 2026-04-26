@@ -247,18 +247,22 @@ export default function Home() {
           </Link>
 
           <a href="https://maps.app.goo.gl/f4dy4jkQ9cbrFq7VA?g_st=ic" target="_blank" rel="noopener noreferrer">
-            <div className="relative bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow overflow-hidden">
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1 rounded-full shadow-md tracking-wide uppercase whitespace-nowrap z-10">
-                🕐 Opening Soon
+            <div className="relative bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <div className="flex items-center gap-4">
+                <div className="rounded-2xl bg-white/20 p-4 flex-shrink-0">
+                  <MapPin className="h-7 w-7 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-white text-lg leading-tight">Find Us on Maps</h3>
+                    <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase whitespace-nowrap flex-shrink-0">
+                      🕐 Soon
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#E8DED8]">Get directions to our store</p>
+                </div>
+                <ChevronRight className="h-5 w-5 text-white/70 flex-shrink-0" />
               </div>
-              <div className="rounded-2xl bg-white/20 p-4">
-                <MapPin className="h-7 w-7 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-white text-lg">Find Us on Maps</h3>
-                <p className="text-xs text-[#E8DED8] mt-1">Get directions to our store</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-white/70" />
             </div>
           </a>
         </div>
@@ -590,19 +594,23 @@ export default function Home() {
               <motion.div
                 whileHover={{ scale: 1.02, y: -3 }}
                 whileTap={{ scale: 0.98 }}
-                className="relative bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-lg flex items-center gap-4 overflow-hidden"
+                className="relative bg-gradient-to-br from-[#5C4A3A] to-[#8B7355] rounded-3xl p-6 shadow-lg overflow-hidden"
               >
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-900 text-[10px] font-bold px-3 py-1 rounded-full shadow-md tracking-wide uppercase whitespace-nowrap z-10">
-                  🕐 Opening Soon
+                <div className="flex items-center gap-4">
+                  <div className="rounded-2xl bg-white/20 p-4 flex-shrink-0">
+                    <MapPin className="h-7 w-7 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-white text-lg leading-tight">Find Us on Maps</h3>
+                      <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase whitespace-nowrap flex-shrink-0">
+                        🕐 Soon
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#E8DED8]">Get directions to our store</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-white/70 flex-shrink-0" />
                 </div>
-                <div className="rounded-2xl bg-white/20 p-4">
-                  <MapPin className="h-7 w-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-white text-lg">Find Us on Maps</h3>
-                  <p className="text-xs text-[#E8DED8] mt-1">Get directions to our store</p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-white/70" />
               </motion.div>
             </a>
           </motion.div>
