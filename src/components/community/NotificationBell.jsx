@@ -102,13 +102,10 @@ export default function NotificationBell({ userEmail }) {
       await Promise.all(unread.map((n) => base44.entities.Notification.update(n.id, { is_read: true })));
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     }
-    const unreadMsgs = adminMsgs.filter((m) => !m.is_read);
-    if (unreadMsgs.length) {
-      await Promise.all(unreadMsgs.map((m) => base44.entities.ChatMessage.update(m.id, { is_read: true })));
+    // Mark admin msgs as read via conversation unread count (user can update Conversation but not ChatMessage)
+    if (conversation && adminMsgs.some((m) => !m.is_read)) {
+      await base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 });
       setAdminMsgs((prev) => prev.map((m) => ({ ...m, is_read: true })));
-      if (conversation) {
-        await base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 });
-      }
     }
   };
 
@@ -189,8 +186,11 @@ export default function NotificationBell({ userEmail }) {
                       className={`px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-[#F9F6F3] transition-colors ${notifBg(item.type, isRead)}`}
                       onClick={async () => {
                         if (isAdminMsg) {
-                          await base44.entities.ChatMessage.update(item.id, { is_read: true });
-                          setAdminMsgs((prev) => prev.map((m) => m.id === item.id ? { ...m, is_read: true } : m));
+                          // Mark conversation as read via Conversation entity (user can't update ChatMessage directly)
+                          if (conversation) {
+                            base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 }).catch(() => {});
+                          }
+                          setAdminMsgs((prev) => prev.map((m) => ({ ...m, is_read: true })));
                           setOpen(false);
                           navigate("/messages");
                         } else {
