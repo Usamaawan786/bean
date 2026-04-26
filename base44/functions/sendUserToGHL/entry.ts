@@ -2,6 +2,13 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const GHL_WEBHOOK = "https://services.leadconnectorhq.com/hooks/gj8OBCLmVBdkG2uJwiTN/webhook-trigger/c45acf73-92c1-4737-9d12-693169c853c5";
 
+function normalizePhone(phone) {
+  let p = (phone || '').trim();
+  if (p.startsWith('0')) return '+92' + p.slice(1);
+  if (p.startsWith('92') && !p.startsWith('+')) return '+' + p;
+  return p;
+}
+
 async function pushContactToGHL(contact) {
   const nameParts = (contact.name || '').trim().split(' ');
   const firstName = nameParts[0] || '';
@@ -15,7 +22,7 @@ async function pushContactToGHL(contact) {
     lastName,
     name: contact.name || `${firstName} ${lastName}`.trim(),
     email: contact.email || '',
-    phone: contact.phone || '',
+    phone: normalizePhone(contact.phone),
     locationId,
     source: "Bean App"
   };
