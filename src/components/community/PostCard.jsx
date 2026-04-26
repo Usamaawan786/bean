@@ -60,11 +60,10 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
 
-  // Long-press for mobile reaction picker
   const longPressTimer = useRef(null);
   const longPressTriggered = useRef(false);
 
-  const handleLikeTouchStart = useCallback(() => {
+  const handleLikeTouchStart = useCallback((e) => {
     longPressTriggered.current = false;
     longPressTimer.current = setTimeout(() => {
       longPressTriggered.current = true;
@@ -74,16 +73,20 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
 
   const handleLikeTouchEnd = useCallback((e) => {
     clearTimeout(longPressTimer.current);
-    if (longPressTriggered.current) {
-      e.preventDefault(); // prevent click from firing after long press
-    }
   }, []);
 
-  const handleLike = (e) => {
+  const handleLikeTouchMove = useCallback(() => {
+    clearTimeout(longPressTimer.current);
+  }, []);
+
+  const handleLikeClick = useCallback(() => {
     if (!currentUserEmail) return;
-    if (longPressTriggered.current) return; // was a long press, not a tap
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
     onLike(post);
-  };
+  }, [currentUserEmail, onLike, post]);
 
   const handleReaction = (emoji) => {
     onReaction(post, emoji);
@@ -262,20 +265,20 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
 
           <div className="mt-4 flex items-center gap-4">
             <div className="relative">
-              <motion.button
-                onHoverStart={() => currentUserEmail && setShowReactions(true)}
-                onHoverEnd={() => setShowReactions(false)}
-                onClick={handleLike}
+              <button
+                onClick={handleLikeClick}
                 onTouchStart={handleLikeTouchStart}
                 onTouchEnd={handleLikeTouchEnd}
-                onTouchMove={() => clearTimeout(longPressTimer.current)}
-                className={`flex items-center gap-1.5 text-sm transition-colors ${
+                onTouchMove={handleLikeTouchMove}
+                onMouseEnter={() => currentUserEmail && setShowReactions(true)}
+                onMouseLeave={() => setShowReactions(false)}
+                className={`flex items-center gap-1.5 text-sm transition-colors select-none ${
                   isLiked ? "text-rose-500" : "text-[#C9B8A6] hover:text-rose-400"
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
                 <span>{displayLikesCount}</span>
-              </motion.button>
+              </button>
 
               <AnimatePresence>
                 {showReactions && currentUserEmail && (
@@ -286,9 +289,9 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                       initial={{ opacity: 0, scale: 0.9, y: 10 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                      onHoverStart={() => setShowReactions(true)}
-                      onHoverEnd={() => setShowReactions(false)}
-                      className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-lg border border-[#E8DED8] p-2 flex gap-1 z-10"
+                      onMouseEnter={() => setShowReactions(true)}
+                      onMouseLeave={() => setShowReactions(false)}
+                      className="absolute bottom-full left-0 mb-2 bg-white rounded-2xl shadow-xl border border-[#E8DED8] p-2 flex gap-1 z-10"
                     >
                       {reactionEmojis.map(emoji => (
                         <motion.button
