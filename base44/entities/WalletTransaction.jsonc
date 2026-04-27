@@ -1,0 +1,71 @@
+{
+  "name": "WalletTransaction",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User who made the transaction"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "top_up",
+        "purchase",
+        "refund",
+        "gift_card_redeem"
+      ],
+      "description": "Type of transaction"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Transaction amount (positive for credits, negative for debits)"
+    },
+    "balance_after": {
+      "type": "number",
+      "description": "Wallet balance after transaction"
+    },
+    "description": {
+      "type": "string",
+      "description": "Transaction description"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional transaction data"
+    }
+  },
+  "required": [
+    "user_email",
+    "type",
+    "amount",
+    "balance_after"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

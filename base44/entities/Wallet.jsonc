@@ -1,0 +1,51 @@
+{
+  "name": "Wallet",
+  "type": "object",
+  "properties": {
+    "balance": {
+      "type": "number",
+      "default": 0,
+      "description": "Current wallet balance in PKR"
+    },
+    "total_topped_up": {
+      "type": "number",
+      "default": 0,
+      "description": "Total amount topped up lifetime"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

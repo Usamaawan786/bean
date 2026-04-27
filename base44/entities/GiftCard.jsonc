@@ -1,0 +1,89 @@
+{
+  "name": "GiftCard",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Unique gift card code"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Gift card value in PKR"
+    },
+    "sender_email": {
+      "type": "string",
+      "description": "Email of the sender"
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Name of the sender"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Email of the recipient"
+    },
+    "recipient_name": {
+      "type": "string",
+      "description": "Name of the recipient"
+    },
+    "message": {
+      "type": "string",
+      "description": "Personal message from sender"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "redeemed"
+      ],
+      "default": "pending",
+      "description": "Gift card status"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the gift card was redeemed"
+    },
+    "redeemed_by": {
+      "type": "string",
+      "description": "Email of user who redeemed it"
+    }
+  },
+  "required": [
+    "code",
+    "amount",
+    "sender_email",
+    "recipient_email"
+  ],
+  "rls": {
+    "create": {
+      "data.sender_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "data.recipient_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

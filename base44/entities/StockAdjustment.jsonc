@@ -1,0 +1,74 @@
+{
+  "name": "StockAdjustment",
+  "type": "object",
+  "properties": {
+    "inventory_id": {
+      "type": "string",
+      "description": "Reference to inventory item"
+    },
+    "item_name": {
+      "type": "string",
+      "description": "Item name for reference"
+    },
+    "adjustment_type": {
+      "type": "string",
+      "enum": [
+        "restock",
+        "manual_adjustment",
+        "sale",
+        "wastage",
+        "damage"
+      ],
+      "description": "Type of adjustment"
+    },
+    "quantity_changed": {
+      "type": "number",
+      "description": "Quantity added (positive) or removed (negative)"
+    },
+    "previous_stock": {
+      "type": "number",
+      "description": "Stock before adjustment"
+    },
+    "new_stock": {
+      "type": "number",
+      "description": "Stock after adjustment"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for adjustment"
+    },
+    "sale_id": {
+      "type": "string",
+      "description": "Reference to sale if adjustment from sale"
+    }
+  },
+  "required": [
+    "inventory_id",
+    "adjustment_type",
+    "quantity_changed",
+    "previous_stock",
+    "new_stock"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

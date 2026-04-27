@@ -1,0 +1,111 @@
+{
+  "name": "PersonalizedOffer",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User this offer is for"
+    },
+    "offer_type": {
+      "type": "string",
+      "enum": [
+        "discount",
+        "bonus_points",
+        "free_item",
+        "challenge",
+        "recommendation"
+      ],
+      "description": "Type of personalized offer"
+    },
+    "title": {
+      "type": "string",
+      "description": "Offer title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Offer description"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Suggested product name"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Product ID if applicable"
+    },
+    "discount_percentage": {
+      "type": "number",
+      "description": "Discount percentage (0-100)"
+    },
+    "points_bonus": {
+      "type": "number",
+      "description": "Bonus points for completing"
+    },
+    "expiry_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When offer expires"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether offer is still valid"
+    },
+    "is_redeemed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has redeemed"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When offer was redeemed"
+    },
+    "ai_reasoning": {
+      "type": "string",
+      "description": "Why AI suggested this offer"
+    }
+  },
+  "required": [
+    "user_email",
+    "offer_type",
+    "title",
+    "description"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

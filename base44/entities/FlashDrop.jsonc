@@ -1,0 +1,85 @@
+{
+  "name": "FlashDrop",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Drop event title"
+    },
+    "description": {
+      "type": "string",
+      "description": "What's being given away"
+    },
+    "location": {
+      "type": "string",
+      "description": "Drop location address"
+    },
+    "location_name": {
+      "type": "string",
+      "description": "Friendly location name"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the drop starts"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the drop ends"
+    },
+    "total_items": {
+      "type": "number",
+      "description": "Total items available"
+    },
+    "items_remaining": {
+      "type": "number",
+      "description": "Items still available"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "upcoming",
+        "active",
+        "ended"
+      ],
+      "default": "upcoming",
+      "description": "Current drop status"
+    },
+    "claimed_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of customers who claimed"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Image for the drop"
+    }
+  },
+  "required": [
+    "title",
+    "location",
+    "start_time",
+    "total_items"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

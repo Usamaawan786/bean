@@ -1,0 +1,88 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Product name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Product price"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Product image"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Coffee Beans",
+        "Matcha",
+        "Equipment",
+        "Merchandise",
+        "Gift Sets"
+      ],
+      "description": "Product category"
+    },
+    "weight": {
+      "type": "string",
+      "description": "Product weight/size (e.g., 250g, 1kg)"
+    },
+    "origin": {
+      "type": "string",
+      "description": "Coffee origin or product source"
+    },
+    "roast_level": {
+      "type": "string",
+      "enum": [
+        "Light",
+        "Medium",
+        "Dark",
+        "N/A"
+      ],
+      "description": "For coffee products"
+    },
+    "in_stock": {
+      "type": "boolean",
+      "default": true,
+      "description": "Product availability"
+    },
+    "stock_quantity": {
+      "type": "number",
+      "description": "Available quantity"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Featured on homepage"
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

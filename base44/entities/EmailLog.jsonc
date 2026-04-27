@@ -1,0 +1,92 @@
+{
+  "name": "EmailLog",
+  "type": "object",
+  "properties": {
+    "campaign_id": {
+      "type": "string",
+      "description": "Associated campaign ID"
+    },
+    "campaign_name": {
+      "type": "string",
+      "description": "Campaign name for reference"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Recipient email address"
+    },
+    "recipient_name": {
+      "type": "string",
+      "description": "Recipient name"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Email subject"
+    },
+    "body": {
+      "type": "string",
+      "description": "Email content"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "Sender name"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "sent",
+        "delivered",
+        "opened",
+        "clicked",
+        "bounced",
+        "failed"
+      ],
+      "default": "sent",
+      "description": "Email status"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When email was sent"
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When email was opened"
+    },
+    "clicked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When link was clicked"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error details if failed"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "subject"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

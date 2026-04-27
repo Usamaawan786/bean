@@ -1,0 +1,87 @@
+{
+  "name": "EmailThread",
+  "type": "object",
+  "properties": {
+    "email_log_id": {
+      "type": "string",
+      "description": "Original email log ID"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "recipient_name": {
+      "type": "string",
+      "description": "Customer name"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Thread subject"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "sent_at": {
+            "type": "string"
+          },
+          "is_admin": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Conversation thread"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "replied",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Thread status"
+    },
+    "last_reply_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last message timestamp"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "subject"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

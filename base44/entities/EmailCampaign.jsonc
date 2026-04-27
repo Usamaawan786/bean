@@ -1,0 +1,112 @@
+{
+  "name": "EmailCampaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Campaign name"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Email subject line"
+    },
+    "body": {
+      "type": "string",
+      "description": "Email body content (HTML supported)"
+    },
+    "from_name": {
+      "type": "string",
+      "description": "Sender name"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "sending",
+        "sent",
+        "paused"
+      ],
+      "default": "draft",
+      "description": "Campaign status"
+    },
+    "scheduled_for": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to send the campaign"
+    },
+    "recipient_type": {
+      "type": "string",
+      "enum": [
+        "all_users",
+        "waitlist",
+        "customers",
+        "custom"
+      ],
+      "description": "Who to send to"
+    },
+    "custom_recipients": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Custom email list"
+    },
+    "total_recipients": {
+      "type": "number",
+      "description": "Total emails to send"
+    },
+    "sent_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Emails sent"
+    },
+    "delivered_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Emails delivered"
+    },
+    "opened_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Emails opened"
+    },
+    "clicked_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Links clicked"
+    },
+    "bounced_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Bounced emails"
+    }
+  },
+  "required": [
+    "name",
+    "subject",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

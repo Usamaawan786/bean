@@ -1,0 +1,80 @@
+{
+  "name": "WaitlistSignup",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "Full name"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "referral_code": {
+      "type": "string",
+      "description": "Unique referral code"
+    },
+    "referral_link": {
+      "type": "string",
+      "description": "Complete referral link for this user"
+    },
+    "referred_by": {
+      "type": "string",
+      "description": "Referral code of who referred them"
+    },
+    "position": {
+      "type": "number",
+      "description": "Position in waitlist"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "waiting",
+        "invited",
+        "joined"
+      ],
+      "default": "waiting",
+      "description": "Status"
+    },
+    "ip_address": {
+      "type": "string",
+      "description": "IP address of signup"
+    },
+    "eba_status": {
+      "type": "string",
+      "enum": [
+        "None",
+        "EBA"
+      ],
+      "default": "None",
+      "description": "Elite Bean Ambassador status"
+    },
+    "eba_promoted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When promoted to EBA"
+    }
+  },
+  "required": [
+    "full_name",
+    "email"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

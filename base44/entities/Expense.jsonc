@@ -1,0 +1,95 @@
+{
+  "name": "Expense",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expense date"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Supplies",
+        "Ingredients",
+        "Equipment",
+        "Utilities",
+        "Rent",
+        "Salaries",
+        "Marketing",
+        "Maintenance",
+        "Other"
+      ],
+      "description": "Expense category"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Expense amount in PKR"
+    },
+    "description": {
+      "type": "string",
+      "description": "Expense description"
+    },
+    "vendor": {
+      "type": "string",
+      "description": "Vendor/supplier name"
+    },
+    "receipt_url": {
+      "type": "string",
+      "description": "Receipt image URL"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "Cash",
+        "Bank Transfer",
+        "Card",
+        "Cheque"
+      ],
+      "default": "Cash",
+      "description": "Payment method"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Paid",
+        "Cancelled"
+      ],
+      "default": "Paid",
+      "description": "Payment status"
+    }
+  },
+  "required": [
+    "date",
+    "category",
+    "amount",
+    "description"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

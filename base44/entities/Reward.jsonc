@@ -1,0 +1,59 @@
+{
+  "name": "Reward",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reward item name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Reward description"
+    },
+    "points_required": {
+      "type": "number",
+      "description": "Points needed to redeem"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Image of the reward"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Drinks",
+        "Food",
+        "Merchandise",
+        "Experience"
+      ],
+      "description": "Reward category"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether reward is available"
+    }
+  },
+  "required": [
+    "name",
+    "points_required"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

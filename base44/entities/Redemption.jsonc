@@ -1,0 +1,64 @@
+{
+  "name": "Redemption",
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string",
+      "description": "Customer who redeemed"
+    },
+    "reward_name": {
+      "type": "string",
+      "description": "Name of redeemed reward"
+    },
+    "points_spent": {
+      "type": "number",
+      "description": "Points used for redemption"
+    },
+    "redemption_code": {
+      "type": "string",
+      "description": "Unique code to claim reward"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "claimed",
+        "expired"
+      ],
+      "default": "pending",
+      "description": "Redemption status"
+    }
+  },
+  "required": [
+    "customer_email",
+    "reward_name",
+    "points_spent"
+  ],
+  "rls": {
+    "create": {
+      "data.customer_email": "{{user.email}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

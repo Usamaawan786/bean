@@ -1,0 +1,70 @@
+{
+  "name": "Comment",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string",
+      "description": "ID of the post this comment belongs to"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the comment author"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the author"
+    },
+    "author_profile_picture": {
+      "type": "string",
+      "description": "Profile picture of the author"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment text"
+    },
+    "likes_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of likes"
+    },
+    "liked_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of emails who liked the comment"
+    },
+    "parent_comment_id": {
+      "type": "string",
+      "description": "ID of parent comment for nested replies"
+    },
+    "reply_to_author": {
+      "type": "string",
+      "description": "Name of the author being replied to"
+    }
+  },
+  "required": [
+    "post_id",
+    "author_email",
+    "content"
+  ],
+  "rls": {
+    "create": {
+      "data.author_email": "{{user.email}}"
+    },
+    "read": {},
+    "update": {},
+    "delete": {
+      "$or": [
+        {
+          "data.author_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

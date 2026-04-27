@@ -1,0 +1,75 @@
+{
+  "name": "StoreProduct",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Product name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Product price in PKR"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Product image"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Hot Coffee",
+        "Cold Coffee",
+        "Tea",
+        "Juices",
+        "Smoothies",
+        "Snacks",
+        "Pastries",
+        "Other"
+      ],
+      "description": "In-store product category"
+    },
+    "size_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Available sizes (e.g., Small, Medium, Large)"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true,
+      "description": "Currently available for sale"
+    },
+    "preparation_time": {
+      "type": "number",
+      "description": "Estimated prep time in minutes"
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

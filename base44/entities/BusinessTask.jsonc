@@ -1,0 +1,104 @@
+{
+  "name": "BusinessTask",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Task title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Product Idea",
+        "Marketing",
+        "Operations",
+        "Customer Service",
+        "Technology",
+        "Finance",
+        "Other"
+      ],
+      "default": "Other",
+      "description": "Task category"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "Low",
+        "Medium",
+        "High",
+        "Urgent"
+      ],
+      "default": "Medium",
+      "description": "Task priority"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Backlog",
+        "To Do",
+        "In Progress",
+        "Completed",
+        "Cancelled"
+      ],
+      "default": "Backlog",
+      "description": "Task status"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of assigned person"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Due date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    }
+  },
+  "required": [
+    "title",
+    "category"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.assigned_to": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "data.assigned_to": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

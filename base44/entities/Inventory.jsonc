@@ -1,0 +1,95 @@
+{
+  "name": "Inventory",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Item name"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Coffee Beans",
+        "Milk & Dairy",
+        "Syrups & Flavors",
+        "Packaging",
+        "Pastries",
+        "Equipment",
+        "Cleaning Supplies",
+        "Other"
+      ],
+      "description": "Item category"
+    },
+    "current_stock": {
+      "type": "number",
+      "description": "Current stock quantity"
+    },
+    "min_stock_level": {
+      "type": "number",
+      "description": "Minimum stock level for alerts"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "kg",
+        "liters",
+        "pieces",
+        "boxes",
+        "bags",
+        "bottles"
+      ],
+      "description": "Unit of measurement"
+    },
+    "last_restock_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last time stock was added"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Supplier name"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "description": "Cost per unit in PKR"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether item is actively tracked"
+    }
+  },
+  "required": [
+    "name",
+    "category",
+    "current_stock",
+    "min_stock_level",
+    "unit"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
