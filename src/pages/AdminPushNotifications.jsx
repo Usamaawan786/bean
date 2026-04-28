@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Bell, Send, Users, History, Zap, ChevronLeft,
-  Smartphone, BarChart2, CheckCircle2, XCircle, Clock, X, Search, UserCheck
+  Smartphone, BarChart2, CheckCircle2, XCircle, Clock, X, Search, UserCheck, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -15,9 +15,11 @@ import UserExplorer from "@/components/admin/notif/UserExplorer";
 import AutomationCenter from "@/components/admin/notif/AutomationCenter";
 import LaunchCampaign from "@/components/admin/notif/LaunchCampaign";
 import ThirtyDaySeries from "@/components/admin/notif/ThirtyDaySeries";
+import AIContentGenerator from "@/components/admin/notif/AIContentGenerator";
 
 const TABS = [
   { id: "compose", label: "Compose", icon: Bell },
+  { id: "ai", label: "✨ AI Writer", icon: Sparkles },
   { id: "30day", label: "☕ 30-Day Series", icon: Zap },
   { id: "launch", label: "🚀 Launch", icon: Zap },
   { id: "templates", label: "Templates", icon: Zap },
@@ -406,6 +408,7 @@ export default function AdminPushNotifications() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-5 pb-24">
         {tab === "compose" && <ComposeTab onSent={() => {}} form={form} setForm={setForm} />}
+        {tab === "ai" && <AIContentGenerator onApply={(tpl) => { applyTemplate(tpl); setTab("compose"); }} />}
         {tab === "30day" && <ThirtyDaySeries />}
         {tab === "launch" && <LaunchCampaign onApply={applyTemplate} />}
         {tab === "templates" && <TemplateLibrary onApply={applyTemplate} />}
