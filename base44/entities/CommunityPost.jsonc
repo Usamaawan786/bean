@@ -52,10 +52,52 @@
         "review",
         "photo",
         "tip",
-        "video"
+        "video",
+        "poll"
       ],
       "default": "general",
       "description": "Type of post"
+    },
+    "poll_question": {
+      "type": "string",
+      "description": "Poll question text"
+    },
+    "poll_options": {
+      "type": "array",
+      "description": "Poll options with vote data",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "voted_by": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "picture": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "poll_ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the poll ends (optional)"
     },
     "moderation_status": {
       "type": "string",

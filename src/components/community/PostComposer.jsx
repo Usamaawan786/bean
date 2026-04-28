@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Image, X, Loader2, Video } from "lucide-react";
+import { Send, Image, X, Loader2, Video, BarChart2, Plus, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
@@ -21,6 +21,9 @@ export default function PostComposer({ onPost, userName }) {
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(() => {
     return localStorage.getItem("bean_terms_accepted") === "true";
   });
+  const [isPollMode, setIsPollMode] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
 
   const withTermsCheck = (action) => {
     if (hasAcceptedTerms) {
@@ -170,7 +173,56 @@ export default function PostComposer({ onPost, userName }) {
   const handleImageClick = () => withTermsCheck(doCapturePhoto);
   const handleVideoClick = () => withTermsCheck(doVideoFromGallery);
 
+  const togglePollMode = () => {
+    setIsPollMode(p => !p);
+    setImageUrl("");
+    setVideoUrl("");
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+  };
+
+  const handlePollOptionChange = (idx, val) => {
+    setPollOptions(prev => prev.map((o, i) => i === idx ? val : o));
+  };
+
+  const addPollOption = () => {
+    if (pollOptions.length < 6) setPollOptions(prev => [...prev, ""]);
+  };
+
+  const removePollOption = (idx) => {
+    if (pollOptions.length <= 2) return;
+    setPollOptions(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = async () => {
+    if (isPollMode) {
+      const question = pollQuestion.trim() || content.trim();
+      const validOptions = pollOptions.map(o => o.trim()).filter(Boolean);
+      if (!question || validOptions.length < 2) {
+        toast.error("Add a question and at least 2 options");
+        return;
+      }
+      setIsPosting(true);
+      const pollOptionObjects = validOptions.map((text, i) => ({
+        id: `opt_${Date.now()}_${i}`,
+        text,
+        voted_by: []
+      }));
+      await onPost({
+        content: question,
+        post_type: "poll",
+        poll_question: question,
+        poll_options: pollOptionObjects,
+        author_name: userName
+      });
+      setContent("");
+      setPollQuestion("");
+      setPollOptions(["", ""]);
+      setIsPollMode(false);
+      setIsPosting(false);
+      return;
+    }
+
     if (!content.trim()) return;
     setIsPosting(true);
     await onPost({
@@ -219,29 +271,77 @@ export default function PostComposer({ onPost, userName }) {
 
 
       <div className="bg-white my-4 px-5 py-5 rounded-3xl border border-[#E8DED8] shadow-sm">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Share your coffee moment..."
-          className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]"
-        />
-
-        {imageUrl && (
-          <div className="mt-3 relative inline-block">
-            <img src={imageUrl} alt="Upload" className="h-24 rounded-xl object-cover" />
-            <button onClick={() => setImageUrl("")} className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1">
-              <X className="h-3 w-3" />
-            </button>
+        {isPollMode ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <BarChart2 className="h-4 w-4 text-[#8B7355]" />
+              <span className="text-sm font-semibold text-[#5C4A3A]">Create a Poll</span>
+              <button onClick={togglePollMode} className="ml-auto text-[#C9B8A6] hover:text-red-400">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <input
+              value={pollQuestion}
+              onChange={e => setPollQuestion(e.target.value)}
+              placeholder="Ask a question..."
+              className="w-full border border-[#E8DED8] rounded-2xl px-4 py-3 text-sm text-[#5C4A3A] placeholder-[#C9B8A6] focus:outline-none focus:border-[#8B7355]"
+            />
+            <div className="space-y-2">
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full border-2 border-[#C9B8A6] flex-shrink-0 flex items-center justify-center">
+                    <span className="text-[9px] text-[#C9B8A6] font-bold">{idx + 1}</span>
+                  </div>
+                  <input
+                    value={opt}
+                    onChange={e => handlePollOptionChange(idx, e.target.value)}
+                    placeholder={`Option ${idx + 1}`}
+                    className="flex-1 border border-[#E8DED8] rounded-xl px-3 py-2 text-sm text-[#5C4A3A] placeholder-[#C9B8A6] focus:outline-none focus:border-[#8B7355]"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button onClick={() => removePollOption(idx)} className="text-[#C9B8A6] hover:text-red-400">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {pollOptions.length < 6 && (
+              <button
+                onClick={addPollOption}
+                className="flex items-center gap-1.5 text-xs text-[#8B7355] hover:text-[#5C4A3A] font-medium transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add option
+              </button>
+            )}
           </div>
-        )}
+        ) : (
+          <>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Share your coffee moment..."
+              className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]"
+            />
 
-        {videoUrl && (
-          <div className="mt-3 relative inline-block">
-            <video src={videoUrl} controls className="h-32 rounded-xl" />
-            <button onClick={() => setVideoUrl("")} className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1">
-              <X className="h-3 w-3" />
-            </button>
-          </div>
+            {imageUrl && (
+              <div className="mt-3 relative inline-block">
+                <img src={imageUrl} alt="Upload" className="h-24 rounded-xl object-cover" />
+                <button onClick={() => setImageUrl("")} className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
+            {videoUrl && (
+              <div className="mt-3 relative inline-block">
+                <video src={videoUrl} controls className="h-32 rounded-xl" />
+                <button onClick={() => setVideoUrl("")} className="absolute -top-2 -right-2 bg-[#5C4A3A] text-white rounded-full p-1">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {!hasAcceptedTerms && (
@@ -250,30 +350,47 @@ export default function PostComposer({ onPost, userName }) {
 
         <div className="mt-4 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleImageClick}
-              disabled={isUploadingImage || !!videoUrl}
-              className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
-            >
-              {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
-              <span className="text-xs">Photo</span>
-            </button>
+            {!isPollMode && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleImageClick}
+                  disabled={isUploadingImage || !!videoUrl}
+                  className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
+                >
+                  {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                  <span className="text-xs">Photo</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleVideoClick}
+                  disabled={isUploadingVideo || !!imageUrl}
+                  className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
+                >
+                  {isUploadingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+                  <span className="text-xs">Video</span>
+                </button>
+              </>
+            )}
 
             <button
               type="button"
-              onClick={handleVideoClick}
-              disabled={isUploadingVideo || !!imageUrl}
-              className={`flex items-center gap-1 transition-colors ${imageUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
+              onClick={togglePollMode}
+              className={`flex items-center gap-1 transition-colors ${isPollMode ? "text-[#8B7355]" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
             >
-              {isUploadingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-              <span className="text-xs">Video</span>
+              <BarChart2 className="h-4 w-4" />
+              <span className="text-xs">Poll</span>
             </button>
           </div>
 
           <Button
-            onClick={handleSubmit}
-            disabled={!content.trim() || !hasAcceptedTerms || isPosting}
+            onClick={() => withTermsCheck(handleSubmit)}
+            disabled={
+              isPosting ||
+              (!isPollMode && !content.trim()) ||
+              (isPollMode && (!pollQuestion.trim() && !content.trim()))
+            }
             size="sm"
             className="rounded-xl bg-gradient-to-r from-[#8B7355] to-[#6B5744] hover:from-[#6B5744] hover:to-[#5C4A3A] flex-shrink-0"
           >

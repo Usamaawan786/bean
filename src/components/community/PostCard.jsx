@@ -2,11 +2,12 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X, Trash2, BarChart2 } from "lucide-react";
 import { formatDateTime } from "@/utils/timeUtils";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
+import PollDisplay from "./PollDisplay";
 import { base44 } from "@/api/base44Client";
 
 const postTypeConfig = {
@@ -14,7 +15,8 @@ const postTypeConfig = {
   review: { icon: Star, color: "text-[#6B5744]", bg: "bg-[#EDE8E3]" },
   photo: { icon: Camera, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
   video: { icon: Video, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
-  tip: { icon: Lightbulb, color: "text-[#6B5744]", bg: "bg-[#EDE3DF]" }
+  tip: { icon: Lightbulb, color: "text-[#6B5744]", bg: "bg-[#EDE3DF]" },
+  poll: { icon: BarChart2, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" }
 };
 
 const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
@@ -238,6 +240,14 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                 className="w-full max-h-80"
               />
             </div>
+          )}
+
+          {/* Poll */}
+          {post.post_type === "poll" && post.poll_options?.length > 0 && (
+            <PollDisplay
+              post={post}
+              currentUser={currentUser}
+            />
           )}
           
           {/* Reactions Preview */}
