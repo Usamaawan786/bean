@@ -27,31 +27,41 @@ function notifBg(type, isRead) {
 
 export default function NotificationBell({ userEmail }) {
   const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]); // Notification entity
+  const [notifications, setNotifications] = useState([]);
   const [conversation, setConversation] = useState(null);
+  const [adminMsgCount, setAdminMsgCount] = useState(0); // use conversation.unread_by_user
   const [adminMsgs, setAdminMsgs] = useState([]);
+  // Track which notification IDs have been read locally (survives re-fetches)
+  const localReadIds = useRef(new Set());
+  const adminMarkedRead = useRef(false);
   const ref = useRef(null);
   const navigate = useNavigate();
 
-  // Load Notification entity records
   const loadNotifications = useCallback(async () => {
     if (!userEmail) return;
     try {
       const data = await base44.entities.Notification.filter(
         { to_email: userEmail }, "-created_date", 30
       );
-      setNotifications(data);
+      // Merge server data with local read state so polling doesn't undo reads
+      setNotifications(data.map((n) =>
+        localReadIds.current.has(n.id) ? { ...n, is_read: true } : n
+      ));
     } catch (e) {}
   }, [userEmail]);
 
-  // Load admin chat messages
-  const loadAdminMsgs = useCallback(async () => {
+  const loadConversation = useCallback(async () => {
     if (!userEmail) return;
     try {
       const convs = await base44.entities.Conversation.filter({ user_email: userEmail });
       if (!convs.length) return;
       const conv = convs[0];
       setConversation(conv);
+      // Use unread_by_user count from Conversation (source of truth for admin msgs)
+      const count = adminMarkedRead.current ? 0 : (conv.unread_by_user || 0);
+      setAdminMsgCount(count);
+
+      // Load admin messages for display purposes only
       const msgs = await base44.entities.ChatMessage.filter({ conversation_id: conv.id }, "-created_date", 20);
       setAdminMsgs(msgs.filter((m) => m.sender_role === "admin"));
     } catch (e) {}
@@ -60,24 +70,42 @@ export default function NotificationBell({ userEmail }) {
   useEffect(() => {
     if (!userEmail) return;
     loadNotifications();
-    loadAdminMsgs();
+    loadConversation();
 
-    // Real-time subscription for new notifications
+    // Real-time: new/updated notifications
     const unsubNotif = base44.entities.Notification.subscribe((event) => {
-      if (event.type === "create" && event.data?.to_email === userEmail) {
+      if (event.data?.to_email !== userEmail) return;
+      if (event.type === "create") {
         setNotifications((prev) => [event.data, ...prev]);
-      } else if (event.type === "update" && event.data?.to_email === userEmail) {
-        setNotifications((prev) => prev.map((n) => n.id === event.id ? event.data : n));
+      } else if (event.type === "update") {
+        if (event.data?.is_read) localReadIds.current.add(event.id);
+        setNotifications((prev) => prev.map((n) => n.id === event.id ? { ...n, ...event.data } : n));
       }
     });
 
+    // Real-time: new admin chat messages → refresh conversation count
     const unsubChat = base44.entities.ChatMessage.subscribe((event) => {
-      if (event.type === "create" && event.data?.sender_role === "admin") loadAdminMsgs();
+      if (event.type === "create" && event.data?.sender_role === "admin") {
+        loadConversation();
+      }
     });
 
-    const interval = setInterval(() => { loadNotifications(); loadAdminMsgs(); }, 30000);
-    return () => { unsubNotif(); unsubChat(); clearInterval(interval); };
-  }, [userEmail, loadNotifications, loadAdminMsgs]);
+    // Real-time: conversation unread_by_user changes
+    const unsubConv = base44.entities.Conversation.subscribe((event) => {
+      if (event.type === "update" && event.data?.user_email === userEmail) {
+        const count = adminMarkedRead.current ? 0 : (event.data?.unread_by_user || 0);
+        setAdminMsgCount(count);
+        setConversation(event.data);
+      }
+    });
+
+    const interval = setInterval(() => {
+      loadNotifications();
+      loadConversation();
+    }, 30000);
+
+    return () => { unsubNotif(); unsubChat(); unsubConv(); clearInterval(interval); };
+  }, [userEmail, loadNotifications, loadConversation]);
 
   // Click outside closes
   useEffect(() => {
@@ -87,32 +115,36 @@ export default function NotificationBell({ userEmail }) {
   }, []);
 
   const unreadNotifs = notifications.filter((n) => !n.is_read);
-  const unreadAdminMsgs = adminMsgs.filter((m) => !m.is_read);
-  const totalUnread = unreadNotifs.length + unreadAdminMsgs.length;
+  const totalUnread = unreadNotifs.length + adminMsgCount;
 
   const markNotifRead = async (notif) => {
     if (notif.is_read) return;
-    await base44.entities.Notification.update(notif.id, { is_read: true });
+    localReadIds.current.add(notif.id);
     setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n));
+    base44.entities.Notification.update(notif.id, { is_read: true }).catch(() => {});
   };
 
   const markAllRead = async () => {
+    // Mark all notification entities as read
     const unread = notifications.filter((n) => !n.is_read);
+    unread.forEach((n) => localReadIds.current.add(n.id));
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     if (unread.length) {
-      await Promise.all(unread.map((n) => base44.entities.Notification.update(n.id, { is_read: true })));
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
+      Promise.all(unread.map((n) => base44.entities.Notification.update(n.id, { is_read: true }))).catch(() => {});
     }
-    // Mark admin msgs as read via conversation unread count (user can update Conversation but not ChatMessage)
-    if (conversation && adminMsgs.some((m) => !m.is_read)) {
-      await base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 });
-      setAdminMsgs((prev) => prev.map((m) => ({ ...m, is_read: true })));
+
+    // Mark admin msgs as read via Conversation entity
+    if (conversation && adminMsgCount > 0) {
+      adminMarkedRead.current = true;
+      setAdminMsgCount(0);
+      base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 }).catch(() => {});
     }
   };
 
-  // Merge and sort all items by date
+  // Merge and sort all items for display
   const allItems = [
     ...notifications.map((n) => ({ ...n, _source: "notif" })),
-    ...adminMsgs.map((m) => ({ ...m, _source: "admin", type: m.message_type || "support" })),
+    ...adminMsgs.map((m) => ({ ...m, _source: "admin", is_read: adminMarkedRead.current || m.is_read, type: m.message_type || "support" })),
   ].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 30);
 
   return (
@@ -125,6 +157,7 @@ export default function NotificationBell({ userEmail }) {
         <Bell className="h-5 w-5" />
         {totalUnread > 0 && (
           <motion.span
+            key={totalUnread}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1"
@@ -186,15 +219,15 @@ export default function NotificationBell({ userEmail }) {
                       className={`px-4 py-3 flex items-start gap-3 cursor-pointer hover:bg-[#F9F6F3] transition-colors ${notifBg(item.type, isRead)}`}
                       onClick={async () => {
                         if (isAdminMsg) {
-                          // Mark conversation as read via Conversation entity (user can't update ChatMessage directly)
-                          if (conversation) {
+                          if (conversation && adminMsgCount > 0) {
+                            adminMarkedRead.current = true;
+                            setAdminMsgCount(0);
                             base44.entities.Conversation.update(conversation.id, { unread_by_user: 0 }).catch(() => {});
                           }
-                          setAdminMsgs((prev) => prev.map((m) => ({ ...m, is_read: true })));
                           setOpen(false);
                           navigate("/messages");
                         } else {
-                          await markNotifRead(item);
+                          markNotifRead(item);
                           setOpen(false);
                           const type = item.type;
                           if ((type === "like" || type === "comment" || type === "reply") && item.post_id) {
@@ -213,7 +246,6 @@ export default function NotificationBell({ userEmail }) {
                         }
                       }}
                     >
-                      {/* Avatar or icon */}
                       <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-[#F5EBE8] overflow-hidden">
                         {item.from_picture ? (
                           <img src={item.from_picture} alt="" className="w-full h-full object-cover" />
