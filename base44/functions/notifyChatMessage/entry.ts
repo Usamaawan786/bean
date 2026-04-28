@@ -119,14 +119,11 @@ Deno.serve(async (req) => {
       ? (content.length > 80 ? content.substring(0, 80) + "…" : content)
       : (file_url ? "📎 Sent an attachment" : "New message");
 
-    // Helper: get device tokens by email
+    // Helper: get device tokens strictly by user_email only
     const getTokensByEmail = async (email) => {
-      const [byUserEmail, byCreatedBy] = await Promise.all([
-        base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true }),
-        base44.asServiceRole.entities.DeviceToken.filter({ created_by: email, is_active: true }),
-      ]);
+      const tokens = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true });
       const seen = new Set();
-      return [...byUserEmail, ...byCreatedBy].filter(t => {
+      return tokens.filter(t => {
         if (!t.token || seen.has(t.token)) return false;
         seen.add(t.token);
         return true;
