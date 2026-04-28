@@ -46,7 +46,9 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
 
   const hasVoted = !!myVoteOptionId;
   const isPollEnded = post.poll_ends_at && new Date(post.poll_ends_at) < new Date();
-  const showResults = hasVoted || isPollEnded || !currentUser;
+  const isAuthor = currentUser?.email === post.author_email;
+  // Show results if: user voted, poll ended, user is author, or not logged in
+  const showResults = hasVoted || isPollEnded || !currentUser || isAuthor;
 
   const getPercent = (option) => {
     if (totalVotes === 0) return 0;
@@ -108,25 +110,26 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
         const isWinner = showResults && option.id === winningId && totalVotes > 0;
         const voters = option.voted_by || [];
 
+        // Can vote: logged in, not ended, not author
+        const canVote = currentUser && !isPollEnded && !isAuthor;
+
         return (
           <div key={option.id} className="relative">
             <button
-              onClick={() => !showResults && handleVote(option.id)}
-              disabled={voting || isPollEnded || showResults}
+              onClick={() => canVote && handleVote(option.id)}
+              disabled={voting || !canVote}
               className={`relative w-full text-left rounded-2xl border-2 overflow-hidden transition-all ${
-                showResults
-                  ? "cursor-default"
-                  : "cursor-pointer hover:border-[#8B7355] active:scale-[0.99]"
+                canVote && !hasVoted
+                  ? "cursor-pointer hover:border-[#8B7355] active:scale-[0.99]"
+                  : "cursor-default"
               } ${
                 isMyVote
                   ? "border-[#8B7355] bg-[#F5EBE8]"
-                  : showResults
-                  ? "border-[#E8DED8] bg-white"
-                  : "border-[#E8DED8] bg-white hover:bg-[#FAFAF8]"
+                  : "border-[#E8DED8] bg-white"
               }`}
             >
-              {/* Progress bar */}
-              {showResults && (
+              {/* Progress bar — always visible when votes exist */}
+              {totalVotes > 0 && (
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
@@ -139,31 +142,31 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
 
               <div className="relative flex items-center justify-between px-4 py-3 gap-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {/* Vote indicator */}
-                  {!showResults && (
+                  {/* Radio button for users who can still vote */}
+                  {canVote && !hasVoted && (
                     <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
                       isMyVote ? "border-[#8B7355] bg-[#8B7355]" : "border-[#C9B8A6]"
-                    }`}>
-                      {isMyVote && <div className="w-full h-full rounded-full bg-white scale-50" />}
-                    </div>
+                    }`} />
                   )}
                   <span className={`text-sm font-medium truncate ${
                     isMyVote ? "text-[#5C4A3A]" : "text-[#6B5744]"
                   }`}>
                     {option.text}
                   </span>
-                  {isMyVote && showResults && <span className="text-[#8B7355] text-xs flex-shrink-0">✓ You</span>}
+                  {isMyVote && <span className="text-[#8B7355] text-xs flex-shrink-0">✓ You</span>}
                 </div>
 
-                {showResults && (
+                {/* Always show avatars + % when there are votes */}
+                {totalVotes > 0 && (
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Voter avatars */}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setShowVoters(showVoters === option.id ? null : option.id); }}
-                      className="flex items-center gap-1"
-                    >
-                      <VoterAvatars voters={voters} />
-                    </button>
+                    {voters.length > 0 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setShowVoters(showVoters === option.id ? null : option.id); }}
+                        className="flex items-center gap-1"
+                      >
+                        <VoterAvatars voters={voters} />
+                      </button>
+                    )}
                     <span className={`text-sm font-bold min-w-[32px] text-right ${
                       isWinner ? "text-[#5C4A3A]" : "text-[#8B7355]"
                     }`}>
