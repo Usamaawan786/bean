@@ -45,7 +45,7 @@ const DEFAULT_SERIES = [
   { day: 30, title: "🏆 30 Days — You Were Here First", body: "One month of the Bean community before we even opened. You believed in what we were building before anyone else could see it. That means everything to us. ☕", time_pkt: "10:00", deep_link: "/Community" },
 ];
 
-const STORAGE_KEY = "bean_30day_series_v3";
+const STORAGE_KEY = "bean_30day_series_v4";
 
 // Get the scheduled date for a given day index (0-based), starting April 28 2026
 function getScheduledDate(index, timePkt) {
