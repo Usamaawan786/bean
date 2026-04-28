@@ -48,45 +48,41 @@ async function getAccessToken(serviceAccount) {
   return tokenData.access_token;
 }
 
-async function sendToTokens(tokens, title, body, deepLink, accessToken, projectId) {
-  const results = await Promise.all(tokens.map(async (token) => {
-    const message = {
-      message: {
-        token,
-        notification: { title, body },
-        data: deepLink ? { deep_link: deepLink, url: deepLink } : {},
-        apns: {
-          headers: {
-            "apns-push-type": "alert",
-            "apns-priority": "10",
-            "apns-topic": "co.beancoffee.app"
-          },
-          payload: { aps: { alert: { title, body }, sound: "default", badge: 1 } }
+async function sendFCM(token, title, body, deepLink, accessToken, projectId) {
+  const message = {
+    message: {
+      token,
+      notification: { title, body },
+      data: deepLink ? { deep_link: deepLink, url: deepLink } : {},
+      apns: {
+        headers: {
+          "apns-push-type": "alert",
+          "apns-priority": "10",
+          "apns-topic": "co.beancoffee.app"
         },
-        android: {
-          priority: "high",
-          notification: { sound: "default", channel_id: "default", notification_priority: "PRIORITY_HIGH" }
-        }
+        payload: { aps: { alert: { title, body }, sound: "default", badge: 1 } }
+      },
+      android: {
+        priority: "high",
+        notification: { sound: "default", channel_id: "default", notification_priority: "PRIORITY_HIGH" }
       }
-    };
-
-    const res = await fetch(
-      `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
-      {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
-        body: JSON.stringify(message)
-      }
-    );
-    const result = await res.json();
-    if (!res.ok) {
-      const errorCode = result?.error?.details?.[0]?.errorCode || result?.error?.status;
-      console.error("FCM error:", errorCode, "token:", token.substring(0, 30));
-      return { success: false, errorCode, token };
     }
-    return { success: true };
-  }));
-  return results;
+  };
+
+  const res = await fetch(
+    `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
+    {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(message)
+    }
+  );
+  const result = await res.json();
+  if (!res.ok) {
+    const errorCode = result?.error?.details?.[0]?.errorCode || result?.error?.status;
+    return { success: false, errorCode, token };
+  }
+  return { success: true, token };
 }
 
 Deno.serve(async (req) => {
@@ -94,112 +90,126 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
 
-    // Called by entity automation — payload has event + data
+    // Entity automation payload — message data is in body.data
     const msgData = body.data;
     if (!msgData) {
       return Response.json({ error: 'No message data provided' }, { status: 400 });
     }
 
     const { conversation_id, sender_role, sender_email, sender_name, content, file_url } = msgData;
+
     if (!conversation_id || !sender_role) {
-      return Response.json({ error: 'Missing required fields' }, { status: 400 });
+      return Response.json({ error: 'Missing conversation_id or sender_role' }, { status: 400 });
+    }
+
+    // Only handle known roles
+    if (sender_role !== "admin" && sender_role !== "user") {
+      return Response.json({ success: true, message: "Unknown sender_role, skipping" });
     }
 
     console.log(`[notifyChatMessage] sender_role=${sender_role}, sender_email=${sender_email}, conv_id=${conversation_id}`);
 
-    // Load service account
-    const serviceAccountStr = Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
-    const serviceAccount = JSON.parse(serviceAccountStr);
+    // Determine the EXACT set of recipient emails — one email for user path, admin emails for user→admin path
+    let recipientEmails = []; // will contain ONLY the intended recipients
+
+    if (sender_role === "admin") {
+      // Admin sent a message → notify ONLY the specific user of this conversation
+      // Use get() with the conversation_id directly
+      const conv = await base44.asServiceRole.entities.Conversation.get(conversation_id);
+
+      if (!conv || !conv.user_email) {
+        console.log(`[notifyChatMessage] Conversation not found or missing user_email: ${conversation_id}`);
+        return Response.json({ success: true, message: "Conversation not found" });
+      }
+
+      const userEmail = conv.user_email;
+
+      // Safety: never notify an admin back when they are also the conversation user
+      const adminUsers = await base44.asServiceRole.entities.User.filter({ role: "admin" });
+      const adminEmails = new Set(adminUsers.map(u => u.email).filter(Boolean));
+
+      if (adminEmails.has(userEmail)) {
+        console.log(`[notifyChatMessage] conversation user_email is an admin, skipping: ${userEmail}`);
+        return Response.json({ success: true, message: "User is admin, skipping" });
+      }
+
+      recipientEmails = [userEmail];
+      console.log(`[notifyChatMessage] Admin→User: will notify ONLY ${userEmail}`);
+
+    } else {
+      // User sent a message → notify ONLY admins, never the sending user
+      const adminUsers = await base44.asServiceRole.entities.User.filter({ role: "admin" });
+      const adminEmails = adminUsers.map(u => u.email).filter(Boolean);
+
+      // Strictly exclude the sender from admin list (in case an admin is messaging from user role)
+      recipientEmails = adminEmails.filter(email => email !== sender_email);
+      console.log(`[notifyChatMessage] User→Admin: will notify ${recipientEmails.length} admin(s), sender excluded`);
+    }
+
+    if (recipientEmails.length === 0) {
+      return Response.json({ success: true, sent: 0, message: "No recipients" });
+    }
+
+    // Fetch device tokens ONLY for the exact recipient emails
+    // Strictly filter by user_email field — no fallbacks to created_by or any other field
+    const allTokenRecords = [];
+    for (const email of recipientEmails) {
+      const tokens = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true });
+      // Extra safety: ensure each token record's user_email exactly matches
+      const valid = tokens.filter(t => t.token && t.user_email === email);
+      allTokenRecords.push(...valid);
+    }
+
+    // Deduplicate tokens
+    const seenTokens = new Set();
+    const uniqueTokenRecords = allTokenRecords.filter(t => {
+      if (seenTokens.has(t.token)) return false;
+      seenTokens.add(t.token);
+      return true;
+    });
+
+    if (uniqueTokenRecords.length === 0) {
+      console.log(`[notifyChatMessage] No active device tokens for recipients: ${recipientEmails.join(', ')}`);
+      return Response.json({ success: true, sent: 0, message: "No devices to notify" });
+    }
+
+    // Build notification content
+    const notifBody = content
+      ? (content.length > 80 ? content.substring(0, 80) + "…" : content)
+      : (file_url ? "📎 Sent an attachment" : "New message");
+
+    const notifTitle = sender_role === "admin"
+      ? "Bean Support 💬"
+      : `${sender_name || "Customer"} 💬`;
+
+    const deepLink = sender_role === "admin"
+      ? "https://beancoffee.co/messages"
+      : "https://beancoffee.co/AdminChat";
+
+    // Load Firebase credentials and send
+    const serviceAccount = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT"));
     const accessToken = await getAccessToken(serviceAccount);
     if (!accessToken) {
       return Response.json({ error: 'Failed to get Firebase access token' }, { status: 500 });
     }
 
-    const notificationBody = content
-      ? (content.length > 80 ? content.substring(0, 80) + "…" : content)
-      : (file_url ? "📎 Sent an attachment" : "New message");
+    const results = await Promise.all(
+      uniqueTokenRecords.map(t => sendFCM(t.token, notifTitle, notifBody, deepLink, accessToken, serviceAccount.project_id))
+    );
 
-    // Helper: get device tokens strictly by user_email only
-    const getTokensByEmail = async (email) => {
-      const tokens = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true });
-      const seen = new Set();
-      return tokens.filter(t => {
-        if (!t.token || seen.has(t.token)) return false;
-        seen.add(t.token);
-        return true;
-      });
-    };
-
-    let tokenRecords = [];
-    let finalTitle = "";
-    let deepLink = "";
-
-    if (sender_role === "admin") {
-      // Admin sent → notify the USER of this conversation (NOT the admin)
-      // Fetch the conversation using conversation_id field filter
-      const allConvs = await base44.asServiceRole.entities.Conversation.filter({ id: conversation_id });
-      
-      // Fallback: list all and find by id if filter doesn't work
-      let conv = allConvs.length > 0 ? allConvs[0] : null;
-      if (!conv) {
-        const allConvsRaw = await base44.asServiceRole.entities.Conversation.list("-created_date", 500);
-        conv = allConvsRaw.find(c => c.id === conversation_id);
-      }
-
-      if (!conv) {
-        console.log(`[notifyChatMessage] Conversation ${conversation_id} not found`);
-        return Response.json({ success: true, message: "Conversation not found" });
-      }
-
-      const userEmail = conv.user_email;
-      if (!userEmail) {
-        console.log(`[notifyChatMessage] No user_email on conversation`);
-        return Response.json({ success: true, message: "No user email on conversation" });
-      }
-
-      // CRITICAL: Do NOT notify the admin themselves — only notify the user
-      tokenRecords = await getTokensByEmail(userEmail);
-      finalTitle = "Bean Support 💬";
-      deepLink = "https://beancoffee.co/messages";
-      console.log(`[notifyChatMessage] Admin→User: notifying ${userEmail}, ${tokenRecords.length} device(s)`);
-
-    } else if (sender_role === "user") {
-      // User sent → notify all ADMINS (not the user themselves)
-      const adminUsers = await base44.asServiceRole.entities.User.filter({ role: "admin" });
-      const adminEmails = adminUsers.map(u => u.email).filter(Boolean);
-      console.log(`[notifyChatMessage] User→Admin: found ${adminEmails.length} admin(s), sender=${sender_email}`);
-
-      // Get tokens for admins only — explicitly exclude the sender's own tokens
-      if (adminEmails.length > 0) {
-        const results = await Promise.all(adminEmails.map(email => getTokensByEmail(email)));
-        tokenRecords = results.flat();
-      }
-
-      const senderLabel = sender_name || "Customer";
-      finalTitle = `${senderLabel} 💬`;
-      deepLink = "https://beancoffee.co/AdminChat";
-    }
-
-    const tokens = tokenRecords.map(t => t.token).filter(Boolean);
-    if (tokens.length === 0) {
-      console.log("[notifyChatMessage] No active device tokens found");
-      return Response.json({ success: true, sent: 0, message: "No devices to notify" });
-    }
-
-    const results = await sendToTokens(tokens, finalTitle, notificationBody, deepLink, accessToken, serviceAccount.project_id);
     const sent = results.filter(r => r.success).length;
     const failed = results.filter(r => !r.success).length;
 
-    // Deactivate invalid tokens
-    const invalidResults = results.filter(r => !r.success && (r.errorCode === "UNREGISTERED" || r.errorCode === "INVALID_ARGUMENT"));
-    for (const r of invalidResults) {
-      const records = tokenRecords.filter(t => t.token === r.token && t.id);
-      for (const record of records) {
+    // Deactivate invalid/unregistered tokens
+    const invalidTokens = results.filter(r => !r.success && (r.errorCode === "UNREGISTERED" || r.errorCode === "INVALID_ARGUMENT"));
+    for (const r of invalidTokens) {
+      const record = uniqueTokenRecords.find(t => t.token === r.token);
+      if (record?.id) {
         await base44.asServiceRole.entities.DeviceToken.update(record.id, { is_active: false });
       }
     }
 
-    console.log(`[notifyChatMessage] Done — sent: ${sent}, failed: ${failed}`);
+    console.log(`[notifyChatMessage] Done — recipients: ${recipientEmails.join(', ')} | sent: ${sent}, failed: ${failed}`);
     return Response.json({ success: true, sent, failed });
 
   } catch (error) {
