@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart2, Clock, Users } from "lucide-react";
+import { Clock, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -32,14 +32,15 @@ function VoterAvatars({ voters, limit = 5 }) {
   );
 }
 
-export default function PollDisplay({ post, currentUser, onUpdate }) {
-  const [showVoters, setShowVoters] = useState(null); // option id
+export default function PollDisplay({ post, currentUser }) {
+  // Local state for poll options so votes reflect immediately
+  const [localOptions, setLocalOptions] = useState(post.poll_options || []);
+  const [showVoters, setShowVoters] = useState(null);
   const [voting, setVoting] = useState(false);
 
-  const options = post.poll_options || [];
+  const options = localOptions;
   const totalVotes = options.reduce((sum, o) => sum + (o.voted_by?.length || 0), 0);
 
-  // Which option has the current user voted for?
   const myVoteOptionId = options.find(o =>
     o.voted_by?.some(v => v.email === currentUser?.email)
   )?.id;
@@ -59,33 +60,37 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
   }, options[0]?.id);
 
   const handleVote = async (optionId) => {
-    if (!currentUser || voting || isPollEnded) return;
+    if (!currentUser?.email || voting || isPollEnded) return;
+
+    const voterData = {
+      email: currentUser.email,
+      name: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
+      picture: currentUser.profile_picture || null
+    };
+
+    // Optimistic update immediately
+    const optimisticOptions = options.map(o => {
+      const filteredVoters = (o.voted_by || []).filter(v => v.email !== currentUser.email);
+      if (o.id === optionId) {
+        const alreadyVotedHere = (o.voted_by || []).some(v => v.email === currentUser.email);
+        return alreadyVotedHere
+          ? { ...o, voted_by: filteredVoters }
+          : { ...o, voted_by: [...filteredVoters, voterData] };
+      }
+      return { ...o, voted_by: filteredVoters };
+    });
+    setLocalOptions(optimisticOptions);
 
     setVoting(true);
     try {
-      const voterData = {
-        email: currentUser.email,
-        name: currentUser.display_name || currentUser.full_name || currentUser.email.split("@")[0],
-        picture: currentUser.profile_picture || null
-      };
-
-      const updatedOptions = options.map(o => {
-        // Remove from old vote if switching
-        const filteredVoters = (o.voted_by || []).filter(v => v.email !== currentUser.email);
-
-        if (o.id === optionId) {
-          // If clicking own vote, remove it (toggle)
-          if (o.id === myVoteOptionId) {
-            return { ...o, voted_by: filteredVoters };
-          }
-          return { ...o, voted_by: [...filteredVoters, voterData] };
-        }
-        return { ...o, voted_by: filteredVoters };
-      });
-
-      await base44.entities.CommunityPost.update(post.id, { poll_options: updatedOptions });
-      if (onUpdate) onUpdate({ ...post, poll_options: updatedOptions });
+      const res = await base44.functions.invoke("voteOnPoll", { postId: post.id, optionId });
+      // Use server response to confirm final state
+      if (res?.data?.poll_options) {
+        setLocalOptions(res.data.poll_options);
+      }
     } catch (e) {
+      // Revert on error
+      setLocalOptions(post.poll_options || []);
       toast.error("Failed to register vote");
     } finally {
       setVoting(false);
@@ -96,12 +101,10 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
 
   return (
     <div className="mt-3 space-y-2">
-      {/* Poll question */}
       {post.poll_question && (
         <p className="font-semibold text-[#5C4A3A] text-sm">{post.poll_question}</p>
       )}
 
-      {/* Options */}
       {options.map(option => {
         const pct = getPercent(option);
         const isMyVote = option.id === myVoteOptionId;
@@ -111,10 +114,10 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
         return (
           <div key={option.id} className="relative">
             <button
-              onClick={() => !showResults && handleVote(option.id)}
-              disabled={voting || isPollEnded || showResults}
+              onClick={() => !isPollEnded && handleVote(option.id)}
+              disabled={voting || isPollEnded}
               className={`relative w-full text-left rounded-2xl border-2 overflow-hidden transition-all ${
-                showResults
+                isPollEnded
                   ? "cursor-default"
                   : "cursor-pointer hover:border-[#8B7355] active:scale-[0.99]"
               } ${
@@ -125,7 +128,7 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
                   : "border-[#E8DED8] bg-white hover:bg-[#FAFAF8]"
               }`}
             >
-              {/* Progress bar */}
+              {/* Progress bar — shown after voting */}
               {showResults && (
                 <motion.div
                   initial={{ width: 0 }}
@@ -139,7 +142,7 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
 
               <div className="relative flex items-center justify-between px-4 py-3 gap-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  {/* Vote indicator */}
+                  {/* Radio indicator — shown before voting */}
                   {!showResults && (
                     <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
                       isMyVote ? "border-[#8B7355] bg-[#8B7355]" : "border-[#C9B8A6]"
@@ -147,9 +150,7 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
                       {isMyVote && <div className="w-full h-full rounded-full bg-white scale-50" />}
                     </div>
                   )}
-                  <span className={`text-sm font-medium truncate ${
-                    isMyVote ? "text-[#5C4A3A]" : "text-[#6B5744]"
-                  }`}>
+                  <span className={`text-sm font-medium truncate ${isMyVote ? "text-[#5C4A3A]" : "text-[#6B5744]"}`}>
                     {option.text}
                   </span>
                   {isMyVote && showResults && <span className="text-[#8B7355] text-xs flex-shrink-0">✓ You</span>}
@@ -157,16 +158,13 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
 
                 {showResults && (
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    {/* Voter avatars */}
                     <button
                       onClick={(e) => { e.stopPropagation(); setShowVoters(showVoters === option.id ? null : option.id); }}
                       className="flex items-center gap-1"
                     >
                       <VoterAvatars voters={voters} />
                     </button>
-                    <span className={`text-sm font-bold min-w-[32px] text-right ${
-                      isWinner ? "text-[#5C4A3A]" : "text-[#8B7355]"
-                    }`}>
+                    <span className={`text-sm font-bold min-w-[32px] text-right ${isWinner ? "text-[#5C4A3A]" : "text-[#8B7355]"}`}>
                       {pct}%
                     </span>
                   </div>
@@ -174,7 +172,6 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
               </div>
             </button>
 
-            {/* Voter list dropdown */}
             <AnimatePresence>
               {showVoters === option.id && voters.length > 0 && (
                 <motion.div
@@ -204,7 +201,6 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
         );
       })}
 
-      {/* Footer stats */}
       <div className="flex items-center gap-3 px-1 pt-1">
         <div className="flex items-center gap-1 text-xs text-[#C9B8A6]">
           <Users className="h-3 w-3" />
@@ -219,6 +215,7 @@ export default function PollDisplay({ post, currentUser, onUpdate }) {
         {hasVoted && !isPollEnded && (
           <button
             onClick={() => handleVote(myVoteOptionId)}
+            disabled={voting}
             className="text-xs text-[#C9B8A6] hover:text-[#8B7355] transition-colors ml-auto"
           >
             Change vote
