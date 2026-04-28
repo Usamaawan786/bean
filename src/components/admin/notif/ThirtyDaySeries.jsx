@@ -8,50 +8,68 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// 30-day series — each with a smart scheduled time (PKT = UTC+5)
-// PKT times converted to UTC for scheduling
+// Series start date: April 28, 2026
+const SERIES_START = new Date("2026-04-28T00:00:00+05:00"); // PKT
+
+// 30-day pre-launch series — building excitement before Bean opens
 const DEFAULT_SERIES = [
-  { day: 1,  title: "☕ Good Morning, Coffee Lover!", body: "Did you know? Your morning cup is best enjoyed 90 minutes after waking up. Give your cortisol a chance to rise first!", time_pkt: "09:00", deep_link: "/Home" },
-  { day: 2,  title: "💧 Coffee & Hydration Tip", body: "Coffee is a mild diuretic — drink a glass of water for every cup you have. Your body will thank you!", time_pkt: "10:00", deep_link: "/Home" },
-  { day: 3,  title: "🌟 You've Got Points Waiting!", body: "Have you scanned your last bill yet? Every PKR you spend earns you rewards. Don't leave points on the table!", time_pkt: "14:00", deep_link: "/Rewards" },
-  { day: 4,  title: "☕ The Perfect Brew Temperature", body: "Hot tip: the ideal water temp for coffee is 93°C — just off the boil. Too hot burns the beans. Too cold = weak flavour.", time_pkt: "10:00", deep_link: "/Community" },
-  { day: 5,  title: "🎉 It's the Weekend — Treat Yourself!", body: "You've worked hard this week. Come visit us, grab your favourite brew, and earn points while you're at it!", time_pkt: "11:00", deep_link: "/Rewards" },
-  { day: 6,  title: "🌙 Wind Down With Us", body: "Swap your evening coffee for a decaf or matcha — sleep better and wake up ready for your morning cup!", time_pkt: "19:00", deep_link: "/Home" },
-  { day: 7,  title: "🏆 One Week In — You're Awesome", body: "You've been with Bean for a week! Check your tier status and see how close you are to your next level.", time_pkt: "10:00", deep_link: "/Rewards" },
-  { day: 8,  title: "🫘 Know Your Beans", body: "Arabica = smooth & sweet. Robusta = bold & strong. Which are you? Come in and try both — we've got you covered!", time_pkt: "09:30", deep_link: "/Community" },
-  { day: 9,  title: "💡 Coffee Before a Workout?", body: "A cup 30 mins before exercise can boost performance by up to 12%! Try it — just stay hydrated too 💪", time_pkt: "07:30", deep_link: "/Home" },
-  { day: 10, title: "🎁 Redeem Your Points Today!", body: "Your points are waiting to become something delicious. Head to Rewards and see what's available for you!", time_pkt: "13:00", deep_link: "/Rewards" },
-  { day: 11, title: "☕ Light vs Dark Roast — The Truth", body: "Myth busted: lighter roasts actually have MORE caffeine than dark roasts! Light roast = less roasting = more caffeine retained.", time_pkt: "10:00", deep_link: "/Community" },
-  { day: 12, title: "🌿 Try Something New Today", body: "If you always order the same thing — today's the day to be adventurous! Our staff loves helping you find your new favourite.", time_pkt: "11:30", deep_link: "/Home" },
-  { day: 13, title: "👫 Bring a Friend, Earn Together", body: "Share your referral code with a friend and you BOTH earn bonus points when they join! Sharing is caring ☕", time_pkt: "15:00", deep_link: "/Home" },
-  { day: 14, title: "🌙 Two Weeks — You're a Regular Now!", body: "Two weeks of great coffee choices! Your loyalty means the world to us. Check your points balance — you might surprise yourself!", time_pkt: "10:00", deep_link: "/Rewards" },
-  { day: 15, title: "🧠 Coffee & Focus Tip", body: "For deep work sessions, try sipping coffee slowly over 45 mins rather than downing it all at once. Steadier energy, better focus!", time_pkt: "09:00", deep_link: "/Home" },
-  { day: 16, title: "🌡️ Iced vs Hot — Which is Healthier?", body: "Both are great! Iced coffee is gentler on the stomach. Hot coffee releases more antioxidants. Pick your mood today!", time_pkt: "12:00", deep_link: "/Home" },
-  { day: 17, title: "⚡ Flash Drops Are Coming!", body: "We drop surprise freebies for our Bean community. Keep your notifications on so you never miss a Flash Drop!", time_pkt: "10:00", deep_link: "/FlashDrops" },
-  { day: 18, title: "💬 Share Your Coffee Moment", body: "Post a photo of your Bean cup on our Community feed! Your fellow coffee lovers want to see your vibes ☕📸", time_pkt: "14:00", deep_link: "/Community" },
-  { day: 19, title: "🫀 Coffee & Your Heart", body: "Studies show 3–5 cups per day is associated with a lower risk of heart disease. Moderation is key — enjoy mindfully!", time_pkt: "10:00", deep_link: "/Home" },
-  { day: 20, title: "🏅 You're Almost at the Next Tier!", body: "Keep sipping and earning — your next loyalty tier means bigger rewards and better perks. Every cup counts!", time_pkt: "13:00", deep_link: "/Rewards" },
-  { day: 21, title: "🌄 Three Weeks Strong!", body: "3 weeks of being part of the Bean family! We love having you. What's your go-to order? Tell us in the Community!", time_pkt: "09:00", deep_link: "/Community" },
-  { day: 22, title: "💤 Cut Off Time Reminder", body: "Pro tip: stop caffeine by 2pm to protect your sleep quality. Switch to decaf after that — we've got great options!", time_pkt: "13:30", deep_link: "/Home" },
-  { day: 23, title: "🌍 Where Does Your Coffee Come From?", body: "Our beans travel thousands of kilometres to reach your cup — from Ethiopia, Colombia, and more. Every sip tells a story!", time_pkt: "10:00", deep_link: "/Community" },
-  { day: 24, title: "🎯 Points Expiry Reminder", body: "Keep your account active! Regular visits keep your Bean membership in great standing. Come see us soon!", time_pkt: "11:00", deep_link: "/Rewards" },
-  { day: 25, title: "☕ The Latte Art Secret", body: "Great latte art starts with perfectly steamed milk at 65°C. Ask our baristas about it next time — they love talking craft!", time_pkt: "10:00", deep_link: "/Community" },
-  { day: 26, title: "💪 Coffee for the Soul", body: "A study found people who drink coffee regularly report higher levels of happiness. So your daily cup is literally self-care! 😊", time_pkt: "09:00", deep_link: "/Home" },
-  { day: 27, title: "🌟 Weekend Special Reminder", body: "Weekends are for good coffee and great company. Pop in, enjoy your favourite brew, and earn those points!", time_pkt: "10:30", deep_link: "/Home" },
-  { day: 28, title: "🎁 You've Earned It — Redeem Now!", body: "Four weeks of being a Bean loyalist! You've been earning points — now treat yourself. Check what rewards are waiting for you!", time_pkt: "12:00", deep_link: "/Rewards" },
-  { day: 29, title: "☕ Bean's Promise to You", body: "Every cup we serve is made with love, quality beans, and a passion for great coffee. Thank you for trusting us with your mornings!", time_pkt: "09:00", deep_link: "/Home" },
-  { day: 30, title: "🏆 30 Days — You're a Bean Legend!", body: "One month of amazing coffee moments! You are officially a Bean Legend ☕🌟 Check your profile for a special surprise!", time_pkt: "10:00", deep_link: "/Rewards" },
+  { day: 1,  title: "☕ Something Exciting is Brewing!", body: "Bean is almost here — Lahore's newest specialty coffee experience. We're putting the final touches on everything. Stay tuned!", time_pkt: "09:00", deep_link: "/Home" },
+  { day: 2,  title: "💧 Did You Know? Coffee & Water", body: "Great coffee starts with great water. We've invested in the best filtration so every sip you take at Bean is exactly as it should be.", time_pkt: "10:00", deep_link: "/Home" },
+  { day: 3,  title: "🌟 Your Points Are Ready & Waiting", body: "You already have points in your account just for joining early! When we open, you'll be ready to earn even more. Check your balance!", time_pkt: "14:00", deep_link: "/Rewards" },
+  { day: 4,  title: "☕ The Perfect Brew Temperature", body: "Hot tip: the ideal water temp for coffee is 93°C — just off the boil. Too hot burns the beans. Too cold = weak flavour. We obsess over this!", time_pkt: "10:00", deep_link: "/Community" },
+  { day: 5,  title: "🎉 Opening Week is Almost Here!", body: "We're getting closer! Our baristas are training, the machines are calibrated, and the beans are roasted. Bean opens very soon!", time_pkt: "11:00", deep_link: "/Home" },
+  { day: 6,  title: "🌙 Evening Ritual — Wind Down Right", body: "Swap your evening coffee for a decaf or matcha — sleep better and wake up energised for your first visit to Bean!", time_pkt: "19:00", deep_link: "/Home" },
+  { day: 7,  title: "🏆 One Week of the Bean Community!", body: "You've been part of our pre-launch community for a week. Thank you! Check your points — early members get the best head start.", time_pkt: "10:00", deep_link: "/Rewards" },
+  { day: 8,  title: "🫘 Know Your Beans", body: "Arabica = smooth & sweet. Robusta = bold & strong. We've carefully curated our menu around both. Which sounds like you?", time_pkt: "09:30", deep_link: "/Community" },
+  { day: 9,  title: "💡 Coffee Before a Workout?", body: "A cup 30 mins before exercise can boost performance by up to 12%! Come to Bean before your morning workout — we'll be open early!", time_pkt: "07:30", deep_link: "/Home" },
+  { day: 10, title: "🎁 Early Member Perks — Just for You", body: "As a pre-launch member, you're already ahead of the crowd. When Bean opens, you'll walk in with points, perks, and priority. You earned it!", time_pkt: "13:00", deep_link: "/Rewards" },
+  { day: 11, title: "☕ Light vs Dark Roast — The Truth", body: "Myth busted: lighter roasts actually have MORE caffeine than dark roasts! Light roast = less roasting = more caffeine retained. Mind blown?", time_pkt: "10:00", deep_link: "/Community" },
+  { day: 12, title: "🌿 The Menu is Coming Together!", body: "From classic espresso to specialty cold brews — our menu is almost finalised. What are you most excited to try first?", time_pkt: "11:30", deep_link: "/Community" },
+  { day: 13, title: "👫 Bring a Friend Before We Open!", body: "Share your referral link with a friend and you BOTH get bonus points on launch day! The more the merrier ☕", time_pkt: "15:00", deep_link: "/Home" },
+  { day: 14, title: "🌙 Two Weeks Strong — Thank You!", body: "Two weeks of being part of the Bean pre-launch family! We couldn't do this without early supporters like you. Something special is coming!", time_pkt: "10:00", deep_link: "/Rewards" },
+  { day: 15, title: "🧠 Coffee & Focus — Science Says So", body: "For deep work sessions, sip coffee slowly over 45 mins rather than downing it all. Steadier energy, better focus. Bean is your new office away from office!", time_pkt: "09:00", deep_link: "/Home" },
+  { day: 16, title: "🌡️ Iced vs Hot — Your Mood, Your Choice", body: "Hot coffee releases more antioxidants. Iced coffee is gentler on the stomach. We'll have both perfected for you from day one!", time_pkt: "12:00", deep_link: "/Home" },
+  { day: 17, title: "⚡ Flash Drops — Coming at Launch!", body: "Once we open, we'll drop surprise freebies for our Bean community. Flash Drops are exclusive — keep your notifications on!", time_pkt: "10:00", deep_link: "/Home" },
+  { day: 18, title: "💬 Share Your Coffee Story", body: "What does your perfect morning look like? Share it in our Community — your fellow Bean members want to know your vibe ☕📸", time_pkt: "14:00", deep_link: "/Community" },
+  { day: 19, title: "🫀 Coffee & Your Heart", body: "Studies show 3–5 cups per day is linked to lower heart disease risk. At Bean, we make it easy to enjoy quality coffee mindfully every day.", time_pkt: "10:00", deep_link: "/Home" },
+  { day: 20, title: "🏅 Your Loyalty Tier Awaits!", body: "Once Bean opens and you start visiting, your tier climbs fast — Bronze → Silver → Gold → Platinum. Each level means bigger rewards!", time_pkt: "13:00", deep_link: "/Rewards" },
+  { day: 21, title: "🌄 3 Weeks — You're a True Early Bird!", body: "3 weeks in the Bean pre-launch community! You've stuck with us and that means everything. Big things are coming very soon!", time_pkt: "09:00", deep_link: "/Community" },
+  { day: 22, title: "💤 The 2PM Caffeine Cut-Off", body: "Pro tip: stop caffeine by 2pm to protect your sleep. After that, our decaf options are genuinely delicious — no compromise needed!", time_pkt: "13:30", deep_link: "/Home" },
+  { day: 23, title: "🌍 Where Our Beans Come From", body: "Our beans travel thousands of kilometres — from Ethiopia, Colombia, and beyond. Every sip at Bean tells the story of that journey.", time_pkt: "10:00", deep_link: "/Community" },
+  { day: 24, title: "🎯 Keep Your Account Active!", body: "Make sure your Bean app is set up and ready. When we open, you won't want to miss a single point or Flash Drop!", time_pkt: "11:00", deep_link: "/Rewards" },
+  { day: 25, title: "☕ The Latte Art Secret", body: "Perfect latte art starts with milk steamed to exactly 65°C. Our baristas have been practicing for weeks — you're going to love it!", time_pkt: "10:00", deep_link: "/Community" },
+  { day: 26, title: "💪 Coffee is Literally Self-Care", body: "Studies show regular coffee drinkers report higher happiness levels. Your daily Bean visit isn't an indulgence — it's a wellness ritual 😊", time_pkt: "09:00", deep_link: "/Home" },
+  { day: 27, title: "🌟 Almost There — Final Countdown!", body: "The wait is nearly over. Everything at Bean has been crafted with care — the space, the menu, the team. We can't wait to welcome you!", time_pkt: "10:30", deep_link: "/Home" },
+  { day: 28, title: "🎁 Your Pre-Launch Points Are Yours!", body: "Every point you've accumulated as an early member is yours to use the moment we open. You've been loyal — now come enjoy the rewards!", time_pkt: "12:00", deep_link: "/Rewards" },
+  { day: 29, title: "☕ Bean's Promise to You", body: "Every cup we serve will be made with love, quality beans, and a genuine passion for great coffee. Thank you for trusting us with your mornings!", time_pkt: "09:00", deep_link: "/Home" },
+  { day: 30, title: "🏆 30 Days — You're a Bean Legend!", body: "One month of the Bean community! You believed in us before anyone else. Walk in on launch day like you own the place — because you kind of do ☕🌟", time_pkt: "10:00", deep_link: "/Rewards" },
 ];
 
-// Convert PKT (UTC+5) time string "HH:MM" to a cron UTC expression
-function pktToCronUTC(timePkt) {
+const STORAGE_KEY = "bean_30day_series_v3";
+
+// Get the scheduled date for a given day index (0-based), starting April 28 2026
+function getScheduledDate(index, timePkt) {
   const [h, m] = timePkt.split(":").map(Number);
-  let utcH = h - 5;
-  if (utcH < 0) utcH += 24;
-  return { utcH, utcM: m };
+  // Start from April 28 PKT and add index days
+  const pktDate = new Date(SERIES_START);
+  pktDate.setDate(pktDate.getDate() + index);
+  // Set PKT hour/min, then convert to UTC (PKT = UTC+5)
+  const utcDate = new Date(pktDate);
+  utcDate.setHours(h - 5, m, 0, 0);
+  // Handle midnight rollover
+  if (h - 5 < 0) {
+    utcDate.setDate(utcDate.getDate() - 1);
+    utcDate.setHours(h - 5 + 24, m, 0, 0);
+  }
+  return utcDate;
 }
 
-const STORAGE_KEY = "bean_30day_series_v2";
+function formatDate(index, timePkt) {
+  const d = getScheduledDate(index, timePkt);
+  // Show in PKT
+  const pktDate = new Date(d.getTime() + 5 * 60 * 60 * 1000);
+  return pktDate.toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short" });
+}
 
 function loadSeries() {
   try {
@@ -88,6 +106,8 @@ function DayCard({ day, index, onEdit, onToggle, onSchedule, scheduling }) {
     return `${h12}:${m} ${period} PKT`;
   };
 
+  const scheduledDateLabel = formatDate(index, day.time_pkt);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -107,7 +127,10 @@ function DayCard({ day, index, onEdit, onToggle, onSchedule, scheduling }) {
 
         <div className="flex-1 min-w-0" onClick={() => setExpanded(e => !e)} role="button">
           <p className="text-sm font-semibold text-gray-800 truncate">{day.title}</p>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <Calendar className="h-3 w-3" />{scheduledDateLabel}
+            </span>
             <span className="text-xs text-gray-400 flex items-center gap-1">
               <Clock className="h-3 w-3" />{getTimeLabel()}
             </span>
@@ -152,6 +175,9 @@ function DayCard({ day, index, onEdit, onToggle, onSchedule, scheduling }) {
                 {day.deep_link && (
                   <span className="text-xs bg-[#F5EBE8] text-[#8B7355] px-2 py-0.5 rounded-full">→ {day.deep_link}</span>
                 )}
+                <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5" />{scheduledDateLabel} · {getTimeLabel()}
+                </span>
               </div>
               {!day.automationId && day.enabled && (
                 <Button
@@ -163,13 +189,13 @@ function DayCard({ day, index, onEdit, onToggle, onSchedule, scheduling }) {
                   {scheduling === index ? (
                     <><Clock className="h-3 w-3 mr-1 animate-spin" /> Scheduling…</>
                   ) : (
-                    <><Calendar className="h-3 w-3 mr-1" /> Schedule This Day</>
+                    <><Calendar className="h-3 w-3 mr-1" /> Schedule for {scheduledDateLabel}</>
                   )}
                 </Button>
               )}
               {day.automationId && (
                 <span className="text-xs text-green-600 flex items-center gap-1">
-                  <Check className="h-3 w-3" /> Automation active
+                  <Check className="h-3 w-3" /> Scheduled for {scheduledDateLabel} at {getTimeLabel()}
                 </span>
               )}
             </div>
@@ -223,6 +249,7 @@ function DayCard({ day, index, onEdit, onToggle, onSchedule, scheduling }) {
                   />
                 </div>
               </div>
+              <p className="text-xs text-gray-400">📅 Will send on: {formatDate(index, draft.time_pkt)} at {draft.time_pkt} PKT</p>
               <div className="flex gap-2">
                 <Button onClick={handleSave} size="sm" className="bg-[#8B7355] hover:bg-[#6B5744] text-white rounded-xl text-xs">
                   <Check className="h-3 w-3 mr-1" /> Save
@@ -244,10 +271,9 @@ export default function ThirtyDaySeries() {
   const [masterOn, setMasterOn] = useState(() => {
     try { return JSON.parse(localStorage.getItem("bean_30day_master") ?? "false"); } catch { return false; }
   });
-  const [scheduling, setScheduling] = useState(null); // index being scheduled
+  const [scheduling, setScheduling] = useState(null);
   const [schedulingAll, setSchedulingAll] = useState(false);
 
-  // Persist whenever series changes
   useEffect(() => { saveSeries(series); }, [series]);
   useEffect(() => { localStorage.setItem("bean_30day_master", JSON.stringify(masterOn)); }, [masterOn]);
 
@@ -270,27 +296,12 @@ export default function ThirtyDaySeries() {
     });
   };
 
-  // Schedule a single day as a one-time automation
-  const scheduleDay = async (index, targetDate) => {
+  const scheduleDay = async (index) => {
     const day = series[index];
     if (!day.enabled) return;
 
-    // Calculate the send datetime
-    const date = targetDate || new Date();
-    const [h, m] = day.time_pkt.split(":").map(Number);
+    const sendDate = getScheduledDate(index, day.time_pkt);
 
-    // If no targetDate provided, schedule for "day N from now" starting tomorrow
-    const sendDate = targetDate ? new Date(targetDate) : new Date();
-    if (!targetDate) {
-      sendDate.setDate(sendDate.getDate() + index); // day 1 = tomorrow, day 2 = day after, etc.
-    }
-    sendDate.setHours(h - 5, m, 0, 0); // convert PKT to UTC (PKT = UTC+5)
-    if (sendDate.getHours() < 0) {
-      sendDate.setDate(sendDate.getDate() - 1);
-      sendDate.setHours(sendDate.getHours() + 24);
-    }
-
-    // Create an automation via backend function
     try {
       const res = await base44.functions.invoke("scheduleSeriesNotification", {
         dayIndex: index,
@@ -301,7 +312,7 @@ export default function ThirtyDaySeries() {
       });
       if (res?.data?.automationId) {
         updateDay(index, { automationId: res.data.automationId });
-        toast.success(`Day ${day.day} scheduled for ${sendDate.toLocaleDateString()} at ${day.time_pkt} PKT`);
+        toast.success(`Day ${day.day} scheduled for ${formatDate(index, day.time_pkt)} at ${day.time_pkt} PKT`);
       } else {
         toast.error(res?.data?.error || "Failed to schedule");
       }
@@ -354,9 +365,9 @@ export default function ThirtyDaySeries() {
             <div>
               <h2 className="font-bold text-lg">30-Day Coffee Series</h2>
               <p className="text-white/70 text-sm">{enabledCount} of 30 days enabled · {scheduledCount} scheduled</p>
+              <p className="text-white/50 text-xs mt-0.5">Starts Apr 28 · Pre-launch campaign</p>
             </div>
           </div>
-          {/* Toggle switch */}
           <button
             onClick={handleToggleMaster}
             className={`relative w-14 h-7 rounded-full transition-colors flex-shrink-0 ${
@@ -372,14 +383,18 @@ export default function ThirtyDaySeries() {
         </div>
 
         {masterOn && (
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-3">
             <div className="bg-white/10 rounded-2xl p-3 text-center">
               <div className="text-2xl font-bold">{enabledCount}</div>
-              <div className="text-xs text-white/70">Days Enabled</div>
+              <div className="text-xs text-white/70">Enabled</div>
             </div>
             <div className="bg-white/10 rounded-2xl p-3 text-center">
               <div className="text-2xl font-bold">{scheduledCount}</div>
               <div className="text-xs text-white/70">Scheduled</div>
+            </div>
+            <div className="bg-white/10 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-bold">{enabledCount - scheduledCount}</div>
+              <div className="text-xs text-white/70">Remaining</div>
             </div>
           </div>
         )}
@@ -388,10 +403,10 @@ export default function ThirtyDaySeries() {
       {/* Instructions */}
       {masterOn && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-          <p className="text-xs text-amber-800 font-semibold mb-1">📅 How to use:</p>
+          <p className="text-xs text-amber-800 font-semibold mb-1">📅 Pre-launch campaign — starts Apr 28, 2026</p>
           <p className="text-xs text-amber-700 leading-relaxed">
-            Edit any day's copy and time, then click "Schedule This Day" to set it up. Times are in Pakistan Time (PKT). 
-            Use "Schedule All" to queue all enabled days starting from tomorrow, one per day.
+            Day 1 goes out today (Apr 28) at its scheduled time. Each subsequent day fires exactly 24 hours later. 
+            All times are in Pakistan Time (PKT). Click "Schedule All" to queue the entire series at once.
           </p>
         </div>
       )}
@@ -431,7 +446,7 @@ export default function ThirtyDaySeries() {
       {!masterOn && (
         <div className="text-center py-12 text-gray-400">
           <Coffee className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Toggle the series ON to manage and schedule your 30-day coffee campaign</p>
+          <p className="text-sm">Toggle the series ON to manage and schedule your 30-day pre-launch coffee campaign</p>
         </div>
       )}
     </div>
