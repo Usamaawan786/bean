@@ -160,8 +160,27 @@ export default function AdminChat() {
     queryKey: ["admin-messages", selectedConv?.id],
     queryFn: () => base44.entities.ChatMessage.filter({ conversation_id: selectedConv.id }, "created_date", 200),
     enabled: !!selectedConv,
-    refetchInterval: 5000,
+    refetchInterval: 10000,
   });
+
+  // Real-time subscription for instant message updates
+  useEffect(() => {
+    if (!selectedConv?.id) return;
+    const unsubscribe = base44.entities.ChatMessage.subscribe((event) => {
+      if (event.data?.conversation_id !== selectedConv.id) return;
+      queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv.id] });
+    });
+    return () => unsubscribe();
+  }, [selectedConv?.id]);
+
+  // Real-time subscription for conversation list updates (new messages from users)
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = base44.entities.Conversation.subscribe(() => {
+      queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["admin-chat-users"],
@@ -207,9 +226,10 @@ export default function AdminChat() {
     const file = e.target.files?.[0];
     if (!file || !selectedConv) return;
     setUploading(true);
+    const freshConv = conversations.find(c => c.id === selectedConv.id) || selectedConv;
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     await base44.entities.ChatMessage.create({
-      conversation_id: selectedConv.id,
+      conversation_id: freshConv.id,
       sender_role: "admin",
       sender_email: user.email,
       sender_name: "Bean Admin",
@@ -217,11 +237,11 @@ export default function AdminChat() {
       file_url,
       message_type: messageType,
     });
-    await base44.entities.Conversation.update(selectedConv.id, {
+    await base44.entities.Conversation.update(freshConv.id, {
       last_message: `📎 ${file.name}`,
       last_message_at: new Date().toISOString(),
       last_sender: "admin",
-      unread_by_user: (selectedConv.unread_by_user || 0) + 1,
+      unread_by_user: (freshConv.unread_by_user || 0) + 1,
     });
     queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv.id] });
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
@@ -234,21 +254,23 @@ export default function AdminChat() {
     setSending(true);
     const content = message.trim();
     setMessage("");
+    // Use fresh conversation data from the query cache to avoid stale unread count
+    const freshConv = conversations.find(c => c.id === selectedConv.id) || selectedConv;
     await base44.entities.ChatMessage.create({
-      conversation_id: selectedConv.id,
+      conversation_id: freshConv.id,
       sender_role: "admin",
       sender_email: user.email,
       sender_name: "Bean Admin",
       content,
       message_type: messageType,
     });
-    await base44.entities.Conversation.update(selectedConv.id, {
+    await base44.entities.Conversation.update(freshConv.id, {
       last_message: content,
       last_message_at: new Date().toISOString(),
       last_sender: "admin",
-      unread_by_user: (selectedConv.unread_by_user || 0) + 1,
+      unread_by_user: (freshConv.unread_by_user || 0) + 1,
     });
-    queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv.id] });
+    queryClient.invalidateQueries({ queryKey: ["admin-messages", freshConv.id] });
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
     setSending(false);
   };

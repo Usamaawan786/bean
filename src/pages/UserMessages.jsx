@@ -221,8 +221,18 @@ export default function UserMessages() {
     queryKey: ["user-messages", conversation?.id],
     queryFn: () => base44.entities.ChatMessage.filter({ conversation_id: conversation.id }, "created_date", 200),
     enabled: !!conversation,
-    refetchInterval: 4000,
+    refetchInterval: 8000,
   });
+
+  // Real-time subscription for instant message updates
+  useEffect(() => {
+    if (!conversation?.id) return;
+    const unsubscribe = base44.entities.ChatMessage.subscribe((event) => {
+      if (event.data?.conversation_id !== conversation.id) return;
+      queryClient.invalidateQueries({ queryKey: ["user-messages", conversation.id] });
+    });
+    return () => unsubscribe();
+  }, [conversation?.id]);
 
   // Mark admin messages as read when viewed
   useEffect(() => {
