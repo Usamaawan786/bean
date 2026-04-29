@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
@@ -33,6 +33,7 @@ const ROLE_FEATURES = {
     { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
     { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
     { icon: Users, label: "Referrals", desc: "View referral activity", link: "/AdminReferrals", color: "from-purple-600 to-purple-700" },
+    { icon: MessageSquare, label: "Admin Chat", desc: "Chat with customers & manage support", link: "/AdminChat", color: "from-teal-600 to-teal-700" },
   ],
   super_admin: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
