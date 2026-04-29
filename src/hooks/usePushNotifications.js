@@ -4,9 +4,11 @@ import { base44 } from "@/api/base44Client";
 const TOKEN_KEY = "bean_fcm_token";
 const PLATFORM_KEY = "bean_fcm_platform";
 
-async function saveToken(token, platform) {
+async function saveToken(token, platform, userEmail) {
   try {
-    const res = await base44.functions.invoke('saveDeviceToken', { token, platform });
+    const payload = { token, platform };
+    if (userEmail) payload.user_email = userEmail;
+    const res = await base44.functions.invoke('saveDeviceToken', payload);
     console.log("[Push] Token saved, user_email:", res?.data?.user_email || 'none');
     return res?.data?.user_email || null;
   } catch (err) {
@@ -17,7 +19,17 @@ async function saveToken(token, platform) {
 
 async function saveTokenWithRetry(token, platform, retries = 5, delayMs = 2000) {
   for (let i = 0; i < retries; i++) {
-    const email = await saveToken(token, platform);
+    // Try to get user email from auth
+    let userEmail = null;
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (isAuth) {
+        const u = await base44.auth.me();
+        userEmail = u?.email || null;
+      }
+    } catch (_) {}
+
+    const email = await saveToken(token, platform, userEmail);
     if (email) {
       console.log("[Push] Token saved with user email:", email);
       return email;

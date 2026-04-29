@@ -35,10 +35,11 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
         }
 
-        const { token, platform } = rawBody;
+        const { token, platform, user_email: bodyEmail } = rawBody;
         console.log('[saveDeviceToken] token present:', !!token);
         console.log('[saveDeviceToken] token preview:', token ? token.substring(0, 30) + '...' : 'MISSING');
         console.log('[saveDeviceToken] platform:', platform);
+        console.log('[saveDeviceToken] body user_email:', bodyEmail || 'none');
 
         if (!token || !platform) {
             console.error('[saveDeviceToken] Missing token or platform');
@@ -51,7 +52,13 @@ Deno.serve(async (req) => {
             if (user?.email) userEmail = user.email;
             console.log('[saveDeviceToken] Authenticated user:', userEmail || 'none');
         } catch (e) {
-            console.log('[saveDeviceToken] Not authenticated, saving token without user:', e.message);
+            console.log('[saveDeviceToken] Not authenticated, using body email if provided:', bodyEmail || 'none');
+        }
+
+        // Fallback: use email from request body if auth failed
+        if (!userEmail && bodyEmail) {
+            userEmail = bodyEmail;
+            console.log('[saveDeviceToken] Using body-provided user_email:', userEmail);
         }
 
         // Check for existing records with this token
