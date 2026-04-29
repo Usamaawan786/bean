@@ -1,4 +1,6 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import { Pin } from "lucide-react";
@@ -8,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PollDisplay from "./PollDisplay";
-import { base44 } from "@/api/base44Client";
-
 const postTypeConfig = {
   general: { icon: Coffee, color: "text-[#8B7355]", bg: "bg-[#F5EBE8]" },
   review: { icon: Star, color: "text-[#6B5744]", bg: "bg-[#EDE8E3]" },
@@ -40,6 +40,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const [showReactions, setShowReactions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [liveCommentCount, setLiveCommentCount] = useState(null);
+  const liveCountRef = useRef(null);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -56,8 +57,21 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const isLiked = likedBy.includes(currentUserEmail);
   const displayLikesCount = likedBy.length;
 
-  // Comment count: use live count when available, fallback to stored
-  const commentCount = liveCommentCount !== null ? liveCommentCount : (post.comments_count || 0);
+  // Eagerly fetch real comment count (includes replies) so the icon is always accurate
+  const { data: allComments } = useQuery({
+    queryKey: ["comments", post.id],
+    queryFn: () => base44.entities.Comment.filter({ post_id: post.id }, "created_date"),
+    staleTime: 30000,
+  });
+
+  // Comment count: use live count > fetched count > stored count
+  const fetchedCount = allComments ? allComments.length : null;
+  const commentCount = liveCommentCount !== null ? liveCommentCount : (fetchedCount !== null ? fetchedCount : (post.comments_count || 0));
+
+  const handleCountChange = useCallback((count) => {
+    liveCountRef.current = count;
+    setLiveCommentCount(count);
+  }, []);
 
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);
@@ -422,7 +436,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
               >
-                <CommentSection postId={post.id} currentUser={currentUser} postAuthorEmail={post.author_email} onCountChange={setLiveCommentCount} />
+                <CommentSection postId={post.id} currentUser={currentUser} postAuthorEmail={post.author_email} onCountChange={handleCountChange} />
               </motion.div>
             )}
           </AnimatePresence>

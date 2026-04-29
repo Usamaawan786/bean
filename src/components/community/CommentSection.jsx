@@ -99,10 +99,10 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
   // Deduplicate by id in case of race conditions
   const uniqueComments = allComments.filter((c, idx, arr) => arr.findIndex(x => x.id === c.id) === idx);
 
-  // Report live count up to parent
+  // Report live count up to parent (total including replies)
   useEffect(() => {
     if (onCountChange) onCountChange(uniqueComments.length);
-  }, [uniqueComments.length]);
+  }, [uniqueComments.length, onCountChange]);
   const topComments = uniqueComments.filter(c => !c.parent_comment_id);
   const getReplies = (commentId) => uniqueComments.filter(c => c.parent_comment_id === commentId);
 
@@ -192,19 +192,24 @@ export default function CommentSection({ postId, currentUser, postAuthorEmail, o
 
   const likeCommentMutation = useMutation({
     mutationFn: async (comment) => {
-      const isLiked = comment.liked_by?.includes(currentUser.email);
+      // Always read freshest data from cache to avoid stale liked_by on replies
+      const cached = queryClient.getQueryData(["comments", postId]);
+      const freshComment = cached?.find(c => c.id === comment.id) || comment;
+      const isLiked = freshComment.liked_by?.includes(currentUser.email);
       const newLikedBy = isLiked
-        ? comment.liked_by.filter(e => e !== currentUser.email)
-        : [...(comment.liked_by || []), currentUser.email];
+        ? (freshComment.liked_by || []).filter(e => e !== currentUser.email)
+        : [...(freshComment.liked_by || []), currentUser.email];
       return base44.entities.Comment.update(comment.id, { liked_by: newLikedBy, likes_count: newLikedBy.length });
     },
     onMutate: async (comment) => {
       await queryClient.cancelQueries({ queryKey: ["comments", postId] });
       const previous = queryClient.getQueryData(["comments", postId]);
-      const isLiked = comment.liked_by?.includes(currentUser.email);
+      // Read from cache for freshest liked_by state (critical for replies)
+      const freshComment = previous?.find(c => c.id === comment.id) || comment;
+      const isLiked = freshComment.liked_by?.includes(currentUser.email);
       const newLikedBy = isLiked
-        ? comment.liked_by.filter(e => e !== currentUser.email)
-        : [...(comment.liked_by || []), currentUser.email];
+        ? (freshComment.liked_by || []).filter(e => e !== currentUser.email)
+        : [...(freshComment.liked_by || []), currentUser.email];
       queryClient.setQueryData(["comments", postId], old =>
         old?.map(c => c.id === comment.id ? { ...c, liked_by: newLikedBy, likes_count: newLikedBy.length } : c)
       );
