@@ -236,6 +236,7 @@ export default function AdminChat() {
       content: file.name,
       file_url,
       message_type: messageType,
+      conversation_user_email: freshConv.user_email,
     });
     await base44.entities.Conversation.update(freshConv.id, {
       last_message: `📎 ${file.name}`,
@@ -263,6 +264,7 @@ export default function AdminChat() {
       sender_name: "Bean Admin",
       content,
       message_type: messageType,
+      conversation_user_email: freshConv.user_email,
     });
     await base44.entities.Conversation.update(freshConv.id, {
       last_message: content,
@@ -305,6 +307,7 @@ export default function AdminChat() {
         sender_name: "Bean Admin",
         content: broadcastMsg.trim(),
         message_type: broadcastType,
+        conversation_user_email: u.email,
       });
     }
     setBroadcastMsg("");

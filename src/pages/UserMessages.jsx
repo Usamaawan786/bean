@@ -267,6 +267,7 @@ export default function UserMessages() {
       file_url,
       message_type: "text",
       is_read: false,
+      conversation_user_email: user.email,
     });
     await base44.entities.Conversation.update(conversation.id, {
       last_message: `📎 ${file.name}`,
@@ -292,6 +293,7 @@ export default function UserMessages() {
       content,
       message_type: "text",
       is_read: false,
+      conversation_user_email: user.email,
     });
     await base44.entities.Conversation.update(conversation.id, {
       last_message: content,

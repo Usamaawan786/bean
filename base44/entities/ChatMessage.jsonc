@@ -48,6 +48,10 @@
         "offer"
       ],
       "default": "text"
+    },
+    "conversation_user_email": {
+      "type": "string",
+      "description": "Email of the user who owns this conversation (for RLS)"
     }
   },
   "required": [
@@ -56,17 +60,49 @@
     "content"
   ],
   "rls": {
-    "create": {},
-    "read": {},
+    "create": {
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "data.conversation_user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "update": {
       "user_condition": {
         "role": "admin"
       }
     },
     "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "data.sender_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
     }
   }
 }
