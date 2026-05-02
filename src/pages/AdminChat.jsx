@@ -167,7 +167,8 @@ export default function AdminChat() {
   useEffect(() => {
     if (!selectedConv?.id) return;
     const unsubscribe = base44.entities.ChatMessage.subscribe((event) => {
-      if (event.data?.conversation_id !== selectedConv.id) return;
+      const convId = event.data?.conversation_id;
+      if (convId && convId !== selectedConv.id) return;
       queryClient.invalidateQueries({ queryKey: ["admin-messages", selectedConv.id] });
     });
     return () => unsubscribe();
