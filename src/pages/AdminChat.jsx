@@ -236,7 +236,7 @@ export default function AdminChat() {
       content: file.name,
       file_url,
       message_type: messageType,
-      conversation_user_email: freshConv.user_email,
+      conversation_user_email: freshConv.user_email || selectedConv.user_email,
     });
     await base44.entities.Conversation.update(freshConv.id, {
       last_message: `📎 ${file.name}`,
@@ -257,6 +257,8 @@ export default function AdminChat() {
     setMessage("");
     // Use fresh conversation data from the query cache to avoid stale unread count
     const freshConv = conversations.find(c => c.id === selectedConv.id) || selectedConv;
+    // Ensure conversation_user_email is always set — fall back to selectedConv
+    const convUserEmail = freshConv.user_email || selectedConv.user_email;
     await base44.entities.ChatMessage.create({
       conversation_id: freshConv.id,
       sender_role: "admin",
@@ -264,7 +266,7 @@ export default function AdminChat() {
       sender_name: "Bean Admin",
       content,
       message_type: messageType,
-      conversation_user_email: freshConv.user_email,
+      conversation_user_email: convUserEmail,
     });
     await base44.entities.Conversation.update(freshConv.id, {
       last_message: content,
