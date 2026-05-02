@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     console.log('Processing QR scan for:', qrCodeId, 'by user:', user.email);
 
-    // 1. Retrieve StoreSale by qrCodeId
+    // 1. Retrieve StoreSale by qrCodeId (service role — StoreSale is admin-only)
     const sales = await base44.asServiceRole.entities.StoreSale.filter({ qr_code_id: qrCodeId });
     console.log('Sales found:', sales.length);
 
@@ -65,13 +65,18 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: 'No points could be awarded for this bill. Bill amount may be too low.' });
     }
 
-    // 5. Get customer record
-    const customers = await base44.entities.Customer.filter({ created_by: user.email });
-    if (customers.length === 0) {
+    // 5. Get customer record — use service role to reliably fetch by user_email
+    const customers = await base44.asServiceRole.entities.Customer.filter({ user_email: user.email });
+    // Fallback: try created_by if user_email field not set
+    const customerList = customers.length > 0
+      ? customers
+      : await base44.asServiceRole.entities.Customer.filter({ created_by: user.email });
+
+    if (customerList.length === 0) {
       return Response.json({ success: false, error: 'Customer profile not found. Please set up your profile first.' });
     }
 
-    const customer = customers[0];
+    const customer = customerList[0];
     const oldBalance = customer.points_balance || 0;
     const newPointsBalance = oldBalance + pointsToAward;
     const newTotalEarned = (customer.total_points_earned || 0) + pointsToAward;
@@ -93,6 +98,7 @@ Deno.serve(async (req) => {
     } catch (e) {
       console.log('Could not fetch RewardSettings for referral, using defaults');
     }
+
     const justCrossedThreshold =
       customer.referred_by &&
       !customer.referral_bonus_awarded &&
@@ -149,7 +155,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 7. Mark sale as scanned
+    // 7. Mark sale as scanned — MUST happen after customer update to prevent double-scanning
     await base44.asServiceRole.entities.StoreSale.update(sale.id, {
       is_scanned: true,
       scanned_by: user.email,
