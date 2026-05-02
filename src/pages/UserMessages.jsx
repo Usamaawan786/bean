@@ -228,7 +228,9 @@ export default function UserMessages() {
   useEffect(() => {
     if (!conversation?.id) return;
     const unsubscribe = base44.entities.ChatMessage.subscribe((event) => {
-      if (event.data?.conversation_id !== conversation.id) return;
+      // event.data may be null when payload_too_large — always refresh if we can't confirm it's a different conversation
+      const convId = event.data?.conversation_id;
+      if (convId && convId !== conversation.id) return;
       queryClient.invalidateQueries({ queryKey: ["user-messages", conversation.id] });
     });
     return () => unsubscribe();
