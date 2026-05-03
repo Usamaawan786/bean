@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
   Bell, Send, Users, History, Zap, ChevronLeft,
-  Smartphone, BarChart2, CheckCircle2, XCircle, Clock, X, Search, UserCheck, Sparkles
+  Smartphone, BarChart2, CheckCircle2, XCircle, Clock, X, Search, UserCheck, Sparkles, CalendarClock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ import AIContentGenerator from "@/components/admin/notif/AIContentGenerator";
 
 const TABS = [
   { id: "compose", label: "Compose", icon: Bell },
+  { id: "schedule", label: "Schedule", icon: CalendarClock },
   { id: "ai", label: "✨ AI Writer", icon: Sparkles },
   { id: "30day", label: "☕ 30-Day Series", icon: Zap },
   { id: "launch", label: "🚀 Launch", icon: Zap },
@@ -27,6 +28,33 @@ const TABS = [
   { id: "automations", label: "Automations", icon: BarChart2 },
   { id: "history", label: "History", icon: History },
 ];
+
+// Pakistan Standard Time is UTC+5
+// Convert a local datetime-local input value (treated as PKT) to a UTC ISO string
+function pktInputToUtc(pktDatetimeLocal) {
+  if (!pktDatetimeLocal) return null;
+  // datetime-local gives "YYYY-MM-DDTHH:MM" — treat as PKT (UTC+5), subtract 5h to get UTC
+  const [datePart, timePart] = pktDatetimeLocal.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hours, minutes] = timePart.split(":").map(Number);
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hours - 5, minutes, 0, 0));
+  return utcDate.toISOString();
+}
+
+// Convert UTC ISO string to PKT for display
+function utcToPktDisplay(utcIso) {
+  if (!utcIso) return "—";
+  const utc = new Date(utcIso);
+  const pkt = new Date(utc.getTime() + 5 * 60 * 60 * 1000);
+  return pkt.toISOString().slice(0, 16).replace("T", " ") + " PKT";
+}
+
+// Get current PKT time as datetime-local value
+function nowAsPktInput() {
+  const utc = new Date();
+  const pkt = new Date(utc.getTime() + 5 * 60 * 60 * 1000);
+  return pkt.toISOString().slice(0, 16);
+}
 
 const AUDIENCE_OPTIONS = [
   { value: "all", label: "All Users" },
@@ -275,6 +303,198 @@ function ComposeTab({ onSent, form, setForm }) {
   );
 }
 
+function ScheduleTab() {
+  const [form, setForm] = useState({
+    title: "",
+    body: "",
+    audience: "all",
+    deep_link: "",
+    image_url: "",
+    scheduled_pkt: nowAsPktInput(),
+  });
+  const [specificEmails, setSpecificEmails] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  const { data: scheduled = [], isLoading, refetch } = useQuery({
+    queryKey: ["scheduled-notifs"],
+    queryFn: () => base44.entities.PushNotification.filter({ status: "scheduled" }),
+  });
+
+  const handleSchedule = async () => {
+    if (!form.title.trim() || !form.body.trim()) {
+      toast.error("Title and body are required");
+      return;
+    }
+    if (!form.scheduled_pkt) {
+      toast.error("Please select a date/time");
+      return;
+    }
+    const utcIso = pktInputToUtc(form.scheduled_pkt);
+    if (new Date(utcIso) <= new Date()) {
+      toast.error("Scheduled time must be in the future (Pakistan Time)");
+      return;
+    }
+    setSaving(true);
+    try {
+      await base44.entities.PushNotification.create({
+        title: form.title,
+        body: form.body,
+        audience: form.audience === "specific" ? "all" : form.audience,
+        deep_link: form.deep_link || null,
+        image_url: form.image_url || null,
+        status: "scheduled",
+        scheduled_at: utcIso,
+        notes: `Scheduled for ${utcToPktDisplay(utcIso)}${form.audience === "specific" ? ` | To: ${specificEmails.join(", ")}` : ""}`,
+        sent_by: "admin",
+      });
+      toast.success(`Scheduled for ${utcToPktDisplay(utcIso)}`);
+      setForm({ title: "", body: "", audience: "all", deep_link: "", image_url: "", scheduled_pkt: nowAsPktInput() });
+      setSpecificEmails([]);
+      refetch();
+    } catch (e) {
+      toast.error("Error: " + e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = async (id) => {
+    await base44.entities.PushNotification.update(id, { status: "draft" });
+    toast.success("Notification cancelled");
+    refetch();
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Form */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+        <div className="flex items-center gap-2 mb-1">
+          <CalendarClock className="h-4 w-4 text-[#8B7355]" />
+          <h3 className="font-semibold text-gray-800 text-sm">Schedule a Notification</h3>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Title *</label>
+          <input
+            value={form.title}
+            onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+            placeholder="e.g. ⚡ Flash Drop is LIVE!"
+            maxLength={65}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Message *</label>
+          <textarea
+            value={form.body}
+            onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
+            placeholder="Write your message here…"
+            rows={3}
+            maxLength={200}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Audience</label>
+          <select
+            value={form.audience}
+            onChange={e => setForm(f => ({ ...f, audience: e.target.value }))}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30 bg-white"
+          >
+            {AUDIENCE_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          {form.audience === "specific" && (
+            <div className="mt-2">
+              <UserEmailPicker selectedEmails={specificEmails} onChange={setSpecificEmails} />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">Deep Link <span className="font-normal text-gray-300">(optional)</span></label>
+          <input
+            value={form.deep_link}
+            onChange={e => setForm(f => ({ ...f, deep_link: e.target.value }))}
+            placeholder="/FlashDrops, /Rewards, /Home…"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-500 mb-1 block">
+            Send Date & Time — <span className="text-[#8B7355] font-semibold">Pakistan Time (PKT, UTC+5)</span>
+          </label>
+          <input
+            type="datetime-local"
+            value={form.scheduled_pkt}
+            onChange={e => setForm(f => ({ ...f, scheduled_pkt: e.target.value }))}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+          />
+          {form.scheduled_pkt && (
+            <p className="text-xs text-gray-400 mt-1">
+              Will fire at: <span className="font-medium text-[#8B7355]">{utcToPktDisplay(pktInputToUtc(form.scheduled_pkt))}</span>
+              {" "}(stored as UTC: {pktInputToUtc(form.scheduled_pkt)?.slice(0, 16).replace("T", " ")} UTC)
+            </p>
+          )}
+        </div>
+
+        <Button
+          onClick={handleSchedule}
+          disabled={saving}
+          className="w-full rounded-xl bg-gradient-to-r from-[#8B7355] to-[#5C4A3A] text-white font-semibold"
+        >
+          {saving ? (
+            <><Clock className="h-4 w-4 mr-2 animate-spin" /> Scheduling…</>
+          ) : (
+            <><CalendarClock className="h-4 w-4 mr-2" /> Schedule Notification</>
+          )}
+        </Button>
+      </div>
+
+      {/* Upcoming scheduled */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+          <Clock className="h-4 w-4 text-[#8B7355]" />
+          Upcoming Scheduled ({scheduled.length})
+        </h3>
+        {isLoading ? (
+          <div className="space-y-2">{[1,2].map(i => <div key={i} className="bg-white rounded-2xl h-16 animate-pulse border border-gray-100" />)}</div>
+        ) : scheduled.length === 0 ? (
+          <div className="text-center py-8 text-gray-400 text-sm bg-white rounded-2xl border border-gray-100">No scheduled notifications</div>
+        ) : (
+          <div className="space-y-2">
+            {scheduled
+              .filter(n => n.scheduled_at)
+              .sort((a, b) => new Date(a.scheduled_at) - new Date(b.scheduled_at))
+              .map(n => (
+                <div key={n.id} className="bg-white rounded-2xl border border-amber-100 p-4 flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-gray-800 truncate">{n.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{n.body}</p>
+                    <p className="text-xs text-[#8B7355] font-medium mt-1">
+                      🕐 {utcToPktDisplay(n.scheduled_at)}
+                    </p>
+                    {n.notes && <p className="text-xs text-gray-400 mt-0.5">{n.notes}</p>}
+                  </div>
+                  <button
+                    onClick={() => handleCancel(n.id)}
+                    className="text-xs text-red-500 hover:text-red-700 font-medium bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors flex-shrink-0"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function HistoryTab() {
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["push-notif-history"],
@@ -408,6 +628,7 @@ export default function AdminPushNotifications() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 py-5 pb-24">
         {tab === "compose" && <ComposeTab onSent={() => {}} form={form} setForm={setForm} />}
+        {tab === "schedule" && <ScheduleTab />}
         {tab === "ai" && <AIContentGenerator onApply={(tpl) => { applyTemplate(tpl); setTab("compose"); }} />}
         {tab === "30day" && <ThirtyDaySeries />}
         {tab === "launch" && <LaunchCampaign onApply={applyTemplate} />}
