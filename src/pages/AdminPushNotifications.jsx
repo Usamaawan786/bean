@@ -156,6 +156,8 @@ function UserEmailPicker({ selectedEmails, onChange }) {
 function ComposeTab({ onSent, form, setForm }) {
   const [sending, setSending] = useState(false);
   const [specificEmails, setSpecificEmails] = useState([]);
+  const [scheduleMode, setScheduleMode] = useState(false);
+  const [scheduledPkt, setScheduledPkt] = useState(nowAsPktInput);
 
   const handleSend = async () => {
     if (!form.title.trim() || !form.body.trim()) {
@@ -166,6 +168,41 @@ function ComposeTab({ onSent, form, setForm }) {
       toast.error("Please select at least one user");
       return;
     }
+
+    // Schedule mode
+    if (scheduleMode) {
+      if (!scheduledPkt) { toast.error("Please select a date/time"); return; }
+      const utcIso = pktInputToUtc(scheduledPkt);
+      if (new Date(utcIso) <= new Date()) {
+        toast.error("Scheduled time must be in the future (Pakistan Time)");
+        return;
+      }
+      setSending(true);
+      try {
+        await base44.entities.PushNotification.create({
+          title: form.title,
+          body: form.body,
+          audience: form.audience === "specific" ? "all" : form.audience,
+          deep_link: form.deep_link || null,
+          image_url: form.image_url || null,
+          status: "scheduled",
+          scheduled_at: utcIso,
+          notes: `${form.notes || ""} | Scheduled for ${utcToPktDisplay(utcIso)}${form.audience === "specific" ? ` | To: ${specificEmails.join(", ")}` : ""}`.trim().replace(/^\|/, "").trim(),
+          sent_by: "admin",
+        });
+        toast.success(`Scheduled for ${utcToPktDisplay(utcIso)}`);
+        setForm({ title: "", body: "", audience: "all", deep_link: "", image_url: "", notes: "" });
+        setSpecificEmails([]);
+        setScheduledPkt(nowAsPktInput());
+        onSent && onSent();
+      } catch (e) {
+        toast.error("Error: " + e.message);
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
+
     setSending(true);
     try {
       const res = await base44.functions.invoke("sendPushNotification", {
@@ -287,13 +324,50 @@ function ComposeTab({ onSent, form, setForm }) {
           />
         </div>
 
+        {/* Schedule toggle */}
+        <div className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-[#8B7355]" />
+              <span className="text-sm font-semibold text-gray-700">Schedule for Later</span>
+            </div>
+            <button
+              onClick={() => setScheduleMode(m => !m)}
+              className={`relative w-11 h-6 rounded-full transition-colors ${scheduleMode ? "bg-[#8B7355]" : "bg-gray-200"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${scheduleMode ? "translate-x-5" : "translate-x-0"}`} />
+            </button>
+          </div>
+          {scheduleMode && (
+            <div className="mt-3 space-y-2">
+              <label className="text-xs font-semibold text-gray-500 block">
+                Send Date & Time — <span className="text-[#8B7355]">Pakistan Time (PKT, UTC+5)</span>
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduledPkt}
+                onChange={e => setScheduledPkt(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+              />
+              {scheduledPkt && (
+                <p className="text-xs text-gray-400">
+                  Will fire at: <span className="font-medium text-[#8B7355]">{utcToPktDisplay(pktInputToUtc(scheduledPkt))}</span>
+                  {" "}· UTC: {pktInputToUtc(scheduledPkt)?.slice(0, 16).replace("T", " ")}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         <Button
           onClick={handleSend}
           disabled={sending}
           className="w-full rounded-xl bg-gradient-to-r from-[#8B7355] to-[#5C4A3A] text-white font-semibold"
         >
           {sending ? (
-            <><Clock className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
+            <><Clock className="h-4 w-4 mr-2 animate-spin" /> {scheduleMode ? "Scheduling…" : "Sending…"}</>
+          ) : scheduleMode ? (
+            <><CalendarClock className="h-4 w-4 mr-2" /> Schedule Notification</>
           ) : (
             <><Send className="h-4 w-4 mr-2" /> Send Now</>
           )}
