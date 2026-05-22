@@ -9,15 +9,16 @@ Deno.serve(async (req) => {
     }
 
     const posts = await base44.asServiceRole.entities.CommunityPost.list("-created_date", 200);
+    const beanPosts = posts.filter(p => p.author_email === "usamaameer309@gmail.com");
     let updated = 0;
-    for (const post of posts) {
+    for (const post of beanPosts) {
       if (post.author_name !== "Bean") {
         await base44.asServiceRole.entities.CommunityPost.update(post.id, { author_name: "Bean" });
         updated++;
       }
     }
 
-    return Response.json({ success: true, updated, total: posts.length });
+    return Response.json({ success: true, updated, total: beanPosts.length });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
