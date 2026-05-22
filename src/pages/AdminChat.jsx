@@ -150,7 +150,7 @@ export default function AdminChat() {
 
   useEffect(() => {
     base44.auth.me().then(u => {
-      if (!u || u.role !== "admin") window.location.href = "/";
+      if (!u || (u.role !== "admin" && u?.data?.role !== "admin")) window.location.href = "/";
       else setUser(u);
     });
   }, []);

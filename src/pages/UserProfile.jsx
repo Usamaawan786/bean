@@ -175,7 +175,7 @@ export default function UserProfile() {
               {followLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : isFollowing ? "Following ✓" : "Follow"}
             </Button>
           )}
-          {currentUser?.role === "admin" && (
+          {(currentUser?.role === "admin" || currentUser?.data?.role === "admin") && (
             <Button
               onClick={() => navigate(`/AdminChat?user=${encodeURIComponent(targetEmail)}`)}
               className="rounded-2xl h-12 px-5 gap-2 bg-[#0084FF] hover:bg-blue-600 text-white font-semibold"
