@@ -29,8 +29,15 @@ function renderContent(content) {
   return parts.map((part, i) => {
     if (part.startsWith('#')) return <span key={i} className="text-[#8B7355] font-medium">{part}</span>;
     if (part.startsWith('@')) {
-      // Strip [email] encoding — just show @Name
+      const emailMatch = part.match(/\[([^\]]+)\]$/);
       const display = part.replace(/\[[^\]]*\]$/, "");
+      if (emailMatch) {
+        return (
+          <Link key={i} to={`/UserProfile?email=${encodeURIComponent(emailMatch[1])}`} className="text-blue-500 font-medium hover:underline">
+            {display}
+          </Link>
+        );
+      }
       return <span key={i} className="text-blue-500 font-medium">{display}</span>;
     }
     return part;
