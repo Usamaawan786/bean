@@ -125,9 +125,12 @@ export default function MentionTextarea({ value, onChange, onMentionsChange, pla
   };
 
   const handleSelectUser = (user) => {
-    const cursor = textareaRef.current?.selectionStart ?? value.length;
     const textBefore = value.slice(0, mentionStart);
-    const textAfter = value.slice(cursor);
+    // Find where the typed query ends: from mentionStart+1 to next space/newline or end of string
+    const afterAt = value.slice(mentionStart + 1);
+    const spaceIdx = afterAt.search(/[\s\n]/);
+    const queryEnd = mentionStart + 1 + (spaceIdx === -1 ? afterAt.length : spaceIdx);
+    const textAfter = value.slice(queryEnd);
     const tagName = user.display_name.replace(/\s+/g, "");
     // Keep content clean — just @Name, no encoded email
     const tag = `@${tagName}`;
