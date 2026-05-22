@@ -335,7 +335,7 @@ export default function Home() {
                 transition={{ delay: 0.3 }}
                 className="text-4xl font-bold mb-2"
               >
-                {getGreeting()}, {(user?.display_name || user?.full_name)?.split(" ")[0]}! ☕
+                {getGreeting()}, {(customer?.is_bean_official ? (customer.display_name || "Bean") : (user?.display_name || user?.full_name))?.split(" ")[0]}! ☕
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0 }}
