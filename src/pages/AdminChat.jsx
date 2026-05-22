@@ -191,7 +191,13 @@ export default function AdminChat() {
 
   const { data: allUsers = [] } = useQuery({
     queryKey: ["admin-chat-users"],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => base44.entities.User.list("-created_date", 500),
+    enabled: !!user,
+  });
+
+  const { data: allCustomers = [] } = useQuery({
+    queryKey: ["admin-chat-customers"],
+    queryFn: () => base44.entities.Customer.list("-created_date", 500),
     enabled: !!user,
   });
 
@@ -207,9 +213,9 @@ export default function AdminChat() {
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
   }, [selectedConv?.id]);
 
-  // Build a quick email -> profile_picture lookup from allUsers
+  // Build email -> profile_picture from Customer records (that's where pictures are stored)
   const userPictureMap = Object.fromEntries(
-    allUsers.filter(u => u.email && u.profile_picture).map(u => [u.email, u.profile_picture])
+    allCustomers.filter(c => c.user_email && c.profile_picture).map(c => [c.user_email, c.profile_picture])
   );
 
   const filteredConvs = conversations.filter(c => {
@@ -449,13 +455,13 @@ export default function AdminChat() {
                 <ChevronDown className="h-3.5 w-3.5 ml-auto group-open:rotate-180 transition-transform" />
               </summary>
               <div className="mt-1 max-h-48 overflow-y-auto bg-gray-50 rounded-xl">
-                {allUsers.filter(u => u.email && !conversations.find(c => c.user_email === u.email)).map(u => (
+                {allUsers.filter(u => u.email).map(u => (
                   <button
                     key={u.id}
                     onClick={() => startConversation(u)}
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-100 text-left text-sm"
                   >
-                    <Avatar name={u.display_name || u.full_name || u.email} picture={u.profile_picture} size="sm" />
+                    <Avatar name={u.display_name || u.full_name || u.email} picture={userPictureMap[u.email]} size="sm" />
                     <span className="text-gray-700 truncate">{u.display_name || u.full_name || u.email}</span>
                   </button>
                 ))}
