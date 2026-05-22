@@ -24,24 +24,24 @@ const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
 function renderContent(content, nameToEmail = {}) {
   if (!content) return null;
-  // Split on encoded mentions @Name[email], plain @mentions, and #hashtags
-  const parts = content.split(/(#\w+|@[\w\s]+(?:\[[^\]]*\])?)/g);
+  // Match encoded @Name[email] OR plain @Word (no spaces — single word names only)
+  const parts = content.split(/(#\w+|@\w+(?:\s\w+)*(?:\[[^\]]*\])?)/g);
   return parts.map((part, i) => {
     if (part.startsWith('#')) return <span key={i} className="text-[#8B7355] font-medium">{part}</span>;
     if (part.startsWith('@')) {
       const emailMatch = part.match(/\[([^\]]+)\]$/);
       const display = part.replace(/\[[^\]]*\]$/, "").trim();
-      const name = display.replace(/^@/, "");
+      const name = display.replace(/^@/, "").trim();
       // Prefer encoded email, fall back to name lookup
       const email = emailMatch ? emailMatch[1] : nameToEmail[name.toLowerCase()];
       if (email) {
         return (
-          <Link key={i} to={`/UserProfile?email=${encodeURIComponent(email)}`} className="text-blue-500 font-medium hover:underline">
+          <Link key={i} to={`/UserProfile?email=${encodeURIComponent(email)}`} className="text-[#8B7355] font-semibold hover:underline">
             {display}
           </Link>
         );
       }
-      return <span key={i} className="text-blue-500 font-medium">{display}</span>;
+      return <span key={i} className="text-[#8B7355] font-semibold">{display}</span>;
     }
     return part;
   });
