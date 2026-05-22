@@ -10,7 +10,7 @@ import { Capacitor } from "@capacitor/core";
 import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function PostComposer({ onPost, userName }) {
+export default function PostComposer({ onPost, userName, currentUserEmail }) {
   const [content, setContent] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -323,6 +323,7 @@ export default function PostComposer({ onPost, userName }) {
               onChange={setContent}
               placeholder="Share your coffee moment... (use @ to tag someone)"
               className="min-h-[100px] w-full border border-[#E8DED8] rounded-2xl p-3 text-sm text-[#5C4A3A] placeholder-[#C9B8A6] resize-none focus:outline-none focus:border-[#8B7355] focus:ring-1 focus:ring-[#8B7355]"
+              currentUserEmail={currentUserEmail}
             />
 
             {imageUrl && (

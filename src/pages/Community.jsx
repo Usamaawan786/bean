@@ -202,8 +202,45 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         reported_by: []
       });
     },
-    onSuccess: () => {
+    onSuccess: async (newPost, postData) => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+
+      // Parse @mentions from post content and send notifications
+      const content = postData.content || "";
+      const mentionRegex = /@(\S+)/g;
+      const mentionedTags = [...content.matchAll(mentionRegex)].map(m => m[1].toLowerCase());
+
+      if (mentionedTags.length > 0) {
+        // Fetch customers to match display names to emails
+        const myCustomer = customers.find(c => c.created_by === user.email || c.user_email === user.email);
+        const fromName = myCustomer?.is_bean_official
+          ? (myCustomer.display_name || "Bean")
+          : (user.display_name || user.full_name || user.email.split("@")[0]);
+
+        // Find matching customers for each mention
+        const notified = new Set(); // avoid double-notifying same person
+        for (const tag of mentionedTags) {
+          const matchedCustomer = customers.find(c => {
+            if (!c.display_name) return false;
+            const tagName = c.display_name.replace(/\s+/g, "").toLowerCase();
+            return tagName === tag;
+          });
+          if (!matchedCustomer) continue;
+          const toEmail = matchedCustomer.user_email || matchedCustomer.created_by;
+          if (!toEmail || toEmail === user.email || notified.has(toEmail)) continue;
+          notified.add(toEmail);
+
+          base44.functions.invoke("notifyCommunityActivity", {
+            type: "mention",
+            toEmail,
+            fromEmail: user.email,
+            fromName,
+            fromPicture: user.profile_picture || null,
+            postId: newPost?.id || null,
+            message: `${fromName} mentioned you in a post ☕`,
+          }).catch(() => {});
+        }
+      }
     }
   });
 
@@ -405,6 +442,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
             <PostComposer 
               onPost={createPostMutation.mutate}
               userName={user?.display_name || user?.full_name}
+              currentUserEmail={user?.email}
             />
           ) : (
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 text-center">
