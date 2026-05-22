@@ -17,6 +17,7 @@ export default function UserProfile() {
 
   const [currentUser, setCurrentUser] = useState(null);
   const [targetUser, setTargetUser] = useState(null);
+  const [targetUserRecord, setTargetUserRecord] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -35,7 +36,10 @@ export default function UserProfile() {
         setIsFollowing((me.following || []).includes(targetEmail));
       }
       // Find target user from community posts to get their info
-      const posts = await base44.entities.CommunityPost.filter({ author_email: targetEmail }, "-created_date", 1);
+      const [posts, targetUsers] = await Promise.all([
+        base44.entities.CommunityPost.filter({ author_email: targetEmail }, "-created_date", 1),
+        base44.entities.User.filter({ email: targetEmail }),
+      ]);
       if (posts.length > 0) {
         setTargetUser({
           email: targetEmail,
@@ -45,6 +49,7 @@ export default function UserProfile() {
       } else {
         setTargetUser({ email: targetEmail, full_name: targetEmail.split("@")[0] });
       }
+      if (targetUsers.length > 0) setTargetUserRecord(targetUsers[0]);
     } catch (e) {
       console.error(e);
     }
@@ -71,8 +76,12 @@ export default function UserProfile() {
       await base44.functions.invoke("followUser", { targetEmail, action });
       setIsFollowing(!isFollowing);
       toast.success(isFollowing ? "Unfollowed" : "Following!");
-      const me = await base44.auth.me();
+      const [me, targetUsers] = await Promise.all([
+        base44.auth.me(),
+        base44.entities.User.filter({ email: targetEmail }),
+      ]);
       setCurrentUser(me);
+      if (targetUsers.length > 0) setTargetUserRecord(targetUsers[0]);
     } catch (e) {
       toast.error("Something went wrong");
     }
@@ -91,9 +100,8 @@ export default function UserProfile() {
   }, [targetEmail]);
 
   const approvedPosts = userPosts.filter(p => p.moderation_status !== "hidden" && p.moderation_status !== "removed");
-  // Count followers by checking how many users have this email in their following list
-  const followersCount = currentUser?.following?.includes(targetEmail) ? 1 : 0; // simplified for now
-  const followingCount = targetUser ? 0 : 0; // would need separate query to get accurate count
+  const followersCount = (targetUserRecord?.followers || []).length;
+  const followingCount = (targetUserRecord?.following || []).length;
 
   if (isLoadingUser) {
     return <div className="min-h-screen bg-[#F5F1ED] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" /></div>;
