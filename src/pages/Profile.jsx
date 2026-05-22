@@ -271,7 +271,15 @@ export default function Profile() {
       {/* Content */}
       <div className="max-w-lg mx-auto px-5 pt-6 pb-24">
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-[#5C4A3A]">{user.display_name || user.full_name}</h2>
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-bold text-[#5C4A3A]">{user.display_name || user.full_name}</h2>
+            {customer?.is_bean_official && (
+              <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 flex-shrink-0" aria-label="Verified Bean account">
+                <circle cx="12" cy="12" r="12" fill="#1D9BF0" />
+                <path d="M7 12.5l3.5 3.5 6.5-7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
           <p className="text-sm text-[#8B7355]">{user.email}</p>
           {customer?.is_founding_member && (
             <div className="inline-flex items-center gap-1.5 mt-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">

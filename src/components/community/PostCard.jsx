@@ -155,10 +155,11 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link to={`/UserProfile?email=${encodeURIComponent(post.author_email)}`} className="font-semibold text-[#5C4A3A] hover:text-[#8B7355] transition-colors">
+            <Link to={`/UserProfile?email=${encodeURIComponent(post.author_email)}`} className="font-semibold text-[#5C4A3A] hover:text-[#8B7355] transition-colors flex items-center gap-1">
               {post.author_name || "Coffee Lover"}
+              {post.author_email === "usamaameer309@gmail.com" && <BeanVerifiedBadge />}
             </Link>
-            {badges.map(b => <UserBadge key={b} badgeKey={b} />)}
+            {post.author_email !== "usamaameer309@gmail.com" && badges.map(b => <UserBadge key={b} badgeKey={b} />)}
             {currentUserEmail && post.author_email !== currentUserEmail && onFollow && (
               <button
                 onClick={() => onFollow(post.author_email)}

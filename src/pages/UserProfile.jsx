@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import PostCard from "@/components/community/PostCard";
 import UserBadge from "@/components/community/UserBadge";
+import BeanVerifiedBadge from "@/components/community/BeanVerifiedBadge";
 
 export default function UserProfile() {
   const params = new URLSearchParams(window.location.search);
@@ -123,8 +124,11 @@ export default function UserProfile() {
 
       <div className="max-w-lg mx-auto px-5 pt-4 pb-24">
         <div className="text-center mb-4">
-          <h2 className="text-xl font-bold text-[#5C4A3A]">{targetUser?.full_name || targetEmail?.split("@")[0]}</h2>
-          {targetBadges.length > 0 && (
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-xl font-bold text-[#5C4A3A]">{targetUser?.full_name || targetEmail?.split("@")[0]}</h2>
+            {targetEmail === "usamaameer309@gmail.com" && <BeanVerifiedBadge size="md" />}
+          </div>
+          {targetEmail !== "usamaameer309@gmail.com" && targetBadges.length > 0 && (
             <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
               {targetBadges.map(badgeKey => (
                 <UserBadge key={badgeKey} badgeKey={badgeKey} size="sm" />
