@@ -6,49 +6,57 @@ let cachedUsers = null;
 let cacheTime = 0;
 const CACHE_TTL = 60 * 1000; // 1 minute
 
+
 async function fetchAllTaggableUsers() {
   if (cachedUsers && Date.now() - cacheTime < CACHE_TTL) return cachedUsers;
 
-  // Fetch customers (has display_name, profile_picture, is_bean_official)
-  const customers = await base44.entities.Customer.list("-created_date", 200);
-
-  // Build user map keyed by email
   const userMap = {};
-  for (const c of customers) {
-    if (!c.display_name) continue;
-    const email = c.user_email || c.created_by;
-    if (!email) continue;
-    userMap[email] = {
-      email,
-      display_name: c.display_name,
-      profile_picture: c.profile_picture || null,
-      is_bean_official: !!c.is_bean_official,
-      tier: c.tier || null,
-      customer_id: c.id,
-    };
-  }
 
-  // Also pull unique authors from recent posts (gives us profile pictures from post data)
+  // Pull unique authors from recent posts — covers all users including admins who may lack a Customer record
   try {
-    const posts = await base44.entities.CommunityPost.list("-created_date", 100);
+    const posts = await base44.entities.CommunityPost.list("-created_date", 200);
     for (const p of posts) {
-      if (!p.author_email) continue;
+      if (!p.author_email || !p.author_name) continue;
       if (!userMap[p.author_email]) {
         userMap[p.author_email] = {
           email: p.author_email,
-          display_name: p.author_name || p.author_email.split("@")[0],
+          display_name: p.author_name,
           profile_picture: p.author_profile_picture || null,
           is_bean_official: false,
           tier: null,
         };
-      } else {
-        // Enrich profile picture from post if not already set
-        if (!userMap[p.author_email].profile_picture && p.author_profile_picture) {
-          userMap[p.author_email].profile_picture = p.author_profile_picture;
-        }
+      } else if (!userMap[p.author_email].profile_picture && p.author_profile_picture) {
+        userMap[p.author_email].profile_picture = p.author_profile_picture;
       }
     }
-  } catch { /* posts fetch is best-effort */ }
+  } catch { /* best-effort */ }
+
+  // Fetch customers (has display_name, profile_picture, is_bean_official, tier)
+  // Now that read RLS is open, this returns all customers
+  try {
+    const customers = await base44.entities.Customer.list("-created_date", 300);
+    for (const c of customers) {
+      const email = c.user_email || c.created_by;
+      if (!email) continue;
+      const displayName = c.display_name;
+      if (userMap[email]) {
+        // Enrich existing entry from Customer record
+        if (displayName) userMap[email].display_name = displayName;
+        if (c.profile_picture) userMap[email].profile_picture = c.profile_picture;
+        if (c.is_bean_official) userMap[email].is_bean_official = true;
+        if (c.tier) userMap[email].tier = c.tier;
+      } else if (displayName) {
+        userMap[email] = {
+          email,
+          display_name: displayName,
+          profile_picture: c.profile_picture || null,
+          is_bean_official: !!c.is_bean_official,
+          tier: c.tier || null,
+          customer_id: c.id,
+        };
+      }
+    }
+  } catch { /* best-effort */ }
 
   cachedUsers = Object.values(userMap).filter(u => u.display_name);
   cacheTime = Date.now();
@@ -173,8 +181,10 @@ export default function MentionTextarea({ value, onChange, placeholder, classNam
     };
   }, []);
 
-  // Prefetch user list when component mounts so it's instant on first @
+  // Prefetch user list when component mounts — bust cache to pick up open RLS
   useEffect(() => {
+    cachedUsers = null;
+    cacheTime = 0;
     fetchAllTaggableUsers().catch(() => {});
   }, []);
 
