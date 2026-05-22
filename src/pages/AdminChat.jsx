@@ -42,10 +42,15 @@ function FileAttachment({ url, isFromAdmin }) {
   );
 }
 
-function Avatar({ name, size = "md" }) {
+function Avatar({ name, picture, size = "md" }) {
   const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-pink-500", "bg-amber-500", "bg-teal-500", "bg-red-500", "bg-indigo-500"];
   const color = colors[(name?.charCodeAt(0) || 0) % colors.length];
   const sz = size === "sm" ? "w-8 h-8 text-xs" : size === "lg" ? "w-12 h-12 text-base" : "w-10 h-10 text-sm";
+  if (picture) {
+    return (
+      <img src={picture} alt={name || "?"} className={`${sz} rounded-full object-cover flex-shrink-0 border border-gray-200`} />
+    );
+  }
   return (
     <div className={`${sz} ${color} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>
       {(name || "?").charAt(0).toUpperCase()}
@@ -53,7 +58,7 @@ function Avatar({ name, size = "md" }) {
   );
 }
 
-function MessageBubble({ msg, isAdmin, onEdit, onDelete, onPin }) {
+function MessageBubble({ msg, isAdmin, onEdit, onDelete, onPin, userPicture }) {
   const isFromAdmin = msg.sender_role === "admin";
   const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -72,7 +77,7 @@ function MessageBubble({ msg, isAdmin, onEdit, onDelete, onPin }) {
   };
   return (
     <div className={`flex items-end gap-2 group ${isFromAdmin ? "flex-row-reverse" : "flex-row"}`}>
-      {!isFromAdmin && <Avatar name={msg.sender_name} size="sm" />}
+      {!isFromAdmin && <Avatar name={msg.sender_name} picture={userPicture} size="sm" />}
       <div className={`max-w-[70%] ${isFromAdmin ? "items-end" : "items-start"} flex flex-col gap-1 relative`}>
         {msg.is_pinned && <span className="text-[10px] text-amber-600 flex items-center gap-0.5 px-1"><Pin className="h-2.5 w-2.5" /> Pinned</span>}
         {msg.message_type === "announcement" && (
@@ -201,6 +206,11 @@ export default function AdminChat() {
     base44.entities.Conversation.update(selectedConv.id, { unread_by_admin: 0 });
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
   }, [selectedConv?.id]);
+
+  // Build a quick email -> profile_picture lookup from allUsers
+  const userPictureMap = Object.fromEntries(
+    allUsers.filter(u => u.email && u.profile_picture).map(u => [u.email, u.profile_picture])
+  );
 
   const filteredConvs = conversations.filter(c => {
     if (filter === "unread") return (c.unread_by_admin || 0) > 0;
@@ -445,7 +455,7 @@ export default function AdminChat() {
                     onClick={() => startConversation(u)}
                     className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-100 text-left text-sm"
                   >
-                    <Avatar name={u.display_name || u.full_name || u.email} size="sm" />
+                    <Avatar name={u.display_name || u.full_name || u.email} picture={u.profile_picture} size="sm" />
                     <span className="text-gray-700 truncate">{u.display_name || u.full_name || u.email}</span>
                   </button>
                 ))}
@@ -472,7 +482,7 @@ export default function AdminChat() {
                     className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-50 text-left transition-colors ${isSelected ? "bg-blue-50 border-l-4 border-l-blue-500" : ""}`}
                   >
                     <div className="relative">
-                      <Avatar name={conv.user_name} />
+                      <Avatar name={conv.user_name} picture={userPictureMap[conv.user_email]} />
                       {unread > 0 && (
                         <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{unread}</span>
                       )}
@@ -502,7 +512,7 @@ export default function AdminChat() {
           <div className="flex-1 flex flex-col bg-[#F0F2F5]">
             {/* Chat Header */}
             <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3 shadow-sm">
-              <Avatar name={selectedConv.user_name} />
+              <Avatar name={selectedConv.user_name} picture={userPictureMap[selectedConv.user_email]} size="lg" />
               <div className="flex-1">
                 <h2 className="font-bold text-gray-900 text-sm">{selectedConv.user_name || selectedConv.user_email}</h2>
                 <p className="text-xs text-gray-400">{selectedConv.user_email}</p>
@@ -530,7 +540,7 @@ export default function AdminChat() {
                   Start the conversation
                 </div>
               ) : (
-                messages.map(msg => <MessageBubble key={msg.id} msg={msg} isAdmin onEdit={handleEditMsg} onDelete={handleDeleteMsg} onPin={handlePinMsg} />)
+                messages.map(msg => <MessageBubble key={msg.id} msg={msg} isAdmin onEdit={handleEditMsg} onDelete={handleDeleteMsg} onPin={handlePinMsg} userPicture={userPictureMap[selectedConv.user_email]} />)
               )}
               <div ref={messagesEndRef} />
             </div>
