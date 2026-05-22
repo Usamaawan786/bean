@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Image, X, Loader2, Video, BarChart2, Plus, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import MentionTextarea from "./MentionTextarea";
 import { toast } from "sonner";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
@@ -317,11 +318,11 @@ export default function PostComposer({ onPost, userName }) {
           </div>
         ) : (
           <>
-            <Textarea
+            <MentionTextarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Share your coffee moment..."
-              className="min-h-[100px] border-[#E8DED8] rounded-2xl resize-none focus:ring-[#8B7355] focus:border-[#8B7355]"
+              onChange={setContent}
+              placeholder="Share your coffee moment... (use @ to tag someone)"
+              className="min-h-[100px] w-full border border-[#E8DED8] rounded-2xl p-3 text-sm text-[#5C4A3A] placeholder-[#C9B8A6] resize-none focus:outline-none focus:border-[#8B7355] focus:ring-1 focus:ring-[#8B7355]"
             />
 
             {imageUrl && (
