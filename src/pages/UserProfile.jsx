@@ -177,14 +177,18 @@ export default function UserProfile() {
             {currentUser.role === "admin" && (
               <Button
                 onClick={() => navigate(`/AdminChat?user=${encodeURIComponent(targetEmail)}`)}
-                variant="outline"
-                className="rounded-2xl h-12 px-4 border-2 border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
-                title="Open Admin Chat"
+                className="rounded-2xl h-12 px-5 gap-2 bg-[#0084FF] hover:bg-blue-600 text-white font-semibold"
+                title="Message this user"
               >
-                <MessageSquare className="h-5 w-5" />
+                <MessageSquare className="h-4 w-4" />
+                Message
               </Button>
             )}
           </div>
+        )}
+        {/* Show message button even if admin is viewing their OWN profile — no, only show for other profiles */}
+        {currentUser?.role === "admin" && currentUser.email === targetEmail && (
+          <div className="mb-6 text-center text-xs text-[#C9B8A6]">This is your profile</div>
         )}
 
         <h3 className="font-bold text-[#5C4A3A] mb-4">Posts ({approvedPosts.length})</h3>

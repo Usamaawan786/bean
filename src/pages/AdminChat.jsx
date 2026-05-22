@@ -225,14 +225,35 @@ export default function AdminChat() {
   };
 
   // Auto-open conversation from ?user= URL param
+  // Wait until BOTH allUsers AND conversations are loaded before trying to open
   useEffect(() => {
-    if (!user || !allUsers.length) return;
+    if (!user || !allUsers.length || convsLoading) return;
     const params = new URLSearchParams(location.search);
     const targetEmail = params.get("user");
     if (!targetEmail) return;
+    // First check if conversation already exists (even if user not in allUsers)
+    const existingConv = conversations.find(c => c.user_email === targetEmail);
+    if (existingConv) {
+      setSelectedConv(existingConv);
+      return;
+    }
+    // Otherwise find the user and create a new conversation
     const targetUser = allUsers.find(u => u.email === targetEmail);
-    if (targetUser) startConversation(targetUser);
-  }, [user, allUsers, location.search]);
+    if (targetUser) {
+      startConversation(targetUser);
+    } else {
+      // User not in allUsers list — create conversation with just the email
+      base44.entities.Conversation.create({
+        user_email: targetEmail,
+        user_name: targetEmail.split("@")[0],
+        last_message: "",
+        last_message_at: new Date().toISOString(),
+      }).then(conv => {
+        queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+        setSelectedConv(conv);
+      });
+    }
+  }, [user, allUsers.length, convsLoading, location.search]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
