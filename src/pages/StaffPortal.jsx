@@ -127,7 +127,7 @@ export default function StaffPortal() {
   const BEAN_OFFICIAL_EMAIL = "usamaameer309@gmail.com";
   let features = ROLE_FEATURES[user?.role] || ROLE_FEATURES.cashier;
   // Grant Admin Chat to the Bean official account if not already included
-  if (user?.email === BEAN_OFFICIAL_EMAIL && !features.find(f => f.link === "/AdminChat")) {
+  if (user?.email?.toLowerCase() === BEAN_OFFICIAL_EMAIL && !features.find(f => f.link === "/AdminChat")) {
     features = [...features, { icon: MessageSquare, label: "Admin Chat", desc: "Chat with customers & manage support", link: "/AdminChat", color: "from-teal-600 to-teal-700" }];
   }
   const roleInfo = ROLE_LABELS[user?.role] || { label: "Staff", icon: "👤" };
