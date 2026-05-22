@@ -189,8 +189,9 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       const myCustomer = customers.find(c => c.created_by === user.email || c.user_email === user.email);
       const myBadges = getBadgesForCustomer(myCustomer);
 
+      const { _mentionMap, ...cleanPostData } = postData;
       return base44.entities.CommunityPost.create({
-        ...postData,
+        ...cleanPostData,
         author_email: user.email,
         author_name: myCustomer?.is_bean_official ? (myCustomer.display_name || "Bean") : (user.display_name || user.full_name || user.email.split("@")[0]),
         author_profile_picture: user.profile_picture || null,
@@ -205,50 +206,19 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     onSuccess: async (newPost, postData) => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
 
-      // Parse @mentions from post content and send notifications
-      const content = postData.content || "";
+      // _mentionMap is { nameKey: email } built by MentionTextarea — no name parsing needed
+      const mentionMap = postData._mentionMap || {};
+      const mentionedEmails = Object.values(mentionMap);
+      if (!mentionedEmails.length) return;
 
       const myCustomer = customers.find(c => c.created_by === user.email || c.user_email === user.email);
       const fromName = myCustomer?.is_bean_official
         ? (myCustomer.display_name || "Bean")
         : (user.display_name || user.full_name || user.email.split("@")[0]);
 
-      // New format: @Name[email] — unambiguous, email is encoded directly in the tag
-      const encodedMentionRegex = /@\S+?\[([^\]]+@[^\]]+)\]/g;
-      const encodedEmails = [...content.matchAll(encodedMentionRegex)].map(m => m[1].toLowerCase());
-
-      // Legacy fallback: plain @Name tags (no [email]) — resolve via name→email map
-      const plainMentionRegex = /@([A-Za-z0-9_]+)(?!\[)/g;
-      const plainTags = [...content.matchAll(plainMentionRegex)].map(m => m[1].toLowerCase());
-
-      const mentionedEmails = new Set(encodedEmails);
-
-      if (plainTags.length > 0) {
-        // Build name→email map only when needed for legacy plain tags
-        const nameToEmail = {};
-        for (const c of customers) {
-          if (!c.display_name) continue;
-          const email = c.user_email || c.created_by;
-          if (!email) continue;
-          nameToEmail[c.display_name.replace(/\s+/g, "").toLowerCase()] = email;
-        }
-        try {
-          const recentPosts = await base44.entities.CommunityPost.list("-created_date", 200);
-          const reversedPosts = [...recentPosts].reverse();
-          for (const p of reversedPosts) {
-            if (!p.author_email || !p.author_name) continue;
-            nameToEmail[p.author_name.replace(/\s+/g, "").toLowerCase()] = p.author_email;
-          }
-        } catch { /* best-effort */ }
-        for (const tag of plainTags) {
-          const email = nameToEmail[tag];
-          if (email) mentionedEmails.add(email.toLowerCase());
-        }
-      }
-
       const notified = new Set();
       for (const toEmail of mentionedEmails) {
-        if (!toEmail || toEmail === user.email.toLowerCase() || notified.has(toEmail)) continue;
+        if (!toEmail || toEmail.toLowerCase() === user.email.toLowerCase() || notified.has(toEmail)) continue;
         notified.add(toEmail);
         base44.functions.invoke("notifyCommunityActivity", {
           type: "mention",

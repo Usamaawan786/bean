@@ -63,11 +63,13 @@ async function fetchAllTaggableUsers() {
   return cachedUsers;
 }
 
-export default function MentionTextarea({ value, onChange, placeholder, className, currentUserEmail }) {
+export default function MentionTextarea({ value, onChange, onMentionsChange, placeholder, className, currentUserEmail }) {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mentionStart, setMentionStart] = useState(-1);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
+  // Map of display_name (no spaces, lowercase) → email for tagged users in current draft
+  const mentionMapRef = useRef({});
   const textareaRef = useRef(null);
   const dropdownRef = useRef(null);
   const searchTimeout = useRef(null);
@@ -123,23 +125,26 @@ export default function MentionTextarea({ value, onChange, placeholder, classNam
   };
 
   const handleSelectUser = (user) => {
-    // Replace @query with @DisplayName[email] so notification resolution is unambiguous
     const cursor = textareaRef.current?.selectionStart ?? value.length;
     const textBefore = value.slice(0, mentionStart);
     const textAfter = value.slice(cursor);
     const tagName = user.display_name.replace(/\s+/g, "");
-    // Encode email in tag so Community.jsx can resolve exactly who was mentioned
-    const tag = `@${tagName}[${user.email}]`;
+    // Keep content clean — just @Name, no encoded email
+    const tag = `@${tagName}`;
     const newVal = `${textBefore}${tag} ${textAfter}`;
+
+    // Store the email mapping internally so the parent can resolve it for notifications
+    const key = tagName.toLowerCase();
+    mentionMapRef.current[key] = user.email;
+    if (onMentionsChange) onMentionsChange({ ...mentionMapRef.current });
 
     onChange(newVal);
     setShowSuggestions(false);
     setMentionStart(-1);
 
-    // Restore focus with correct cursor position
     setTimeout(() => {
       if (textareaRef.current) {
-        const newPos = textBefore.length + tag.length + 1; // tag + space
+        const newPos = textBefore.length + tag.length + 1;
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(newPos, newPos);
       }

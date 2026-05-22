@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function PostComposer({ onPost, userName, currentUserEmail }) {
   const [content, setContent] = useState("");
+  const [mentionMap, setMentionMap] = useState({});
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -231,9 +232,11 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
       post_type: "general",
       image_url: imageUrl || undefined,
       video_url: videoUrl || undefined,
-      author_name: userName
+      author_name: userName,
+      _mentionMap: mentionMap,
     });
     setContent("");
+    setMentionMap({});
     setImageUrl("");
     setVideoUrl("");
     setIsPosting(false);
@@ -321,6 +324,7 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
             <MentionTextarea
               value={content}
               onChange={setContent}
+              onMentionsChange={setMentionMap}
               placeholder="Share your coffee moment... (use @ to tag someone)"
               className="min-h-[100px] w-full border border-[#E8DED8] rounded-2xl p-3 text-sm text-[#5C4A3A] placeholder-[#C9B8A6] resize-none focus:outline-none focus:border-[#8B7355] focus:ring-1 focus:ring-[#8B7355]"
               currentUserEmail={currentUserEmail}
