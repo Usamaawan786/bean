@@ -464,6 +464,34 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
             </div>
           )}
 
+          {/* First Comment Preview — shown when comments are collapsed */}
+          {!showComments && allComments && allComments.length > 0 && (() => {
+            const first = allComments[0];
+            return (
+              <button
+                onClick={() => setShowComments(true)}
+                className="mt-3 w-full text-left flex items-start gap-2 group"
+              >
+                <div className="w-6 h-6 rounded-full bg-[#F5EBE8] flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden">
+                  {first.author_picture ? (
+                    <img src={first.author_picture} alt={first.author_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[8px] font-bold text-[#8B7355]">{(first.author_name || "?")[0].toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 bg-[#F5F1ED] rounded-2xl px-3 py-2">
+                  <span className="text-xs font-semibold text-[#5C4A3A]">{first.author_name || "User"} </span>
+                  <span className="text-xs text-[#6B5744] line-clamp-2">{first.content}</span>
+                </div>
+                {allComments.length > 1 && (
+                  <span className="text-xs text-[#C9B8A6] group-hover:text-[#8B7355] self-center whitespace-nowrap ml-1">
+                    +{allComments.length - 1} more
+                  </span>
+                )}
+              </button>
+            );
+          })()}
+
           {/* Comments Section */}
           <AnimatePresence>
             {showComments && currentUser && (
