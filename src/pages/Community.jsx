@@ -211,22 +211,35 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
       const mentionedTags = [...content.matchAll(mentionRegex)].map(m => m[1].toLowerCase());
 
       if (mentionedTags.length > 0) {
-        // Fetch customers to match display names to emails
         const myCustomer = customers.find(c => c.created_by === user.email || c.user_email === user.email);
         const fromName = myCustomer?.is_bean_official
           ? (myCustomer.display_name || "Bean")
           : (user.display_name || user.full_name || user.email.split("@")[0]);
 
-        // Find matching customers for each mention
-        const notified = new Set(); // avoid double-notifying same person
+        // Build a name->email map from both customers AND recent post authors (covers admins without Customer records)
+        const nameToEmail = {};
+
+        // From customers
+        for (const c of customers) {
+          if (!c.display_name) continue;
+          const email = c.user_email || c.created_by;
+          if (!email) continue;
+          nameToEmail[c.display_name.replace(/\s+/g, "").toLowerCase()] = email;
+        }
+
+        // From recent posts (covers users like admins who may not have a Customer record)
+        try {
+          const recentPosts = await base44.entities.CommunityPost.list("-created_date", 100);
+          for (const p of recentPosts) {
+            if (!p.author_email || !p.author_name) continue;
+            const key = p.author_name.replace(/\s+/g, "").toLowerCase();
+            if (!nameToEmail[key]) nameToEmail[key] = p.author_email;
+          }
+        } catch { /* best-effort */ }
+
+        const notified = new Set();
         for (const tag of mentionedTags) {
-          const matchedCustomer = customers.find(c => {
-            if (!c.display_name) return false;
-            const tagName = c.display_name.replace(/\s+/g, "").toLowerCase();
-            return tagName === tag;
-          });
-          if (!matchedCustomer) continue;
-          const toEmail = matchedCustomer.user_email || matchedCustomer.created_by;
+          const toEmail = nameToEmail[tag];
           if (!toEmail || toEmail === user.email || notified.has(toEmail)) continue;
           notified.add(toEmail);
 
