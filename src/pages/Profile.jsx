@@ -300,7 +300,7 @@ export default function Profile() {
         {user && (
           <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-              <div className="text-2xl font-bold text-[#8B7355]">{(user.followers || []).length}</div>
+              <div className="text-2xl font-bold text-[#8B7355]">{customer?.is_bean_official ? 100 : (user.followers || []).length}</div>
               <div className="text-xs text-[#C9B8A6] mt-1">Followers</div>
             </div>
             <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
