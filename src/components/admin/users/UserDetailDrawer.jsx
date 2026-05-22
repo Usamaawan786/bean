@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import UserDetailTabs from "./UserDetailTabs";
 
 export default function UserDetailDrawer({ customer, userRecord, deviceTokens, onClose }) {
+  const navigate = useNavigate();
+  const email = customer.user_email || customer.created_by;
+
   return (
     <>
       {/* Backdrop */}
@@ -37,9 +41,19 @@ export default function UserDetailDrawer({ customer, userRecord, deviceTokens, o
                 {customer.phone && <p className="text-white/60 text-xs mt-0.5">{customer.phone}</p>}
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors mt-1">
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                onClick={() => { onClose(); navigate(`/AdminChat?user=${encodeURIComponent(email)}`); }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors text-sm font-medium"
+                title="Message this user"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Message
+              </button>
+              <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
 

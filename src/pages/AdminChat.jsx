@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   MessageCircle, Search, Send, ArrowLeft, MoreVertical,
   CheckCheck, Check, Circle, Users, Bell, BellOff, Trash2,
@@ -126,6 +126,7 @@ function MessageBubble({ msg, isAdmin, onEdit, onDelete, onPin }) {
 }
 
 export default function AdminChat() {
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [selectedConv, setSelectedConv] = useState(null);
   const [message, setMessage] = useState("");
@@ -222,6 +223,16 @@ export default function AdminChat() {
     queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
     setSelectedConv(conv);
   };
+
+  // Auto-open conversation from ?user= URL param
+  useEffect(() => {
+    if (!user || !allUsers.length) return;
+    const params = new URLSearchParams(location.search);
+    const targetEmail = params.get("user");
+    if (!targetEmail) return;
+    const targetUser = allUsers.find(u => u.email === targetEmail);
+    if (targetUser) startConversation(targetUser);
+  }, [user, allUsers, location.search]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];

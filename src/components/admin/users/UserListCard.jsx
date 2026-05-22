@@ -1,5 +1,6 @@
-import { Smartphone, Star, Crown, Users } from "lucide-react";
+import { Smartphone, Star, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 const TIER_COLORS = {
   Bronze: "bg-amber-100 text-amber-700",
@@ -9,6 +10,7 @@ const TIER_COLORS = {
 };
 
 export default function UserListCard({ customer, userRecord, hasDevice, onClick }) {
+  const navigate = useNavigate();
   const email = customer.user_email || customer.created_by || "";
   const name = customer.display_name || userRecord?.full_name || email.split("@")[0];
   const tier = customer.tier || "Bronze";
@@ -52,6 +54,13 @@ export default function UserListCard({ customer, userRecord, hasDevice, onClick 
                 <Smartphone className="h-3.5 w-3.5" />
               </span>
             )}
+            <button
+              onClick={e => { e.stopPropagation(); navigate(`/AdminChat?user=${encodeURIComponent(email)}`); }}
+              className="p-1 rounded-full hover:bg-blue-50 text-blue-400 hover:text-blue-600 transition-colors"
+              title="Message user"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+            </button>
             <span className="text-xs text-gray-400">
               {joinedAt ? format(new Date(joinedAt), "MMM d") : "—"}
             </span>
