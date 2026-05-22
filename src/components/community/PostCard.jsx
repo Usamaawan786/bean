@@ -22,18 +22,21 @@ const postTypeConfig = {
 
 const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
-function renderContent(content) {
+function renderContent(content, nameToEmail = {}) {
   if (!content) return null;
   // Split on encoded mentions @Name[email], plain @mentions, and #hashtags
-  const parts = content.split(/(#\w+|@\w+(?:\[[^\]]*\])?)/g);
+  const parts = content.split(/(#\w+|@[\w\s]+(?:\[[^\]]*\])?)/g);
   return parts.map((part, i) => {
     if (part.startsWith('#')) return <span key={i} className="text-[#8B7355] font-medium">{part}</span>;
     if (part.startsWith('@')) {
       const emailMatch = part.match(/\[([^\]]+)\]$/);
-      const display = part.replace(/\[[^\]]*\]$/, "");
-      if (emailMatch) {
+      const display = part.replace(/\[[^\]]*\]$/, "").trim();
+      const name = display.replace(/^@/, "");
+      // Prefer encoded email, fall back to name lookup
+      const email = emailMatch ? emailMatch[1] : nameToEmail[name.toLowerCase()];
+      if (email) {
         return (
-          <Link key={i} to={`/UserProfile?email=${encodeURIComponent(emailMatch[1])}`} className="text-blue-500 font-medium hover:underline">
+          <Link key={i} to={`/UserProfile?email=${encodeURIComponent(email)}`} className="text-blue-500 font-medium hover:underline">
             {display}
           </Link>
         );
@@ -70,6 +73,17 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
   const likedBy = Array.isArray(post.liked_by) ? post.liked_by : [];
   const isLiked = likedBy.includes(currentUserEmail);
   const displayLikesCount = likedBy.length;
+
+  // Build name→email lookup for plain @mentions
+  const { data: customers = [] } = useQuery({
+    queryKey: ["customers-name-lookup"],
+    queryFn: () => base44.entities.Customer.list(),
+    staleTime: 300000,
+  });
+  const nameToEmail = {};
+  customers.forEach(c => {
+    if (c.display_name && c.user_email) nameToEmail[c.display_name.toLowerCase()] = c.user_email;
+  });
 
   // Eagerly fetch real comment count (includes replies) so the icon is always accurate
   const { data: allComments } = useQuery({
@@ -255,7 +269,7 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
               </div>
             </div>
           ) : (
-            <p className="mt-2 text-[#6B5744] whitespace-pre-wrap leading-relaxed">{renderContent(post.content)}</p>
+            <p className="mt-2 text-[#6B5744] whitespace-pre-wrap leading-relaxed">{renderContent(post.content, nameToEmail)}</p>
           )}
           
           {post.image_url && (
