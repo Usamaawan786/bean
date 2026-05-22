@@ -137,6 +137,13 @@ export default function Profile() {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       setFormData(prev => ({ ...prev, profile_picture: file_url }));
       await base44.auth.updateMe({ profile_picture: file_url, profile_picture_consent: true });
+      // Sync profile picture to Customer record for mention lookups
+      if (user?.email) {
+        const custList = await base44.entities.Customer.filter({ created_by: user.email });
+        if (custList.length > 0) {
+          await base44.entities.Customer.update(custList[0].id, { profile_picture: file_url });
+        }
+      }
       await loadUserData();
       toast.success("Profile picture updated!");
     } catch (error) {

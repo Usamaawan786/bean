@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Customer's display name"
     },
+    "profile_picture": {
+      "type": "string",
+      "description": "Profile picture URL synced from user account"
+    },
     "phone": {
       "type": "string",
       "description": "Customer's phone number"
@@ -104,18 +108,7 @@
     "create": {
       "created_by": "{{user.email}}"
     },
-    "read": {
-      "$or": [
-        {
-          "created_by": "{{user.email}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "$or": [
         {
