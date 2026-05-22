@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
+import BeanVerifiedBadge from "./BeanVerifiedBadge";
 import { Pin } from "lucide-react";
 import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X, Trash2, BarChart2 } from "lucide-react";
 import { formatDateTime } from "@/utils/timeUtils";

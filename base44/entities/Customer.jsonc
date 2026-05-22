@@ -92,6 +92,11 @@
       "type": "number",
       "default": 0,
       "description": "How many EBA discounts have been used"
+    },
+    "is_bean_official": {
+      "type": "boolean",
+      "default": false,
+      "description": "Official Bean account with verified blue tick"
     }
   },
   "required": [],
