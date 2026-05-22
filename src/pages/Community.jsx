@@ -227,13 +227,16 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
           nameToEmail[c.display_name.replace(/\s+/g, "").toLowerCase()] = email;
         }
 
-        // From recent posts (covers users like admins who may not have a Customer record)
+        // From recent posts — overwrite Customer entries so that the actual post author
+        // wins when multiple customers share the same display_name.
+        // Sort oldest-first so the most recent post author is the final winner.
         try {
-          const recentPosts = await base44.entities.CommunityPost.list("-created_date", 100);
-          for (const p of recentPosts) {
+          const recentPosts = await base44.entities.CommunityPost.list("-created_date", 200);
+          const reversedPosts = [...recentPosts].reverse(); // oldest first → newest overwrites
+          for (const p of reversedPosts) {
             if (!p.author_email || !p.author_name) continue;
             const key = p.author_name.replace(/\s+/g, "").toLowerCase();
-            if (!nameToEmail[key]) nameToEmail[key] = p.author_email;
+            nameToEmail[key] = p.author_email; // always overwrite — most recent post wins
           }
         } catch { /* best-effort */ }
 
