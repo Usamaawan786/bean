@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import UserBadge from "./UserBadge";
 import BeanVerifiedBadge from "./BeanVerifiedBadge";
 import { Pin } from "lucide-react";
-import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X, Trash2, BarChart2 } from "lucide-react";
+import { Heart, MessageCircle, Coffee, Camera, Lightbulb, Star, AlertTriangle, Video, Flag, Ban, Bookmark, UserPlus, UserCheck, Edit2, Check, X, Trash2, BarChart2, MessageSquare } from "lucide-react";
 import { formatDateTime } from "@/utils/timeUtils";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CommentSection from "./CommentSection";
 import PollDisplay from "./PollDisplay";
 const postTypeConfig = {
@@ -40,6 +40,8 @@ function renderContent(content) {
 export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit, onDelete }) {
   // Use denormalized badges from the post itself; fall back to prop
   const badges = (post.author_badges && post.author_badges.length > 0) ? post.author_badges : authorBadges;
+  const navigate = useNavigate();
+  const isAdmin = currentUser?.role === "admin";
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
@@ -199,6 +201,13 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
               )}
               {!isOwnPost && (
                 <>
+                  {isAdmin && (
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+                      onClick={() => navigate(`/AdminChat?user=${encodeURIComponent(post.author_email)}`)}
+                      className="p-1.5 rounded-lg text-[#C9B8A6] hover:bg-[#F5EBE8] hover:text-[#8B7355] transition-colors" title="Message user (Admin)">
+                      <MessageSquare className="h-3.5 w-3.5" />
+                    </motion.button>
+                  )}
                   <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                     onClick={() => setShowReportConfirm(true)}
                     className={`p-1.5 rounded-lg transition-colors ${

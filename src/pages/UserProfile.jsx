@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, User, Loader2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, User, Loader2, MessageSquare } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import BeanVerifiedBadge from "@/components/community/BeanVerifiedBadge";
 export default function UserProfile() {
   const params = new URLSearchParams(window.location.search);
   const targetEmail = params.get("email");
+  const navigate = useNavigate();
 
   const [currentUser, setCurrentUser] = useState(null);
   const [targetUser, setTargetUser] = useState(null);
@@ -161,17 +162,29 @@ export default function UserProfile() {
         </div>
 
         {currentUser && currentUser.email !== targetEmail && (
-          <Button
-            onClick={handleFollow}
-            disabled={followLoading}
-            className={`w-full mb-6 rounded-2xl h-12 text-base font-semibold ${
-              isFollowing
-                ? "bg-white text-[#8B7355] border-2 border-[#8B7355] hover:bg-[#F5EBE8]"
-                : "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white hover:from-[#6B5744] hover:to-[#5C4A3A]"
-            }`}
-          >
-            {followLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : isFollowing ? "Following ✓" : "Follow"}
-          </Button>
+          <div className="flex gap-3 mb-6">
+            <Button
+              onClick={handleFollow}
+              disabled={followLoading}
+              className={`flex-1 rounded-2xl h-12 text-base font-semibold ${
+                isFollowing
+                  ? "bg-white text-[#8B7355] border-2 border-[#8B7355] hover:bg-[#F5EBE8]"
+                  : "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white hover:from-[#6B5744] hover:to-[#5C4A3A]"
+              }`}
+            >
+              {followLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : isFollowing ? "Following ✓" : "Follow"}
+            </Button>
+            {currentUser.role === "admin" && (
+              <Button
+                onClick={() => navigate(`/AdminChat?user=${encodeURIComponent(targetEmail)}`)}
+                variant="outline"
+                className="rounded-2xl h-12 px-4 border-2 border-[#8B7355] text-[#8B7355] hover:bg-[#F5EBE8]"
+                title="Open Admin Chat"
+              >
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
         )}
 
         <h3 className="font-bold text-[#5C4A3A] mb-4">Posts ({approvedPosts.length})</h3>
