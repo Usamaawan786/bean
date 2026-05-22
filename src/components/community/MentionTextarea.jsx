@@ -123,12 +123,14 @@ export default function MentionTextarea({ value, onChange, placeholder, classNam
   };
 
   const handleSelectUser = (user) => {
-    // Replace @query with @DisplayName (no spaces in tag)
+    // Replace @query with @DisplayName[email] so notification resolution is unambiguous
     const cursor = textareaRef.current?.selectionStart ?? value.length;
     const textBefore = value.slice(0, mentionStart);
     const textAfter = value.slice(cursor);
     const tagName = user.display_name.replace(/\s+/g, "");
-    const newVal = `${textBefore}@${tagName} ${textAfter}`;
+    // Encode email in tag so Community.jsx can resolve exactly who was mentioned
+    const tag = `@${tagName}[${user.email}]`;
+    const newVal = `${textBefore}${tag} ${textAfter}`;
 
     onChange(newVal);
     setShowSuggestions(false);
@@ -137,7 +139,7 @@ export default function MentionTextarea({ value, onChange, placeholder, classNam
     // Restore focus with correct cursor position
     setTimeout(() => {
       if (textareaRef.current) {
-        const newPos = textBefore.length + tagName.length + 2; // @ + name + space
+        const newPos = textBefore.length + tag.length + 1; // tag + space
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(newPos, newPos);
       }

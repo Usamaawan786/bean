@@ -24,11 +24,15 @@ const reactionEmojis = ["☕", "❤️", "😍", "👍", "🔥"];
 
 function renderContent(content) {
   if (!content) return null;
-  // Parse hashtags and mentions
-  const parts = content.split(/(#\w+|@\w+)/g);
+  // Split on encoded mentions @Name[email], plain @mentions, and #hashtags
+  const parts = content.split(/(#\w+|@\w+(?:\[[^\]]*\])?)/g);
   return parts.map((part, i) => {
     if (part.startsWith('#')) return <span key={i} className="text-[#8B7355] font-medium">{part}</span>;
-    if (part.startsWith('@')) return <span key={i} className="text-blue-500 font-medium">{part}</span>;
+    if (part.startsWith('@')) {
+      // Strip [email] encoding — just show @Name
+      const display = part.replace(/\[[^\]]*\]$/, "");
+      return <span key={i} className="text-blue-500 font-medium">{display}</span>;
+    }
     return part;
   });
 }
