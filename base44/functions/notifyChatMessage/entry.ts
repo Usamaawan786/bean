@@ -152,11 +152,20 @@ Deno.serve(async (req) => {
 
     // Fetch device tokens ONLY for the exact recipient emails
     // Strictly filter by user_email field — no fallbacks to created_by or any other field
+    // Build a Set of valid recipient emails for strict matching
+    const recipientSet = new Set(recipientEmails.map(e => e.toLowerCase()));
+
     const allTokenRecords = [];
     for (const email of recipientEmails) {
       const tokens = await base44.asServiceRole.entities.DeviceToken.filter({ user_email: email, is_active: true });
-      // Extra safety: ensure each token record's user_email exactly matches
-      const valid = tokens.filter(t => t.token && t.user_email === email);
+      // Triple-safety: token must exist, user_email must be non-null, and must exactly match the intended recipient
+      const valid = tokens.filter(t =>
+        t.token &&
+        t.user_email &&
+        typeof t.user_email === "string" &&
+        t.user_email.toLowerCase() === email.toLowerCase() &&
+        recipientSet.has(t.user_email.toLowerCase())
+      );
       allTokenRecords.push(...valid);
     }
 

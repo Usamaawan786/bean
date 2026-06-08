@@ -68,7 +68,18 @@ Deno.serve(async (req) => {
         if (existing.length > 0) {
             for (const record of existing) {
                 const updateData = { is_active: true, platform };
-                if (userEmail) updateData.user_email = userEmail;
+                // Only set/overwrite user_email if the new email matches or the record has none
+                // This prevents one user's token from being reassigned to another user's email
+                if (userEmail) {
+                    if (!record.user_email || record.user_email === userEmail) {
+                        updateData.user_email = userEmail;
+                    } else {
+                        // Different user on same device token — create a new record instead of overwriting
+                        console.log(`[saveDeviceToken] Token owned by ${record.user_email}, new user ${userEmail} — creating separate record`);
+                        await base44.asServiceRole.entities.DeviceToken.create({ token, platform, is_active: true, user_email: userEmail });
+                        continue;
+                    }
+                }
                 await base44.asServiceRole.entities.DeviceToken.update(record.id, updateData);
                 console.log('[saveDeviceToken] Updated existing record id:', record.id);
             }

@@ -23,5 +23,8 @@
       ],
       "description": "For cashiers: which counter they are assigned to (counter_1=Takeaway, counter_2=Dine In)"
     }
-  }
+  },
+  "required": [
+    "counter"
+  ]
 }
