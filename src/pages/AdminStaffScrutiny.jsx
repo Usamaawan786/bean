@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import CameraSurveillance from "@/components/admin/CameraSurveillance";
 import { format, formatDistanceToNow, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 
 const ROLE_COLORS = {
@@ -288,6 +289,9 @@ export default function AdminStaffScrutiny() {
       </div>
 
       <div className="max-w-7xl mx-auto px-5 py-6 pb-24 space-y-6">
+
+        {/* Camera Surveillance */}
+        <CameraSurveillance />
 
         {/* Overview KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

@@ -1,0 +1,68 @@
+{
+  "name": "CameraRecording",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Recording label (e.g. Counter 1, POS Screen)"
+    },
+    "video_url": {
+      "type": "string",
+      "description": "URL of the stored video file"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Duration of this recording chunk in seconds"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this recording chunk started"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this recording chunk ended"
+    },
+    "file_size_mb": {
+      "type": "number",
+      "description": "Approximate file size in MB"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "recording",
+        "uploading",
+        "stored",
+        "failed"
+      ],
+      "default": "recording"
+    }
+  },
+  "required": [
+    "label",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
