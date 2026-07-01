@@ -185,6 +185,9 @@ export default function AdminDashboard() {
               <Link to="/AdminRewardsRedemptions" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-3 py-2 rounded-xl border border-white/20 transition-colors">
                 <Gift className="h-4 w-4" /> Rewards
               </Link>
+              <Link to="/AdminLeadsDashboard" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-3 py-2 rounded-xl border border-white/20 transition-colors">
+                <Users className="h-4 w-4" /> Leads
+              </Link>
             </div>
           </div>
 

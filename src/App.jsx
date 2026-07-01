@@ -31,6 +31,7 @@ import AdminStaffScrutiny from './pages/AdminStaffScrutiny';
 import Welcome from './pages/Welcome';
 import Leaderboard from './pages/Leaderboard';
 import UserProfile from './pages/UserProfile';
+import AdminLeadsDashboard from './pages/AdminLeadsDashboard';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -85,6 +86,7 @@ function App() {
             <Route path="/OrderManager" element={<OrderManager />} />
             <Route path="/OrderHistory" element={<OrderHistory />} />
             <Route path="/AdminStaffScrutiny" element={<AdminStaffScrutiny />} />
+            <Route path="/AdminLeadsDashboard" element={<AdminLeadsDashboard />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
