@@ -32,6 +32,11 @@ import Welcome from './pages/Welcome';
 import Leaderboard from './pages/Leaderboard';
 import UserProfile from './pages/UserProfile';
 import AdminLeadsDashboard from './pages/AdminLeadsDashboard';
+import CustomerDirectory from './pages/CustomerDirectory';
+import RewardAnalytics from './pages/RewardAnalytics';
+import FlashDropManager from './pages/FlashDropManager';
+import SyrveIntegrationHub from './pages/SyrveIntegrationHub';
+import SurveillanceVault from './pages/SurveillanceVault';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -87,6 +92,11 @@ function App() {
             <Route path="/OrderHistory" element={<OrderHistory />} />
             <Route path="/AdminStaffScrutiny" element={<AdminStaffScrutiny />} />
             <Route path="/AdminLeadsDashboard" element={<AdminLeadsDashboard />} />
+            <Route path="/customer-directory" element={<CustomerDirectory />} />
+            <Route path="/reward-analytics" element={<RewardAnalytics />} />
+            <Route path="/flash-drop-manager" element={<FlashDropManager />} />
+            <Route path="/syrve-integration-hub" element={<SyrveIntegrationHub />} />
+            <Route path="/surveillance-vault" element={<SurveillanceVault />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

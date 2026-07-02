@@ -1,0 +1,63 @@
+{
+  "name": "SyrveSyncLog",
+  "type": "object",
+  "properties": {
+    "sync_type": {
+      "type": "string",
+      "enum": [
+        "connection_test",
+        "manual_sync",
+        "auto_sync"
+      ],
+      "default": "manual_sync",
+      "description": "Type of sync operation"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "not_configured"
+      ],
+      "description": "Result of the sync attempt"
+    },
+    "records_synced": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of records synced in this run"
+    },
+    "message": {
+      "type": "string",
+      "description": "Result or error message"
+    },
+    "triggered_by": {
+      "type": "string",
+      "description": "Email of the admin who triggered this sync"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
