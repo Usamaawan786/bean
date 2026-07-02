@@ -14,6 +14,8 @@ import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
 import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
+import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
+import { SlidersHorizontal } from "lucide-react";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
 import { generateTicketNumber, aggregateItemsToCart, diffCartAgainstBaseline } from "@/lib/openTicketUtils";
 
@@ -34,6 +36,7 @@ export default function AdminPOS() {
   const [ticketBaseline, setTicketBaseline] = useState([]); // cart snapshot at last save/load
   const [ticketKitchenOrder, setTicketKitchenOrder] = useState(null); // linked KDS record
   const [savingTicket, setSavingTicket] = useState(false);
+  const [modifierPickerItem, setModifierPickerItem] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -85,6 +88,10 @@ export default function AdminPOS() {
     setCart(cart.filter(item => item.id !== productId));
   };
 
+  const updateItemModifiers = (productId, modifierIds) => {
+    setCart(cart.map(item => item.id === productId ? { ...item, selected_modifiers: modifierIds } : item));
+  };
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const discountAmount = subtotal * (discountPct / 100);
   const discountedSubtotal = subtotal - discountAmount;
@@ -121,7 +128,8 @@ export default function AdminPOS() {
             product_id: item.id,
             product_name: item.name,
             quantity: item.quantity,
-            price: item.price
+            price: item.price,
+            selected_modifiers: item.selected_modifiers || []
           })),
           subtotal: discountedSubtotal,
           original_subtotal: subtotal,
@@ -535,31 +543,40 @@ export default function AdminPOS() {
                     <p className="text-[#8B7355] text-sm text-center py-8">No items in cart</p>
                   ) : (
                     cart.map(item => (
-                      <div key={item.id} className="flex items-center gap-2 bg-[#F5EBE8] rounded-xl p-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[#5C4A3A] text-sm truncate">{item.name}</p>
-                          <p className="text-xs text-[#8B7355]">PKR {item.price}</p>
-                        </div>
-                        <div className="flex items-center gap-1">
+                      <div key={item.id} className="bg-[#F5EBE8] rounded-xl p-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-[#5C4A3A] text-sm truncate">{item.name}</p>
+                            <p className="text-xs text-[#8B7355]">PKR {item.price}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="w-6 h-6 rounded-full bg-white flex items-center justify-center"
+                            >
+                              <Minus className="h-3 w-3 text-[#8B7355]" />
+                            </button>
+                            <span className="w-8 text-center text-sm font-medium text-[#5C4A3A]">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="w-6 h-6 rounded-full bg-white flex items-center justify-center"
+                            >
+                              <Plus className="h-3 w-3 text-[#8B7355]" />
+                            </button>
+                          </div>
                           <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="w-6 h-6 rounded-full bg-white flex items-center justify-center"
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-red-500 hover:text-red-700"
                           >
-                            <Minus className="h-3 w-3 text-[#8B7355]" />
-                          </button>
-                          <span className="w-8 text-center text-sm font-medium text-[#5C4A3A]">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="w-6 h-6 rounded-full bg-white flex items-center justify-center"
-                          >
-                            <Plus className="h-3 w-3 text-[#8B7355]" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-red-500 hover:text-red-700"
+                          onClick={() => setModifierPickerItem(item)}
+                          className="mt-2 flex items-center gap-1 text-xs text-[#8B7355] hover:text-[#5C4A3A]"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <SlidersHorizontal className="h-3 w-3" />
+                          {item.selected_modifiers?.length ? `${item.selected_modifiers.length} modifier(s)` : "Add modifiers"}
                         </button>
                       </div>
                     ))
@@ -656,6 +673,18 @@ export default function AdminPOS() {
           )}
         </Tabs>
       </div>
+
+      {/* Modifier Picker */}
+      <ModifierPickerSheet
+        open={!!modifierPickerItem}
+        onOpenChange={(open) => { if (!open) setModifierPickerItem(null); }}
+        product={modifierPickerItem}
+        selectedIds={modifierPickerItem?.selected_modifiers || []}
+        onChange={(ids) => {
+          updateItemModifiers(modifierPickerItem.id, ids);
+          setModifierPickerItem(item => item ? { ...item, selected_modifiers: ids } : item);
+        }}
+      />
 
       {/* Bill Generator Dialog */}
       {showBill && generatedBill && (

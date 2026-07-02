@@ -1,0 +1,118 @@
+{
+  "name": "InventoryItem",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Ingredient name"
+    },
+    "sku": {
+      "type": "string",
+      "description": "Stock keeping unit code"
+    },
+    "base_unit": {
+      "type": "string",
+      "enum": [
+        "grams",
+        "ml",
+        "pieces"
+      ],
+      "description": "The atomic unit stock is tracked in"
+    },
+    "storage_unit": {
+      "type": "string",
+      "description": "Purchasing unit, e.g. '1kg bag'"
+    },
+    "conversion_rate": {
+      "type": "number",
+      "default": 1,
+      "description": "Base units per one storage unit, e.g. 1000"
+    },
+    "current_stock_base_qty": {
+      "type": "number",
+      "default": 0,
+      "description": "Current stock, always in base unit"
+    },
+    "min_par_level_base_qty": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum par level in base unit"
+    },
+    "cost_per_base_unit": {
+      "type": "number",
+      "default": 0,
+      "description": "Reference cost per base unit (PKR)"
+    },
+    "moving_average_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Moving average cost per base unit (PKR), updated on every purchase"
+    },
+    "is_negative_flagged": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when stock has gone below zero"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Primary supplier"
+    },
+    "category": {
+      "type": "string",
+      "description": "Ingredient category"
+    }
+  },
+  "required": [
+    "name",
+    "base_unit"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

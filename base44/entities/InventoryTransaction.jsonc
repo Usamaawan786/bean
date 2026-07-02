@@ -1,0 +1,101 @@
+{
+  "name": "InventoryTransaction",
+  "type": "object",
+  "properties": {
+    "inventory_item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem"
+    },
+    "transaction_type": {
+      "type": "string",
+      "enum": [
+        "Purchase_Invoice",
+        "Sales_Deduction",
+        "Modifier_Credit",
+        "Modifier_Debit",
+        "Waste_Log",
+        "Batch_Production_Debit",
+        "Batch_Production_Credit",
+        "Manual_Audit_Adjustment"
+      ],
+      "description": "Type of ledger event"
+    },
+    "qty_change_base_unit": {
+      "type": "number",
+      "description": "Positive = stock in, negative = stock out"
+    },
+    "unit_cost_at_time": {
+      "type": "number",
+      "description": "Moving average cost at the moment of this transaction (PKR)"
+    },
+    "sale_id": {
+      "type": "string",
+      "description": "Reference to StoreSale, if applicable"
+    },
+    "batch_id": {
+      "type": "string",
+      "description": "Reference to CompositeBatch, if applicable"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the staff member or system that created this transaction"
+    },
+    "is_negative_flag": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this transaction pushed the item's stock below zero"
+    },
+    "error": {
+      "type": "string",
+      "description": "Error message if this transaction failed to fully process"
+    }
+  },
+  "required": [
+    "inventory_item_id",
+    "transaction_type",
+    "qty_change_base_unit"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

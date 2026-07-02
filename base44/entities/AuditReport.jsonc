@@ -1,0 +1,88 @@
+{
+  "name": "AuditReport",
+  "type": "object",
+  "properties": {
+    "inventory_item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem"
+    },
+    "item_name": {
+      "type": "string"
+    },
+    "unit": {
+      "type": "string"
+    },
+    "theoretical_stock": {
+      "type": "number"
+    },
+    "actual_count": {
+      "type": "number"
+    },
+    "variance": {
+      "type": "number"
+    },
+    "financial_impact_pkr": {
+      "type": "number"
+    },
+    "mac_used": {
+      "type": "number"
+    },
+    "audit_window_t0": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "audit_window_t1": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "auditor_email": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "inventory_item_id",
+    "theoretical_stock",
+    "actual_count",
+    "variance"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

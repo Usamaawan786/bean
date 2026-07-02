@@ -17,6 +17,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import { format, subDays, startOfDay, isAfter } from "date-fns";
+import NegativeBalancePanel from "@/components/admin/inventory/NegativeBalancePanel";
 
 const COLORS = ['#8B7355', '#6B5744', '#D4C4B0', '#C9B8A6', '#B5A593', '#A08975', '#5C4A3A'];
 
@@ -232,6 +233,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-5 py-6 space-y-6">
+        <NegativeBalancePanel compact />
+
         {/* Revenue Area Chart */}
         <Card className="border-[#E8DED8]">
           <CardHeader>

@@ -1,0 +1,69 @@
+{
+  "name": "PurchaseInvoice",
+  "type": "object",
+  "properties": {
+    "inventory_item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem"
+    },
+    "qty_received_storage_units": {
+      "type": "number",
+      "description": "Quantity received, in storage units"
+    },
+    "cost_per_storage_unit_pkr": {
+      "type": "number",
+      "description": "Cost per storage unit (PKR)"
+    },
+    "invoice_number": {
+      "type": "string"
+    },
+    "supplier": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "inventory_item_id",
+    "qty_received_storage_units",
+    "cost_per_storage_unit_pkr"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

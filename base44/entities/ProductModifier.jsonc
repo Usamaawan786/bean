@@ -1,0 +1,89 @@
+{
+  "name": "ProductModifier",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Reference to StoreProduct this modifier applies to"
+    },
+    "modifier_name": {
+      "type": "string",
+      "description": "Display name, e.g. 'Oat Milk substitution'"
+    },
+    "modifier_type": {
+      "type": "string",
+      "enum": [
+        "substitution",
+        "addition",
+        "removal"
+      ],
+      "description": "How this modifier affects ingredients"
+    },
+    "base_item_id": {
+      "type": "string",
+      "description": "InventoryItem to credit back (substitution/removal)"
+    },
+    "base_item_credit_qty": {
+      "type": "number",
+      "description": "Quantity to credit back in base units"
+    },
+    "replacement_item_id": {
+      "type": "string",
+      "description": "InventoryItem to debit (substitution/addition)"
+    },
+    "replacement_item_qty": {
+      "type": "number",
+      "description": "Quantity to debit in base units"
+    }
+  },
+  "required": [
+    "product_id",
+    "modifier_name",
+    "modifier_type"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    }
+  }
+}

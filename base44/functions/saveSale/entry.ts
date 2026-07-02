@@ -31,6 +31,11 @@ Deno.serve(async (req) => {
 
     const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
 
+    // Deduct recipe/modifier ingredients from inventory. Fire-and-forget so a
+    // failure here never blocks the sale from completing.
+    base44.asServiceRole.functions.invoke('deductSaleIngredients', { sale_id: sale.id })
+      .catch(err => console.error('Ingredient deduction failed:', err));
+
     // Process referral rewards if customer email exists
     if (saleData.scanned_by) {
       await base44.asServiceRole.functions.invoke('processSaleReferralRewards', {

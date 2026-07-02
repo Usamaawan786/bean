@@ -1,0 +1,92 @@
+{
+  "name": "Recipe",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Reference to StoreProduct (set when this row belongs to a menu item)"
+    },
+    "composite_batch_id": {
+      "type": "string",
+      "description": "Reference to CompositeBatch (set when this row is a raw ingredient of a batch)"
+    },
+    "inventory_item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem"
+    },
+    "required_qty_base_unit": {
+      "type": "number",
+      "description": "Quantity required, in base unit"
+    },
+    "loss_pct": {
+      "type": "number",
+      "default": 0,
+      "description": "Percentage loss/waste applied on top of required qty (0-100)"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "inventory_item_id",
+    "required_qty_base_unit"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    }
+  }
+}

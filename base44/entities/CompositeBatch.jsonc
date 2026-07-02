@@ -1,0 +1,89 @@
+{
+  "name": "CompositeBatch",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Batch name, e.g. 'Vanilla Syrup Batch'"
+    },
+    "output_inventory_item_id": {
+      "type": "string",
+      "description": "InventoryItem that this batch produces / stocks"
+    },
+    "batch_yield_qty_base_unit": {
+      "type": "number",
+      "description": "How many base units one production run yields"
+    },
+    "last_produced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this batch was last produced"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "output_inventory_item_id",
+    "batch_yield_qty_base_unit"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    }
+  }
+}

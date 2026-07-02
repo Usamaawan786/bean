@@ -38,6 +38,7 @@ import RewardAnalytics from './pages/RewardAnalytics';
 import FlashDropManager from './pages/FlashDropManager';
 import SyrveIntegrationHub from './pages/SyrveIntegrationHub';
 import SurveillanceVault from './pages/SurveillanceVault';
+import InventoryAudit from './pages/InventoryAudit';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -98,6 +99,7 @@ function App() {
             <Route path="/flash-drop-manager" element={<FlashDropManager />} />
             <Route path="/syrve-integration-hub" element={<SyrveIntegrationHub />} />
             <Route path="/surveillance-vault" element={<SurveillanceVault />} />
+            <Route path="/inventory-audit" element={<InventoryAudit />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
