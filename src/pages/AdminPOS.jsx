@@ -13,6 +13,7 @@ import ProductManager from "@/components/admin/ProductManager";
 import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
+import ReceiptLookup from "@/components/admin/pos/ReceiptLookup";
 import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
 import { SlidersHorizontal } from "lucide-react";
@@ -103,7 +104,9 @@ export default function AdminPOS() {
     if (completing) return;
     setCompleting(true);
     try {
-      const billNumber = "INV-" + Date.now().toString().slice(-8);
+      // Date-prefixed + timestamp + random suffix: sortable, human-readable, and
+      // collision-resistant so receipts stay unique and lookup-able for years.
+      const billNumber = "INV-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Date.now().toString().slice(-6) + Math.random().toString(36).slice(2, 5).toUpperCase();
       const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
 
       // Fetch reward settings for dynamic points calculation
@@ -413,6 +416,7 @@ export default function AdminPOS() {
           <TabsList className="bg-white border border-[#E8DED8]">
             <TabsTrigger value="pos">POS</TabsTrigger>
             <TabsTrigger value="open-tickets">Open Tickets</TabsTrigger>
+            <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
@@ -660,6 +664,10 @@ export default function AdminPOS() {
 
           <TabsContent value="open-tickets">
             <OpenTicketsPanel user={user} onResume={handleResumeTicket} />
+          </TabsContent>
+
+          <TabsContent value="receipts">
+            <ReceiptLookup />
           </TabsContent>
 
           <TabsContent value="launch-discount">

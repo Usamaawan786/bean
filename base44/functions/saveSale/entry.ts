@@ -29,6 +29,16 @@ Deno.serve(async (req) => {
       cashier_role: user.role,
     };
 
+    // Guarantee the receipt number is unique so historical sales can always be
+    // looked up by bill_number, even years later — retry with a fresh suffix on collision.
+    let bill_number = enrichedSale.bill_number;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const existing = await base44.asServiceRole.entities.StoreSale.filter({ bill_number });
+      if (existing.length === 0) break;
+      bill_number = `${enrichedSale.bill_number}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    }
+    enrichedSale.bill_number = bill_number;
+
     const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
 
     // Deduct recipe/modifier ingredients from inventory. Fire-and-forget so a

@@ -1,10 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
 import { ClipboardList, User, Ban, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { timeAgo } from "@/utils/timeUtils";
 
 export default function OpenTicketsPanel({ user, onResume }) {
   const queryClient = useQueryClient();
@@ -66,7 +66,7 @@ export default function OpenTicketsPanel({ user, onResume }) {
                 {ticket.ticket_number}
               </span>
               <span className="text-xs text-[#8B7355]">
-                {formatDistanceToNow(new Date(ticket.created_date), { addSuffix: true })}
+                {timeAgo(ticket.created_date)}
               </span>
             </div>
 
