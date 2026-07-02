@@ -14,14 +14,15 @@ Deno.serve(async (req) => {
     const q = query.trim();
 
     // Search across all-time sales history — no date limit — by exact receipt
-    // number or by phone/name match.
-    const [byBillNumber, byPhone] = await Promise.all([
+    // number, QR code id (bill scanning), or phone/name match.
+    const [byBillNumber, byQrCode, byPhone] = await Promise.all([
       base44.asServiceRole.entities.StoreSale.filter({ bill_number: q }),
+      base44.asServiceRole.entities.StoreSale.filter({ qr_code_id: q }),
       q.length >= 4 ? base44.asServiceRole.entities.StoreSale.filter({ customer_phone: q }) : Promise.resolve([])
     ]);
 
     const seen = new Set();
-    const sales = [...byBillNumber, ...byPhone].filter(s => {
+    const sales = [...byBillNumber, ...byQrCode, ...byPhone].filter(s => {
       if (seen.has(s.id)) return false;
       seen.add(s.id);
       return true;

@@ -6,9 +6,14 @@ import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
 
+const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
+const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
+
 export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [qrReady, setQrReady] = useState(!bill.qrCodeId); // true immediately if no QR needed
+  const [iosQrUrl, setIosQrUrl] = useState("");
+  const [androidQrUrl, setAndroidQrUrl] = useState("");
 
   const generatePDF = useCallback((qrUrl) => {
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -103,12 +108,32 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     }
 
     pdf.line(margin, y, 190, y);
+    y += 8;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.text("Don't have the Bean app yet? Download & scan:", 105, y, { align: "center" });
+    y += 6;
+    if (iosQrUrl) {
+      pdf.addImage(iosQrUrl, "PNG", 55, y, 32, 32);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.text("iOS", 71, y + 36, { align: "center" });
+    }
+    if (androidQrUrl) {
+      pdf.addImage(androidQrUrl, "PNG", 123, y, 32, 32);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.text("Android", 139, y + 36, { align: "center" });
+    }
+    y += 42;
+
+    pdf.line(margin, y, 190, y);
     y += 6;
     pdf.setFontSize(9);
     pdf.text("Thank you for your purchase!", 105, y, { align: "center" });
 
     pdf.save(`bill-${bill.billNumber}.pdf`);
-  }, [bill]);
+  }, [bill, iosQrUrl, androidQrUrl]);
 
   // Generate QR code if needed
   useEffect(() => {
@@ -119,6 +144,12 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
       });
     }
   }, [bill.qrCodeId]);
+
+  // Generate app download QR codes
+  useEffect(() => {
+    QRCode.toDataURL(IOS_APP_URL, { width: 160, margin: 1 }).then(setIosQrUrl);
+    QRCode.toDataURL(ANDROID_APP_URL, { width: 160, margin: 1 }).then(setAndroidQrUrl);
+  }, []);
 
   // Auto-download once QR is ready
   useEffect(() => {
@@ -245,6 +276,20 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
               <p className="text-xs text-[#8B7355] mt-2">Scan in the Bean Pakistan App to add points to your account
             </p>
             </div>}
+
+          <div className="text-center py-4 border-t border-[#E8DED8]">
+            <p className="text-xs font-semibold text-[#5C4A3A] mb-3">Don't have the Bean app yet? Download & scan</p>
+            <div className="flex items-center justify-center gap-6">
+              <div>
+                {iosQrUrl && <img src={iosQrUrl} alt="Download on iOS" className="w-24 h-24 mx-auto border-4 border-[#E8DED8] rounded-2xl" />}
+                <p className="text-xs text-[#8B7355] mt-1">iOS</p>
+              </div>
+              <div>
+                {androidQrUrl && <img src={androidQrUrl} alt="Download on Android" className="w-24 h-24 mx-auto border-4 border-[#E8DED8] rounded-2xl" />}
+                <p className="text-xs text-[#8B7355] mt-1">Android</p>
+              </div>
+            </div>
+          </div>
 
           <div className="text-center pt-3 border-t border-[#E8DED8]">
             <p className="text-sm text-[#8B7355] mb-1">Thank you for your purchase!</p>

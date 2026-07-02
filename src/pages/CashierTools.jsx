@@ -370,14 +370,19 @@ export default function CashierTools() {
   const handleScan = async (code) => {
     setLoadingQR(true);
     setQrSaleResult(null);
-    // Look up the StoreSale by qr_code_id
-    const sales = await base44.entities.StoreSale.filter({ qr_code_id: code });
-    if (sales.length === 0) {
-      toast.error("No sale found for this QR code");
-      setLoadingQR(false);
-      return;
+    try {
+      // StoreSale reads are admin-only via RLS, so cashiers/managers must go
+      // through this backend function (service role) to look up the sale.
+      const res = await base44.functions.invoke("lookupSaleReceipt", { query: code });
+      const sales = res.data?.sales || [];
+      if (sales.length === 0) {
+        toast.error("No sale found for this QR code");
+      } else {
+        setQrSaleResult(sales[0]);
+      }
+    } catch (err) {
+      toast.error("Failed to look up QR code: " + (err?.message || "Unknown error"));
     }
-    setQrSaleResult(sales[0]);
     setLoadingQR(false);
   };
 
