@@ -21,13 +21,17 @@ export default function LaunchDiscountPanel() {
     if (!query.trim()) return;
     setSearching(true);
     const q = query.trim().toLowerCase();
+    const qDigits = q.replace(/\D/g, "");
+    const matchesText = (...fields) => fields.some((f) => (f || "").toLowerCase().includes(q));
+    const matchesPhone = (phone) => qDigits.length >= 3 && (phone || "").replace(/\D/g, "").includes(qDigits);
+
     const [customers, waitlist] = await Promise.all([
       base44.entities.Customer.list("-created_date", 1000),
       base44.entities.WaitlistSignup.list("-created_date", 1000),
     ]);
 
     const fromCustomers = customers
-      .filter((c) => (c.display_name || "").toLowerCase().includes(q) || (c.phone || "").includes(q))
+      .filter((c) => matchesText(c.display_name, c.phone, c.user_email, c.created_by) || matchesPhone(c.phone))
       .map((c) => ({
         record_type: "customer",
         id: c.id,
@@ -39,7 +43,7 @@ export default function LaunchDiscountPanel() {
       }));
 
     const fromWaitlist = waitlist
-      .filter((w) => (w.full_name || "").toLowerCase().includes(q) || (w.phone || "").includes(q))
+      .filter((w) => matchesText(w.full_name, w.phone, w.email) || matchesPhone(w.phone))
       .map((w) => ({
         record_type: "waitlist",
         id: w.id,
@@ -87,7 +91,7 @@ export default function LaunchDiscountPanel() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
-          placeholder="Search by name or phone..."
+          placeholder="Search by name, phone, or email..."
           className="border-[#E8DED8]"
         />
         <Button onClick={search} disabled={searching} className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl px-5 gap-2">
