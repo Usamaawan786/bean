@@ -1,5 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+function roundQty(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -17,48 +21,42 @@ Deno.serve(async (req) => {
 
     const recipeRows = await base44.asServiceRole.entities.Recipe.filter({ composite_batch_id: batch_id });
 
-    for (const row of recipeRows) {
-      const deductQty = row.required_qty_base_unit * multiplier * (1 + (row.loss_pct || 0) / 100);
-      const item = await base44.asServiceRole.entities.InventoryItem.get(row.inventory_item_id);
-      if (!item) continue;
-      const newStock = (item.current_stock_base_qty || 0) - deductQty;
+    async function applyDelta(inventoryItemId, qtyChangeRaw, transactionType, notes) {
+      const qtyChange = roundQty(qtyChangeRaw);
+      const item = await base44.asServiceRole.entities.InventoryItem.get(inventoryItemId);
+      if (!item) return;
 
       await base44.asServiceRole.entities.InventoryTransaction.create({
-        inventory_item_id: row.inventory_item_id,
-        transaction_type: 'Batch_Production_Debit',
-        qty_change_base_unit: -deductQty,
+        inventory_item_id: inventoryItemId,
+        transaction_type: transactionType,
+        qty_change_base_unit: qtyChange,
         unit_cost_at_time: item.moving_average_cost || item.cost_per_base_unit || 0,
         batch_id,
         created_by: user.email,
-        is_negative_flag: newStock < 0,
-        notes: `Produced batch: ${batch.name}`
+        is_negative_flag: (item.current_stock_base_qty || 0) + qtyChange < 0,
+        notes
       });
 
-      await base44.asServiceRole.entities.InventoryItem.update(row.inventory_item_id, {
-        current_stock_base_qty: newStock,
-        is_negative_flagged: newStock < 0
-      });
+      // Atomic increment avoids lost updates if multiple batches/sales touch this item at once.
+      await base44.asServiceRole.entities.InventoryItem.updateMany(
+        { id: inventoryItemId },
+        { $inc: { current_stock_base_qty: qtyChange } }
+      );
+
+      const updated = await base44.asServiceRole.entities.InventoryItem.get(inventoryItemId);
+      const negativeFlag = roundQty(updated.current_stock_base_qty || 0) < 0;
+      if (negativeFlag !== updated.is_negative_flagged) {
+        await base44.asServiceRole.entities.InventoryItem.update(inventoryItemId, { is_negative_flagged: negativeFlag });
+      }
     }
 
-    const outputItem = await base44.asServiceRole.entities.InventoryItem.get(batch.output_inventory_item_id);
+    for (const row of recipeRows) {
+      const deductQty = row.required_qty_base_unit * multiplier * (1 + (row.loss_pct || 0) / 100);
+      await applyDelta(row.inventory_item_id, -deductQty, 'Batch_Production_Debit', `Produced batch: ${batch.name}`);
+    }
+
     const yieldQty = batch.batch_yield_qty_base_unit * multiplier;
-    const newOutputStock = (outputItem?.current_stock_base_qty || 0) + yieldQty;
-
-    await base44.asServiceRole.entities.InventoryTransaction.create({
-      inventory_item_id: batch.output_inventory_item_id,
-      transaction_type: 'Batch_Production_Credit',
-      qty_change_base_unit: yieldQty,
-      unit_cost_at_time: outputItem?.moving_average_cost || 0,
-      batch_id,
-      created_by: user.email,
-      is_negative_flag: newOutputStock < 0,
-      notes: `Produced batch: ${batch.name}`
-    });
-
-    await base44.asServiceRole.entities.InventoryItem.update(batch.output_inventory_item_id, {
-      current_stock_base_qty: newOutputStock,
-      is_negative_flagged: newOutputStock < 0
-    });
+    await applyDelta(batch.output_inventory_item_id, yieldQty, 'Batch_Production_Credit', `Produced batch: ${batch.name}`);
 
     await base44.asServiceRole.entities.CompositeBatch.update(batch_id, {
       last_produced_at: new Date().toISOString()

@@ -1,5 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+function roundQty(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -18,7 +22,7 @@ Deno.serve(async (req) => {
     if (!item) return Response.json({ error: 'Inventory item not found' }, { status: 404 });
 
     const conversionRate = item.conversion_rate || 1;
-    const receivedBaseQty = qty_received_storage_units * conversionRate;
+    const receivedBaseQty = roundQty(qty_received_storage_units * conversionRate);
     const newCostPerBase = cost_per_storage_unit_pkr / conversionRate;
 
     const currentStock = item.current_stock_base_qty || 0;
@@ -27,8 +31,6 @@ Deno.serve(async (req) => {
     const newMAC = totalQtyAfter > 0
       ? ((currentStock * oldMAC) + (receivedBaseQty * newCostPerBase)) / totalQtyAfter
       : newCostPerBase;
-
-    const newStock = currentStock + receivedBaseQty;
 
     await base44.asServiceRole.entities.PurchaseInvoice.create({
       inventory_item_id,
@@ -48,8 +50,18 @@ Deno.serve(async (req) => {
       notes: invoice_number ? `Invoice ${invoice_number}` : 'Purchase invoice'
     });
 
+    // Atomic increment for the stock quantity so a concurrent sale/audit on the same
+    // item can never be silently overwritten (lost update). The moving-average-cost
+    // recalculation above still relies on the stock value read at the start of this
+    // call; purchases are low-frequency/manual so this residual window is acceptable.
+    await base44.asServiceRole.entities.InventoryItem.updateMany(
+      { id: inventory_item_id },
+      { $inc: { current_stock_base_qty: receivedBaseQty } }
+    );
+
+    const updated = await base44.asServiceRole.entities.InventoryItem.get(inventory_item_id);
+    const newStock = roundQty(updated.current_stock_base_qty || 0);
     await base44.asServiceRole.entities.InventoryItem.update(inventory_item_id, {
-      current_stock_base_qty: newStock,
       moving_average_cost: newMAC,
       is_negative_flagged: newStock < 0,
       ...(supplier ? { supplier } : {})

@@ -1,5 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Round to 3 decimals to avoid floating point drift (e.g. 945.9999999999999) from
+// repeated increments/decrements.
+function roundQty(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -12,12 +18,11 @@ Deno.serve(async (req) => {
     const actor = sale.cashier_email || 'system';
     const results = [];
 
-    async function applyTransaction(inventoryItemId, qtyChange, transactionType, notes) {
+    async function applyTransaction(inventoryItemId, qtyChangeRaw, transactionType, notes) {
+      const qtyChange = roundQty(qtyChangeRaw);
       try {
         const item = await base44.asServiceRole.entities.InventoryItem.get(inventoryItemId);
         if (!item) return;
-        const newStock = (item.current_stock_base_qty || 0) + qtyChange;
-        const negativeFlag = newStock < 0;
 
         await base44.asServiceRole.entities.InventoryTransaction.create({
           inventory_item_id: inventoryItemId,
@@ -26,14 +31,23 @@ Deno.serve(async (req) => {
           unit_cost_at_time: item.moving_average_cost || item.cost_per_base_unit || 0,
           sale_id,
           created_by: actor,
-          is_negative_flag: negativeFlag,
+          is_negative_flag: (item.current_stock_base_qty || 0) + qtyChange < 0,
           notes
         });
 
-        await base44.asServiceRole.entities.InventoryItem.update(inventoryItemId, {
-          current_stock_base_qty: newStock,
-          is_negative_flagged: negativeFlag
-        });
+        // Atomic increment ($inc) instead of read-then-write: prevents the lost-update
+        // race condition when multiple sales deduct the same ingredient concurrently.
+        await base44.asServiceRole.entities.InventoryItem.updateMany(
+          { id: inventoryItemId },
+          { $inc: { current_stock_base_qty: qtyChange } }
+        );
+
+        const updated = await base44.asServiceRole.entities.InventoryItem.get(inventoryItemId);
+        const newStock = roundQty(updated.current_stock_base_qty || 0);
+        const negativeFlag = newStock < 0;
+        if (negativeFlag !== updated.is_negative_flagged) {
+          await base44.asServiceRole.entities.InventoryItem.update(inventoryItemId, { is_negative_flagged: negativeFlag });
+        }
 
         results.push({ inventory_item_id: inventoryItemId, qty_change: qtyChange, new_stock: newStock });
       } catch (e) {

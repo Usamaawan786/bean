@@ -1,5 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+function roundQty(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -44,9 +48,9 @@ Deno.serve(async (req) => {
       }
 
       const startingStock = (item.current_stock_base_qty || 0) - sumAfterT0;
-      const theoretical = startingStock + purchases + salesDeductions + waste;
-      const actual = Number(actual_count) || 0;
-      const variance = actual - theoretical;
+      const theoretical = roundQty(startingStock + purchases + salesDeductions + waste);
+      const actual = roundQty(Number(actual_count) || 0);
+      const variance = roundQty(actual - theoretical);
       const mac = item.moving_average_cost || item.cost_per_base_unit || 0;
       const financialImpact = Math.abs(variance) * mac;
 
@@ -66,20 +70,26 @@ Deno.serve(async (req) => {
       reports.push(report);
 
       if (variance !== 0) {
-        const newStock = (item.current_stock_base_qty || 0) + variance;
+        // Atomic increment avoids clobbering any sale/purchase that lands on this item
+        // between the read above and this write.
         await base44.asServiceRole.entities.InventoryTransaction.create({
           inventory_item_id,
           transaction_type: 'Manual_Audit_Adjustment',
           qty_change_base_unit: variance,
           unit_cost_at_time: mac,
           created_by: user.email,
-          is_negative_flag: newStock < 0,
+          is_negative_flag: (item.current_stock_base_qty || 0) + variance < 0,
           notes: `Audit adjustment ${t0} to ${t1}`
         });
-        await base44.asServiceRole.entities.InventoryItem.update(inventory_item_id, {
-          current_stock_base_qty: newStock,
-          is_negative_flagged: newStock < 0
-        });
+        await base44.asServiceRole.entities.InventoryItem.updateMany(
+          { id: inventory_item_id },
+          { $inc: { current_stock_base_qty: variance } }
+        );
+        const updated = await base44.asServiceRole.entities.InventoryItem.get(inventory_item_id);
+        const negativeFlag = roundQty(updated.current_stock_base_qty || 0) < 0;
+        if (negativeFlag !== updated.is_negative_flagged) {
+          await base44.asServiceRole.entities.InventoryItem.update(inventory_item_id, { is_negative_flagged: negativeFlag });
+        }
       }
     }
 
