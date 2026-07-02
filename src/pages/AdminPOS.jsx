@@ -13,6 +13,7 @@ import ProductManager from "@/components/admin/ProductManager";
 import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
+import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
 import { generateTicketNumber, aggregateItemsToCart, diffCartAgainstBaseline } from "@/lib/openTicketUtils";
 
@@ -331,6 +332,7 @@ export default function AdminPOS() {
   if (!user) return null;
 
   return (
+    <ScreenShareGate user={user}>
     <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#6B5744] text-white sticky top-0 z-10">
@@ -664,5 +666,6 @@ export default function AdminPOS() {
         />
       )}
     </div>
+    </ScreenShareGate>
   );
 }
