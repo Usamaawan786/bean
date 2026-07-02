@@ -1,9 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// Soft-launch 10% discount: valid only on July 10-12, 2026 (Asia/Karachi),
-// for app users / waitlist signups registered before July 12, 2026, max 3 uses each.
-const VALID_DATES = ['2026-07-10', '2026-07-11', '2026-07-12'];
-const ELIGIBILITY_CUTOFF = '2026-07-11T19:00:00.000Z'; // July 12 00:00 Asia/Karachi (UTC+5)
+// Soft-launch 10% discount: TEMPORARILY enabled early for testing, hard-closes
+// after July 12, 2026 11:59pm (Asia/Karachi). Max 3 uses each.
+const WINDOW_CLOSE = '2026-07-12T18:59:59.999Z'; // July 12 23:59:59.999 Asia/Karachi (UTC+5)
 const MAX_USES = 3;
 
 Deno.serve(async (req) => {
@@ -19,20 +18,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'record_type (customer|waitlist) and record_id are required' }, { status: 400 });
     }
 
-    // Enforce the valid redemption window (Asia/Karachi local date)
-    const todayKarachi = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Karachi' }).format(new Date());
-    if (!VALID_DATES.includes(todayKarachi)) {
-      return Response.json({ error: `This discount is only valid on July 10-12, 2026. Today (${todayKarachi}) is not eligible.` }, { status: 403 });
+    // Enforce the hard close after July 12, 2026 11:59pm Asia/Karachi
+    if (new Date() > new Date(WINDOW_CLOSE)) {
+      return Response.json({ error: 'The soft-launch discount window has closed (ended July 12, 2026 11:59pm).' }, { status: 403 });
     }
 
     const entityName = record_type === 'customer' ? 'Customer' : 'WaitlistSignup';
     const record = await base44.asServiceRole.entities[entityName].get(record_id);
     if (!record) {
       return Response.json({ error: 'Record not found' }, { status: 404 });
-    }
-
-    if (new Date(record.created_date) >= new Date(ELIGIBILITY_CUTOFF)) {
-      return Response.json({ error: 'This person registered on or after July 12, 2026 and is not eligible for the soft-launch discount.' }, { status: 403 });
     }
 
     const currentUses = record.launch_discount_uses || 0;
