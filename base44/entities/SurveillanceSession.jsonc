@@ -1,0 +1,95 @@
+{
+  "name": "SurveillanceSession",
+  "type": "object",
+  "properties": {
+    "staff_email": {
+      "type": "string",
+      "description": "Email of the staff member being monitored"
+    },
+    "staff_name": {
+      "type": "string",
+      "description": "Display name of the staff member"
+    },
+    "role": {
+      "type": "string",
+      "description": "Role of the staff member (cashier/manager)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "stopped_by_admin",
+        "ended"
+      ],
+      "default": "active",
+      "description": "active = recording is expected, stopped_by_admin = paused by an admin, ended = session closed"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this session started"
+    },
+    "last_heartbeat_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time the staff tab checked in"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this session was stopped/ended"
+    }
+  },
+  "required": [
+    "staff_email",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.staff_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
