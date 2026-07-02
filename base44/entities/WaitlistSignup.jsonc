@@ -57,6 +57,11 @@
       "type": "string",
       "format": "date-time",
       "description": "When promoted to EBA"
+    },
+    "launch_discount_uses": {
+      "type": "number",
+      "default": 0,
+      "description": "How many of the 3 soft-launch 10% discounts have been redeemed (July 10-12). Only ever changed by the redeemLaunchDiscount backend function."
     }
   },
   "required": [

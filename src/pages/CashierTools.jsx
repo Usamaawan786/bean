@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Html5Qrcode } from "html5-qrcode";
+import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 
 // ─── helpers ─────────────────────────────────────────────────
 const TIERS = { Bronze: "#CD7F32", Silver: "#9E9E9E", Gold: "#FFD700", Platinum: "#E5E4E2" };
@@ -415,6 +416,9 @@ export default function CashierTools() {
         {qrSaleResult && (
           <QRResultCard result={qrSaleResult} onClose={() => setQrSaleResult(null)} />
         )}
+
+        {/* Soft-Launch Discount */}
+        <LaunchDiscountPanel />
 
         {/* Reward Code Verifier */}
         <RewardCodeVerifier />

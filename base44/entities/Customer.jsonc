@@ -101,6 +101,11 @@
       "type": "boolean",
       "default": false,
       "description": "Official Bean account with verified blue tick"
+    },
+    "launch_discount_uses": {
+      "type": "number",
+      "default": 0,
+      "description": "How many of the 3 soft-launch 10% discounts have been redeemed (July 10-12). Only ever changed by the redeemLaunchDiscount backend function."
     }
   },
   "required": [],

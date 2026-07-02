@@ -1,0 +1,81 @@
+{
+  "name": "LaunchDiscountRedemption",
+  "type": "object",
+  "properties": {
+    "record_type": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "waitlist"
+      ],
+      "description": "Whether the discount was applied to a Customer or WaitlistSignup record"
+    },
+    "record_id": {
+      "type": "string",
+      "description": "ID of the Customer or WaitlistSignup record"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Email of the person who redeemed the discount"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Name of the person who redeemed the discount"
+    },
+    "redemption_number": {
+      "type": "number",
+      "description": "Which of the 3 uses this was (1, 2, or 3)"
+    },
+    "redeemed_by": {
+      "type": "string",
+      "description": "Email of the staff member (cashier/admin) who marked it"
+    }
+  },
+  "required": [
+    "record_type",
+    "record_id",
+    "redemption_number",
+    "redeemed_by"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

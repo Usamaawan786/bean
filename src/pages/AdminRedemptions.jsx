@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 
 const statusConfig = {
   pending: { label: "Valid – Not Claimed", color: "bg-green-100 text-green-700 border-green-200", icon: Clock },
@@ -294,6 +295,7 @@ export default function AdminRedemptions() {
         <div className="max-w-5xl mx-auto px-4 flex gap-1 py-2">
           {[
             { id: "discounts", label: "🏅 FM & EBA Discounts" },
+            { id: "launch", label: "🚀 Soft-Launch Discount" },
             { id: "codes", label: "🎁 Reward Codes" },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
@@ -349,6 +351,9 @@ export default function AdminRedemptions() {
             )}
           </>
         )}
+
+        {/* ─── Soft-Launch Discount Tab ─── */}
+        {tab === "launch" && <LaunchDiscountPanel />}
 
         {/* ─── Reward Codes Tab ─── */}
         {tab === "codes" && (
