@@ -1,0 +1,146 @@
+{
+  "name": "OpenTicket",
+  "type": "object",
+  "properties": {
+    "ticket_number": {
+      "type": "string",
+      "description": "Auto-generated ticket number, e.g. T-000123"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name (optional)"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Customer phone (optional)"
+    },
+    "order_type": {
+      "type": "string",
+      "enum": [
+        "dine_in",
+        "takeaway"
+      ],
+      "default": "dine_in",
+      "description": "Dine in or takeaway"
+    },
+    "counter": {
+      "type": "string",
+      "enum": [
+        "counter_1",
+        "counter_2"
+      ],
+      "default": "counter_1",
+      "description": "Which counter opened this ticket"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Paid",
+        "Voided"
+      ],
+      "default": "Open",
+      "description": "Current ticket status"
+    },
+    "opened_by": {
+      "type": "string",
+      "description": "Email of the staff member who opened this ticket"
+    },
+    "opened_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who opened this ticket"
+    },
+    "total_estimate": {
+      "type": "number",
+      "default": 0,
+      "description": "Running total estimate of all non-voided items on this ticket"
+    },
+    "sale_bill_number": {
+      "type": "string",
+      "description": "Linked StoreSale bill number, set when the ticket is checked out"
+    }
+  },
+  "required": [
+    "ticket_number",
+    "opened_by"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

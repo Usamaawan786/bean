@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield, Percent } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield, Percent, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -12,7 +12,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductManager from "@/components/admin/ProductManager";
 import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
-import { buildKitchenOrder } from "@/lib/kitchenOrderUtils";
+import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
+import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
+import { generateTicketNumber, aggregateItemsToCart, diffCartAgainstBaseline } from "@/lib/openTicketUtils";
 
 export default function AdminPOS() {
   const [user, setUser] = useState(null);
@@ -26,6 +28,11 @@ export default function AdminPOS() {
   const [orderType, setOrderType] = useState("dine_in"); // "dine_in" | "takeaway"
   const [counter, setCounter] = useState("counter_1");
   const [discountPct, setDiscountPct] = useState(0); // percentage discount 0-100
+  const [activeTab, setActiveTab] = useState("pos");
+  const [activeTicket, setActiveTicket] = useState(null); // OpenTicket being resumed, if any
+  const [ticketBaseline, setTicketBaseline] = useState([]); // cart snapshot at last save/load
+  const [ticketKitchenOrder, setTicketKitchenOrder] = useState(null); // linked KDS record
+  const [savingTicket, setSavingTicket] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -149,19 +156,32 @@ export default function AdminPOS() {
         });
       } catch (e) { /* analytics failure should not block sale */ }
 
-      // Send order to kitchen display system
-      try {
-        const kitchenOrder = buildKitchenOrder({
-          cart,
-          customerInfo,
-          billNumber,
-          orderType,
-          counter,
-          total,
-          paymentMethod
-        });
-        await base44.entities.KitchenOrder.create(kitchenOrder);
-      } catch (e) { /* kitchen order failure should not block sale */ }
+      // Send order to kitchen display system (skip if already sent progressively via open ticket)
+      if (!activeTicket) {
+        try {
+          const kitchenOrder = buildKitchenOrder({
+            cart,
+            customerInfo,
+            billNumber,
+            orderType,
+            counter,
+            total,
+            paymentMethod
+          });
+          await base44.entities.KitchenOrder.create(kitchenOrder);
+        } catch (e) { /* kitchen order failure should not block sale */ }
+      } else if (ticketKitchenOrder) {
+        try {
+          await base44.entities.KitchenOrder.update(ticketKitchenOrder.id, { bill_number: billNumber, payment_method: paymentMethod });
+        } catch (e) { /* kitchen order link failure should not block sale */ }
+      }
+
+      // Resolve the open ticket into this sale
+      if (activeTicket) {
+        try {
+          await base44.entities.OpenTicket.update(activeTicket.id, { status: "Paid", sale_bill_number: billNumber });
+        } catch (e) { /* ticket resolution failure should not block sale */ }
+      }
 
       const bill = {
         items: cart,
@@ -195,6 +215,115 @@ export default function AdminPOS() {
     setDiscountPct(0);
     setShowBill(false);
     setGeneratedBill(null);
+    setActiveTicket(null);
+    setTicketBaseline([]);
+    setTicketKitchenOrder(null);
+  };
+
+  const handleResumeTicket = async (ticket) => {
+    try {
+      const items = await base44.entities.OpenTicketItem.filter({ ticket_id: ticket.id });
+      const aggregated = aggregateItemsToCart(items, products);
+      setCart(aggregated);
+      setTicketBaseline(aggregated);
+      setCustomerInfo({ name: ticket.customer_name || "", phone: ticket.customer_phone || "" });
+      setOrderType(ticket.order_type || "dine_in");
+      setCounter(ticket.counter || "counter_1");
+      setActiveTicket(ticket);
+      const kOrders = await base44.entities.KitchenOrder.filter({ bill_number: ticket.ticket_number });
+      setTicketKitchenOrder(kOrders?.[0] || null);
+      setActiveTab("pos");
+    } catch (err) {
+      toast.error("Failed to load ticket: " + (err?.message || "Unknown error"));
+    }
+  };
+
+  const handleSaveOpenTicket = async () => {
+    if (cart.length === 0) {
+      toast.error("Add items to the cart first");
+      return;
+    }
+    if (savingTicket) return;
+    setSavingTicket(true);
+    try {
+      if (!activeTicket) {
+        const ticketNumber = generateTicketNumber();
+        const ticket = await base44.entities.OpenTicket.create({
+          ticket_number: ticketNumber,
+          customer_name: customerInfo.name || "",
+          customer_phone: customerInfo.phone || "",
+          order_type: orderType,
+          counter,
+          status: "Open",
+          opened_by: user.email,
+          opened_by_name: user.full_name || "",
+          total_estimate: total
+        });
+        await base44.entities.OpenTicketItem.bulkCreate(cart.map(item => ({
+          ticket_id: ticket.id,
+          product_id: item.id,
+          product_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          status: "Pending",
+          added_by: user.email,
+          added_by_name: user.full_name || ""
+        })));
+        try {
+          await syncTicketKitchenOrder({
+            base44, ticketNumber, deltaItems: cart, products,
+            orderType, counter, customerName: customerInfo.name, existingOrder: null
+          });
+        } catch (e) { /* KDS failure should not block ticket save */ }
+        toast.success(`Ticket ${ticketNumber} saved`);
+      } else {
+        const { increases, decreases } = diffCartAgainstBaseline(cart, ticketBaseline);
+        if (increases.length > 0) {
+          await base44.entities.OpenTicketItem.bulkCreate(increases.map(item => ({
+            ticket_id: activeTicket.id,
+            product_id: item.id,
+            product_name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            status: "Pending",
+            added_by: user.email,
+            added_by_name: user.full_name || ""
+          })));
+        }
+        for (const dec of decreases) {
+          const rows = await base44.entities.OpenTicketItem.filter({ ticket_id: activeTicket.id, product_id: dec.id });
+          let remaining = dec.quantity;
+          for (const row of rows.filter(r => r.status !== "Voided")) {
+            if (remaining <= 0) break;
+            await base44.entities.OpenTicketItem.update(row.id, { status: "Voided" });
+            remaining -= row.quantity;
+          }
+        }
+        await base44.entities.OpenTicket.update(activeTicket.id, {
+          customer_name: customerInfo.name || "",
+          customer_phone: customerInfo.phone || "",
+          order_type: orderType,
+          counter,
+          total_estimate: total
+        });
+        if (increases.length > 0) {
+          try {
+            const updated = await syncTicketKitchenOrder({
+              base44, ticketNumber: activeTicket.ticket_number, deltaItems: increases, products,
+              orderType, counter, customerName: customerInfo.name, existingOrder: ticketKitchenOrder
+            });
+            setTicketKitchenOrder(updated);
+          } catch (e) { /* KDS failure should not block ticket save */ }
+        }
+        toast.success(`Ticket ${activeTicket.ticket_number} updated`);
+      }
+      clearCart();
+      queryClient.invalidateQueries({ queryKey: ["open-tickets"] });
+    } catch (err) {
+      toast.error("Failed to save ticket: " + (err?.message || "Unknown error"));
+    } finally {
+      setSavingTicket(false);
+    }
   };
 
   const canManageProducts = ["admin", "super_admin", "manager"].includes(user?.role);
@@ -270,9 +399,10 @@ export default function AdminPOS() {
       </div>
 
       <div className="max-w-7xl mx-auto px-5 py-6 pb-24">
-        <Tabs defaultValue="pos" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-white border border-[#E8DED8]">
             <TabsTrigger value="pos">POS</TabsTrigger>
+            <TabsTrigger value="open-tickets">Open Tickets</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
@@ -314,6 +444,13 @@ export default function AdminPOS() {
                   <ShoppingCart className="h-5 w-5 text-[#8B7355]" />
                   <h2 className="font-semibold text-[#5C4A3A]">Current Sale</h2>
                 </div>
+
+                {activeTicket && (
+                  <div className="mb-4 px-3 py-2 rounded-xl bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium flex items-center justify-between">
+                    <span>Editing Ticket {activeTicket.ticket_number}</span>
+                    <button onClick={clearCart} className="underline">Cancel</button>
+                  </div>
+                )}
 
                 {/* Order Type */}
                 <div className="mb-4">
@@ -480,6 +617,15 @@ export default function AdminPOS() {
                         {completing ? "Processing..." : "Complete Sale & Print Bill"}
                       </Button>
                       <Button
+                        onClick={handleSaveOpenTicket}
+                        disabled={savingTicket}
+                        variant="outline"
+                        className="w-full rounded-xl border-[#8B7355] text-[#8B7355]"
+                      >
+                        {savingTicket ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ClipboardList className="h-4 w-4 mr-2" />}
+                        {activeTicket ? `Update Ticket ${activeTicket.ticket_number}` : "Save as Open Ticket"}
+                      </Button>
+                      <Button
                         onClick={clearCart}
                         variant="outline"
                         className="w-full rounded-xl border-[#E8DED8]"
@@ -491,6 +637,10 @@ export default function AdminPOS() {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="open-tickets">
+            <OpenTicketsPanel user={user} onResume={handleResumeTicket} />
           </TabsContent>
 
           <TabsContent value="launch-discount">
