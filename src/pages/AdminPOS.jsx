@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ProductManager from "@/components/admin/ProductManager";
 import BillGenerator from "@/components/admin/BillGenerator";
+import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import { buildKitchenOrder } from "@/lib/kitchenOrderUtils";
 
 export default function AdminPOS() {
@@ -281,6 +282,7 @@ export default function AdminPOS() {
         <Tabs defaultValue="pos" className="space-y-6">
           <TabsList className="bg-white border border-[#E8DED8]">
             <TabsTrigger value="pos">POS</TabsTrigger>
+            <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
 
@@ -512,6 +514,10 @@ export default function AdminPOS() {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="launch-discount">
+            <LaunchDiscountPanel />
           </TabsContent>
 
           {canManageProducts && (
