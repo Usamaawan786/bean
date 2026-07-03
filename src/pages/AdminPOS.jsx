@@ -105,9 +105,6 @@ export default function AdminPOS() {
     if (completing) return;
     setCompleting(true);
     try {
-      // Date-prefixed + timestamp + random suffix: sortable, human-readable, and
-      // collision-resistant so receipts stay unique and lookup-able for years.
-      const billNumber = "INV-" + new Date().toISOString().slice(0, 10).replace(/-/g, "") + "-" + Date.now().toString().slice(-6) + Math.random().toString(36).slice(2, 5).toUpperCase();
       const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
 
       // Fetch reward settings for dynamic points calculation
@@ -125,7 +122,6 @@ export default function AdminPOS() {
       // Use backend function (service role) to guarantee save
       const saveResp = await base44.functions.invoke('saveSale', {
         saleData: {
-          bill_number: billNumber,
           customer_name: customerInfo.name || null,
           customer_phone: customerInfo.phone || null,
           items: cart.map(item => ({
@@ -153,6 +149,9 @@ export default function AdminPOS() {
       if (!saveResp.data?.success) {
         throw new Error(saveResp.data?.error || 'Failed to save sale');
       }
+
+      // Backend auto-generates sequential bill number (A1, A2, ...)
+      const billNumber = saveResp.data.sale.bill_number;
 
       // Track analytics regardless of what happens next
       try {

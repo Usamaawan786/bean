@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -29,24 +29,35 @@ Deno.serve(async (req) => {
       cashier_role: user.role,
     };
 
-    // Guarantee the receipt number is unique so historical sales can always be
-    // looked up by bill_number, even years later — retry with a fresh suffix on collision.
-    let bill_number = enrichedSale.bill_number;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const existing = await base44.asServiceRole.entities.StoreSale.filter({ bill_number });
-      if (existing.length === 0) break;
-      bill_number = `${enrichedSale.bill_number}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+    // Auto-generate sequential bill number: A1, A2, A3, ...
+    const recentSales = await base44.asServiceRole.entities.StoreSale.list('-created_date', 20);
+    let maxNum = 0;
+    for (const sale of recentSales) {
+      const match = sale.bill_number?.match(/^A(\d+)$/);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (n > maxNum) maxNum = n;
+      }
     }
-    enrichedSale.bill_number = bill_number;
+
+    let billNumber = `A${maxNum + 1}`;
+
+    // Collision check (handles race conditions when two cashiers save simultaneously)
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const existing = await base44.asServiceRole.entities.StoreSale.filter({ bill_number: billNumber });
+      if (existing.length === 0) break;
+      maxNum++;
+      billNumber = `A${maxNum + 1}`;
+    }
+
+    enrichedSale.bill_number = billNumber;
 
     const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
 
     // Deduct recipe/modifier ingredients from inventory. Fire-and-forget so a
     // failure here never blocks the sale from completing.
-    // Old StoreProduct-based recipes:
     base44.asServiceRole.functions.invoke('deductSaleIngredients', { sale_id: sale.id })
       .catch(err => console.error('Ingredient deduction failed:', err));
-    // New MenuItem-based recipes (MenuItemRecipe + MenuModifierRecipe):
     base44.asServiceRole.functions.invoke('deductMenuRecipe', { sale_id: sale.id })
       .catch(err => console.error('Menu recipe deduction failed:', err));
 
