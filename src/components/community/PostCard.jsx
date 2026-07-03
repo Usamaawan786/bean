@@ -47,7 +47,7 @@ function renderContent(content, nameToEmail = {}) {
   });
 }
 
-export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit, onDelete }) {
+export default function PostCard({ post, currentUserEmail, currentUser, currentUserFollowing = [], currentUserSavedPosts = [], authorBadges = [], onLike, onReaction, onBlock, onReport, onFollow, onSave, onEdit, onDelete, autoOpenComments = false }) {
   // Use denormalized badges from the post itself; fall back to prop
   const badges = (post.author_badges && post.author_badges.length > 0) ? post.author_badges : authorBadges;
   const navigate = useNavigate();
@@ -100,6 +100,11 @@ export default function PostCard({ post, currentUserEmail, currentUser, currentU
     liveCountRef.current = count;
     setLiveCommentCount(count);
   }, []);
+
+  // Auto-expand comments when arriving from a comment/reply notification
+  useEffect(() => {
+    if (autoOpenComments) setShowComments(true);
+  }, [autoOpenComments]);
 
   const isFlagged = post.moderation_status === "flagged" || post.moderation_status === "pending";
   const hasReported = post.reported_by?.includes(currentUserEmail);

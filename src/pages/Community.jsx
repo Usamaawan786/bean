@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Users, Coffee, Star, Camera, Lightbulb, TrendingUp, Loader2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import NotificationBell from "@/components/community/NotificationBell";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -25,8 +26,12 @@ export default function Community() {
   const headerRef = useRef(null);
   const postRefs = useRef({});
 
-  // Read ?post= param on mount and scroll to it once posts load
-  const targetPostId = new URLSearchParams(window.location.search).get("post");
+  // Read ?post= (and ?openComments=) reactively so in-app notification clicks
+  // while already on this page still re-target the right post
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const targetPostId = searchParams.get("post");
+  const shouldOpenComments = searchParams.get("openComments") === "1";
 
   const queryClient = useQueryClient();
   const pendingLikes = useRef(new Set());
@@ -115,9 +120,22 @@ export default function Community() {
 
 
 
+  // A notification may link to a post outside the "Following"/"Saved" tab or
+  // outside the most recently loaded 50 posts — always switch to "All" and
+  // fetch the specific post directly so it's guaranteed to be reachable.
+  useEffect(() => {
+    if (targetPostId) setFeedTab("all");
+  }, [targetPostId]);
+
+  const { data: targetPostFetch = [] } = useQuery({
+    queryKey: ["community-target-post", targetPostId],
+    queryFn: () => base44.entities.CommunityPost.filter({ id: targetPostId }),
+    enabled: !!targetPostId,
+  });
+
   // Scroll to highlighted post when posts load
   useEffect(() => {
-    if (!targetPostId || !allPosts.length) return;
+    if (!targetPostId || !posts.length) return;
     setHighlightedPostId(targetPostId);
     setTimeout(() => {
       const el = postRefs.current[targetPostId];
@@ -127,7 +145,7 @@ export default function Community() {
       // Remove highlight after 3s
       setTimeout(() => setHighlightedPostId(null), 3000);
     }, 300);
-  }, [targetPostId, allPosts.length]);
+  }, [targetPostId, posts.length]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ["community-customers"],
@@ -161,7 +179,16 @@ export default function Community() {
   // Pinned posts first
   const pinnedPosts = feedFiltered.filter(p => p.is_pinned);
   const otherPosts = feedFiltered.filter(p => !p.is_pinned);
-  const posts = [...pinnedPosts, ...otherPosts];
+  let posts = [...pinnedPosts, ...otherPosts];
+
+  // Guarantee the notification-linked post is present even if it wasn't in
+  // the initial page of posts (respecting moderation/block filters)
+  if (targetPostId && !posts.some(p => p.id === targetPostId)) {
+    const fetched = targetPostFetch[0];
+    if (fetched && fetched.moderation_status !== "hidden" && fetched.moderation_status !== "removed" && !blockedUsers.includes(fetched.author_email)) {
+      posts = [fetched, ...posts];
+    }
+  }
 
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
@@ -484,6 +511,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
                     onSave={handleSavePost}
                     onEdit={(id, data) => editPostMutation.mutate({ id, data })}
                     onDelete={deletePostMutation.mutate}
+                    autoOpenComments={shouldOpenComments && targetPostId === post.id}
                     />
                 </motion.div>
               ))}

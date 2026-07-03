@@ -230,16 +230,16 @@ export default function NotificationBell({ userEmail }) {
                           markNotifRead(item);
                           setOpen(false);
                           const type = item.type;
-                          if ((type === "like" || type === "comment" || type === "reply") && item.post_id) {
-                            navigate(`/Community?post=${item.post_id}`);
-                          } else if (type === "follow" && item.from_email) {
+                          if (type === "follow" && item.from_email) {
                             navigate(`/UserProfile?email=${encodeURIComponent(item.from_email)}`);
                           } else if (type === "offer") {
                             navigate("/Rewards");
-                          } else if (type === "announcement") {
+                          } else if (type === "announcement" && !item.post_id) {
                             navigate("/Community");
                           } else if (item.post_id) {
-                            navigate(`/Community?post=${item.post_id}`);
+                            // comment/reply notifications also auto-expand that post's comments
+                            const openComments = (type === "comment" || type === "reply") ? "&openComments=1" : "";
+                            navigate(`/Community?post=${item.post_id}${openComments}`);
                           } else {
                             navigate("/Community");
                           }
