@@ -10,6 +10,10 @@ Deno.serve(async (req) => {
       return Response.json({ skip: true });
     }
 
+    let body = {};
+    try { body = await req.json(); } catch (e) { /* no body sent, plain heartbeat */ }
+    const { recording_active, interrupted } = body;
+
     const existing = await base44.asServiceRole.entities.SurveillanceSession.filter(
       { staff_email: user.email },
       "-created_date",
@@ -20,10 +24,15 @@ Deno.serve(async (req) => {
     let session;
 
     if (existing.length > 0 && existing[0].status !== "ended") {
-      await base44.asServiceRole.entities.SurveillanceSession.update(existing[0].id, {
-        last_heartbeat_at: nowIso
-      });
-      session = { ...existing[0], last_heartbeat_at: nowIso };
+      const updateData = { last_heartbeat_at: nowIso };
+      if (typeof recording_active === "boolean") updateData.recording_active = recording_active;
+      if (interrupted === true) {
+        updateData.recording_active = false;
+        updateData.last_interruption_at = nowIso;
+        updateData.interruption_count = (existing[0].interruption_count || 0) + 1;
+      }
+      await base44.asServiceRole.entities.SurveillanceSession.update(existing[0].id, updateData);
+      session = { ...existing[0], ...updateData };
     } else {
       session = await base44.asServiceRole.entities.SurveillanceSession.create({
         staff_email: user.email,
@@ -31,7 +40,9 @@ Deno.serve(async (req) => {
         role: user.role,
         status: "active",
         started_at: nowIso,
-        last_heartbeat_at: nowIso
+        last_heartbeat_at: nowIso,
+        recording_active: recording_active !== false,
+        interruption_count: interrupted === true ? 1 : 0
       });
     }
 

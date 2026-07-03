@@ -23,7 +23,7 @@ export default function SurveillanceSessionsPanel() {
   });
 
   const isLive = (s) =>
-    s.status === "active" && s.last_heartbeat_at && (Date.now() - new Date(s.last_heartbeat_at).getTime()) < 60000;
+    s.status === "active" && s.recording_active !== false && s.last_heartbeat_at && (Date.now() - new Date(s.last_heartbeat_at).getTime()) < 60000;
 
   // Merge every eligible staff member with their most recent session (if any),
   // so admins can start monitoring someone who has never opened the POS yet.
@@ -103,6 +103,11 @@ export default function SurveillanceSessionsPanel() {
                       }
                       {s?.last_heartbeat_at && ` · ${formatDistanceToNow(new Date(s.last_heartbeat_at), { addSuffix: true })}`}
                     </p>
+                    {s?.interruption_count > 0 && (
+                      <p className="text-xs text-amber-600 font-medium mt-0.5">
+                        ⚠ {s.interruption_count} sharing interruption{s.interruption_count > 1 ? "s" : ""}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {status === "not_started" || status === "ended" ? (

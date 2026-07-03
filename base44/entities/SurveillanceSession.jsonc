@@ -38,6 +38,21 @@
       "type": "string",
       "format": "date-time",
       "description": "When this session was stopped/ended"
+    },
+    "recording_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the client currently believes screen+mic recording is actively running"
+    },
+    "interruption_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many times screen/mic sharing was lost during this session"
+    },
+    "last_interruption_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the most recent sharing interruption occurred"
     }
   },
   "required": [
