@@ -1,8 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
+import { Capacitor } from "@capacitor/core";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { X, QrCode, AlertCircle, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+
+const isIOSNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+
+function dataUrlToFile(dataUrl, filename) {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(base64);
+  let n = binary.length;
+  const bytes = new Uint8Array(n);
+  while (n--) bytes[n] = binary.charCodeAt(n);
+  return new File([bytes], filename, { type: mime });
+}
 
 export default function QRScanner({ onScan, onClose }) {
   const onScanRef = useRef(onScan);
@@ -13,6 +27,51 @@ export default function QRScanner({ onScan, onClose }) {
 
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
   useEffect(() => () => { mountedRef.current = false; }, []);
+
+  const getScannerInstance = () => {
+    if (!qrScannerRef.current) {
+      qrScannerRef.current = new Html5Qrcode("qr-reader");
+    }
+    return qrScannerRef.current;
+  };
+
+  // Native iOS flow: bypasses WKWebView's unavailable getUserMedia entirely by using
+  // the native Capacitor Camera plugin, which reliably triggers the native iOS
+  // permission prompt on first use. The captured photo is then decoded with
+  // html5-qrcode's scanFile (no live video needed).
+  const takeNativePhoto = async () => {
+    if (!mountedRef.current) return;
+    setError("");
+    let photo;
+    try {
+      photo = await Camera.getPhoto({
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        quality: 90,
+      });
+    } catch (err) {
+      if (!mountedRef.current) return;
+      const msg = (err?.message || String(err)).toLowerCase();
+      if (msg.includes("cancel")) return; // user closed the camera, no error needed
+      if (msg.includes("permission") || msg.includes("denied")) {
+        setError("Camera access was denied. Please allow camera access when prompted, then tap Retry.");
+      } else {
+        setError("Could not access camera. Please check permissions and tap Retry.");
+      }
+      return;
+    }
+
+    try {
+      const file = dataUrlToFile(photo.dataUrl, "scan.jpg");
+      const scanner = getScannerInstance();
+      const decodedText = await scanner.scanFile(file, false);
+      if (!mountedRef.current) return;
+      onScanRef.current(decodedText);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setError("No QR code found — please try again.");
+    }
+  };
 
   const startScanning = async () => {
     if (!mountedRef.current) return;
@@ -104,6 +163,10 @@ export default function QRScanner({ onScan, onClose }) {
   };
 
   useEffect(() => {
+    // On iOS native, camera capture is only ever triggered by the user tapping
+    // "Start Scanning" (Camera.getPhoto requires a user gesture) — don't auto-start.
+    if (isIOSNative) return;
+
     // Delay start to let the modal animation finish and container render with dimensions
     const timer = setTimeout(startScanning, 700);
 
@@ -147,14 +210,19 @@ export default function QRScanner({ onScan, onClose }) {
         )}
 
         <div className="space-y-4">
-          {/* Container needs explicit min dimensions for html5-qrcode to initialize */}
+          {/* Container needs explicit min dimensions for html5-qrcode to initialize (web/Android live scan) */}
           <div
             id="qr-reader"
             className="rounded-2xl overflow-hidden border-4 border-[#E8DED8] bg-black"
-            style={{ minHeight: 300, width: "100%" }}
+            style={isIOSNative ? { display: "none" } : { minHeight: 300, width: "100%" }}
           />
 
-          {!isScanning ? (
+          {isIOSNative ? (
+            <Button onClick={takeNativePhoto} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl">
+              <QrCode className="h-4 w-4 mr-2" />
+              {error ? "Retry" : "Open Camera"}
+            </Button>
+          ) : !isScanning ? (
             <Button onClick={startScanning} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl">
               <RefreshCw className="h-4 w-4 mr-2" />
               {error ? "Retry" : "Start Scanning"}
