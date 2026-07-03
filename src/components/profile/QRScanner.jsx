@@ -42,6 +42,23 @@ export default function QRScanner({ onScan, onClose }) {
   const takeNativePhoto = async () => {
     if (!mountedRef.current) return;
     setError("");
+
+    try {
+      let permStatus = await Camera.checkPermissions();
+      if (permStatus.camera === "prompt" || permStatus.camera === "prompt-with-rationale") {
+        permStatus = await Camera.requestPermissions({ permissions: ["camera"] });
+      }
+      if (permStatus.camera !== "granted") {
+        if (!mountedRef.current) return;
+        setError("Camera access is disabled. Go to iOS Settings → BEAN Coffee → Camera and turn it on.");
+        return;
+      }
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setError("Could not access camera. Please check permissions and tap Retry.");
+      return;
+    }
+
     let photo;
     try {
       photo = await Camera.getPhoto({
