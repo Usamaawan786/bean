@@ -37,9 +37,23 @@ export default function QRScanner({ onScan, onClose }) {
     // Stop if already scanning before restarting
     try { if (scanner.isScanning) await scanner.stop(); } catch (e) { /* ignore */ }
 
+    // iOS WKWebView often throws OverconstrainedError on { facingMode: "environment" }
+    // when a device has multiple rear cameras (wide/ultra-wide/telephoto), since
+    // html5-qrcode applies it as an exact constraint. Enumerating cameras and
+    // starting by deviceId is far more reliable on iPhone (still works fine on
+    // Android/desktop too).
+    let cameraTarget = { facingMode: "environment" };
+    try {
+      const cameras = await Html5Qrcode.getCameras();
+      if (cameras && cameras.length) {
+        const backCamera = cameras.find((c) => /back|rear|environment/i.test(c.label || ""));
+        cameraTarget = (backCamera || cameras[cameras.length - 1]).id;
+      }
+    } catch (e) { /* fall back to facingMode below */ }
+
     try {
       await scanner.start(
-        { facingMode: "environment" },
+        cameraTarget,
         {
           fps: 10,
           qrbox: (viewfinderWidth, viewfinderHeight) => {
