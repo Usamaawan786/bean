@@ -37,53 +37,70 @@ export default function QRScanner({ onScan, onClose }) {
     // Stop if already scanning before restarting
     try { if (scanner.isScanning) await scanner.stop(); } catch (e) { /* ignore */ }
 
+    const scanConfig = {
+      fps: 10,
+      qrbox: (viewfinderWidth, viewfinderHeight) => {
+        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
+        return { width: Math.floor(size), height: Math.floor(size) };
+      },
+      aspectRatio: 1.0,
+    };
+    const onSuccess = async (decodedText) => {
+      try { await scanner.stop(); } catch (e) { /* ignore */ }
+      if (mountedRef.current) setIsScanning(false);
+      onScanRef.current(decodedText);
+    };
+
     // iOS WKWebView often throws OverconstrainedError on { facingMode: "environment" }
     // when a device has multiple rear cameras (wide/ultra-wide/telephoto), since
-    // html5-qrcode applies it as an exact constraint. Enumerating cameras and
-    // starting by deviceId is far more reliable on iPhone (still works fine on
-    // Android/desktop too).
+    // html5-qrcode applies it as an exact constraint. Requesting the camera with an
+    // "ideal" (not exact) constraint first triggers the native permission prompt
+    // exactly once, then we resolve the concrete rear deviceId for html5-qrcode —
+    // this is far more reliable on iPhone and still works fine on Android/desktop.
     let cameraTarget = { facingMode: "environment" };
     try {
-      const cameras = await Html5Qrcode.getCameras();
-      if (cameras && cameras.length) {
-        const backCamera = cameras.find((c) => /back|rear|environment/i.test(c.label || ""));
-        cameraTarget = (backCamera || cameras[cameras.length - 1]).id;
-      }
-    } catch (e) { /* fall back to facingMode below */ }
-
-    try {
-      await scanner.start(
-        cameraTarget,
-        {
-          fps: 10,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.7;
-            return { width: Math.floor(size), height: Math.floor(size) };
-          },
-          aspectRatio: 1.0,
-        },
-        async (decodedText) => {
-          try { await scanner.stop(); } catch (e) { /* ignore */ }
-          if (mountedRef.current) setIsScanning(false);
-          onScanRef.current(decodedText);
-        },
-        () => {}
-      );
-      if (mountedRef.current) setIsScanning(true);
-    } catch (err) {
+      const probeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+      const deviceId = probeStream.getVideoTracks()[0]?.getSettings()?.deviceId;
+      probeStream.getTracks().forEach((t) => t.stop());
+      if (deviceId) cameraTarget = deviceId;
+    } catch (e) {
+      // Permission truly denied — no point trying further constraint variations
       if (!mountedRef.current) return;
-      const msg = (err?.message || String(err)).toLowerCase();
+      const msg = (e?.message || String(e)).toLowerCase();
       if (msg.includes("permission") || msg.includes("notallowed") || msg.includes("denied")) {
-        setError("Camera access denied. Please allow camera permission in your browser or device settings, then tap Retry.");
-      } else if (msg.includes("notfounderror") || msg.includes("no camera") || msg.includes("requested device not found")) {
-        setError("No camera found on this device.");
-      } else if (msg.includes("notreadableerror") || msg.includes("could not start") || msg.includes("already in use")) {
-        setError("Camera is busy. Close other apps using the camera and tap Retry.");
-      } else {
-        setError("Could not access camera. Please check permissions and tap Retry.");
+        setError("Camera access was denied. Please allow camera access when prompted, then tap Retry.");
+        setIsScanning(false);
+        return;
       }
-      setIsScanning(false);
+      // Any other error (e.g. no camera) — fall through and let scanner.start below report it
     }
+
+    // Try the resolved target first, then automatically fall back through progressively
+    // looser constraints — no manual user action required for these fallbacks.
+    const attempts = [cameraTarget, { facingMode: "environment" }, { video: true }];
+    let lastErr = null;
+    for (const target of attempts) {
+      try {
+        await scanner.start(target, scanConfig, onSuccess, () => {});
+        if (mountedRef.current) setIsScanning(true);
+        return;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+
+    if (!mountedRef.current) return;
+    const msg = (lastErr?.message || String(lastErr)).toLowerCase();
+    if (msg.includes("permission") || msg.includes("notallowed") || msg.includes("denied")) {
+      setError("Camera access was denied. Please allow camera access when prompted, then tap Retry.");
+    } else if (msg.includes("notfounderror") || msg.includes("no camera") || msg.includes("requested device not found")) {
+      setError("No camera found on this device.");
+    } else if (msg.includes("notreadableerror") || msg.includes("could not start") || msg.includes("already in use")) {
+      setError("Camera is busy. Close other apps using the camera and tap Retry.");
+    } else {
+      setError("Could not access camera. Please check permissions and tap Retry.");
+    }
+    setIsScanning(false);
   };
 
   useEffect(() => {
