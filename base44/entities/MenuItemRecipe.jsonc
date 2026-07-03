@@ -1,0 +1,86 @@
+{
+  "name": "MenuItemRecipe",
+  "type": "object",
+  "properties": {
+    "menu_item_id": {
+      "type": "string",
+      "description": "FK to MenuItem"
+    },
+    "inventory_item_id": {
+      "type": "string",
+      "description": "FK to InventoryItem"
+    },
+    "net_weight_required": {
+      "type": "number",
+      "description": "Net amount in base unit (grams/ml/pieces)"
+    },
+    "waste_percentage_multiplier": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Multiplier for waste e.g. 1.05 = 5% waste"
+    }
+  },
+  "required": [
+    "menu_item_id",
+    "inventory_item_id",
+    "net_weight_required"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    }
+  }
+}

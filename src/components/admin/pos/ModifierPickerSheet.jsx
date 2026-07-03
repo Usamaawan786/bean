@@ -6,8 +6,10 @@ import { Check } from "lucide-react";
 
 export default function ModifierPickerSheet({ open, onOpenChange, product, selectedIds = [], onChange }) {
   const { data: modifiers = [] } = useQuery({
-    queryKey: ["product-modifiers-pos", product?.id],
-    queryFn: () => base44.entities.ProductModifier.filter({ product_id: product.id }),
+    queryKey: ["modifiers-pos", product?.id, product?._isMenuItem],
+    queryFn: () => product?._isMenuItem
+      ? base44.entities.MenuModifier.filter({ menu_item_id: product.id })
+      : base44.entities.ProductModifier.filter({ product_id: product.id }),
     enabled: !!product && open
   });
 
@@ -33,8 +35,8 @@ export default function ModifierPickerSheet({ open, onOpenChange, product, selec
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 text-left transition-all ${active ? "border-[#8B7355] bg-[#F5EBE8]" : "border-[#E8DED8] bg-white"}`}
                 >
                   <div>
-                    <p className="text-sm font-medium text-[#5C4A3A]">{m.modifier_name}</p>
-                    <p className="text-xs text-[#8B7355] capitalize">{m.modifier_type}</p>
+                    <p className="text-sm font-medium text-[#5C4A3A]">{m.modifier_name || m.name}</p>
+                    <p className="text-xs text-[#8B7355] capitalize">{m.modifier_type || (m.price_delta ? `+PKR ${m.price_delta}` : "modifier")}</p>
                   </div>
                   {active && <Check className="h-4 w-4 text-[#8B7355]" />}
                 </button>

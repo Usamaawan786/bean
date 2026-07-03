@@ -16,6 +16,7 @@ import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
 import ReceiptLookup from "@/components/admin/pos/ReceiptLookup";
 import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
+import POSCategoryNav from "@/components/admin/pos/POSCategoryNav";
 import { SlidersHorizontal } from "lucide-react";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
 import { generateTicketNumber, aggregateItemsToCart, diffCartAgainstBaseline } from "@/lib/openTicketUtils";
@@ -423,34 +424,7 @@ export default function AdminPOS() {
 
           <TabsContent value="pos" className="space-y-6">
             <div className="grid lg:grid-cols-3 gap-6">
-              {/* Products Section */}
-              <div className="lg:col-span-2 space-y-4">
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="border-[#E8DED8]"
-                />
-
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {filteredProducts.map(product => (
-                    <motion.button
-                      key={product.id}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => addToCart(product)}
-                      className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-left hover:border-[#8B7355] transition-colors"
-                    >
-                      {product.image_url && (
-                        <img src={product.image_url} alt={product.name} className="w-full h-32 object-cover rounded-xl mb-3" />
-                      )}
-                      <h3 className="font-semibold text-[#5C4A3A] text-sm">{product.name}</h3>
-                      <p className="text-[#8B7355] text-xs mt-1">{product.category}</p>
-                      <p className="font-bold text-[#5C4A3A] mt-2">PKR {product.price.toFixed(2)}</p>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+              <POSCategoryNav onAddToCart={addToCart} />
 
               {/* Cart Section */}
               <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 h-fit sticky top-24">
@@ -676,7 +650,14 @@ export default function AdminPOS() {
 
           {canManageProducts && (
             <TabsContent value="products">
-              <ProductManager isStoreProducts={true} />
+              <div className="bg-white rounded-2xl border border-[#E8DED8] p-8 text-center">
+                <Package className="h-12 w-12 text-[#C9B8A6] mx-auto mb-3" />
+                <h3 className="font-semibold text-[#5C4A3A] mb-2">Catalog Management</h3>
+                <p className="text-sm text-[#8B7355] mb-4">Manage your menu categories, items, recipes, and modifiers in the Inventory Engine</p>
+                <Link to={createPageUrl("AdminInventory")}>
+                  <Button className="bg-[#8B7355] hover:bg-[#6B5744]"><Package className="h-4 w-4 mr-2" /> Open Catalog Manager</Button>
+                </Link>
+              </div>
             </TabsContent>
           )}
         </Tabs>

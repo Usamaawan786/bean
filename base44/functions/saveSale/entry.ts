@@ -43,8 +43,12 @@ Deno.serve(async (req) => {
 
     // Deduct recipe/modifier ingredients from inventory. Fire-and-forget so a
     // failure here never blocks the sale from completing.
+    // Old StoreProduct-based recipes:
     base44.asServiceRole.functions.invoke('deductSaleIngredients', { sale_id: sale.id })
       .catch(err => console.error('Ingredient deduction failed:', err));
+    // New MenuItem-based recipes (MenuItemRecipe + MenuModifierRecipe):
+    base44.asServiceRole.functions.invoke('deductMenuRecipe', { sale_id: sale.id })
+      .catch(err => console.error('Menu recipe deduction failed:', err));
 
     // Process referral rewards if customer email exists
     if (saleData.scanned_by) {

@@ -1,0 +1,71 @@
+{
+  "name": "MenuModifier",
+  "type": "object",
+  "properties": {
+    "menu_item_id": {
+      "type": "string",
+      "description": "FK to MenuItem this modifier belongs to"
+    },
+    "name": {
+      "type": "string"
+    },
+    "price_delta": {
+      "type": "number",
+      "default": 0,
+      "description": "PKR add-on price adjustment"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "required": [
+    "menu_item_id",
+    "name"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    }
+  }
+}

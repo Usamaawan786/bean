@@ -9,10 +9,12 @@ import RecipesTab from "@/components/admin/inventory/RecipesTab";
 import ModifiersTab from "@/components/admin/inventory/ModifiersTab";
 import BatchesTab from "@/components/admin/inventory/BatchesTab";
 import NegativeBalancePanel from "@/components/admin/inventory/NegativeBalancePanel";
+import CatalogTab from "@/components/admin/catalog/CatalogTab";
+import DemandForecastTab from "@/components/admin/inventory/DemandForecastTab";
 
 export default function AdminInventory() {
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState("ingredients");
+  const [activeTab, setActiveTab] = useState("catalog");
 
   useEffect(() => {
     const loadUser = async () => {
@@ -49,16 +51,20 @@ export default function AdminInventory() {
         <NegativeBalancePanel />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-4 w-full bg-white rounded-xl p-1">
+          <TabsList className="grid grid-cols-6 w-full bg-white rounded-xl p-1">
+            <TabsTrigger value="catalog">Catalog</TabsTrigger>
             <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
             <TabsTrigger value="recipes">Recipes</TabsTrigger>
             <TabsTrigger value="modifiers">Modifiers</TabsTrigger>
             <TabsTrigger value="batches">Batches</TabsTrigger>
+            <TabsTrigger value="forecast">Forecast</TabsTrigger>
           </TabsList>
+          <TabsContent value="catalog" className="mt-4"><CatalogTab /></TabsContent>
           <TabsContent value="ingredients" className="mt-4"><IngredientsTab /></TabsContent>
           <TabsContent value="recipes" className="mt-4"><RecipesTab /></TabsContent>
           <TabsContent value="modifiers" className="mt-4"><ModifiersTab /></TabsContent>
           <TabsContent value="batches" className="mt-4"><BatchesTab /></TabsContent>
+          <TabsContent value="forecast" className="mt-4"><DemandForecastTab /></TabsContent>
         </Tabs>
       </div>
     </div>
