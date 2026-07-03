@@ -7,7 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, PackagePlus, AlertTriangle, Edit2 } from "lucide-react";
+import { Plus, PackagePlus, AlertTriangle, Edit2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+
+function FieldLabel({ text, help }) {
+  return (
+    <div className="flex items-center gap-1">
+      <Label>{text}</Label>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger type="button" className="cursor-help"><HelpCircle className="h-3.5 w-3.5 text-[#C9B8A6]" /></TooltipTrigger>
+          <TooltipContent className="max-w-[220px] text-xs">{help}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
+}
 import { toast } from "sonner";
 
 const emptyForm = { name: "", sku: "", base_unit: "grams", storage_unit: "", conversion_rate: "1", min_par_level_base_qty: "0", cost_per_base_unit: "0", supplier: "", category: "" };
@@ -124,14 +139,14 @@ export default function IngredientsTab() {
         <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingItem ? "Edit Ingredient" : "Add Ingredient"}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-3">
-            <div><Label>Name</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required /></div>
+            <div><FieldLabel text="Name" help="The ingredient's name, e.g. Condensed milk." /><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required /></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>SKU</Label><Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} /></div>
-              <div><Label>Category</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
+              <div><FieldLabel text="SKU" help="Your own internal stock code. Optional." /><Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} /></div>
+              <div><FieldLabel text="Category" help="Grouping label, e.g. Dairy, Syrups." /><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Base Unit</Label>
+                <FieldLabel text="Base Unit" help="The smallest unit stock is tracked in. All recipes and deductions use this unit." />
                 <Select value={form.base_unit} onValueChange={v => setForm(f => ({ ...f, base_unit: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -141,15 +156,15 @@ export default function IngredientsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Storage Unit</Label><Input placeholder="e.g. 1kg bag" value={form.storage_unit} onChange={e => setForm(f => ({ ...f, storage_unit: e.target.value }))} /></div>
+              <div><FieldLabel text="Storage Unit" help="How you buy/store it, e.g. 1kg bag. Used on the Log Purchase form." /><Input placeholder="e.g. 1kg bag" value={form.storage_unit} onChange={e => setForm(f => ({ ...f, storage_unit: e.target.value }))} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Conversion Rate</Label><Input type="number" step="0.01" value={form.conversion_rate} onChange={e => setForm(f => ({ ...f, conversion_rate: e.target.value }))} required /></div>
-              <div><Label>Min Par (base unit)</Label><Input type="number" step="0.01" value={form.min_par_level_base_qty} onChange={e => setForm(f => ({ ...f, min_par_level_base_qty: e.target.value }))} /></div>
+              <div><FieldLabel text="Conversion Rate" help="How many Base Units are in one Storage Unit. E.g. a 1kg bag = 1000 grams, so this is 1000." /><Input type="number" step="0.01" value={form.conversion_rate} onChange={e => setForm(f => ({ ...f, conversion_rate: e.target.value }))} required /></div>
+              <div><FieldLabel text="Min Par (base unit)" help="Low-stock threshold. Item shows a 'Low' badge once stock drops to or below this." /><Input type="number" step="0.01" value={form.min_par_level_base_qty} onChange={e => setForm(f => ({ ...f, min_par_level_base_qty: e.target.value }))} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Cost / Base Unit (PKR)</Label><Input type="number" step="0.01" value={form.cost_per_base_unit} onChange={e => setForm(f => ({ ...f, cost_per_base_unit: e.target.value }))} /></div>
-              <div><Label>Supplier</Label><Input value={form.supplier} onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))} /></div>
+              <div><FieldLabel text="Cost / Base Unit (PKR)" help="Reference cost per gram/ml/piece, used to value stock before any purchases are logged." /><Input type="number" step="0.01" value={form.cost_per_base_unit} onChange={e => setForm(f => ({ ...f, cost_per_base_unit: e.target.value }))} /></div>
+              <div><FieldLabel text="Supplier" help="Default vendor name for this ingredient." /><Input value={form.supplier} onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))} /></div>
             </div>
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" className="flex-1" onClick={() => setShowDialog(false)}>Cancel</Button>

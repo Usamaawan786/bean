@@ -18,6 +18,7 @@ export default function MenuItemDrawer({ item, open, onClose, onSaved, categorie
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
+  const [recipeEdits, setRecipeEdits] = useState({});
 
   useEffect(() => {
     if (item) setForm({ name: item.name || "", description: item.description || "", base_price: item.base_price ?? "", tax_rate: item.tax_rate ?? "0.17", category_id: item.category_id || "", is_available: item.is_available !== false, image_url: item.image_url || "" });
@@ -57,7 +58,11 @@ export default function MenuItemDrawer({ item, open, onClose, onSaved, categorie
     await base44.entities.MenuItemRecipe.create({ menu_item_id: item.id, inventory_item_id: inventoryItems[0]?.id || "", net_weight_required: 0, waste_percentage_multiplier: 1.0 });
     refetchRecipes();
   };
-  const updateRecipe = async (id, field, value) => { await base44.entities.MenuItemRecipe.update(id, { [field]: value }); refetchRecipes(); };
+  const updateRecipe = async (id, field, value) => {
+    setRecipeEdits(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+    await base44.entities.MenuItemRecipe.update(id, { [field]: value });
+    refetchRecipes();
+  };
   const deleteRecipe = async (id) => { await base44.entities.MenuItemRecipe.delete(id); refetchRecipes(); };
 
   const addModifier = async () => {
@@ -121,9 +126,9 @@ export default function MenuItemDrawer({ item, open, onClose, onSaved, categorie
                   </Select>
                 </div>
                 <div className="col-span-2 text-xs text-center text-[#8B7355]">{getUnit(r.inventory_item_id)}</div>
-                <div className="col-span-2"><Input type="number" step="0.01" value={r.net_weight_required} onChange={e => updateRecipe(r.id, 'net_weight_required', parseFloat(e.target.value) || 0)} className="h-8 text-xs border-[#E8DED8]" /></div>
-                <div className="col-span-2"><Input type="number" step="0.01" value={r.waste_percentage_multiplier} onChange={e => updateRecipe(r.id, 'waste_percentage_multiplier', parseFloat(e.target.value) || 1)} className="h-8 text-xs border-[#E8DED8]" /></div>
-                <div className="col-span-1 text-xs text-[#5C4A3A] font-semibold text-right">{((r.net_weight_required || 0) * (r.waste_percentage_multiplier || 1)).toFixed(1)}</div>
+                <div className="col-span-2"><Input type="number" step="0.01" value={recipeEdits[r.id]?.net_weight_required ?? r.net_weight_required} onChange={e => updateRecipe(r.id, 'net_weight_required', parseFloat(e.target.value) || 0)} className="h-8 text-xs border-[#E8DED8]" /></div>
+                <div className="col-span-2"><Input type="number" step="0.01" value={recipeEdits[r.id]?.waste_percentage_multiplier ?? r.waste_percentage_multiplier} onChange={e => updateRecipe(r.id, 'waste_percentage_multiplier', parseFloat(e.target.value) || 1)} className="h-8 text-xs border-[#E8DED8]" /></div>
+                <div className="col-span-1 text-xs text-[#5C4A3A] font-semibold text-right">{((recipeEdits[r.id]?.net_weight_required ?? r.net_weight_required ?? 0) * (recipeEdits[r.id]?.waste_percentage_multiplier ?? r.waste_percentage_multiplier ?? 1)).toFixed(2)}</div>
                 <div className="col-span-1 flex justify-end"><button onClick={() => deleteRecipe(r.id)} className="text-red-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button></div>
               </div>
             ))}
