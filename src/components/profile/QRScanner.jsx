@@ -6,8 +6,6 @@ import { X, QrCode, AlertCircle, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-const isIOSNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
-
 function dataUrlToFile(dataUrl, filename) {
   const [header, base64] = dataUrl.split(",");
   const mime = header.match(/:(.*?);/)[1];
@@ -19,6 +17,9 @@ function dataUrlToFile(dataUrl, filename) {
 }
 
 export default function QRScanner({ onScan, onClose }) {
+  // Compute at render time — module-scope check runs before Capacitor's
+  // native bridge is ready and always returns false.
+  const isNative = Capacitor.isNativePlatform();
   const onScanRef = useRef(onScan);
   const qrScannerRef = useRef(null);
   const mountedRef = useRef(true);
@@ -35,7 +36,7 @@ export default function QRScanner({ onScan, onClose }) {
     return qrScannerRef.current;
   };
 
-  // Native iOS flow: bypasses WKWebView's unavailable getUserMedia entirely by using
+  // Native flow: bypasses WKWebView's unavailable getUserMedia entirely by using
   // the native Capacitor Camera plugin, which reliably triggers the native iOS
   // permission prompt on first use. The captured photo is then decoded with
   // html5-qrcode's scanFile (no live video needed).
@@ -44,41 +45,15 @@ export default function QRScanner({ onScan, onClose }) {
     setError("");
 
     try {
-      let permStatus = await Camera.checkPermissions();
-      if (permStatus.camera === "prompt" || permStatus.camera === "prompt-with-rationale") {
-        permStatus = await Camera.requestPermissions({ permissions: ["camera"] });
-      }
-      if (permStatus.camera !== "granted") {
-        if (!mountedRef.current) return;
-        setError("Camera access is disabled. Go to iOS Settings → BEAN Coffee → Camera and turn it on.");
-        return;
-      }
-    } catch (err) {
-      if (!mountedRef.current) return;
-      setError("Could not access camera. Please check permissions and tap Retry.");
-      return;
-    }
-
-    let photo;
-    try {
-      photo = await Camera.getPhoto({
+      // Let Camera.getPhoto handle permissions internally — calling
+      // requestPermissions separately consumes the iOS user-gesture context.
+      const photo = await Camera.getPhoto({
         resultType: CameraResultType.DataUrl,
         source: CameraSource.Camera,
         quality: 90,
       });
-    } catch (err) {
-      if (!mountedRef.current) return;
-      const msg = (err?.message || String(err)).toLowerCase();
-      if (msg.includes("cancel")) return; // user closed the camera, no error needed
-      if (msg.includes("permission") || msg.includes("denied")) {
-        setError("Camera access was denied. Please allow camera access when prompted, then tap Retry.");
-      } else {
-        setError("Could not access camera. Please check permissions and tap Retry.");
-      }
-      return;
-    }
+      if (!photo?.dataUrl) return;
 
-    try {
       const file = dataUrlToFile(photo.dataUrl, "scan.jpg");
       const scanner = getScannerInstance();
       const decodedText = await scanner.scanFile(file, false);
@@ -86,7 +61,13 @@ export default function QRScanner({ onScan, onClose }) {
       onScanRef.current(decodedText);
     } catch (err) {
       if (!mountedRef.current) return;
-      setError("No QR code found — please try again.");
+      const msg = (err?.message || String(err)).toLowerCase();
+      if (msg.includes("cancel") || msg.includes("user cancelled")) return;
+      if (msg.includes("qr") || msg.includes("no multi")) {
+        setError("No QR code found — please try again.");
+      } else {
+        setError("Could not access camera. Please check permissions and tap Retry.");
+      }
     }
   };
 
@@ -188,9 +169,9 @@ export default function QRScanner({ onScan, onClose }) {
   };
 
   useEffect(() => {
-    // On iOS native, camera capture is only ever triggered by the user tapping
-    // "Start Scanning" (Camera.getPhoto requires a user gesture) — don't auto-start.
-    if (isIOSNative) return;
+    // On native, camera capture is only ever triggered by the user tapping
+    // "Open Camera" (Camera.getPhoto requires a user gesture) — don't auto-start.
+    if (isNative) return;
 
     // Delay start to let the modal animation finish and container render with dimensions
     const timer = setTimeout(startScanning, 700);
@@ -239,10 +220,10 @@ export default function QRScanner({ onScan, onClose }) {
           <div
             id="qr-reader"
             className="rounded-2xl overflow-hidden border-4 border-[#E8DED8] bg-black"
-            style={isIOSNative ? { display: "none" } : { minHeight: 300, width: "100%" }}
+            style={isNative ? { display: "none" } : { minHeight: 300, width: "100%" }}
           />
 
-          {isIOSNative ? (
+          {isNative ? (
             <Button onClick={takeNativePhoto} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl">
               <QrCode className="h-4 w-4 mr-2" />
               {error ? "Retry" : "Open Camera"}
