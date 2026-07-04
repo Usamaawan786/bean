@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Image, X, Loader2, Video, BarChart2, Plus, Trash2 } from "lucide-react";
+import { Send, Image as ImageIcon, X, Loader2, Video, BarChart2, Plus, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import MentionTextarea from "./MentionTextarea";
 import { toast } from "sonner";
@@ -58,7 +58,7 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
   // compression fails (e.g. unsupported format like HEIC on some browsers).
   const compressImage = (file, maxDim = 1280, quality = 0.78) => {
     return new Promise((resolve) => {
-      const img = new Image();
+      const img = document.createElement("img");
       const url = URL.createObjectURL(file);
       const cleanup = () => URL.revokeObjectURL(url);
       const timeout = setTimeout(() => { cleanup(); resolve(file); }, 8000);
@@ -130,15 +130,15 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
       const photo = await Camera.getPhoto({
         quality: 80,
         allowEditing: false,
-        resultType: CameraResultType.Uri,
+        resultType: CameraResultType.DataUrl,
         source,
         saveToGallery: false,
       });
-      if (!photo?.webPath) return;
-      // Fetch the native file URI directly as a Blob — avoids the slow
-      // base64 decode + byte-by-byte copy that bogged down large photos.
-      const response = await fetch(photo.webPath);
-      const blob = await response.blob();
+      if (!photo?.dataUrl) return;
+      // Convert data-URL to Blob via fetch — fast native implementation
+      const response = await fetch(photo.dataUrl);
+      const rawBlob = await response.blob();
+      const blob = await compressImage(rawBlob);
       const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${photo.format || 'jpg'}`);
       setImageUrl(url);
       toast.success("Photo uploaded!");
@@ -300,7 +300,7 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
             >
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-[#F5EBE8] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Image className="h-8 w-8 text-[#8B7355]" />
+                  <ImageIcon className="h-8 w-8 text-[#8B7355]" />
                 </div>
                 <h3 className="text-xl font-bold text-[#5C4A3A] mb-2">Community Guidelines</h3>
                 <p className="text-sm text-[#8B7355] leading-relaxed">
@@ -408,7 +408,7 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
                   disabled={isUploadingImage || !!videoUrl}
                   className={`flex items-center gap-1 transition-colors ${videoUrl ? "text-[#E8DED8] cursor-not-allowed" : "text-[#C9B8A6] hover:text-[#8B7355]"}`}
                 >
-                  {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Image className="h-4 w-4" />}
+                  {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
                   <span className="text-xs">Photo</span>
                 </button>
 
