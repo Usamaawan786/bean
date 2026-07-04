@@ -52,6 +52,29 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
     return file_url;
   };
 
+  // Compress + downscale images on the client before upload — dramatically
+  // reduces upload time on mobile, especially for high-megapixel phone photos.
+  const compressImage = (file, maxDim = 1280, quality = 0.78) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim; }
+          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Compression failed")), "image/jpeg", quality);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not load image")); };
+      img.src = url;
+    });
+  };
+
   const doCapturePhoto = async () => {
     if (isUploadingImage) return;
 
@@ -62,11 +85,12 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
       input.accept = "image/*";
       input.onchange = async (e) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) { setIsUploadingImage(false); return; }
         setIsUploadingImage(true);
         try {
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          setImageUrl(file_url);
+          const blob = await compressImage(file);
+          const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.jpg`);
+          setImageUrl(url);
           toast.success("Photo uploaded!");
         } catch {
           toast.error("Failed to upload photo. Please try again.");
@@ -97,18 +121,15 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
       const photo = await Camera.getPhoto({
         quality: 80,
         allowEditing: false,
-        resultType: CameraResultType.Base64,
+        resultType: CameraResultType.Uri,
         source,
         saveToGallery: false,
       });
-      if (!photo?.base64String) return;
-      const mimeType = photo.format === 'png' ? 'image/png' : 'image/jpeg';
-      const byteCharacters = atob(photo.base64String);
-      const byteArray = new Uint8Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteArray[i] = byteCharacters.charCodeAt(i);
-      }
-      const blob = new Blob([byteArray], { type: mimeType });
+      if (!photo?.webPath) return;
+      // Fetch the native file URI directly as a Blob — avoids the slow
+      // base64 decode + byte-by-byte copy that bogged down large photos.
+      const response = await fetch(photo.webPath);
+      const blob = await response.blob();
       const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${photo.format || 'jpg'}`);
       setImageUrl(url);
       toast.success("Photo uploaded!");
@@ -147,20 +168,33 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
         setVideoUrl(url);
         toast.success("Video uploaded!");
       } else {
-        // Web fallback: file input
+        // Web fallback: file input — manage loading state inside onchange
+        // (the finally below must NOT reset it, or the spinner vanishes before
+        // the file is even picked and upload failures go unnoticed).
+        setIsUploadingVideo(false); // undo the early set from the top of the fn
         const input = document.createElement("input");
         input.type = "file";
         input.accept = "video/*";
         input.onchange = async (e) => {
           const file = e.target.files[0];
-          if (!file) { setIsUploadingVideo(false); return; }
-          const { file_url } = await base44.integrations.Core.UploadFile({ file });
-          setVideoUrl(file_url);
-          toast.success("Video uploaded!");
-          setIsUploadingVideo(false);
+          if (!file) return;
+          if (file.size > 50 * 1024 * 1024) {
+            toast.error("Video is too large (max 50MB). Try a shorter clip.");
+            return;
+          }
+          setIsUploadingVideo(true);
+          try {
+            const { file_url } = await base44.integrations.Core.UploadFile({ file });
+            setVideoUrl(file_url);
+            toast.success("Video uploaded!");
+          } catch {
+            toast.error("Failed to upload video. Please try again.");
+          } finally {
+            setIsUploadingVideo(false);
+          }
         };
         input.click();
-        return; // don't hit finally yet
+        return; // skip the finally's reset — onchange handles it
       }
     } catch (error) {
       const msg = error?.message || String(error);
