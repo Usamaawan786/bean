@@ -53,24 +53,33 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
   };
 
   // Compress + downscale images on the client before upload — dramatically
-  // reduces upload time on mobile, especially for high-megapixel phone photos.
+  // Compress + downscale images on the client before upload — dramatically
+  // reduces upload time on mobile. Falls back to the original file if
+  // compression fails (e.g. unsupported format like HEIC on some browsers).
   const compressImage = (file, maxDim = 1280, quality = 0.78) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
+      const cleanup = () => URL.revokeObjectURL(url);
+      const timeout = setTimeout(() => { cleanup(); resolve(file); }, 8000);
       img.onload = () => {
-        URL.revokeObjectURL(url);
-        let { width, height } = img;
-        if (width > maxDim || height > maxDim) {
-          if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim; }
-          else { width = Math.round(width * maxDim / height); height = maxDim; }
+        clearTimeout(timeout);
+        cleanup();
+        try {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim; }
+            else { width = Math.round(width * maxDim / height); height = maxDim; }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width; canvas.height = height;
+          canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+          canvas.toBlob(blob => resolve(blob || file), "image/jpeg", quality);
+        } catch {
+          resolve(file);
         }
-        const canvas = document.createElement("canvas");
-        canvas.width = width; canvas.height = height;
-        canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Compression failed")), "image/jpeg", quality);
       };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not load image")); };
+      img.onerror = () => { clearTimeout(timeout); cleanup(); resolve(file); };
       img.src = url;
     });
   };
@@ -206,8 +215,9 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
     }
   };
 
-  const handleImageClick = () => withTermsCheck(doCapturePhoto);
-  const handleVideoClick = () => withTermsCheck(doVideoFromGallery);
+  // Uploads open the picker immediately — terms check is only on the Post button.
+  const handleImageClick = () => doCapturePhoto();
+  const handleVideoClick = () => doVideoFromGallery();
 
   const togglePollMode = () => {
     setIsPollMode(p => !p);
