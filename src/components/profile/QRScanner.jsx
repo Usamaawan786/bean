@@ -127,20 +127,28 @@ export default function QRScanner({ onScan, onClose }) {
       onScanRef.current(decodedText);
     };
 
-    // iOS WKWebView often throws OverconstrainedError on { facingMode: "environment" }
-    // when a device has multiple rear cameras (wide/ultra-wide/telephoto), since
-    // html5-qrcode applies it as an exact constraint. Requesting the camera with an
-    // "ideal" (not exact) constraint first triggers the native permission prompt
-    // exactly once, then we resolve the concrete rear deviceId for html5-qrcode —
-    // this is far more reliable on iPhone and still works fine on Android/desktop.
+    // Guard: some browsers (e.g. insecure context / older iOS Safari) expose no
+    // mediaDevices API at all — surface a clear message instead of a generic crash.
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+      setError("Camera isn't supported in this browser. Try the Bean app on a device with a camera.");
+      setIsScanning(false);
+      return;
+    }
+
+    // Probe with the simplest possible constraint ({ video: true }) to trigger the
+    // iOS Safari permission prompt reliably. Complex facingMode:{ideal:...} syntax
+    // throws an unrecognized OverconstrainedError on iOS Safari, which previously
+    // fell through to a generic "Could not access camera" message. After the probe
+    // we still resolve a rear deviceId when available for html5-qrcode.
     let cameraTarget = { facingMode: "environment" };
     try {
-      const probeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
-      const deviceId = probeStream.getVideoTracks()[0]?.getSettings()?.deviceId;
+      const probeStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const track = probeStream.getVideoTracks()[0];
+      const settings = track?.getSettings?.() || {};
+      const deviceId = settings.deviceId;
       probeStream.getTracks().forEach((t) => t.stop());
       if (deviceId) cameraTarget = deviceId;
     } catch (e) {
-      // Permission truly denied — no point trying further constraint variations
       if (!mountedRef.current) return;
       const msg = (e?.message || String(e)).toLowerCase();
       if (msg.includes("permission") || msg.includes("notallowed") || msg.includes("denied")) {
@@ -148,7 +156,7 @@ export default function QRScanner({ onScan, onClose }) {
         setIsScanning(false);
         return;
       }
-      // Any other error (e.g. no camera) — fall through and let scanner.start below report it
+      // Other errors (no camera, insecure context, etc.) — fall through to attempts
     }
 
     // Try the resolved target first, then automatically fall back through progressively
