@@ -133,20 +133,6 @@ export default function Community() {
     enabled: !!targetPostId,
   });
 
-  // Scroll to highlighted post when posts load
-  useEffect(() => {
-    if (!targetPostId || !posts.length) return;
-    setHighlightedPostId(targetPostId);
-    setTimeout(() => {
-      const el = postRefs.current[targetPostId];
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      // Remove highlight after 3s
-      setTimeout(() => setHighlightedPostId(null), 3000);
-    }, 300);
-  }, [targetPostId, posts.length]);
-
   const { data: customers = [] } = useQuery({
     queryKey: ["community-customers"],
     queryFn: () => base44.entities.Customer.list("-created_date", 500),
@@ -189,6 +175,20 @@ export default function Community() {
       posts = [fetched, ...posts];
     }
   }
+
+  // Scroll to highlighted post when posts load (must run after `posts` is computed)
+  useEffect(() => {
+    if (!targetPostId || !posts.length) return;
+    setHighlightedPostId(targetPostId);
+    setTimeout(() => {
+      const el = postRefs.current[targetPostId];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setTimeout(() => setHighlightedPostId(null), 3000);
+    }, 300);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetPostId, posts.length]);
 
   const createPostMutation = useMutation({
     mutationFn: async (postData) => {
