@@ -111,7 +111,7 @@ export default function QRScanner({ onScan, onClose }) {
     // Guard: some browsers (e.g. insecure context / older iOS Safari) expose no
     // mediaDevices API at all — surface a clear message instead of a generic crash.
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
-      setError("Camera isn't supported in this browser. Try the Bean app on a device with a camera.");
+      setError("Camera isn't supported in this browser. If you installed the app via TestFlight, please update to the latest build.");
       setIsScanning(false);
       return;
     }
