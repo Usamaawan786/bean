@@ -17,9 +17,13 @@ function dataUrlToFile(dataUrl, filename) {
 }
 
 export default function QRScanner({ onScan, onClose }) {
-  // Compute at render time — module-scope check runs before Capacitor's
-  // native bridge is ready and always returns false.
-  const isNative = Capacitor.isNativePlatform();
+  // Detect native platform AFTER mount. Capacitor's bridge may not be fully
+  // ready during the first render, so isNativePlatform() can return false
+  // inside the iOS app shell — routing the user into the web getUserMedia
+  // path, which fails inside WKWebView with "Camera isn't supported".
+  // Checking once mounted ensures the bridge is initialised.
+  const [isNative, setIsNative] = useState(false);
+  useEffect(() => { setIsNative(Capacitor.isNativePlatform()); }, []);
   const onScanRef = useRef(onScan);
   const qrScannerRef = useRef(null);
   const mountedRef = useRef(true);
@@ -111,6 +115,13 @@ export default function QRScanner({ onScan, onClose }) {
     // Guard: some browsers (e.g. insecure context / older iOS Safari) expose no
     // mediaDevices API at all — surface a clear message instead of a generic crash.
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
+      // WKWebView (the iOS app shell) exposes no mediaDevices API. If we're
+      // actually inside the Capacitor native shell, use the Camera plugin
+      // instead — covers any case where the native detection was a false
+      // negative at render time.
+      if (Capacitor.isNativePlatform()) {
+        return takeNativePhoto();
+      }
       setError("Camera isn't supported in this browser. If you installed the app via TestFlight, please update to the latest build.");
       setIsScanning(false);
       return;
@@ -182,7 +193,7 @@ export default function QRScanner({ onScan, onClose }) {
         if (qrScannerRef.current?.isScanning) qrScannerRef.current.stop();
       } catch (e) { /* ignore */ }
     };
-  }, []);
+  }, [isNative]);
 
   const handleClose = async () => {
     try {

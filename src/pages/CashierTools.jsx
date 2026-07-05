@@ -28,7 +28,8 @@ function EBABadge() {
 
 // ─── QR Scanner section ───────────────────────────────────────
 function QRScannerSection({ onScanResult }) {
-  const isNative = Capacitor.isNativePlatform();
+  const [isNative, setIsNative] = useState(false);
+  useEffect(() => { setIsNative(Capacitor.isNativePlatform()); }, []);
   const [scanning, setScanning] = useState(false);
   const [manualCode, setManualCode] = useState("");
   const scannerRef = useRef(null);
