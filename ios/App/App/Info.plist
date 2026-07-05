@@ -51,13 +51,13 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera to scan QR codes and take photos for posts.</string>
+	<string>BEAN Coffee uses the camera to scan QR codes on your receipts and award loyalty reward points. No photos or video are stored.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to upload photos and videos to the community.</string>
+	<string>BEAN Coffee accesses your photo library so you can upload photos and videos to the community feed.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>We need access to your photo library to save photos.</string>
+	<string>BEAN Coffee can save receipt scans and edited photos to your photo library.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We need access to your microphone for video uploads.</string>
+	<string>BEAN Coffee uses the microphone when recording video posts for the community feed.</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
