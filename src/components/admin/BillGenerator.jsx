@@ -6,7 +6,6 @@ import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
 import ThermalReceipt, { ThermalPrintStyles } from "@/components/admin/ThermalReceipt";
-import { BEAN_LOGO_BASE64 } from "@/components/admin/beanLogoBase64";
 
 const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
 const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
@@ -45,8 +44,17 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
       doc.setFont("courier", "normal");
       doc.setTextColor(...black);
 
-      // --- Logo (~15mm) ---
-      try { doc.addImage(BEAN_LOGO_BASE64, "PNG", center - 7.5, y, 15, 15); } catch (e) { /* logo optional */ }
+      // --- Logo: vector coffee-bean mark (avoids base64/CORS/PNG-decode issues) ---
+      {
+        const lc = center;
+        const lcy = y + 7.5;
+        doc.setFillColor(...black);
+        doc.ellipse(lc, lcy, 6, 7.5, "F"); // filled bean
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.8);
+        doc.lines([[3.5, 6, -3.5, 9, 0, 15]], lc, lcy - 7.5, [1, 1], "S", false); // white S-seam
+        doc.setDrawColor(...black);
+      }
       y += 16;
 
       // --- Brand header ---
