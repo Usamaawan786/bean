@@ -6,6 +6,7 @@ import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
 import ThermalReceipt, { ThermalPrintStyles } from "@/components/admin/ThermalReceipt";
+import { BEAN_LOGO_BASE64 } from "@/components/admin/beanLogoBase64";
 
 const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
 const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
@@ -16,227 +17,190 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const [qrReady, setQrReady] = useState(!bill.qrCodeId);
   const [iosQrUrl, setIosQrUrl] = useState("");
   const [androidQrUrl, setAndroidQrUrl] = useState("");
-  const [logoDataUrl, setLogoDataUrl] = useState("");
-
-  // Preload logo image as data URL for PDF
-  useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        setLogoDataUrl(canvas.toDataURL("image/png"));
-      } catch (e) { /* CORS or tainted canvas - skip logo in PDF */ }
-    };
-    img.src = LOGO_URL;
-  }, []);
 
   const generatePDF = useCallback((qrUrl) => {
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const margin = 25;
-    const pw = 210; // page width
-    const right = pw - margin;
-    let y = 20;
+    // 80mm thermal receipt PDF — monochrome, Courier, auto height.
+    const margin = 4;
+    const pw = 80;
+    const right = pw - margin; // 76
+    const center = pw / 2;      // 40
+    const black = [0, 0, 0];
 
-    // Colors (RGB)
-    const dark = [92, 74, 58];      // #5C4A3A
-    const med = [139, 115, 85];     // #8B7355
-    const line = [232, 222, 216];   // #E8DED8
+    const dashedLine = (doc, y) => {
+      doc.setLineDashPattern([1, 1], 0);
+      doc.setDrawColor(...black);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y, right, y);
+      doc.setLineDashPattern([], 0);
+    };
+    const solidLine = (doc, y) => {
+      doc.setDrawColor(...black);
+      doc.setLineWidth(0.5);
+      doc.line(margin, y, right, y);
+    };
 
-    const drawLine = (yPos) => { pdf.setDrawColor(...line); pdf.setLineWidth(0.4); pdf.line(margin, yPos, right, yPos); };
+    // Draw the full receipt into `doc`, returning the final y (for height calc).
+    const layout = (doc) => {
+      let y = margin;
+      doc.setFont("courier", "normal");
+      doc.setTextColor(...black);
 
-    // --- Logo ---
-    if (logoDataUrl) {
-      pdf.addImage(logoDataUrl, "PNG", (pw - 22) / 2, y, 22, 22);
-      y += 26;
-    }
+      // --- Logo (~15mm) ---
+      try { doc.addImage(BEAN_LOGO_BASE64, "PNG", center - 7.5, y, 15, 15); } catch (e) { /* logo optional */ }
+      y += 16;
 
-    // --- Title ---
-    pdf.setFontSize(22);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(...dark);
-    pdf.text("Bean", pw / 2, y, { align: "center" });
-    y += 7;
-    pdf.setFontSize(9);
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(...med);
-    pdf.text("More than just coffee, it's a community!", pw / 2, y, { align: "center" });
-    y += 8;
+      // --- Brand header ---
+      doc.setFont("courier", "bold");
+      doc.setFontSize(14);
+      doc.text("BEAN", center, y, { align: "center" });
+      y += 5;
+      doc.setFont("courier", "normal");
+      doc.setFontSize(7);
+      doc.text("More than just coffee, it's a community!", center, y, { align: "center" });
+      y += 3;
 
-    drawLine(y);
-    y += 7;
+      dashedLine(doc, y); y += 3;
 
-    // --- Invoice info (two columns with labels) ---
-    pdf.setFontSize(8);
-    pdf.setTextColor(...med);
-    pdf.text("Invoice Number", margin, y);
-    pdf.text("Date", right, y, { align: "right" });
-    y += 5;
-    pdf.setFontSize(12);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(...dark);
-    pdf.text(bill.billNumber, margin, y);
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "normal");
-    pdf.text(format(new Date(bill.date), "MMM dd, yyyy HH:mm"), right, y, { align: "right" });
-    y += 3;
-
-    if (bill.customerInfo?.name || bill.customerInfo?.phone) {
+      // --- Invoice info ---
+      doc.setFontSize(8);
+      doc.setFont("courier", "normal");
+      doc.text("Invoice No.", margin, y);
+      doc.setFont("courier", "bold");
+      doc.text(String(bill.billNumber), right, y, { align: "right" });
       y += 4;
-      pdf.setFontSize(8);
-      pdf.setTextColor(...med);
-      if (bill.customerInfo.name) {
-        pdf.text("Customer Name", margin, y);
-        if (bill.customerInfo.phone) pdf.text("Phone", right, y, { align: "right" });
+      doc.setFont("courier", "normal");
+      doc.text("Date", margin, y);
+      doc.text(format(new Date(bill.date), "MMM dd, yyyy HH:mm"), right, y, { align: "right" });
+      y += 4;
+      if (bill.customerInfo?.name) {
+        doc.text("Customer", margin, y);
+        doc.text(String(bill.customerInfo.name), right, y, { align: "right" });
         y += 4;
-        pdf.setFontSize(10);
-        pdf.setTextColor(...dark);
-        pdf.text(bill.customerInfo.name, margin, y);
-        if (bill.customerInfo.phone) pdf.text(bill.customerInfo.phone, right, y, { align: "right" });
-        y += 2;
       }
-    }
+      if (bill.customerInfo?.phone) {
+        doc.text("Phone", margin, y);
+        doc.text(String(bill.customerInfo.phone), right, y, { align: "right" });
+        y += 4;
+      }
 
-    y += 5;
-    drawLine(y);
-    y += 6;
+      dashedLine(doc, y); y += 3;
 
-    // --- Table header ---
-    pdf.setFontSize(10);
-    pdf.setFont("helvetica", "bold");
-    pdf.setTextColor(...dark);
-    pdf.text("Item", margin, y);
-    pdf.text("Qty", 115, y, { align: "center" });
-    pdf.text("Price", 147, y, { align: "right" });
-    pdf.text("Total", right, y, { align: "right" });
-    y += 3;
-    drawLine(y);
-    y += 6;
+      // --- Items header ---
+      doc.setFont("courier", "bold");
+      doc.setFontSize(8);
+      doc.text("Item", margin, y);
+      doc.text("Qty", 34, y, { align: "center" });
+      doc.text("Price", 52, y, { align: "right" });
+      doc.text("Total", right, y, { align: "right" });
+      y += 2;
+      dashedLine(doc, y); y += 3;
 
-    // --- Table rows ---
-    pdf.setFont("helvetica", "normal");
-    bill.items.forEach((item) => {
-      pdf.setTextColor(...dark);
-      pdf.text(item.name, margin, y);
-      pdf.setTextColor(...med);
-      pdf.text(String(item.quantity), 115, y, { align: "center" });
-      pdf.text(`PKR ${item.price.toFixed(2)}`, 147, y, { align: "right" });
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(...dark);
-      pdf.text(`PKR ${(item.price * item.quantity).toFixed(2)}`, right, y, { align: "right" });
-      pdf.setFont("helvetica", "normal");
-      y += 7;
-    });
+      // --- Item rows ---
+      bill.items.forEach((item) => {
+        doc.setFont("courier", "normal");
+        doc.text(String(item.name).slice(0, 26), margin, y);
+        y += 4;
+        doc.text(String(item.quantity), 34, y, { align: "center" });
+        doc.text(`PKR ${item.price.toFixed(2)}`, 52, y, { align: "right" });
+        doc.setFont("courier", "bold");
+        doc.text(`PKR ${(item.price * item.quantity).toFixed(2)}`, right, y, { align: "right" });
+        y += 5;
+      });
 
-    y += 1;
-    drawLine(y);
-    y += 6;
+      dashedLine(doc, y); y += 3;
 
-    // --- Totals ---
-    pdf.setFontSize(10);
-    if (bill.discountPct > 0) {
-      pdf.setTextColor(...med);
-      pdf.text("Subtotal", 147, y, { align: "right" });
-      pdf.text(`PKR ${(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}`, right, y, { align: "right" });
-      y += 6;
-      pdf.setTextColor(220, 38, 38);
-      pdf.text(`Discount (${bill.discountPct}%)`, 147, y, { align: "right" });
-      pdf.text(`- PKR ${(bill.discountAmount ?? 0).toFixed(2)}`, right, y, { align: "right" });
-      y += 6;
-    } else {
-      pdf.setTextColor(...med);
-      pdf.text("Subtotal", 147, y, { align: "right" });
-      pdf.text(`PKR ${bill.subtotal.toFixed(2)}`, right, y, { align: "right" });
-      y += 6;
-    }
+      // --- Totals ---
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      if (bill.discountPct > 0) {
+        doc.text("Subtotal", margin, y);
+        doc.text(`PKR ${(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}`, right, y, { align: "right" });
+        y += 4;
+        doc.text(`Discount (${bill.discountPct}%)`, margin, y);
+        doc.text(`-PKR ${(bill.discountAmount ?? 0).toFixed(2)}`, right, y, { align: "right" });
+        y += 4;
+      } else {
+        doc.text("Subtotal", margin, y);
+        doc.text(`PKR ${bill.subtotal.toFixed(2)}`, right, y, { align: "right" });
+        y += 4;
+      }
+      const gstLabel = bill.paymentMethod === "Card" ? "5%" : "17%";
+      doc.text(`GST (${gstLabel})`, margin, y);
+      doc.text(`PKR ${bill.tax.toFixed(2)}`, right, y, { align: "right" });
+      y += 3;
 
-    pdf.setTextColor(...med);
-    pdf.text(`GST (${bill.paymentMethod === "Card" ? "5%" : "17%"})`, 147, y, { align: "right" });
-    pdf.text(`PKR ${bill.tax.toFixed(2)}`, right, y, { align: "right" });
-    y += 4;
+      solidLine(doc, y); y += 4;
 
-    pdf.setLineWidth(0.8);
-    pdf.setDrawColor(...line);
-    pdf.line(margin, y, right, y);
-    pdf.setLineWidth(0.4);
-    y += 7;
+      doc.setFont("courier", "bold");
+      doc.setFontSize(12);
+      doc.text("TOTAL", margin, y);
+      doc.text(`PKR ${bill.total.toFixed(2)}`, right, y, { align: "right" });
+      y += 5;
 
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(14);
-    pdf.setTextColor(...dark);
-    pdf.text("Total", 147, y, { align: "right" });
-    pdf.text(`PKR ${bill.total.toFixed(2)}`, right, y, { align: "right" });
-    y += 5;
+      dashedLine(doc, y); y += 3;
 
-    drawLine(y);
-    y += 6;
-
-    // --- Reward Points ---
-    const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
-    pdf.setTextColor(...med);
-    pdf.text("Reward Points Earned", margin, y);
-    pdf.setFontSize(14);
-    pdf.text(`${pts} pts`, right, y, { align: "right" });
-    y += 8;
-
-    // --- Rewards QR ---
-    if (qrUrl) {
-      drawLine(y);
-      y += 6;
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(...dark);
-      pdf.text("Earn Rewards", pw / 2, y, { align: "center" });
+      // --- Reward Points ---
+      const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
+      doc.setFont("courier", "normal");
+      doc.setFontSize(8);
+      doc.text("Reward Points Earned", margin, y);
+      doc.setFont("courier", "bold");
+      doc.text(`${pts} pts`, right, y, { align: "right" });
       y += 4;
-      pdf.addImage(qrUrl, "PNG", (pw - 34) / 2, y, 34, 34);
-      y += 37;
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
-      pdf.setTextColor(...med);
-      pdf.text("Scan in the Bean Pakistan App to add points to your account", pw / 2, y, { align: "center" });
-      y += 7;
-    }
 
-    // --- App Download ---
-    drawLine(y);
-    y += 6;
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.setTextColor(...dark);
-    pdf.text("Don't have the Bean app yet? Download & scan", pw / 2, y, { align: "center" });
-    y += 5;
+      // --- Rewards QR (~34mm centered) ---
+      if (qrUrl) {
+        dashedLine(doc, y); y += 3;
+        doc.setFont("courier", "bold");
+        doc.setFontSize(9);
+        doc.text("Earn Rewards", center, y, { align: "center" });
+        y += 3;
+        try { doc.addImage(qrUrl, "PNG", center - 17, y, 34, 34); } catch (e) {}
+        y += 35;
+        doc.setFont("courier", "normal");
+        doc.setFontSize(6);
+        doc.text("Scan in the Bean Pakistan App to add points", center, y, { align: "center" });
+        y += 4;
+      }
 
-    const qrSize = 26;
-    if (iosQrUrl) {
-      pdf.addImage(iosQrUrl, "PNG", pw / 2 - qrSize - 8, y, qrSize, qrSize);
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
-      pdf.setTextColor(...med);
-      pdf.text("iOS", pw / 2 - qrSize / 2 - 8, y + qrSize + 4, { align: "center" });
-    }
-    if (androidQrUrl) {
-      pdf.addImage(androidQrUrl, "PNG", pw / 2 + 8, y, qrSize, qrSize);
-      pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8);
-      pdf.setTextColor(...med);
-      pdf.text("Android", pw / 2 + qrSize / 2 + 8, y + qrSize + 4, { align: "center" });
-    }
-    y += qrSize + 10;
+      // --- App download QRs (~22mm each, side by side) ---
+      dashedLine(doc, y); y += 3;
+      doc.setFont("courier", "bold");
+      doc.setFontSize(8);
+      doc.text("Don't have the app? Download & scan", center, y, { align: "center" });
+      y += 3;
+      const qrSm = 22;
+      const gap = 4;
+      const startX = center - (qrSm * 2 + gap) / 2;
+      if (iosQrUrl) { try { doc.addImage(iosQrUrl, "PNG", startX, y, qrSm, qrSm); } catch (e) {} }
+      if (androidQrUrl) { try { doc.addImage(androidQrUrl, "PNG", startX + qrSm + gap, y, qrSm, qrSm); } catch (e) {} }
+      y += qrSm + 3;
+      doc.setFont("courier", "normal");
+      doc.setFontSize(7);
+      if (iosQrUrl) doc.text("iOS", startX + qrSm / 2, y, { align: "center" });
+      if (androidQrUrl) doc.text("Android", startX + qrSm + gap + qrSm / 2, y, { align: "center" });
+      y += 4;
 
-    drawLine(y);
-    y += 6;
-    pdf.setFontSize(9);
-    pdf.setTextColor(...med);
-    pdf.text("Thank you for your purchase!", pw / 2, y, { align: "center" });
+      // --- Footer ---
+      dashedLine(doc, y); y += 3;
+      doc.setFontSize(8);
+      doc.text("Thank you for your purchase!", center, y, { align: "center" });
+      y += 4;
+      doc.setFontSize(6);
+      doc.text("Bean - More than just coffee, it's a community!", center, y, { align: "center" });
+      y += 6;
+      return y;
+    };
 
+    // Two-pass: measure content height on a throwaway doc, then render the
+    // final doc at exactly that height so there is no trailing blank page.
+    const temp = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, 300] });
+    const finalY = layout(temp);
+    const height = Math.min(300, Math.max(40, finalY));
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, height] });
+    layout(pdf);
     pdf.save(`bill-${bill.billNumber}.pdf`);
-  }, [bill, iosQrUrl, androidQrUrl, logoDataUrl]);
+  }, [bill, iosQrUrl, androidQrUrl]);
 
   // Generate QR codes
   useEffect(() => {
@@ -270,7 +234,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
           qrCodeUrl={qrCodeUrl}
           iosQrUrl={iosQrUrl}
           androidQrUrl={androidQrUrl}
-          logoDataUrl={logoDataUrl}
           logoUrl={LOGO_URL}
         />
       </div>

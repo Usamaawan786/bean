@@ -119,7 +119,7 @@ export function ThermalPrintStyles() {
 // div that the @media print stylesheet shows when window.print() is called.
 // Layout-only utilities here — no colours, shadows, or rounded corners since
 // thermal printers are monochrome.
-export default function ThermalReceipt({ bill, qrCodeUrl, iosQrUrl, androidQrUrl, logoDataUrl, logoUrl }) {
+export default function ThermalReceipt({ bill, qrCodeUrl, iosQrUrl, androidQrUrl, logoUrl }) {
   const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
   const gstLabel = bill.paymentMethod === "Card" ? "5%" : "17%";
 
@@ -127,11 +127,7 @@ export default function ThermalReceipt({ bill, qrCodeUrl, iosQrUrl, androidQrUrl
     <div id="thermal-receipt" className="thermal-receipt">
       {/* Header */}
       <div className="th-center">
-        {logoDataUrl ? (
-          <img src={logoDataUrl} alt="Bean" className="th-logo" />
-        ) : (
-          <img src={logoUrl} alt="Bean" className="th-logo" />
-        )}
+        <img src={logoUrl} alt="Bean" className="th-logo" />
         <div className="th-brand">BEAN</div>
         <div className="th-tagline">More than just coffee, it's a community!</div>
       </div>
