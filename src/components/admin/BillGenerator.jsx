@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { X, Printer, Download } from "lucide-react";
+import { X, Printer, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
@@ -17,7 +18,7 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const [iosQrUrl, setIosQrUrl] = useState("");
   const [androidQrUrl, setAndroidQrUrl] = useState("");
 
-  const generatePDF = useCallback((qrUrl) => {
+  const generatePDF = useCallback((qrUrl, iosUrl, androidUrl) => {
     // 80mm thermal receipt PDF — monochrome, Courier, auto height.
     const margin = 4;
     const pw = 80;
@@ -180,13 +181,13 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
       const qrSm = 22;
       const gap = 4;
       const startX = center - (qrSm * 2 + gap) / 2;
-      if (iosQrUrl) { try { doc.addImage(iosQrUrl, "PNG", startX, y, qrSm, qrSm); } catch (e) {} }
-      if (androidQrUrl) { try { doc.addImage(androidQrUrl, "PNG", startX + qrSm + gap, y, qrSm, qrSm); } catch (e) {} }
+      if (iosUrl) { try { doc.addImage(iosUrl, "PNG", startX, y, qrSm, qrSm); } catch (e) {} }
+      if (androidUrl) { try { doc.addImage(androidUrl, "PNG", startX + qrSm + gap, y, qrSm, qrSm); } catch (e) {} }
       y += qrSm + 3;
       doc.setFont("courier", "normal");
       doc.setFontSize(7);
-      if (iosQrUrl) doc.text("iOS", startX + qrSm / 2, y, { align: "center" });
-      if (androidQrUrl) doc.text("Android", startX + qrSm + gap + qrSm / 2, y, { align: "center" });
+      if (iosUrl) doc.text("iOS", startX + qrSm / 2, y, { align: "center" });
+      if (androidUrl) doc.text("Android", startX + qrSm + gap + qrSm / 2, y, { align: "center" });
       y += 4;
 
       // --- Footer ---
@@ -207,8 +208,12 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     const height = Math.min(300, Math.max(40, finalY));
     const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, height] });
     layout(pdf);
-    pdf.save(`bill-${bill.billNumber}.pdf`);
-  }, [bill, iosQrUrl, androidQrUrl]);
+    try {
+      pdf.save(`bill-${bill.billNumber}.pdf`);
+    } catch (e) {
+      toast.error(`PDF generation failed: ${e?.message || e}`);
+    }
+  }, [bill]);
 
   // Generate QR codes
   useEffect(() => {
@@ -225,12 +230,12 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     QRCode.toDataURL(ANDROID_APP_URL, { width: 160, margin: 1 }).then(setAndroidQrUrl);
   }, []);
 
-  // Auto-download once QR is ready
+  // Auto-download once ALL QR codes are ready (qr reward + app download QRs)
   useEffect(() => {
-    if (autoDownload && qrReady) {
-      generatePDF(qrCodeUrl);
+    if (autoDownload && qrReady && iosQrUrl && androidQrUrl) {
+      generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl);
     }
-  }, [autoDownload, qrReady, qrCodeUrl, generatePDF]);
+  }, [autoDownload, qrReady, iosQrUrl, androidQrUrl, qrCodeUrl, generatePDF]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -256,8 +261,10 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
             <Button size="sm" variant="outline" onClick={() => window.print()} className="rounded-xl">
               <Printer className="h-4 w-4 mr-2" />Print
             </Button>
-            <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl)} className="rounded-xl">
-              <Download className="h-4 w-4 mr-2" />PDF
+            <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl)} className="rounded-xl">
+              {(!iosQrUrl || !androidQrUrl)
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating…</>
+                : <><Download className="h-4 w-4 mr-2" />PDF</>}
             </Button>
             <button onClick={onClose} className="p-2 hover:bg-[#F5EBE8] rounded-full transition-colors">
               <X className="h-5 w-5 text-[#8B7355]" />
