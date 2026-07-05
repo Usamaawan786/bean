@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
+import ThermalReceipt, { ThermalPrintStyles } from "@/components/admin/ThermalReceipt";
 
 const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
 const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
@@ -261,6 +262,18 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <ThermalPrintStyles />
+      {/* Hidden thermal receipt — only visible during window.print() */}
+      <div className="thermal-print-root">
+        <ThermalReceipt
+          bill={bill}
+          qrCodeUrl={qrCodeUrl}
+          iosQrUrl={iosQrUrl}
+          androidQrUrl={androidQrUrl}
+          logoDataUrl={logoDataUrl}
+          logoUrl={LOGO_URL}
+        />
+      </div>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
