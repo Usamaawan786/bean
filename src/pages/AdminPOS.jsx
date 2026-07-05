@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -30,9 +30,11 @@ export default function AdminPOS() {
   const [showBill, setShowBill] = useState(false);
   const [generatedBill, setGeneratedBill] = useState(null);
   const [completing, setCompleting] = useState(false);
+  const completingRef = useRef(false);
   const [orderType, setOrderType] = useState("dine_in"); // "dine_in" | "takeaway"
   const [counter, setCounter] = useState("counter_1");
   const [discountPct, setDiscountPct] = useState(0); // percentage discount 0-100
+  const [discountInput, setDiscountInput] = useState(""); // local string for the custom input field
   const [activeTab, setActiveTab] = useState("pos");
   const [activeTicket, setActiveTicket] = useState(null); // OpenTicket being resumed, if any
   const [ticketBaseline, setTicketBaseline] = useState([]); // cart snapshot at last save/load
@@ -102,7 +104,10 @@ export default function AdminPOS() {
   const total = discountedSubtotal + tax;
 
   const completeSale = async () => {
-    if (completing) return;
+    // Ref guard blocks a second tap that lands before the state re-render
+    // propagates (< 16ms) — state-only guards let both taps through.
+    if (completingRef.current) return;
+    completingRef.current = true;
     setCompleting(true);
     try {
       const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
@@ -215,6 +220,7 @@ export default function AdminPOS() {
     } catch (err) {
       toast.error("Failed to complete sale: " + (err?.message || "Unknown error"));
     } finally {
+      completingRef.current = false;
       setCompleting(false);
     }
   };
@@ -225,6 +231,7 @@ export default function AdminPOS() {
     setPaymentMethod("Cash");
     setOrderType("dine_in");
     setDiscountPct(0);
+    setDiscountInput("");
     setShowBill(false);
     setGeneratedBill(null);
     setActiveTicket(null);
@@ -575,8 +582,21 @@ export default function AdminPOS() {
                             {pct === 0 ? "None" : `${pct}%`}
                           </button>
                         ))}
-                        <input type="number" min="0" max="100" value={discountPct || ""}
-                          onChange={e => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value))))}
+                        <input type="number" min="0" max="100" value={discountInput}
+                          onChange={e => setDiscountInput(e.target.value)}
+                          onBlur={() => {
+                            const n = Math.min(100, Math.max(0, Number(discountInput)));
+                            setDiscountPct(Number.isFinite(n) ? n : 0);
+                            setDiscountInput("");
+                          }}
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              const n = Math.min(100, Math.max(0, Number(discountInput)));
+                              setDiscountPct(Number.isFinite(n) ? n : 0);
+                              setDiscountInput("");
+                              e.target.blur();
+                            }
+                          }}
                           placeholder="Custom"
                           className="w-20 border border-[#E8DED8] rounded-xl px-2 py-1.5 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30" />
                       </div>

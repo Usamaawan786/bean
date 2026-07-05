@@ -29,27 +29,12 @@ Deno.serve(async (req) => {
       cashier_role: user.role,
     };
 
-    // Auto-generate sequential bill number: A1, A2, A3, ...
-    const recentSales = await base44.asServiceRole.entities.StoreSale.list('-created_date', 20);
-    let maxNum = 0;
-    for (const sale of recentSales) {
-      const match = sale.bill_number?.match(/^A(\d+)$/);
-      if (match) {
-        const n = parseInt(match[1], 10);
-        if (n > maxNum) maxNum = n;
-      }
-    }
-
-    let billNumber = `A${maxNum + 1}`;
-
-    // Collision check (handles race conditions when two cashiers save simultaneously)
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const existing = await base44.asServiceRole.entities.StoreSale.filter({ bill_number: billNumber });
-      if (existing.length === 0) break;
-      maxNum++;
-      billNumber = `A${maxNum + 1}`;
-    }
-
+    // Collision-proof bill number: timestamp + random suffix.
+    // Replaces the old read-max-then-increment loop which raced when two
+    // cashiers saved simultaneously (both read the same maxNum and the
+    // 5-attempt collision check re-read independently, still producing A{n} dupes).
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const billNumber = `A-${Date.now()}-${rand}`;
     enrichedSale.bill_number = billNumber;
 
     const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);

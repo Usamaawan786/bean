@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Html5Qrcode } from "html5-qrcode";
+import { Capacitor } from "@capacitor/core";
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 
 // ─── helpers ─────────────────────────────────────────────────
@@ -26,10 +28,42 @@ function EBABadge() {
 
 // ─── QR Scanner section ───────────────────────────────────────
 function QRScannerSection({ onScanResult }) {
+  const isNative = Capacitor.isNativePlatform();
   const [scanning, setScanning] = useState(false);
   const [manualCode, setManualCode] = useState("");
   const scannerRef = useRef(null);
   const html5QrRef = useRef(null);
+
+  // Native path: bypass WKWebView's unavailable getUserMedia by using the
+  // Capacitor Camera plugin, then decode the captured photo with scanFile.
+  const takeNativePhoto = async () => {
+    try {
+      const photo = await Camera.getPhoto({
+        resultType: CameraResultType.DataUrl,
+        source: CameraSource.Camera,
+        quality: 90,
+      });
+      if (!photo?.dataUrl) return;
+      const [header, base64] = photo.dataUrl.split(",");
+      const mime = header.match(/:(.*?);/)?.[1] || "image/jpeg";
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const file = new File([bytes], "scan.jpg", { type: mime });
+
+      if (!html5QrRef.current) html5QrRef.current = new Html5Qrcode("qr-reader");
+      const decoded = await html5QrRef.current.scanFile(file, false);
+      onScanResult(decoded);
+    } catch (err) {
+      const msg = (err?.message || String(err)).toLowerCase();
+      if (msg.includes("cancel") || msg.includes("user cancelled")) return;
+      if (msg.includes("qr") || msg.includes("no multi")) {
+        toast.error("No QR code found — please try again.");
+      } else {
+        toast.error("Could not access camera. Please check permissions and retry.");
+      }
+    }
+  };
 
   const startScanner = async () => {
     setScanning(true);
@@ -58,11 +92,15 @@ function QRScannerSection({ onScanResult }) {
       <h2 className="font-bold text-[#5C4A3A] flex items-center gap-2 text-lg"><ScanLine className="h-5 w-5 text-[#8B7355]" /> Scan Bill QR Code</h2>
       <p className="text-xs text-[#8B7355]">Scan the QR on the customer's bill to award them loyalty points.</p>
 
-      {scanning ? (
-        <div className="space-y-3">
-          <div id="qr-reader" className="w-full rounded-2xl overflow-hidden" />
-          <Button onClick={stopScanner} variant="outline" className="w-full rounded-xl border-[#E8DED8]">Cancel</Button>
-        </div>
+      {/* Hidden container used by scanFile on native; visible live-video on web */}
+      <div id="qr-reader" className={isNative ? "hidden" : "w-full rounded-2xl overflow-hidden"} />
+
+      {isNative ? (
+        <Button onClick={takeNativePhoto} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl gap-2">
+          <QrCode className="h-5 w-5" /> Open Camera & Scan
+        </Button>
+      ) : scanning ? (
+        <Button onClick={stopScanner} variant="outline" className="w-full rounded-xl border-[#E8DED8]">Cancel</Button>
       ) : (
         <Button onClick={startScanner} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl gap-2">
           <QrCode className="h-5 w-5" /> Open Camera & Scan
@@ -90,10 +128,14 @@ function QRScannerSection({ onScanResult }) {
 function QRResultCard({ result, onClose }) {
   const [processing, setProcessing] = useState(false);
   const [done, setDone] = useState(!!result.is_scanned);
+  const processingRef = useRef(false);
   const queryClient = useQueryClient();
 
   const awardPoints = async () => {
-    if (processing || done) return;
+    // Ref guard blocks a second tap that lands before the state re-render
+    // propagates (< 16ms) — state-only guards let both taps through.
+    if (processingRef.current || done) return;
+    processingRef.current = true;
     setProcessing(true);
     try {
       const response = await base44.functions.invoke('processBillScan', { qr_code_id: result.qr_code_id });
@@ -105,8 +147,10 @@ function QRResultCard({ result, onClose }) {
       }
     } catch (e) {
       toast.error("Error processing QR");
+    } finally {
+      processingRef.current = false;
+      setProcessing(false);
     }
-    setProcessing(false);
   };
 
   const isExpired = result.qr_expires_at && new Date(result.qr_expires_at) < new Date();
@@ -151,30 +195,37 @@ function CustomerLookup() {
   const search = async () => {
     if (!query.trim()) return;
     setSearching(true);
-    const q = query.trim().toLowerCase();
-    const customers = await base44.entities.Customer.list("-created_date", 500);
-    const users = await base44.entities.User.list();
-    const userMap = {};
-    users.forEach(u => { userMap[u.email] = u; });
-    const filtered = customers.filter(c => {
-      const u = userMap[c.created_by];
-      return (u?.full_name || "").toLowerCase().includes(q) ||
-        (u?.display_name || "").toLowerCase().includes(q) ||
-        (c.created_by || "").toLowerCase().includes(q) ||
-        (c.phone || "").includes(q);
-    }).map(c => ({ ...c, _user: userMap[c.created_by] }));
-    setResults(filtered.slice(0, 20));
+    try {
+      const res = await base44.functions.invoke("searchCustomer", { query: query.trim() });
+      const matched = res.data?.customers || [];
+      setResults(matched);
+      if (matched.length === 0) toast.error("No customer found");
+    } catch (e) {
+      toast.error("Search failed: " + (e?.message || "Unknown error"));
+      setResults([]);
+    }
     setSearching(false);
-    if (filtered.length === 0) toast.error("No customer found");
   };
 
   const markDiscount = async (customer, type) => {
     const field = type === "fm" ? "fm_discount_used" : "eba_discount_used";
     const current = customer[field] || 0;
     if (current >= 3) { toast.error("All discounts already used!"); return; }
-    await base44.entities.Customer.update(customer.id, { [field]: current + 1 });
-    setResults(prev => prev.map(c => c.id === customer.id ? { ...c, [field]: current + 1 } : c));
-    toast.success(`✅ ${type === "fm" ? "FM" : "EBA"} discount marked — ${current + 1}/3 used`);
+    try {
+      const res = await base44.functions.invoke("markCustomerDiscount", {
+        customer_id: customer.id,
+        discount_type: type
+      });
+      if (res.data?.success) {
+        const newValue = res.data.new_value;
+        setResults(prev => prev.map(c => c.id === customer.id ? { ...c, [field]: newValue } : c));
+        toast.success(`✅ ${type === "fm" ? "FM" : "EBA"} discount marked — ${newValue}/3 used`);
+      } else {
+        toast.error(res.data?.error || "Failed to mark discount");
+      }
+    } catch (e) {
+      toast.error("Failed to mark discount: " + (e?.message || "Unknown error"));
+    }
   };
 
   return (
@@ -193,8 +244,7 @@ function CustomerLookup() {
       <div className="space-y-3">
         {results.map(c => {
           const isOpen = expanded === c.id;
-          const u = c._user;
-          const name = u?.full_name || u?.display_name || c.display_name || "Unknown";
+          const name = c.display_name || "Unknown";
           return (
             <div key={c.id} className="bg-[#F9F6F3] rounded-2xl border border-[#E8DED8] overflow-hidden">
               <button onClick={() => setExpanded(isOpen ? null : c.id)}
@@ -208,7 +258,7 @@ function CustomerLookup() {
                     {c.is_founding_member && <FMBadge />}
                     {c.is_eba && <EBABadge />}
                   </div>
-                  <p className="text-xs text-[#8B7355] truncate">{c.created_by}</p>
+                  <p className="text-xs text-[#8B7355] truncate">{c.email || c.phone || "—"}</p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="text-center">
