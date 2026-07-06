@@ -52,29 +52,62 @@ export default function QRScanner({ onScan, onClose }) {
   // the native Capacitor Camera plugin, which reliably triggers the native iOS
   // permission prompt on first use. The captured photo is then decoded with
   // html5-qrcode's scanFile (no live video needed).
+  // Drive a plain <input type="file" accept="image/*"> from the user's tap.
+  // Used on iOS, where the bridge reports 'web' (remote-URL race) so
+  // Camera.getPhoto would fall back to a programmatic <input capture> whose
+  // system handoff backgrounds the WKWebView and never resolves. A direct,
+  // gesture-driven file input with NO capture attribute is reliable in
+  // WKWebView and lets the user take a photo of the QR code.
+  const pickImageFile = () =>
+    new Promise((resolve, reject) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e) => {
+        const f = e.target.files?.[0];
+        if (f) resolve(f); else reject(new Error("No file selected"));
+      };
+      input.onerror = () => reject(new Error("File input error"));
+      input.click();
+    });
+
   const takeNativePhoto = async () => {
     if (!mountedRef.current) return;
     setError("");
 
     try {
-      // Let Camera.getPhoto handle permissions internally — calling
-      // requestPermissions separately consumes the iOS user-gesture context.
-      const photo = await Camera.getPhoto({
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-        quality: 90,
-      });
-      if (!photo?.dataUrl) return;
+      let file;
+      // Android: the Capacitor bridge reports native, so Camera.getPhoto
+      // opens the native camera (unchanged). iOS App Store build: the bridge
+      // reports 'web', so Camera.getPhoto's web fallback would background the
+      // app — use a direct file input instead.
+      if (Capacitor.isNativePlatform()) {
+        console.log("[QRScanner] native bridge — calling Camera.getPhoto()");
+        const photo = await Camera.getPhoto({
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          quality: 90,
+        });
+        console.log("[QRScanner] Camera.getPhoto resolved:", !!photo?.dataUrl);
+        if (!photo?.dataUrl) return;
+        file = dataUrlToFile(photo.dataUrl, "scan.jpg");
+      } else {
+        console.log("[QRScanner] no native bridge — opening direct file input");
+        file = await pickImageFile();
+        console.log("[QRScanner] file input resolved:", file?.name);
+        if (!file) return;
+      }
 
-      const file = dataUrlToFile(photo.dataUrl, "scan.jpg");
       const scanner = getScannerInstance();
       const decodedText = await scanner.scanFile(file, false);
+      console.log("[QRScanner] scanFile decoded:", !!decodedText);
       if (!mountedRef.current) return;
       onScanRef.current(decodedText);
     } catch (err) {
+      console.log("[QRScanner] takeNativePhoto error:", err?.message || err);
       if (!mountedRef.current) return;
       const msg = (err?.message || String(err)).toLowerCase();
-      if (msg.includes("cancel") || msg.includes("user cancelled")) return;
+      if (msg.includes("cancel") || msg.includes("user cancelled") || msg.includes("no file selected")) return;
       if (msg.includes("qr") || msg.includes("no multi")) {
         setError("No QR code found — please try again.");
       } else {

@@ -48,29 +48,61 @@ function QRScannerSection({ onScanResult }) {
   const scannerRef = useRef(null);
   const html5QrRef = useRef(null);
 
+  // Drive a plain <input type="file" accept="image/*"> from the user's tap.
+  // Used on iOS, where the bridge reports 'web' (remote-URL race) so
+  // Camera.getPhoto would fall back to a programmatic <input capture> whose
+  // system handoff backgrounds the WKWebView and never resolves. A direct,
+  // gesture-driven file input with NO capture attribute is reliable in
+  // WKWebView and lets the user take a photo of the QR code.
+  const pickImageFile = () =>
+    new Promise((resolve, reject) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e) => {
+        const f = e.target.files?.[0];
+        if (f) resolve(f); else reject(new Error("No file selected"));
+      };
+      input.onerror = () => reject(new Error("File input error"));
+      input.click();
+    });
+
   // Native path: bypass WKWebView's unavailable getUserMedia by using the
-  // Capacitor Camera plugin, then decode the captured photo with scanFile.
+  // Capacitor Camera plugin (Android), or a direct file input (iOS App Store
+  // build, where the bridge reports 'web'). Decode the photo with scanFile.
   const takeNativePhoto = async () => {
     try {
-      const photo = await Camera.getPhoto({
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-        quality: 90,
-      });
-      if (!photo?.dataUrl) return;
-      const [header, base64] = photo.dataUrl.split(",");
-      const mime = header.match(/:(.*?);/)?.[1] || "image/jpeg";
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const file = new File([bytes], "scan.jpg", { type: mime });
+      let file;
+      if (Capacitor.isNativePlatform()) {
+        console.log("[CashierTools] native bridge — calling Camera.getPhoto()");
+        const photo = await Camera.getPhoto({
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Camera,
+          quality: 90,
+        });
+        console.log("[CashierTools] Camera.getPhoto resolved:", !!photo?.dataUrl);
+        if (!photo?.dataUrl) return;
+        const [header, base64] = photo.dataUrl.split(",");
+        const mime = header.match(/:(.*?);/)?.[1] || "image/jpeg";
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        file = new File([bytes], "scan.jpg", { type: mime });
+      } else {
+        console.log("[CashierTools] no native bridge — opening direct file input");
+        file = await pickImageFile();
+        console.log("[CashierTools] file input resolved:", file?.name);
+        if (!file) return;
+      }
 
       if (!html5QrRef.current) html5QrRef.current = new Html5Qrcode("qr-reader");
       const decoded = await html5QrRef.current.scanFile(file, false);
+      console.log("[CashierTools] scanFile decoded:", !!decoded);
       onScanResult(decoded);
     } catch (err) {
+      console.log("[CashierTools] takeNativePhoto error:", err?.message || err);
       const msg = (err?.message || String(err)).toLowerCase();
-      if (msg.includes("cancel") || msg.includes("user cancelled")) return;
+      if (msg.includes("cancel") || msg.includes("user cancelled") || msg.includes("no file selected")) return;
       if (msg.includes("qr") || msg.includes("no multi")) {
         toast.error("No QR code found — please try again.");
       } else {
