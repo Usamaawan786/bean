@@ -17,13 +17,21 @@ function dataUrlToFile(dataUrl, filename) {
 }
 
 export default function QRScanner({ onScan, onClose }) {
-  // Detect native platform AFTER mount. Capacitor's bridge may not be fully
-  // ready during the first render, so isNativePlatform() can return false
-  // inside the iOS app shell — routing the user into the web getUserMedia
-  // path, which fails inside WKWebView with "Camera isn't supported".
-  // Checking once mounted ensures the bridge is initialised.
-  const [isNative, setIsNative] = useState(false);
-  useEffect(() => { setIsNative(Capacitor.isNativePlatform()); }, []);
+  // Route by CAPABILITY, not by the platform flag. On the iOS App Store
+  // build the app runs against a remote URL and Capacitor's iOS bridge does
+  // not stamp platform="ios" before React evaluates isNativePlatform(), so
+  // it returns false *inside the native shell*. WKWebView also exposes no
+  // navigator.mediaDevices, so the only working camera path is Camera.getPhoto
+  // (its web implementation opens the iOS camera via a captured file input —
+  // no bridge required). Treat "no getUserMedia" as "use Camera.getPhoto"
+  // regardless of what isNativePlatform() reports. Android (bridge flag set)
+  // and the desktop browser (mediaDevices present) are unaffected.
+  const [isNative, setIsNative] = useState(
+    () => Capacitor.isNativePlatform() || !navigator.mediaDevices?.getUserMedia
+  );
+  useEffect(() => {
+    setIsNative(Capacitor.isNativePlatform() || !navigator.mediaDevices?.getUserMedia);
+  }, []);
   const onScanRef = useRef(onScan);
   const qrScannerRef = useRef(null);
   const mountedRef = useRef(true);

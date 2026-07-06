@@ -28,8 +28,21 @@ function EBABadge() {
 
 // ─── QR Scanner section ───────────────────────────────────────
 function QRScannerSection({ onScanResult }) {
-  const [isNative, setIsNative] = useState(false);
-  useEffect(() => { setIsNative(Capacitor.isNativePlatform()); }, []);
+  // Route by CAPABILITY, not by the platform flag. On the iOS App Store
+  // build the app runs against a remote URL and Capacitor's iOS bridge does
+  // not stamp platform="ios" before React evaluates isNativePlatform(), so
+  // it returns false *inside the native shell*. WKWebView also exposes no
+  // navigator.mediaDevices, so the only working camera path is Camera.getPhoto
+  // (its web implementation opens the iOS camera via a captured file input —
+  // no bridge required). Treat "no getUserMedia" as "use Camera.getPhoto"
+  // regardless of what isNativePlatform() reports. Android (bridge flag set)
+  // and the desktop browser (mediaDevices present) are unaffected.
+  const [isNative, setIsNative] = useState(
+    () => Capacitor.isNativePlatform() || !navigator.mediaDevices?.getUserMedia
+  );
+  useEffect(() => {
+    setIsNative(Capacitor.isNativePlatform() || !navigator.mediaDevices?.getUserMedia);
+  }, []);
   const [scanning, setScanning] = useState(false);
   const [manualCode, setManualCode] = useState("");
   const scannerRef = useRef(null);
