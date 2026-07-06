@@ -1,42 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { Capacitor } from "@capacitor/core";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
-import { X, QrCode, AlertCircle, RefreshCw } from "lucide-react";
+import { CapacitorBarcodeScanner } from "@capacitor/barcode-scanner";
+import { X, QrCode, AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-function dataUrlToFile(dataUrl, filename) {
-  const [header, base64] = dataUrl.split(",");
-  const mime = header.match(/:(.*?);/)[1];
-  const binary = atob(base64);
-  let n = binary.length;
-  const bytes = new Uint8Array(n);
-  while (n--) bytes[n] = binary.charCodeAt(n);
-  return new File([bytes], filename, { type: mime });
-}
-
 export default function QRScanner({ onScan, onClose }) {
-  // Route by CAPABILITY, not by the platform flag. On the iOS App Store
-  // build the app runs against a remote URL and Capacitor's iOS bridge does
-  // not stamp platform="ios" before React evaluates isNativePlatform(), so
-  // it returns false *inside the native shell*. WKWebView also exposes no
-  // navigator.mediaDevices, so the only working camera path is Camera.getPhoto
-  // (its web implementation opens the iOS camera via a captured file input —
-  // no bridge required). Treat "no getUserMedia" as "use Camera.getPhoto"
-  // regardless of what isNativePlatform() reports. Android (bridge flag set)
-  // and the desktop browser (mediaDevices present) are unaffected.
-  const [isNative, setIsNative] = useState(
-    () => Capacitor.isNativePlatform() || !navigator.mediaDevices?.getUserMedia
-  );
-  useEffect(() => {
-    setIsNative(Capacitor.isNativePlatform() || !navigator.mediaDevices?.getUserMedia);
-  }, []);
+  // iOS App Store build runs in a WKWebView that does NOT expose
+  // navigator.mediaDevices.getUserMedia (WebKit only surfaces getUserMedia to
+  // WKWebView over HTTPS for browser contexts — bugs.webkit.org 188360/220184),
+  // so html5-qrcode's live getUserMedia scan cannot run there. Use the official
+  // @capacitor/barcode-scanner native plugin instead: it opens a full-screen
+  // live AVFoundation camera, continuously scans, and auto-closes on detection,
+  // feeding the decoded QR into the existing onScan → processBillScan → points
+  // flow. Android WebView and the desktop browser DO expose getUserMedia, so
+  // they keep the html5-qrcode live scan (unchanged).
+  const useNativeScanner =
+    Capacitor.isNativePlatform() && !navigator.mediaDevices?.getUserMedia;
+
   const onScanRef = useRef(onScan);
   const qrScannerRef = useRef(null);
   const mountedRef = useRef(true);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
+  const [nativeStarting, setNativeStarting] = useState(false);
 
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -48,73 +36,41 @@ export default function QRScanner({ onScan, onClose }) {
     return qrScannerRef.current;
   };
 
-  // Native flow: bypasses WKWebView's unavailable getUserMedia entirely by using
-  // the native Capacitor Camera plugin, which reliably triggers the native iOS
-  // permission prompt on first use. The captured photo is then decoded with
-  // html5-qrcode's scanFile (no live video needed).
-  // Drive a plain <input type="file" accept="image/*"> from the user's tap.
-  // Used on iOS, where the bridge reports 'web' (remote-URL race) so
-  // Camera.getPhoto would fall back to a programmatic <input capture> whose
-  // system handoff backgrounds the WKWebView and never resolves. A direct,
-  // gesture-driven file input with NO capture attribute is reliable in
-  // WKWebView and lets the user take a photo of the QR code.
-  const pickImageFile = () =>
-    new Promise((resolve, reject) => {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = (e) => {
-        const f = e.target.files?.[0];
-        if (f) resolve(f); else reject(new Error("No file selected"));
-      };
-      input.onerror = () => reject(new Error("File input error"));
-      input.click();
-    });
-
-  const takeNativePhoto = async () => {
+  // Native live scan: opens the device camera full-screen, continuously scans,
+  // and resolves with { ScanResult } on detection (auto-closes). Cancelling the
+  // native UI rejects — close the modal.
+  const startNativeScan = async () => {
     if (!mountedRef.current) return;
     setError("");
-
+    setNativeStarting(true);
     try {
-      let file;
-      // Android: the Capacitor bridge reports native, so Camera.getPhoto
-      // opens the native camera (unchanged). iOS App Store build: the bridge
-      // reports 'web', so Camera.getPhoto's web fallback would background the
-      // app — use a direct file input instead.
-      if (Capacitor.isNativePlatform()) {
-        console.log("[QRScanner] native bridge — calling Camera.getPhoto()");
-        const photo = await Camera.getPhoto({
-          resultType: CameraResultType.DataUrl,
-          source: CameraSource.Camera,
-          quality: 90,
-        });
-        console.log("[QRScanner] Camera.getPhoto resolved:", !!photo?.dataUrl);
-        if (!photo?.dataUrl) return;
-        file = dataUrlToFile(photo.dataUrl, "scan.jpg");
-      } else {
-        console.log("[QRScanner] no native bridge — opening direct file input");
-        file = await pickImageFile();
-        console.log("[QRScanner] file input resolved:", file?.name);
-        if (!file) return;
-      }
-
-      const scanner = getScannerInstance();
-      const decodedText = await scanner.scanFile(file, false);
-      console.log("[QRScanner] scanFile decoded:", !!decodedText);
+      const result = await CapacitorBarcodeScanner.scanBarcode({
+        hint: 17, // ALL — receipts carry QR codes; ALL avoids hint mismatches
+        cameraDirection: 1, // BACK
+      });
       if (!mountedRef.current) return;
-      onScanRef.current(decodedText);
+      const decoded = result?.ScanResult;
+      if (decoded) {
+        onScanRef.current(decoded);
+      } else {
+        onClose();
+      }
     } catch (err) {
-      console.log("[QRScanner] takeNativePhoto error:", err?.message || err);
       if (!mountedRef.current) return;
       const msg = (err?.message || String(err)).toLowerCase();
-      if (msg.includes("cancel") || msg.includes("user cancelled") || msg.includes("no file selected")) return;
-      if (msg.includes("qr") || msg.includes("no multi")) {
-        setError("No QR code found — please try again.");
-      } else {
-        setError("Could not access camera. Please check permissions and tap Retry.");
+      if (msg.includes("cancel") || msg.includes("user cancelled")) {
+        onClose();
+        return;
       }
+      setError("Could not access camera. Please check permissions and try again.");
+    } finally {
+      if (mountedRef.current) setNativeStarting(false);
     }
   };
+
+  // The html5-qrcode live getUserMedia scan (Android + browser) lives in
+  // startScanning below. On iOS the native @capacitor/barcode-scanner live scan
+  // above replaces it entirely (no getUserMedia, no single-photo fallback).
 
   const startScanning = async () => {
     if (!mountedRef.current) return;
@@ -156,13 +112,6 @@ export default function QRScanner({ onScan, onClose }) {
     // Guard: some browsers (e.g. insecure context / older iOS Safari) expose no
     // mediaDevices API at all — surface a clear message instead of a generic crash.
     if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== "function") {
-      // WKWebView (the iOS app shell) exposes no mediaDevices API. If we're
-      // actually inside the Capacitor native shell, use the Camera plugin
-      // instead — covers any case where the native detection was a false
-      // negative at render time.
-      if (Capacitor.isNativePlatform()) {
-        return takeNativePhoto();
-      }
       setError("Camera isn't supported in this browser. If you installed the app via TestFlight, please update to the latest build.");
       setIsScanning(false);
       return;
@@ -221,20 +170,23 @@ export default function QRScanner({ onScan, onClose }) {
   };
 
   useEffect(() => {
-    // On native, camera capture is only ever triggered by the user tapping
-    // "Open Camera" (Camera.getPhoto requires a user gesture) — don't auto-start.
-    if (isNative) return;
-
-    // Delay start to let the modal animation finish and container render with dimensions
+    // iOS native: launch the native live scanner immediately on open — the
+    // native camera IS the UI (full-screen, continuous, auto-close on detect).
+    if (useNativeScanner) {
+      startNativeScan();
+      return;
+    }
+    // Android / browser: delay start to let the modal animation finish and
+    // the container render with dimensions, then run the html5-qrcode live scan.
     const timer = setTimeout(startScanning, 700);
-
     return () => {
       clearTimeout(timer);
       try {
         if (qrScannerRef.current?.isScanning) qrScannerRef.current.stop();
       } catch (e) { /* ignore */ }
     };
-  }, [isNative]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleClose = async () => {
     try {
@@ -272,14 +224,21 @@ export default function QRScanner({ onScan, onClose }) {
           <div
             id="qr-reader"
             className="rounded-2xl overflow-hidden border-4 border-[#E8DED8] bg-black"
-            style={isNative ? { display: "none" } : { minHeight: 300, width: "100%" }}
+            style={useNativeScanner ? { display: "none" } : { minHeight: 300, width: "100%" }}
           />
 
-          {isNative ? (
-            <Button onClick={takeNativePhoto} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl">
-              <QrCode className="h-4 w-4 mr-2" />
-              {error ? "Retry" : "Open Camera"}
-            </Button>
+          {useNativeScanner ? (
+            <div className="text-center py-4">
+              {error ? (
+                <Button onClick={startNativeScan} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl">
+                  <RefreshCw className="h-4 w-4 mr-2" /> Retry
+                </Button>
+              ) : (
+                <p className="text-sm text-[#8B7355] flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Opening camera…
+                </p>
+              )}
+            </div>
           ) : !isScanning ? (
             <Button onClick={startScanning} className="w-full bg-[#8B7355] hover:bg-[#6B5744] rounded-xl">
               <RefreshCw className="h-4 w-4 mr-2" />
