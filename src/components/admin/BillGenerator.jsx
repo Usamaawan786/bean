@@ -17,8 +17,9 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const [qrReady, setQrReady] = useState(!bill.qrCodeId);
   const [iosQrUrl, setIosQrUrl] = useState("");
   const [androidQrUrl, setAndroidQrUrl] = useState("");
+  const [logoDataUrl, setLogoDataUrl] = useState("");
 
-  const generatePDF = useCallback((qrUrl, iosUrl, androidUrl) => {
+  const generatePDF = useCallback((qrUrl, iosUrl, androidUrl, logoUrl) => {
     // 80mm thermal receipt PDF — monochrome, Courier, auto height.
     const margin = 4;
     const pw = 80;
@@ -45,18 +46,10 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
       doc.setFont("courier", "normal");
       doc.setTextColor(...black);
 
-      // --- Logo: vector coffee-bean mark (avoids base64/CORS/PNG-decode issues) ---
-      {
-        const lc = center;
-        const lcy = y + 7.5;
-        doc.setFillColor(...black);
-        doc.ellipse(lc, lcy, 6, 7.5, "F"); // filled bean
-        doc.setDrawColor(255, 255, 255);
-        doc.setLineWidth(0.8);
-        doc.lines([[3.5, 6, -3.5, 9, 0, 15]], lc, lcy - 7.5, [1, 1], "S", false); // white S-seam
-        doc.setDrawColor(...black);
+      // --- Logo: real Bean circular brand mark (pre-fetched data URL) ---
+      if (logoUrl) {
+        try { doc.addImage(logoUrl, "PNG", center - 10, y, 20, 20); y += 22; } catch (e) { /* skip on decode error */ }
       }
-      y += 16;
 
       // --- Brand header ---
       doc.setFont("courier", "bold");
@@ -230,12 +223,27 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     QRCode.toDataURL(ANDROID_APP_URL, { width: 160, margin: 1 }).then(setAndroidQrUrl);
   }, []);
 
-  // Auto-download once ALL QR codes are ready (qr reward + app download QRs)
+  // Pre-fetch the real Bean logo as a base64 data URL (jsPDF addImage needs inline data)
   useEffect(() => {
-    if (autoDownload && qrReady && iosQrUrl && androidQrUrl) {
-      generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(LOGO_URL);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => { if (!cancelled && reader.result) setLogoDataUrl(reader.result); };
+        reader.readAsDataURL(blob);
+      } catch (e) { /* logo stays empty — receipt continues without image */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Auto-download once ALL QR codes AND the logo are ready
+  useEffect(() => {
+    if (autoDownload && qrReady && iosQrUrl && androidQrUrl && logoDataUrl) {
+      generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl, logoDataUrl);
     }
-  }, [autoDownload, qrReady, iosQrUrl, androidQrUrl, qrCodeUrl, generatePDF]);
+  }, [autoDownload, qrReady, iosQrUrl, androidQrUrl, logoDataUrl, qrCodeUrl, generatePDF]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -261,8 +269,8 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
             <Button size="sm" variant="outline" onClick={() => window.print()} className="rounded-xl">
               <Printer className="h-4 w-4 mr-2" />Print
             </Button>
-            <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl)} className="rounded-xl">
-              {(!iosQrUrl || !androidQrUrl)
+            <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl, logoDataUrl)} className="rounded-xl">
+              {(!iosQrUrl || !androidQrUrl || !logoDataUrl)
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating…</>
                 : <><Download className="h-4 w-4 mr-2" />PDF</>}
             </Button>
