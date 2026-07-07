@@ -42,6 +42,7 @@ export default function AdminCommunity() {
   const [composeContent, setComposeContent] = useState("");
   const [composeType, setComposeType] = useState("general");
   const [composing, setComposing] = useState(false);
+  const [composeAsOfficial, setComposeAsOfficial] = useState(false);
   const [assignBadgeModal, setAssignBadgeModal] = useState(null); // customer object
   const queryClient = useQueryClient();
 
@@ -78,6 +79,10 @@ export default function AdminCommunity() {
 
   const customerByEmail = {};
   customers.forEach(c => { if (c.created_by) customerByEmail[c.created_by] = c; });
+
+  const officialEmail = "usamaameer309@gmail.com";
+  const officialUser = allUsers.find(u => u.email === officialEmail);
+  const officialCustomer = customers.find(c => c.user_email === officialEmail);
 
   const badgeDefsMap = {};
   badgeDefs.forEach(b => { badgeDefsMap[b.key] = b; });
@@ -133,10 +138,18 @@ export default function AdminCommunity() {
   const handleCompose = async () => {
     if (!composeContent.trim()) return;
     setComposing(true);
+    const asOfficial = composeAsOfficial;
+    const authorEmail = asOfficial ? officialEmail : user.email;
+    const authorName = asOfficial
+      ? (officialCustomer?.display_name || officialUser?.full_name || "Bean ☕")
+      : (user.full_name || "Admin");
+    const authorPicture = asOfficial
+      ? (officialCustomer?.profile_picture || officialUser?.profile_picture || null)
+      : (user.profile_picture || null);
     await base44.entities.CommunityPost.create({
-      author_email: user.email,
-      author_name: user.full_name || "Admin",
-      author_profile_picture: user.profile_picture || null,
+      author_email: authorEmail,
+      author_name: authorName,
+      author_profile_picture: authorPicture,
       content: composeContent,
       post_type: composeType,
       moderation_status: "approved",
@@ -149,6 +162,7 @@ export default function AdminCommunity() {
     setComposeContent("");
     setShowCompose(false);
     setComposing(false);
+    setComposeAsOfficial(false);
     toast.success("Post published!");
   };
 
@@ -436,6 +450,10 @@ export default function AdminCommunity() {
                     <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
                   ))}
                 </select>
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-[#5C4A3A] bg-[#F5EBE8] rounded-xl px-3 py-2">
+                  <input type="checkbox" checked={composeAsOfficial} onChange={e => setComposeAsOfficial(e.target.checked)} className="h-4 w-4 accent-[#8B7355]" />
+                  <span>Publish as official Bean account <span className="text-[#8B7355] text-xs">(usamaameer309@gmail.com)</span></span>
+                </label>
                 <Textarea value={composeContent} onChange={e => setComposeContent(e.target.value)}
                   placeholder="Write your post..." className="border-[#E8DED8] h-32 text-sm" />
               </div>

@@ -21,6 +21,7 @@ import OnboardingNameModal from "@/components/shared/OnboardingNameModal";
 import { useQueryClient } from "@tanstack/react-query";
 import NotificationBell from "@/components/community/NotificationBell";
 import PointsHistoryList from "@/components/dashboard/PointsHistoryList";
+import SoftLaunchBanner from "@/components/shared/SoftLaunchBanner";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -220,6 +221,7 @@ export default function Home() {
         </div>
 
         <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-5">
+          <SoftLaunchBanner />
           <Link to={createPageUrl("Shop")}>
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="rounded-2xl bg-gradient-to-br from-[#F5EBE8] to-[#EDE3DF] p-4">
@@ -255,9 +257,6 @@ export default function Home() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-bold text-white text-lg leading-tight">Find Us on Maps</h3>
-                    <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase whitespace-nowrap flex-shrink-0">
-                      🕐 Soon
-                    </span>
                   </div>
                   <p className="text-xs text-[#E8DED8]">Get directions to our store</p>
                 </div>
@@ -429,6 +428,8 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
+
+          <SoftLaunchBanner />
 
           {/* Founding Member Bonus Banner — visible for 24h after first login */}
           {customer?.is_founding_member && (() => {
@@ -603,9 +604,6 @@ export default function Home() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-white text-lg leading-tight">Find Us on Maps</h3>
-                      <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide uppercase whitespace-nowrap flex-shrink-0">
-                        🕐 Soon
-                      </span>
                     </div>
                     <p className="text-xs text-[#E8DED8]">Get directions to our store</p>
                   </div>
