@@ -20,198 +20,222 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const [logoDataUrl, setLogoDataUrl] = useState("");
 
   const generatePDF = useCallback((qrUrl, iosUrl, androidUrl, logoUrl) => {
-    // 80mm thermal receipt PDF — monochrome, Courier, auto height.
-    const margin = 4;
-    const pw = 80;
-    const right = pw - margin; // 76
-    const center = pw / 2;      // 40
-    const black = [0, 0, 0];
+    // Branded A4 invoice matching the on-screen POS design (beige / brown).
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageW = 210, pageH = 297;
+    const margin = 18;
+    const left = margin;
+    const right = pageW - margin;
+    const contentW = right - left;
+    const center = pageW / 2;
 
-    const dashedLine = (doc, y) => {
-      doc.setLineDashPattern([1, 1], 0);
-      doc.setDrawColor(...black);
-      doc.setLineWidth(0.2);
-      doc.line(margin, y, right, y);
-      doc.setLineDashPattern([], 0);
+    const brown = [92, 74, 58];       // #5C4A3A
+    const brownSec = [139, 115, 85]; // #8B7355
+    const border = [232, 222, 216];  // #E8DED8
+    const accent = [245, 235, 232];  // #F5EBE8
+
+    let y = margin;
+    const ensureSpace = (need) => {
+      if (y + need > pageH - margin) { doc.addPage(); y = margin; }
     };
-    const solidLine = (doc, y) => {
-      doc.setDrawColor(...black);
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, right, y);
+
+    // --- Header: logo + brand ---
+    if (logoUrl) {
+      try { doc.addImage(logoUrl, "PNG", center - 11, y, 22, 22); } catch (e) {}
+      y += 26;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
+    doc.setTextColor(...brown);
+    doc.text("Bean", center, y, { align: "center" });
+    y += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...brownSec);
+    doc.text("More than just coffee, it's a community!", center, y, { align: "center" });
+    y += 8;
+
+    // --- Invoice meta band ---
+    const bandH = 18;
+    doc.setFillColor(...accent);
+    doc.roundedRect(left, y, contentW, bandH, 2, 2, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(...brown);
+    doc.text("INVOICE", left + 5, y + 8);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...brownSec);
+    doc.text(`No. ${bill.billNumber}`, right - 5, y + 7, { align: "right" });
+    doc.text(format(new Date(bill.date), "MMM dd, yyyy HH:mm"), right - 5, y + 14, { align: "right" });
+    y += bandH + 6;
+
+    // --- Customer info ---
+    if (bill.customerInfo?.name || bill.customerInfo?.phone) {
+      doc.setFontSize(9);
+      if (bill.customerInfo.name) {
+        doc.setTextColor(...brownSec); doc.text("Customer", left, y);
+        doc.setTextColor(...brown); doc.setFont("helvetica", "bold");
+        doc.text(String(bill.customerInfo.name), left + 25, y);
+        doc.setFont("helvetica", "normal");
+        y += 6;
+      }
+      if (bill.customerInfo.phone) {
+        doc.setTextColor(...brownSec); doc.text("Phone", left, y);
+        doc.setTextColor(...brown); doc.setFont("helvetica", "bold");
+        doc.text(String(bill.customerInfo.phone), left + 25, y);
+        doc.setFont("helvetica", "normal");
+        y += 6;
+      }
+      y += 4;
+    }
+
+    // --- Items table ---
+    const colQty = left + contentW - 78;
+    const colPrice = left + contentW - 44;
+    const colTotal = right - 5;
+    doc.setFillColor(...accent);
+    doc.rect(left, y, contentW, 9, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...brown);
+    doc.text("Item", left + 4, y + 6);
+    doc.text("Qty", colQty + 8, y + 6, { align: "center" });
+    doc.text("Price", colPrice, y + 6, { align: "right" });
+    doc.text("Total", colTotal, y + 6, { align: "right" });
+    y += 9;
+    bill.items.forEach((item) => {
+      ensureSpace(11);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...brown);
+      doc.text(String(item.name).slice(0, 42), left + 4, y + 6);
+      doc.setTextColor(...brownSec);
+      doc.text(String(item.quantity), colQty + 8, y + 6, { align: "center" });
+      doc.text(`PKR ${item.price.toFixed(2)}`, colPrice, y + 6, { align: "right" });
+      doc.setTextColor(...brown);
+      doc.setFont("helvetica", "bold");
+      doc.text(`PKR ${(item.price * item.quantity).toFixed(2)}`, colTotal, y + 6, { align: "right" });
+      doc.setDrawColor(...border); doc.setLineWidth(0.2);
+      doc.line(left, y + 9, right, y + 9);
+      y += 9;
+    });
+    y += 6;
+
+    // --- Totals (right-aligned column) ---
+    const labelX = right - 60;
+    const valueX = right - 4;
+    const totalsRow = (label, value, opts = {}) => {
+      ensureSpace(9);
+      doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+      doc.setFontSize(opts.size || 9);
+      doc.setTextColor(...(opts.color || brownSec));
+      doc.text(label, labelX, y + 5);
+      doc.setTextColor(...(opts.valueColor || brown));
+      doc.text(value, valueX, y + 5, { align: "right" });
+      y += (opts.size || 9) > 11 ? 8 : 6;
     };
+    if (bill.discountPct > 0) {
+      totalsRow("Subtotal", `PKR ${(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}`);
+      totalsRow(`Discount (${bill.discountPct}%)`, `- PKR ${(bill.discountAmount ?? 0).toFixed(2)}`, { color: [220, 38, 38], valueColor: [220, 38, 38] });
+    } else {
+      totalsRow("Subtotal", `PKR ${bill.subtotal.toFixed(2)}`);
+    }
+    const gstLabel = bill.paymentMethod === "Card" ? "5%" : "17%";
+    totalsRow(`GST (${gstLabel})`, `PKR ${bill.tax.toFixed(2)}`);
+    ensureSpace(8);
+    doc.setDrawColor(...brown); doc.setLineWidth(0.5);
+    doc.line(labelX, y, valueX, y);
+    y += 4;
+    totalsRow("TOTAL", `PKR ${bill.total.toFixed(2)}`, { bold: true, size: 13, color: brown, valueColor: brown });
+    y += 4;
 
-    // Draw the full receipt into `doc`, returning the final y (for height calc).
-    const layout = (doc) => {
-      let y = margin;
-      doc.setFont("courier", "normal");
-      doc.setTextColor(...black);
+    // --- Reward points pill ---
+    ensureSpace(12);
+    const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
+    doc.setFillColor(...accent);
+    doc.roundedRect(labelX, y, valueX - labelX, 11, 2, 2, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...brown);
+    doc.text("Reward Points Earned", labelX + 4, y + 7);
+    doc.setFontSize(11);
+    doc.text(`${pts} pts`, valueX - 4, y + 7, { align: "right" });
+    y += 16;
 
-      // --- Logo: real Bean circular brand mark (pre-fetched data URL) ---
-      if (logoUrl) {
-        try { doc.addImage(logoUrl, "PNG", center - 10, y, 20, 20); y += 22; } catch (e) { /* skip on decode error */ }
-      }
-
-      // --- Brand header ---
-      doc.setFont("courier", "bold");
-      doc.setFontSize(14);
-      doc.text("BEAN", center, y, { align: "center" });
-      y += 5;
-      doc.setFont("courier", "normal");
-      doc.setFontSize(7);
-      doc.text("More than just coffee, it's a community!", center, y, { align: "center" });
-      y += 3;
-
-      dashedLine(doc, y); y += 3;
-
-      // --- Invoice info ---
-      doc.setFontSize(8);
-      doc.setFont("courier", "normal");
-      doc.text("Invoice No.", margin, y);
-      doc.setFont("courier", "bold");
-      doc.text(String(bill.billNumber), right, y, { align: "right" });
-      y += 4;
-      doc.setFont("courier", "normal");
-      doc.text("Date", margin, y);
-      doc.text(format(new Date(bill.date), "MMM dd, yyyy HH:mm"), right, y, { align: "right" });
-      y += 4;
-      if (bill.customerInfo?.name) {
-        doc.text("Customer", margin, y);
-        doc.text(String(bill.customerInfo.name), right, y, { align: "right" });
-        y += 4;
-      }
-      if (bill.customerInfo?.phone) {
-        doc.text("Phone", margin, y);
-        doc.text(String(bill.customerInfo.phone), right, y, { align: "right" });
-        y += 4;
-      }
-
-      dashedLine(doc, y); y += 3;
-
-      // --- Items header ---
-      doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      doc.text("Item", margin, y);
-      doc.text("Qty", 34, y, { align: "center" });
-      doc.text("Price", 52, y, { align: "right" });
-      doc.text("Total", right, y, { align: "right" });
-      y += 2;
-      dashedLine(doc, y); y += 3;
-
-      // --- Item rows ---
-      bill.items.forEach((item) => {
-        doc.setFont("courier", "normal");
-        doc.text(String(item.name).slice(0, 26), margin, y);
-        y += 4;
-        doc.text(String(item.quantity), 34, y, { align: "center" });
-        doc.text(`PKR ${item.price.toFixed(2)}`, 52, y, { align: "right" });
-        doc.setFont("courier", "bold");
-        doc.text(`PKR ${(item.price * item.quantity).toFixed(2)}`, right, y, { align: "right" });
-        y += 5;
-      });
-
-      dashedLine(doc, y); y += 3;
-
-      // --- Totals ---
-      doc.setFont("courier", "normal");
-      doc.setFontSize(8);
-      if (bill.discountPct > 0) {
-        doc.text("Subtotal", margin, y);
-        doc.text(`PKR ${(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}`, right, y, { align: "right" });
-        y += 4;
-        doc.text(`Discount (${bill.discountPct}%)`, margin, y);
-        doc.text(`-PKR ${(bill.discountAmount ?? 0).toFixed(2)}`, right, y, { align: "right" });
-        y += 4;
-      } else {
-        doc.text("Subtotal", margin, y);
-        doc.text(`PKR ${bill.subtotal.toFixed(2)}`, right, y, { align: "right" });
-        y += 4;
-      }
-      const gstLabel = bill.paymentMethod === "Card" ? "5%" : "17%";
-      doc.text(`GST (${gstLabel})`, margin, y);
-      doc.text(`PKR ${bill.tax.toFixed(2)}`, right, y, { align: "right" });
-      y += 3;
-
-      solidLine(doc, y); y += 4;
-
-      doc.setFont("courier", "bold");
-      doc.setFontSize(12);
-      doc.text("TOTAL", margin, y);
-      doc.text(`PKR ${bill.total.toFixed(2)}`, right, y, { align: "right" });
-      y += 5;
-
-      dashedLine(doc, y); y += 3;
-
-      // --- Reward Points ---
-      const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
-      doc.setFont("courier", "normal");
-      doc.setFontSize(8);
-      doc.text("Reward Points Earned", margin, y);
-      doc.setFont("courier", "bold");
-      doc.text(`${pts} pts`, right, y, { align: "right" });
-      y += 4;
-
-      // --- Rewards QR (~34mm centered) ---
-      if (qrUrl) {
-        dashedLine(doc, y); y += 3;
-        doc.setFont("courier", "bold");
-        doc.setFontSize(9);
-        doc.text("Earn Rewards", center, y, { align: "center" });
-        y += 3;
-        try { doc.addImage(qrUrl, "PNG", center - 17, y, 34, 34); } catch (e) {}
-        y += 35;
-        doc.setFont("courier", "normal");
-        doc.setFontSize(6);
-        doc.text("Scan in the Bean Pakistan App to add points", center, y, { align: "center" });
-        y += 4;
-        if (bill.qrCodeId) {
-          doc.setFontSize(5);
-          doc.text("or enter code manually:", center, y, { align: "center" });
-          y += 3;
-          doc.setFont("courier", "bold");
-          doc.setFontSize(8);
-          doc.text(String(bill.qrCodeId), center, y, { align: "center" });
-          y += 4;
-        }
-      }
-
-      // --- App download QRs (~22mm each, side by side) ---
-      dashedLine(doc, y); y += 3;
-      doc.setFont("courier", "bold");
-      doc.setFontSize(8);
-      doc.text("Don't have the app? Download & scan", center, y, { align: "center" });
-      y += 3;
-      const qrSm = 22;
-      const gap = 4;
-      const startX = center - (qrSm * 2 + gap) / 2;
-      if (iosUrl) { try { doc.addImage(iosUrl, "PNG", startX, y, qrSm, qrSm); } catch (e) {} }
-      if (androidUrl) { try { doc.addImage(androidUrl, "PNG", startX + qrSm + gap, y, qrSm, qrSm); } catch (e) {} }
-      y += qrSm + 3;
-      doc.setFont("courier", "normal");
-      doc.setFontSize(7);
-      if (iosUrl) doc.text("iOS", startX + qrSm / 2, y, { align: "center" });
-      if (androidUrl) doc.text("Android", startX + qrSm + gap + qrSm / 2, y, { align: "center" });
-      y += 4;
-
-      // --- Footer ---
-      dashedLine(doc, y); y += 3;
-      doc.setFontSize(8);
-      doc.text("Thank you for your purchase!", center, y, { align: "center" });
-      y += 4;
-      doc.setFontSize(6);
-      doc.text("Bean - More than just coffee, it's a community!", center, y, { align: "center" });
+    // --- Rewards QR section ---
+    if (qrUrl) {
+      ensureSpace(52);
+      doc.setDrawColor(...border); doc.setLineWidth(0.3);
+      doc.line(left, y, right, y);
       y += 6;
-      return y;
-    };
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...brown);
+      doc.text("Earn Rewards", center, y, { align: "center" });
+      y += 5;
+      const qrSize = 38;
+      try { doc.addImage(qrUrl, "PNG", center - qrSize / 2, y, qrSize, qrSize); } catch (e) {}
+      y += qrSize + 4;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...brownSec);
+      doc.text("Scan in the Bean Pakistan App to add points", center, y, { align: "center" });
+      y += 5;
+      if (bill.qrCodeId) {
+        doc.setFontSize(7);
+        doc.text("or enter code manually:", center, y, { align: "center" });
+        y += 4;
+        const codeW = Math.min(contentW, 14 + bill.qrCodeId.length * 2.6);
+        doc.setFillColor(...accent);
+        doc.roundedRect(center - codeW / 2, y, codeW, 8, 2, 2, "F");
+        doc.setFont("courier", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(...brown);
+        doc.text(bill.qrCodeId, center, y + 5.5, { align: "center" });
+        y += 12;
+      }
+    }
 
-    // Two-pass: measure content height on a throwaway doc, then render the
-    // final doc at exactly that height so there is no trailing blank page.
-    const temp = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, 300] });
-    const finalY = layout(temp);
-    const height = Math.min(300, Math.max(40, finalY));
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: [pw, height] });
-    layout(pdf);
+    // --- App download QRs ---
+    ensureSpace(40);
+    doc.setDrawColor(...border); doc.setLineWidth(0.3);
+    doc.line(left, y, right, y);
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...brown);
+    doc.text("Don't have the app? Download & scan", center, y, { align: "center" });
+    y += 5;
+    const qrSm = 26, gapSm = 12;
+    const startX = center - (qrSm * 2 + gapSm) / 2;
+    if (iosUrl) { try { doc.addImage(iosUrl, "PNG", startX, y, qrSm, qrSm); } catch (e) {} }
+    if (androidUrl) { try { doc.addImage(androidUrl, "PNG", startX + qrSm + gapSm, y, qrSm, qrSm); } catch (e) {} }
+    y += qrSm + 4;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(...brownSec);
+    if (iosUrl) doc.text("iOS", startX + qrSm / 2, y, { align: "center" });
+    if (androidUrl) doc.text("Android", startX + qrSm + gapSm + qrSm / 2, y, { align: "center" });
+    y += 8;
+
+    // --- Footer ---
+    ensureSpace(14);
+    doc.setDrawColor(...border); doc.setLineWidth(0.3);
+    doc.line(left, y, right, y);
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(...brown);
+    doc.text("Thank you for your purchase!", center, y, { align: "center" });
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(...brownSec);
+    doc.text("Bean — More than just coffee, it's a community!", center, y, { align: "center" });
+
     try {
-      pdf.save(`bill-${bill.billNumber}.pdf`);
+      doc.save(`invoice-${bill.billNumber}.pdf`);
     } catch (e) {
       toast.error(`PDF generation failed: ${e?.message || e}`);
     }

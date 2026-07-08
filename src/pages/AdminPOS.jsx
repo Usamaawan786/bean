@@ -111,7 +111,9 @@ export default function AdminPOS() {
     completingRef.current = true;
     setCompleting(true);
     try {
-      const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
+      // Short, dynamic reward code: compact base36 timestamp + random suffix (~10 chars),
+      // still unique per millisecond + disambiguator for same-ms sales.
+      const qrCodeId = "B" + Date.now().toString(36).slice(-6).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
 
       // Fetch reward settings for dynamic points calculation
       let pkrPerPoint = PKR_PER_POINT; // default fallback (RewardSettings overrides)
