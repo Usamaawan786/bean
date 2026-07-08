@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { Crown, Star, Award, Gift, Zap, Coffee, Percent, ChevronRight } from "lucide-react";
+import { PKR_PER_POINT } from "@/lib/loyaltyConfig";
 
-// Points system: ~1 point per PKR 10 spent (so 100 PKR = 10 pts)
+// Points system: 1 point per PKR 100 spent (see loyaltyConfig.js / RewardSettings.pkr_per_point)
 // Tiers based on total points earned
 const tierData = {
   Bronze: {
@@ -14,10 +15,10 @@ const tierData = {
     minPoints: 0,
     nextTier: "Silver",
     pointsNeeded: 500,
-    spendNeeded: 5000, // PKR
+    spendNeeded: 50000, // PKR
     benefits: [
-      { icon: Star, text: "1 point per PKR 10 spent" },
-      { icon: Coffee, text: "Free coffee at 200 points (~PKR 2,000 spend)" },
+      { icon: Star, text: "1 point per PKR 100 spent" },
+      { icon: Coffee, text: "Free coffee at 200 points (~PKR 20,000 spend)" },
       { icon: Gift, text: "Birthday surprise drink" },
     ],
   },
@@ -31,10 +32,10 @@ const tierData = {
     minPoints: 500,
     nextTier: "Gold",
     pointsNeeded: 1500,
-    spendNeeded: 15000,
+    spendNeeded: 150000,
     benefits: [
-      { icon: Star, text: "1.2 points per PKR 10 spent" },
-      { icon: Coffee, text: "Free coffee at 180 points (~PKR 1,500 spend)" },
+      { icon: Star, text: "1 point per PKR 100 spent" },
+      { icon: Coffee, text: "Free coffee at 180 points (~PKR 18,000 spend)" },
       { icon: Gift, text: "Birthday reward + 1 surprise gift/month" },
       { icon: Zap, text: "Early access to Flash Drops" },
       { icon: Percent, text: "5% off every in-store order" },
@@ -50,10 +51,10 @@ const tierData = {
     minPoints: 1500,
     nextTier: "Platinum",
     pointsNeeded: 3000,
-    spendNeeded: 30000,
+    spendNeeded: 300000,
     benefits: [
-      { icon: Star, text: "1.5 points per PKR 10 spent" },
-      { icon: Coffee, text: "Free coffee at 150 points (~PKR 1,000 spend)" },
+      { icon: Star, text: "1 point per PKR 100 spent" },
+      { icon: Coffee, text: "Free coffee at 150 points (~PKR 15,000 spend)" },
       { icon: Gift, text: "Premium birthday reward" },
       { icon: Zap, text: "Priority Flash Drop access" },
       { icon: Percent, text: "10% off every in-store order" },
@@ -72,8 +73,8 @@ const tierData = {
     pointsNeeded: null,
     spendNeeded: null,
     benefits: [
-      { icon: Star, text: "2 points per PKR 10 spent" },
-      { icon: Coffee, text: "Free coffee at 120 points (~PKR 600 spend)" },
+      { icon: Star, text: "1 point per PKR 100 spent" },
+      { icon: Coffee, text: "Free coffee at 120 points (~PKR 12,000 spend)" },
       { icon: Gift, text: "VIP birthday experience + monthly reward" },
       { icon: Zap, text: "First pick on all Flash Drops" },
       { icon: Percent, text: "15% off every in-store order" },
@@ -187,7 +188,7 @@ export function AllTiersPanel({ currentTier, totalPoints }) {
                 <span className="text-xs text-[#C9B8A6]">
                   {data.minPoints === 0
                     ? "Starting tier"
-                    : `From ${data.minPoints.toLocaleString()} points (≈ PKR ${(data.minPoints * 10).toLocaleString()} spend)`}
+                    : `From ${data.minPoints.toLocaleString()} points (≈ PKR ${(data.minPoints * PKR_PER_POINT).toLocaleString()} spend)`}
                 </span>
               </div>
             </div>
@@ -208,7 +209,7 @@ export function AllTiersPanel({ currentTier, totalPoints }) {
                   />
                 </div>
                 <p className="text-xs text-[#8B7355] mt-1">
-                  {data.pointsNeeded - totalPoints} pts more · spend ≈ PKR {((data.pointsNeeded - totalPoints) * 10).toLocaleString()}
+                  {data.pointsNeeded - totalPoints} pts more · spend ≈ PKR {((data.pointsNeeded - totalPoints) * PKR_PER_POINT).toLocaleString()}
                 </p>
               </div>
             )}
@@ -230,7 +231,7 @@ export function AllTiersPanel({ currentTier, totalPoints }) {
       })}
 
       <p className="text-center text-xs text-[#C9B8A6] pt-1">
-        Points rate: PKR 10 spent = 1 point · Multipliers apply per tier
+        Points rate: PKR {PKR_PER_POINT} spent = 1 point
       </p>
     </div>
   );

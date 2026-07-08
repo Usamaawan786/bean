@@ -4,7 +4,7 @@
   "properties": {
     "pkr_per_point": {
       "type": "number",
-      "description": "How many PKR spent = 1 point (e.g. 10 means 10 PKR = 1 point)"
+      "description": "How many PKR spent = 1 point (e.g. 100 means 100 PKR = 1 point)"
     },
     "min_spend_for_points": {
       "type": "number",

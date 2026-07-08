@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Gift, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { PKR_PER_POINT } from "@/lib/loyaltyConfig";
 
 export default function RewardProgress({ currentPoints }) {
   const { data: rewards = [] } = useQuery({
@@ -73,7 +74,7 @@ export default function RewardProgress({ currentPoints }) {
       {/* Motivational Text */}
       <div className="mt-4 pt-4 border-t border-white/20">
         <p className="text-[#F5EBE8] text-xs text-center">
-          ☕ Every PKR 100 = 1 point • Keep scanning receipts!
+          ☕ Every PKR {PKR_PER_POINT} = 1 point • Keep scanning receipts!
         </p>
       </div>
     </motion.div>

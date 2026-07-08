@@ -1,5 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
+// Canonical PKR-per-point fallback. The live value is RewardSettings.pkr_per_point
+// (currently 100). Keep in sync with src/lib/loyaltyConfig.js.
+const DEFAULT_PKR_PER_POINT = 100;
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -50,7 +54,7 @@ Deno.serve(async (req) => {
     }
 
     // 4. Fetch RewardSettings ONCE — reused for both pkrPerPoint and referral config.
-    let pkrPerPoint = 100;
+    let pkrPerPoint = DEFAULT_PKR_PER_POINT;
     let REFERRAL_SPEND_THRESHOLD = 2000;
     let REFERRAL_BONUS_REFERRER = 25;
     let REFERRAL_BONUS_JOINEE = 25;

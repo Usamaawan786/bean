@@ -19,6 +19,7 @@ import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
 import POSCategoryNav from "@/components/admin/pos/POSCategoryNav";
 import { SlidersHorizontal } from "lucide-react";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
+import { PKR_PER_POINT } from "@/lib/loyaltyConfig";
 import { generateTicketNumber, aggregateItemsToCart, diffCartAgainstBaseline } from "@/lib/openTicketUtils";
 
 export default function AdminPOS() {
@@ -113,7 +114,7 @@ export default function AdminPOS() {
       const qrCodeId = "QR-" + Date.now().toString() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase();
 
       // Fetch reward settings for dynamic points calculation
-      let pkrPerPoint = 100; // default fallback
+      let pkrPerPoint = PKR_PER_POINT; // default fallback (RewardSettings overrides)
       try {
         const settings = await base44.entities.RewardSettings.list("-created_date", 1);
         if (settings.length > 0 && settings[0].pkr_per_point) {
