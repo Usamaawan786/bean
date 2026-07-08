@@ -39,6 +39,7 @@ import FlashDropManager from './pages/FlashDropManager';
 import SyrveIntegrationHub from './pages/SyrveIntegrationHub';
 import SurveillanceVault from './pages/SurveillanceVault';
 import InventoryAudit from './pages/InventoryAudit';
+import ThermalReceiptPage from './pages/ThermalReceiptPage';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -100,6 +101,7 @@ function App() {
             <Route path="/syrve-integration-hub" element={<SyrveIntegrationHub />} />
             <Route path="/surveillance-vault" element={<SurveillanceVault />} />
             <Route path="/inventory-audit" element={<InventoryAudit />} />
+            <Route path="/thermal-receipt" element={<ThermalReceiptPage />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>

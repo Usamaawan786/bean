@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
-import ThermalReceipt, { ThermalPrintStyles } from "@/components/admin/ThermalReceipt";
+
+const PAPER_WIDTH_KEY = "thermalPaperWidth";
 
 const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
 const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
@@ -18,6 +19,15 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
   const [iosQrUrl, setIosQrUrl] = useState("");
   const [androidQrUrl, setAndroidQrUrl] = useState("");
   const [logoDataUrl, setLogoDataUrl] = useState("");
+  const [paperWidth, setPaperWidth] = useState(() => {
+    const saved = localStorage.getItem(PAPER_WIDTH_KEY);
+    return saved === "58" ? 58 : 80;
+  });
+
+  const setWidth = (w) => {
+    setPaperWidth(w);
+    localStorage.setItem(PAPER_WIDTH_KEY, String(w));
+  };
 
   const generatePDF = useCallback((qrUrl, iosUrl, androidUrl, logoUrl) => {
     // Branded A4 invoice matching the on-screen POS design (beige / brown).
@@ -241,6 +251,31 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     }
   }, [bill]);
 
+  // Open a dedicated thermal-receipt tab with all assets inlined as base64.
+  const handlePrintReceipt = useCallback(() => {
+    if (!qrReady || !iosQrUrl || !androidQrUrl || !logoDataUrl) {
+      toast.error("Preparing assets — please try again in a moment.");
+      return;
+    }
+    try {
+      sessionStorage.setItem(
+        "thermalReceiptData",
+        JSON.stringify({
+          bill,
+          qrCodeUrl,
+          iosQrUrl,
+          androidQrUrl,
+          logoDataUrl,
+          paperWidth,
+        })
+      );
+    } catch (e) {
+      toast.error("Could not prepare receipt for printing.");
+      return;
+    }
+    window.open("/thermal-receipt", "_blank");
+  }, [bill, qrReady, iosQrUrl, androidQrUrl, logoDataUrl, qrCodeUrl, paperWidth]);
+
   // Generate QR codes
   useEffect(() => {
     if (bill.qrCodeId) {
@@ -280,17 +315,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <ThermalPrintStyles />
-      {/* Hidden thermal receipt — only visible during window.print() */}
-      <div className="thermal-print-root">
-        <ThermalReceipt
-          bill={bill}
-          qrCodeUrl={qrCodeUrl}
-          iosQrUrl={iosQrUrl}
-          androidQrUrl={androidQrUrl}
-          logoUrl={LOGO_URL}
-        />
-      </div>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -299,18 +323,35 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
         <div className="sticky top-0 bg-white border-b border-[#E8DED8] p-4 flex items-center justify-between rounded-t-3xl">
           <h2 className="text-xl font-bold text-[#5C4A3A]">Invoice</h2>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => window.print()} className="rounded-xl">
-              <Printer className="h-4 w-4 mr-2" />Print
+            <Button size="sm" variant="outline" onClick={handlePrintReceipt} className="rounded-xl">
+              {(!qrReady || !iosQrUrl || !androidQrUrl || !logoDataUrl)
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing…</>
+                : <><Printer className="h-4 w-4 mr-2" />Print Receipt</>}
             </Button>
             <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl, logoDataUrl)} className="rounded-xl">
               {(!iosQrUrl || !androidQrUrl || !logoDataUrl)
                 ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Generating…</>
-                : <><Download className="h-4 w-4 mr-2" />PDF</>}
+                : <><Download className="h-4 w-4 mr-2" />Download Invoice</>}
             </Button>
             <button onClick={onClose} className="p-2 hover:bg-[#F5EBE8] rounded-full transition-colors">
               <X className="h-5 w-5 text-[#8B7355]" />
             </button>
           </div>
+        </div>
+        {/* Paper width setting */}
+        <div className="bg-[#F5EBE8] border-b border-[#E8DED8] px-4 py-2 flex items-center gap-3">
+          <span className="text-xs font-medium text-[#8B7355]">Receipt paper:</span>
+          <div className="flex bg-white rounded-full p-0.5 border border-[#E8DED8]">
+            <button
+              onClick={() => setWidth(58)}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${paperWidth === 58 ? "bg-[#5C4A3A] text-white" : "text-[#8B7355]"}`}
+            >58mm</button>
+            <button
+              onClick={() => setWidth(80)}
+              className={`px-3 py-1 rounded-full text-xs transition-colors ${paperWidth === 80 ? "bg-[#5C4A3A] text-white" : "text-[#8B7355]"}`}
+            >80mm</button>
+          </div>
+          <span className="text-[10px] text-[#C9B8A6]">Applies to Print Receipt output</span>
         </div>
 
         <div className="p-6 bg-white">
