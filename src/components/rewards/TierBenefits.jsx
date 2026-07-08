@@ -18,7 +18,7 @@ const tierData = {
     spendNeeded: 50000, // PKR
     benefits: [
       { icon: Star, text: "1 point per PKR 100 spent" },
-      { icon: Coffee, text: "Free coffee at 200 points (~PKR 20,000 spend)" },
+      { icon: Coffee, text: "Free coffee at 200 points" },
       { icon: Gift, text: "Birthday surprise drink" },
     ],
   },
