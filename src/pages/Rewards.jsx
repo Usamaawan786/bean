@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Gift, ArrowLeft, Check, Sparkles, TrendingUp, Trophy, Medal, Crown } from "lucide-react";
+import { Star, Gift, ArrowLeft, Check, Sparkles, TrendingUp, Trophy, Medal, Crown, Printer } from "lucide-react";
+import { printRedemptionVoucher } from "@/lib/redemptionVoucher";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import RewardCard from "@/components/rewards/RewardCard";
@@ -112,7 +113,7 @@ export default function Rewards() {
     }
   });
 
-  const categories = ["all", "Drinks", "Food", "Merchandise", "Experience"];
+  const categories = ["all", "Drinks", "Food"];
 
   const rewardList = Array.isArray(rewards) ? rewards : [];
   const filteredRewards = selectedCategory === "all"
@@ -435,8 +436,21 @@ export default function Rewards() {
             </p>
 
             <Button
+              onClick={() => printRedemptionVoucher({
+                reward_name: successDialog.reward?.name,
+                points_spent: successDialog.reward?.points_required,
+                redemption_code: successDialog.code,
+                customer_email: user?.email,
+                date: new Date().toLocaleString()
+              })}
+              variant="outline"
+              className="w-full mt-6 rounded-xl border-[#E8DED8] text-[#8B7355] hover:bg-[#F5EBE8] gap-2"
+            >
+              <Printer className="h-4 w-4" /> Print / Save Voucher
+            </Button>
+            <Button
               onClick={() => setSuccessDialog({ open: false, reward: null, code: "" })}
-              className="w-full mt-6 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
+              className="w-full mt-3 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
             >
               Awesome!
             </Button>

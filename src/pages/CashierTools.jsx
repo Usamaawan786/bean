@@ -350,25 +350,51 @@ function CustomerLookup() {
 }
 
 // ─── Reward code verifier ─────────────────────────────────────
+// Goes through the verifyRewardCode backend function (service role) so cashiers
+// — who can't read Redemption records directly (RLS is customer/admin only) —
+// can look up and claim codes. The claim is atomic and once-only server-side.
 function RewardCodeVerifier() {
   const [codeInput, setCodeInput] = useState("");
   const [lookedUp, setLookedUp] = useState(null);
   const [notFound, setNotFound] = useState(false);
-  const queryClient = useQueryClient();
+  const [verifying, setVerifying] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
   const handleLookup = async () => {
     const code = codeInput.trim().toUpperCase();
     if (!code) return;
-    setNotFound(false); setLookedUp(null);
-    const results = await base44.entities.Redemption.filter({ redemption_code: code });
-    if (results.length === 0) setNotFound(true);
-    else setLookedUp(results[0]);
+    setNotFound(false); setLookedUp(null); setVerifying(true);
+    try {
+      const res = await base44.functions.invoke("verifyRewardCode", { redemption_code: code, claim: false });
+      const d = res.data;
+      if (!d || d.error) { toast.error(d?.error || "Lookup failed"); }
+      else if (d.reason === "not_found") { setNotFound(true); }
+      else { setLookedUp({ ...d.redemption, redemption_code: code }); }
+    } catch (e) {
+      toast.error("Lookup failed: " + (e?.message || "Unknown error"));
+    }
+    setVerifying(false);
   };
 
-  const handleClaim = async (r) => {
-    await base44.entities.Redemption.update(r.id, { status: "claimed" });
-    setLookedUp(prev => ({ ...prev, status: "claimed" }));
-    toast.success("Reward marked as claimed!");
+  const handleClaim = async () => {
+    if (!lookedUp) return;
+    setClaiming(true);
+    try {
+      const res = await base44.functions.invoke("verifyRewardCode", { redemption_code: lookedUp.redemption_code, claim: true });
+      const d = res.data;
+      if (d?.claimed) {
+        setLookedUp(prev => ({ ...prev, status: "claimed" }));
+        toast.success("Reward marked as claimed!");
+      } else if (d?.reason === "already_claimed") {
+        setLookedUp(prev => ({ ...prev, status: "claimed" }));
+        toast.error("This code was already claimed.");
+      } else {
+        toast.error(d?.error || "Could not claim");
+      }
+    } catch (e) {
+      toast.error("Claim failed: " + (e?.message || "Unknown error"));
+    }
+    setClaiming(false);
   };
 
   return (
@@ -380,7 +406,9 @@ function RewardCodeVerifier() {
           onKeyDown={e => e.key === "Enter" && handleLookup()}
           placeholder="e.g. 3Z79DYJK"
           className="font-mono text-lg tracking-widest border-[#E8DED8] uppercase" />
-        <Button onClick={handleLookup} className="bg-[#8B7355] hover:bg-[#6B5744] px-5 rounded-xl">Verify</Button>
+        <Button onClick={handleLookup} disabled={verifying} className="bg-[#8B7355] hover:bg-[#6B5744] px-5 rounded-xl gap-2">
+          {verifying && <Loader2 className="h-4 w-4 animate-spin" />} Verify
+        </Button>
       </div>
 
       <AnimatePresence>
@@ -403,10 +431,11 @@ function RewardCodeVerifier() {
               <div><p className="text-[#8B7355] text-xs">Reward</p><p className="font-bold text-[#5C4A3A]">{lookedUp.reward_name}</p></div>
               <div><p className="text-[#8B7355] text-xs">Points Spent</p><p className="font-bold text-[#5C4A3A]">{lookedUp.points_spent} pts</p></div>
               <div><p className="text-[#8B7355] text-xs">Customer</p><p className="font-medium text-[#5C4A3A] text-xs">{lookedUp.customer_email}</p></div>
+              <div><p className="text-[#8B7355] text-xs">Code</p><p className="font-mono font-bold text-[#5C4A3A]">{lookedUp.redemption_code}</p></div>
             </div>
             {lookedUp.status === "pending" && (
-              <Button onClick={() => handleClaim(lookedUp)} className="w-full bg-green-600 hover:bg-green-700 rounded-xl gap-2">
-                <CheckCircle className="h-4 w-4" /> Mark as Claimed
+              <Button onClick={handleClaim} disabled={claiming} className="w-full bg-green-600 hover:bg-green-700 rounded-xl gap-2">
+                {claiming ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />} Mark as Claimed
               </Button>
             )}
           </motion.div>

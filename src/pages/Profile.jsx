@@ -13,6 +13,7 @@ import QRScanner from "@/components/profile/QRScanner";
 import PointsAnimation from "@/components/profile/PointsAnimation";
 import ImageCropModal from "@/components/profile/ImageCropModal";
 import DeleteAccountDialog from "@/components/profile/DeleteAccountDialog";
+import MyRedemptions from "@/components/profile/MyRedemptions";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -276,7 +277,7 @@ export default function Profile() {
       </div>
 
       {/* Content */}
-      <div className="max-w-lg mx-auto px-5 pt-6 pb-24">
+      <div className="max-w-lg mx-auto px-5 pt-6 pb-32">
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-2">
             <h2 className="text-xl font-bold text-[#5C4A3A]">{customer?.is_bean_official ? (customer.display_name || "Bean") : (user.display_name || user.full_name)}</h2>
@@ -405,6 +406,9 @@ export default function Profile() {
             <ChevronRight className="h-5 w-5 text-[#C9B8A6]" />
           </div>
         </Link>
+
+        {/* My Redemption Codes — show pending reward codes to the barista */}
+        <MyRedemptions customerEmail={user?.email} />
 
         {/* Profile Form */}
         <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm space-y-4">
