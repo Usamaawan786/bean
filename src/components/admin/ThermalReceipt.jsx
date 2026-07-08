@@ -225,6 +225,14 @@ export default function ThermalReceipt({ bill, qrCodeUrl, iosQrUrl, androidQrUrl
           <div className="th-center th-small">
             Scan in the Bean Pakistan App to add points
           </div>
+          {bill.qrCodeId && (
+            <>
+              <div className="th-center th-small">or enter code manually:</div>
+              <div className="th-center th-bold" style={{ fontSize: "9pt", letterSpacing: "1px", wordBreak: "break-all" }}>
+                {bill.qrCodeId}
+              </div>
+            </>
+          )}
         </>
       )}
 

@@ -163,6 +163,15 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
         doc.setFontSize(6);
         doc.text("Scan in the Bean Pakistan App to add points", center, y, { align: "center" });
         y += 4;
+        if (bill.qrCodeId) {
+          doc.setFontSize(5);
+          doc.text("or enter code manually:", center, y, { align: "center" });
+          y += 3;
+          doc.setFont("courier", "bold");
+          doc.setFontSize(8);
+          doc.text(String(bill.qrCodeId), center, y, { align: "center" });
+          y += 4;
+        }
       }
 
       // --- App download QRs (~22mm each, side by side) ---
@@ -368,6 +377,12 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
               <p className="text-xs font-semibold text-[#5C4A3A] mb-2">Earn Rewards</p>
               <img src={qrCodeUrl} alt="Rewards QR Code" className="w-32 h-32 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
               <p className="text-xs text-[#8B7355] mt-2">Scan in the Bean Pakistan App to add points to your account</p>
+              {bill.qrCodeId && (
+                <div className="mt-3 inline-block bg-[#F5EBE8] rounded-xl px-4 py-2">
+                  <p className="text-[10px] text-[#8B7355] mb-1">or enter code manually</p>
+                  <p className="font-mono font-bold text-sm tracking-wider text-[#5C4A3A] break-all">{bill.qrCodeId}</p>
+                </div>
+              )}
             </div>
           )}
 
