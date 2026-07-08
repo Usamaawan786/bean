@@ -399,6 +399,13 @@ export default function Rewards() {
         )}
       </div>}
 
+      {/* Rewards disclaimer — points terms */}
+      <div className="max-w-lg mx-auto px-5 pb-10">
+        <p className="text-[10px] leading-relaxed text-[#C9B8A6] text-center">
+          Bean Rewards points have no cash value, are non-transferable, and cannot be exchanged for cash or combined with other offers unless stated. Points and rewards may expire and are subject to availability. Bean reserves the right to modify, suspend, or cancel the rewards program at any time without notice. Redemption of points does not guarantee product availability and is subject to these terms.
+        </p>
+      </div>
+
       {/* Success Dialog */}
       <Dialog open={successDialog.open} onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}>
         <DialogContent className="max-w-sm rounded-3xl">
