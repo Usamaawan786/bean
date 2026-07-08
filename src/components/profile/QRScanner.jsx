@@ -5,6 +5,7 @@ import { CapacitorBarcodeScanner } from "@capacitor/barcode-scanner";
 import { X, QrCode, AlertCircle, RefreshCw, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function QRScanner({ onScan, onClose }) {
   // iOS App Store build runs in a WKWebView that does NOT expose
@@ -16,8 +17,13 @@ export default function QRScanner({ onScan, onClose }) {
   // feeding the decoded QR into the existing onScan → processBillScan → points
   // flow. Android WebView and the desktop browser DO expose getUserMedia, so
   // they keep the html5-qrcode live scan (unchanged).
+  // iOS WKWebView exposes navigator.mediaDevices.getUserMedia in modern iOS but
+  // the stream is black/frozen and never decodes — so ALWAYS use the native
+  // AVFoundation scanner on iOS. Android WebView has a working getUserMedia, so
+  // it keeps html5-qrcode there (unless getUserMedia is missing).
   const useNativeScanner =
-    Capacitor.isNativePlatform() && !navigator.mediaDevices?.getUserMedia;
+    Capacitor.isNativePlatform() &&
+    (Capacitor.getPlatform() === "ios" || !navigator.mediaDevices?.getUserMedia);
 
   const onScanRef = useRef(onScan);
   const qrScannerRef = useRef(null);
@@ -25,6 +31,7 @@ export default function QRScanner({ onScan, onClose }) {
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
   const [nativeStarting, setNativeStarting] = useState(false);
+  const [manualCode, setManualCode] = useState("");
 
   useEffect(() => { onScanRef.current = onScan; }, [onScan]);
   useEffect(() => () => { mountedRef.current = false; }, []);
@@ -42,6 +49,10 @@ export default function QRScanner({ onScan, onClose }) {
   const startNativeScan = async () => {
     if (!mountedRef.current) return;
     setError("");
+    if (typeof CapacitorBarcodeScanner === "undefined") {
+      setError("Scanner isn't available in this app build. Update to the latest version, or enter the code manually below.");
+      return;
+    }
     setNativeStarting(true);
     try {
       const result = await CapacitorBarcodeScanner.scanBarcode({
@@ -260,6 +271,22 @@ export default function QRScanner({ onScan, onClose }) {
           <div className="bg-[#F5EBE8] rounded-2xl p-4 text-center">
             <p className="text-sm text-[#5C4A3A]">Point your camera at the QR code on your receipt to earn reward points!</p>
             <p className="text-xs text-[#8B7355] mt-2">Collect points with every purchase</p>
+          </div>
+
+          {/* Manual entry fallback — guarantees the launch works even if the
+              camera/native scanner fails on a device. Feeds the same onScan flow. */}
+          <div className="border-t border-[#E8DED8] pt-3">
+            <div className="flex items-center gap-2 text-xs text-[#C9B8A6] mb-2"><div className="flex-1 h-px bg-[#E8DED8]" />or enter code manually<div className="flex-1 h-px bg-[#E8DED8]" /></div>
+            <div className="flex gap-2">
+              <Input
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                placeholder="e.g. QR-17234560-AB12C3"
+                className="font-mono text-sm border-[#E8DED8]"
+                onKeyDown={(e) => { if (e.key === "Enter" && manualCode.trim()) { onScanRef.current(manualCode.trim()); setManualCode(""); } }}
+              />
+              <Button onClick={() => { if (manualCode.trim()) { onScanRef.current(manualCode.trim()); setManualCode(""); } }} className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl px-5">Look Up</Button>
+            </div>
           </div>
         </div>
       </motion.div>

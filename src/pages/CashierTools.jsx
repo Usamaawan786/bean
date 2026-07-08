@@ -37,8 +37,13 @@ function QRScannerSection({ onScanResult }) {
   // feeding the decoded QR into the existing onScanResult → lookup flow.
   // Android WebView and the desktop browser DO expose getUserMedia, so they
   // keep the html5-qrcode live scan (unchanged).
+  // iOS WKWebView exposes navigator.mediaDevices.getUserMedia in modern iOS but
+  // the stream is black/frozen and never decodes — so ALWAYS use the native
+  // AVFoundation scanner on iOS. Android WebView has a working getUserMedia, so
+  // it keeps html5-qrcode there (unless getUserMedia is missing).
   const useNativeScanner =
-    Capacitor.isNativePlatform() && !navigator.mediaDevices?.getUserMedia;
+    Capacitor.isNativePlatform() &&
+    (Capacitor.getPlatform() === "ios" || !navigator.mediaDevices?.getUserMedia);
   const [scanning, setScanning] = useState(false);
   const [manualCode, setManualCode] = useState("");
   const [nativeStarting, setNativeStarting] = useState(false);
@@ -48,6 +53,10 @@ function QRScannerSection({ onScanResult }) {
   // Native live scan: opens the device camera full-screen, continuously scans,
   // and resolves with { ScanResult } on detection (auto-closes).
   const startNativeScan = async () => {
+    if (typeof CapacitorBarcodeScanner === "undefined") {
+      toast.error("Scanner isn't available in this app build. Update to the latest version, or enter the code manually.");
+      return;
+    }
     setNativeStarting(true);
     try {
       const result = await CapacitorBarcodeScanner.scanBarcode({
