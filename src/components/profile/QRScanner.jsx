@@ -207,13 +207,13 @@ export default function QRScanner({ onScan, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-3xl max-w-md w-full p-6"
+        className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 my-auto"
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 sticky top-0 bg-white -mt-6 pt-6 -mx-6 px-6 z-10">
           <div className="flex items-center gap-2">
             <QrCode className="h-5 w-5 text-[#8B7355]" />
             <h2 className="text-lg font-bold text-[#5C4A3A]">Scan Bill QR Code</h2>
