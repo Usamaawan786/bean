@@ -40,6 +40,7 @@ import SyrveIntegrationHub from './pages/SyrveIntegrationHub';
 import SurveillanceVault from './pages/SurveillanceVault';
 import InventoryAudit from './pages/InventoryAudit';
 import ThermalReceiptPage from './pages/ThermalReceiptPage';
+import MenuPage from './pages/MenuPage';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -102,6 +103,7 @@ function App() {
             <Route path="/surveillance-vault" element={<SurveillanceVault />} />
             <Route path="/inventory-audit" element={<InventoryAudit />} />
             <Route path="/thermal-receipt" element={<ThermalReceiptPage />} />
+            <Route path="/menu" element={<MenuPage />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Router>
