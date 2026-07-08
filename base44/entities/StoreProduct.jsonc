@@ -21,13 +21,16 @@
     "category": {
       "type": "string",
       "enum": [
+        "Breakfast",
+        "Pastry",
+        "Sweeter",
         "Hot Coffee",
         "Cold Coffee",
-        "Tea",
-        "Juices",
+        "Matcha",
+        "Add-Ons",
+        "Fresher",
         "Smoothies",
-        "Snacks",
-        "Pastries",
+        "Teas & More",
         "Other"
       ],
       "description": "In-store product category"

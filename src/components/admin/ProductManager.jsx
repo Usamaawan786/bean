@@ -275,13 +275,16 @@ export default function ProductManager({ isStoreProducts = false }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="Breakfast">Breakfast</SelectItem>
+                      <SelectItem value="Pastry">Pastry</SelectItem>
+                      <SelectItem value="Sweeter">Sweeter</SelectItem>
                       <SelectItem value="Hot Coffee">Hot Coffee</SelectItem>
                       <SelectItem value="Cold Coffee">Cold Coffee</SelectItem>
-                      <SelectItem value="Tea">Tea</SelectItem>
-                      <SelectItem value="Juices">Juices</SelectItem>
+                      <SelectItem value="Matcha">Matcha</SelectItem>
+                      <SelectItem value="Add-Ons">Add-Ons</SelectItem>
+                      <SelectItem value="Fresher">Fresher</SelectItem>
                       <SelectItem value="Smoothies">Smoothies</SelectItem>
-                      <SelectItem value="Snacks">Snacks</SelectItem>
-                      <SelectItem value="Pastries">Pastries</SelectItem>
+                      <SelectItem value="Teas & More">Teas &amp; More</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
