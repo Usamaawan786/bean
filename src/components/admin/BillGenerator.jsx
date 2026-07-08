@@ -164,29 +164,29 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     ensureSpace(12);
     const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
     doc.setFillColor(...accent);
-    doc.roundedRect(labelX, y, valueX - labelX, 11, 2, 2, "F");
+    doc.roundedRect(labelX, y, valueX - labelX, 10, 2, 2, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...brown);
-    doc.text("Reward Points Earned", labelX + 4, y + 7);
+    doc.text("Reward Points Earned", labelX + 4, y + 6.5);
     doc.setFontSize(11);
-    doc.text(`${pts} pts`, valueX - 4, y + 7, { align: "right" });
-    y += 16;
+    doc.text(`${pts} pts`, valueX - 4, y + 6.5, { align: "right" });
+    y += 12;
 
     // --- Rewards QR section ---
     if (qrUrl) {
-      ensureSpace(52);
+      ensureSpace(50);
       doc.setDrawColor(...border); doc.setLineWidth(0.3);
       doc.line(left, y, right, y);
-      y += 6;
+      y += 5;
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(...brown);
       doc.text("Earn Rewards", center, y, { align: "center" });
-      y += 5;
-      const qrSize = 38;
+      y += 4;
+      const qrSize = 34;
       try { doc.addImage(qrUrl, "PNG", center - qrSize / 2, y, qrSize, qrSize); } catch (e) {}
-      y += qrSize + 4;
+      y += qrSize + 3;
       doc.setFont("helvetica", "normal");
       doc.setFontSize(8);
       doc.setTextColor(...brownSec);
@@ -207,33 +207,30 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
       }
     }
 
-    // --- App download QRs ---
-    ensureSpace(40);
+    // --- App download QRs + footer (all on same page) ---
+    const qrSm = 24, gapSm = 10;
+    const appSectionH = 6 + 5 + qrSm + 4 + 6 + 5 + 5; // separator + title + qr + labels + footer
+    ensureSpace(appSectionH);
     doc.setDrawColor(...border); doc.setLineWidth(0.3);
     doc.line(left, y, right, y);
-    y += 6;
+    y += 5;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...brown);
     doc.text("Don't have the app? Download & scan", center, y, { align: "center" });
-    y += 5;
-    const qrSm = 26, gapSm = 12;
+    y += 4;
     const startX = center - (qrSm * 2 + gapSm) / 2;
     if (iosUrl) { try { doc.addImage(iosUrl, "PNG", startX, y, qrSm, qrSm); } catch (e) {} }
     if (androidUrl) { try { doc.addImage(androidUrl, "PNG", startX + qrSm + gapSm, y, qrSm, qrSm); } catch (e) {} }
-    y += qrSm + 4;
+    y += qrSm + 3;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...brownSec);
     if (iosUrl) doc.text("iOS", startX + qrSm / 2, y, { align: "center" });
     if (androidUrl) doc.text("Android", startX + qrSm + gapSm + qrSm / 2, y, { align: "center" });
-    y += 8;
+    y += 6;
 
     // --- Footer ---
-    ensureSpace(14);
-    doc.setDrawColor(...border); doc.setLineWidth(0.3);
-    doc.line(left, y, right, y);
-    y += 6;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...brown);
