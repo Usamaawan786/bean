@@ -138,13 +138,18 @@ export default function ThermalReceiptPage() {
     });
   };
 
-  // Create the single @page <style> element (placeholder size until measured).
+  // The single @page <style> element. Size is FIXED to the thermal driver's paper
+  // size (POS80C = 80×420mm) so Chrome's print dialog selects it. A measured/
+  // content height (e.g. 80×143mm) matches NO driver paper size → Chrome ignores
+  // @page and defaults to Letter. The printer feeds only the printed content and
+  // auto-cuts at the content end (driver-managed), so a 420mm page wastes no paper.
+  // Set on mount so @page is applied WELL BEFORE window.print().
   useEffect(() => {
     if (!data) return;
     const pw = data.paperWidth === 58 ? 58 : 80;
     const el = document.createElement("style");
     el.setAttribute("data-thermal-page", "");
-    el.textContent = `@page { size: ${pw}mm ${pw}mm; margin: 0; }`;
+    el.textContent = `@page { size: ${pw}mm 420mm; margin: 0; }`;
     document.head.appendChild(el);
     pageStyleRef.current = el;
     return () => {
@@ -168,7 +173,6 @@ export default function ThermalReceiptPage() {
     if (printedRef.current) return;
     printedRef.current = true;
     console.log("[RECEIPT-PIPE] 4. doPrint() fired — images + fonts ready");
-    const pw = data.paperWidth === 58 ? 58 : 80;
     const el = document.getElementById("receipt");
     // STEP 1: confirm which URL receives window.print()
     console.log("[RECEIPT-PIPE] 5. Printing URL:", window.location.pathname);
@@ -178,24 +182,42 @@ export default function ThermalReceiptPage() {
     const hasNewTemplate = /Invoice No\.|Reward Points|TOTAL|Earn Rewards/.test(txt);
     console.log("[RECEIPT-PIPE] 7. New shared ReceiptTemplate present in print DOM:", hasNewTemplate,
       hasNewTemplate ? "" : ">>> STALE/CACHED BUNDLE SUSPECTED — the print tab is NOT running the new code <<<");
-    // Measure the fully-laid-out receipt and fit the @page to it (the fix for
-    // the A4 fallback — `size: Wmm auto` is invalid and was being dropped).
-    if (el && pageStyleRef.current) {
+    // Log the receipt's own content height for diagnostics. It is NOT used for
+    // @page — @page is fixed to the driver paper size (set on mount above).
+    if (el) {
       const mmH = el.scrollHeight * MM_PER_PX;
-      console.log("[RECEIPT-PIPE] 8. Receipt measured:", el.scrollHeight, "px ->", Math.ceil(mmH) + 1, "mm");
-      pageStyleRef.current.textContent =
-        `@page { size: ${pw}mm ${Math.ceil(mmH) + 1}mm; margin: 0; }`;
-    } else {
-      console.log("[RECEIPT-PIPE] 8. Receipt measured: SKIPPED (no #receipt or no @page style)");
+      console.log("[RECEIPT-PIPE] 8. Receipt content height:", el.scrollHeight, "px ->", Math.round(mmH), "mm (page stays 420mm)");
     }
-    // Two rAF so the browser applies the measured page size before printing.
+    // Collect every @page rule in the document to prove there is exactly ONE
+    // and that it is the driver-matching size.
+    const documentPageRules = [];
+    try {
+      for (const sheet of document.styleSheets) {
+        try {
+          for (const r of (sheet.cssRules || [])) {
+            if (r.cssText && r.cssText.indexOf("@page") === 0) documentPageRules.push(r.cssText);
+          }
+        } catch (e) { /* cross-origin sheet — skip */ }
+      }
+    } catch (e) {}
+    console.log("[RECEIPT-PIPE] 8b. @page rules in document:", documentPageRules.length, documentPageRules);
+    // Two rAF so the @page (set on mount) is committed before printing.
     console.log("[RECEIPT-PIPE] 9. Awaiting 2x requestAnimationFrame before window.print()...");
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        console.log("[RECEIPT-PIPE] 10. Calling window.print() — the ONLY print call in the pipeline");
+        const receipt = document.getElementById("receipt");
+        const rCs = receipt ? getComputedStyle(receipt) : null;
+        // Computed values immediately before window.print():
+        console.log("[RECEIPT-PIPE] 10. Pre-print computed values:", {
+          innerWidth: window.innerWidth,
+          innerHeight: window.innerHeight,
+          receiptWidth: rCs ? rCs.width : null,
+          receiptClientWidth: receipt ? receipt.clientWidth : null,
+          receiptHeight: receipt ? receipt.scrollHeight : null,
+          computedAtPage: pageStyleRef.current ? pageStyleRef.current.textContent : null,
+        });
+        console.log("[RECEIPT-PIPE] 10b. Calling window.print() — the ONLY print call in the pipeline");
         // Serialize computed layout of every receipt row IMMEDIATELY before print.
-        // If labelX≈0 and valueRight≈receipt width here, the flex layout is already
-        // correct on screen — any paper collapse is the print engine / driver.
         serializeReceiptRows("BEFORE PRINT");
         try { window.print(); } catch (e) { console.log("[RECEIPT-PIPE] window.print() threw:", e?.message || e); }
         setTimeout(() => { console.log("[RECEIPT-PIPE] 12. window.close() after 1200ms"); try { window.close(); } catch (e) {} }, 1200);
@@ -248,6 +270,15 @@ export default function ThermalReceiptPage() {
       body.style.padding = "0";
       body.style.display = "block";
       body.style.minHeight = "0";
+      // Verify html, body and #receipt are ALL pw mm wide during print.
+      const rEl = document.getElementById("receipt");
+      console.log("[RECEIPT-PIPE] beforeprint widths:", {
+        html: getComputedStyle(html).width,
+        body: getComputedStyle(body).width,
+        receipt: rEl ? getComputedStyle(rEl).width : null,
+        receiptInline: rEl ? rEl.style.width : null,
+        atPage: pageStyleRef.current ? pageStyleRef.current.textContent : null,
+      });
     };
     screen();
     const onAfterPrint = () => {
