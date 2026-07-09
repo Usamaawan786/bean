@@ -2,103 +2,123 @@ import html2canvas from "html2canvas";
 
 // ─────────────────────────────────────────────────────────────────────────
 // THE one and only print path in the application.
-//
-// The receipt (#receipt, rendered once by <Receipt> in BillGenerator) is
-// rasterized to a PNG at the printer's NATIVE resolution, then printed through
-// a hidden iframe whose page, body, and image are all fixed to the exact paper
-// width. The thermal printer therefore receives a 1:1 bitmap — never HTML,
-// extracted text, or a DOM — that fills the full paper width with crisp text.
+// (DEBUG BUILD — verbose logging at every stage; html2canvas scale fixed at 2
+//  to test for canvas memory limits. Revert scale to native once the exact
+//  failure step is identified.)
 // ─────────────────────────────────────────────────────────────────────────
-const DOTS_PER_MM = 8; // 203 dpi thermal print head ≈ 8 dots/mm (80mm → 640px)
+const DOTS_PER_MM = 8;
 
 export async function printReceipt(paperWidth = 80) {
   const pw = paperWidth === 58 ? 58 : 80;
-  const node = document.getElementById("receipt");
-  if (!node) throw new Error("Receipt not found");
+  console.log("[printReceipt] START — paperWidth:", paperWidth, "pw:", pw);
 
-  // Pre-create the hidden iframe synchronously (within the click gesture) so
-  // the later print() call is not treated as a non-user-initiated popup.
+  const node = document.getElementById("receipt");
+  if (!node) {
+    console.error("[printReceipt] FAIL — #receipt element NOT found");
+    throw new Error("Receipt not found");
+  }
+  console.log("[printReceipt] Receipt element found — offsetWidth:", node.offsetWidth, "offsetHeight:", node.offsetHeight);
+
   const iframe = document.createElement("iframe");
   iframe.style.cssText =
     "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;";
   document.body.appendChild(iframe);
+  console.log("[printReceipt] Hidden iframe created");
 
   let printed = false;
   try {
-    // Wait until fonts + a paint cycle are settled so the capture is complete.
-    try { await document.fonts.ready; } catch (e) {}
+    console.log("[printReceipt] Waiting for fonts...");
+    try { await document.fonts.ready; } catch (e) { console.warn("[printReceipt] document.fonts.ready threw:", e); }
+    console.log("[printReceipt] Fonts ready");
+
+    console.log("[printReceipt] Waiting for 2 RAF cycles...");
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    console.log("[printReceipt] RAF cycles complete");
 
-    // Ensure every inline image (logo, QR codes) is fully decoded.
-    await Promise.all(
-      Array.from(node.querySelectorAll("img")).map((img) =>
-        img.complete && img.naturalWidth > 0
-          ? Promise.resolve()
-          : new Promise((res) => {
-              img.addEventListener("load", res, { once: true });
-              img.addEventListener("error", res, { once: true });
-            })
-      )
-    );
+    console.log("[printReceipt] Waiting for images...");
+    const imgs = Array.from(node.querySelectorAll("img"));
+    console.log("[printReceipt] Images expected:", imgs.length);
+    let loaded = 0;
+    await Promise.all(imgs.map((img, i) => {
+      console.log("[printReceipt] image[" + i + "] complete:", img.complete, "naturalWidth:", img.naturalWidth, "src:", (img.src || "").slice(0, 48));
+      if (img.complete && img.naturalWidth > 0) { loaded++; return Promise.resolve(); }
+      return new Promise((res) => {
+        img.addEventListener("load", () => { loaded++; console.log("[printReceipt] image[" + i + "] LOADED — loaded/expected:", loaded + "/" + imgs.length); res(); }, { once: true });
+        img.addEventListener("error", () => { console.error("[printReceipt] image[" + i + "] FAILED to load — src:", (img.src || "").slice(0, 48)); res(); }, { once: true });
+      });
+    }));
+    console.log("[printReceipt] Images done — loaded:", loaded, "of expected:", imgs.length);
 
-    // Render the bitmap at the printer's NATIVE width (80mm → 640px, 58mm → 464px),
-    // not an arbitrary scale — so Chrome never shrinks thousands of px down to the
-    // paper width and every bitmap pixel maps 1:1 to a print dot.
-    const targetWidth = pw * DOTS_PER_MM;
-    const scale = targetWidth / node.offsetWidth;
+    // TEMPORARY DEBUG: fixed scale 2 (native ≈ 2.12 for 80mm). If scale 2 succeeds
+    // where a higher scale failed, the cause is canvas memory limits.
+    const scale = 2;
+    const options = { scale, useCORS: true, allowTaint: false, backgroundColor: "#ffffff", logging: false };
+    console.log("[printReceipt] Calling html2canvas... options:", JSON.stringify(options));
 
-    // Drop the on-screen drop shadow so it never bleeds into the printed bitmap.
     const prevShadow = node.style.boxShadow;
     node.style.boxShadow = "none";
     let canvas;
     try {
-      canvas = await html2canvas(node, {
-        scale,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-    } finally {
+      canvas = await html2canvas(node, options);
+    } catch (err) {
+      console.error("[printReceipt] html2canvas THREW:", err);
+      console.error("[printReceipt] error message:", err && err.message);
+      console.error("[printReceipt] error stack:", err && err.stack);
       node.style.boxShadow = prevShadow;
+      throw err;
+    }
+    node.style.boxShadow = prevShadow;
+
+    console.log("[printReceipt] html2canvas SUCCESS — canvas.width:", canvas.width, "canvas.height:", canvas.height);
+
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+      console.error("[printReceipt] FAIL — blank canvas:", canvas && canvas.width, "x", canvas && canvas.height);
+      throw new Error("Blank canvas");
     }
 
-    if (!canvas || canvas.width === 0 || canvas.height === 0) throw new Error("Blank canvas");
-    const png = canvas.toDataURL("image/png");
-    if (!png || png === "data:,") throw new Error("Blank canvas");
-
-    // Verify the bitmap is at the printer's native resolution (≈ 640 x XXXX).
-    console.log("[printReceipt] canvas    :", canvas.width, "x", canvas.height);
-    console.log("[printReceipt] paper px  :", targetWidth, "x", canvas.height, "(" + pw + "mm @ " + DOTS_PER_MM + " dots/mm)");
+    let png;
+    try {
+      png = canvas.toDataURL("image/png");
+    } catch (err) {
+      console.error("[printReceipt] toDataURL THREW:", err, err && err.stack);
+      throw err;
+    }
+    console.log("[printReceipt] toDataURL length:", png.length);
+    if (!png || png === "data:,") {
+      console.error("[printReceipt] FAIL — empty PNG data URL");
+      throw new Error("Blank canvas");
+    }
+    console.log("[printReceipt] PNG ready — printing via iframe");
 
     printed = await printPngInIframe(iframe, png, pw);
+    console.log("[printReceipt] printPngInIframe returned:", printed);
   } finally {
     if (!printed) {
-      // Capture/print failed or never completed — remove the orphaned iframe.
+      console.log("[printReceipt] finally — removing orphan iframe (printed=false)");
       try { iframe.remove(); } catch (e) {}
+    } else {
+      console.log("[printReceipt] finally — iframe already removed by afterprint");
     }
   }
 }
 
 function printPngInIframe(iframe, png, pw) {
+  console.log("[printPngInIframe] start — pw:", pw, "png length:", png.length);
   return new Promise((resolve) => {
     const w = iframe.contentWindow;
-    if (!w) return resolve(false);
+    if (!w) { console.error("[printPngInIframe] FAIL — no contentWindow"); return resolve(false); }
+    console.log("[printPngInIframe] contentWindow OK");
 
     let done = false;
     const cleanup = () => {
-      if (done) return;
-      done = true;
+      if (done) return; done = true;
+      console.log("[printPngInIframe] cleanup fired (afterprint or 60s timeout)");
       try { iframe.remove(); } catch (e) {}
       resolve(true);
     };
     w.onafterprint = cleanup;
-    setTimeout(cleanup, 60000); // safety net if afterprint never fires
+    setTimeout(cleanup, 60000);
 
-    // Page, body, and image are ALL fixed to the exact paper width (never
-    // width:100%), so the print renders at 1:1 with no "fit to page" shrink.
-    // overflow:hidden + auto page height crop the bitmap to the receipt only —
-    // no blank paper underneath.
     w.document.open();
     w.document.write(
       "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>" +
@@ -108,11 +128,24 @@ function printPngInIframe(iframe, png, pw) {
       "</style></head><body><img id=\"r\" src=\"" + png + "\"></body></html>"
     );
     w.document.close();
+    console.log("[printPngInIframe] iframe document written");
 
     const img = w.document.getElementById("r");
-    const go = () => { w.focus(); w.print(); };
-    if (img && img.complete) go();
-    else if (img) { img.onload = go; img.onerror = () => resolve(false); }
-    else resolve(false);
+    const go = () => {
+      console.log("[printPngInIframe] PNG image loaded inside iframe — calling iframe.contentWindow.print() NOW");
+      w.focus();
+      w.print();
+    };
+    if (img && img.complete) {
+      console.log("[printPngInIframe] img already complete");
+      go();
+    } else if (img) {
+      console.log("[printPngInIframe] waiting for img.onload...");
+      img.onload = go;
+      img.onerror = () => { console.error("[printPngInIframe] img FAILED to load"); resolve(false); };
+    } else {
+      console.error("[printPngInIframe] FAIL — #r img element not found");
+      resolve(false);
+    }
   });
 }
