@@ -3,7 +3,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 Deno.serve(async (req) => {
     try {
         const base44 = createClientFromRequest(req);
-        
+        const user = await base44.auth.me();
+        if (!user || user.role !== 'admin') {
+            return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+        }
+
         const r50 = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', 50);
         const r100 = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', 100);
         const r20 = await base44.asServiceRole.entities.WaitlistSignup.list('created_date', 20);
