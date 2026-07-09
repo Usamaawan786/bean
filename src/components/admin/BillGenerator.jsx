@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import { format } from "date-fns";
 import QRCode from "qrcode";
+import ReceiptTemplate from "@/components/admin/ReceiptTemplate";
 
 const PAPER_WIDTH_KEY = "thermalPaperWidth";
 
@@ -344,121 +345,18 @@ export default function BillGenerator({ bill, onClose }) {
           <span className="text-[10px] text-[#C9B8A6]">Applies to Print Receipt output</span>
         </div>
 
-        <div className="p-6 bg-white">
-          <div className="text-center mb-4">
-            <img src={LOGO_URL} alt="Bean Logo" className="w-20 h-20 mx-auto mb-2 object-contain" />
-            <h1 className="text-2xl font-bold text-[#5C4A3A]">Bean</h1>
-            <p className="text-[#8B7355] text-xs">More than just coffee, it's a community!</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-4 pb-4 border-b-2 border-[#E8DED8]">
-            <div>
-              <p className="text-xs text-[#8B7355] mb-1">Invoice Number</p>
-              <p className="font-bold text-[#5C4A3A]">{bill.billNumber}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-[#8B7355] mb-1">Date</p>
-              <p className="font-medium text-[#5C4A3A]">{format(new Date(bill.date), "MMM dd, yyyy HH:mm")}</p>
-            </div>
-            {bill.customerInfo?.name && (
-              <div>
-                <p className="text-xs text-[#8B7355] mb-1">Customer Name</p>
-                <p className="font-medium text-[#5C4A3A]">{bill.customerInfo.name}</p>
-              </div>
-            )}
-            {bill.customerInfo?.phone && (
-              <div className="text-right">
-                <p className="text-xs text-[#8B7355] mb-1">Phone</p>
-                <p className="font-medium text-[#5C4A3A]">{bill.customerInfo.phone}</p>
-              </div>
-            )}
-          </div>
-
-          <table className="w-full mb-4">
-            <thead>
-              <tr className="border-b-2 border-[#E8DED8]">
-                <th className="text-left py-3 text-sm font-semibold text-[#5C4A3A]">Item</th>
-                <th className="text-center py-3 text-sm font-semibold text-[#5C4A3A]">Qty</th>
-                <th className="text-right py-3 text-sm font-semibold text-[#5C4A3A]">Price</th>
-                <th className="text-right py-3 text-sm font-semibold text-[#5C4A3A]">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bill.items.map((item, index) => (
-                <tr key={index} className="border-b border-[#F5EBE8]">
-                  <td className="py-3 text-[#5C4A3A]">{item.name}</td>
-                  <td className="text-center py-3 text-[#8B7355]">{item.quantity}</td>
-                  <td className="text-right py-3 text-[#8B7355]">PKR {item.price.toFixed(2)}</td>
-                  <td className="text-right py-3 font-medium text-[#5C4A3A]">PKR {(item.price * item.quantity).toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="space-y-1.5 mb-4">
-            {bill.discountPct > 0 ? (
-              <>
-                <div className="flex justify-between text-[#8B7355]">
-                  <span>Subtotal</span>
-                  <span>PKR {(bill.originalSubtotal ?? bill.subtotal).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-red-500 font-medium">
-                  <span>Discount ({bill.discountPct}%)</span>
-                  <span>- PKR {(bill.discountAmount ?? 0).toFixed(2)}</span>
-                </div>
-              </>
-            ) : (
-              <div className="flex justify-between text-[#8B7355]">
-                <span>Subtotal</span>
-                <span>PKR {bill.subtotal.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-[#8B7355]">
-              <span>GST ({bill.paymentMethod === "Card" ? "5%" : "17%"})</span>
-              <span>PKR {bill.tax.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-xl font-bold text-[#5C4A3A] pt-3 border-t-2 border-[#E8DED8]">
-              <span>Total</span>
-              <span>PKR {bill.total.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center text-[#8B7355] pt-3 border-t border-[#E8DED8]">
-              <span className="font-semibold">🎁 Reward Points Earned</span>
-              <span className="text-xl font-bold text-[#8B7355]">{bill.pointsToAward ?? Math.floor(bill.subtotal / 100)} pts</span>
-            </div>
-          </div>
-
-          {qrCodeUrl && (
-            <div className="text-center py-3 border-t border-[#E8DED8]">
-              <p className="text-xs font-semibold text-[#5C4A3A] mb-2">Earn Rewards</p>
-              <img src={qrCodeUrl} alt="Rewards QR Code" className="w-32 h-32 mx-auto border-4 border-[#E8DED8] rounded-2xl" />
-              <p className="text-xs text-[#8B7355] mt-2">Scan in the Bean Pakistan App to add points to your account</p>
-              {bill.qrCodeId && (
-                <div className="mt-3 inline-block bg-[#F5EBE8] rounded-xl px-4 py-2">
-                  <p className="text-[10px] text-[#8B7355] mb-1">or enter code manually</p>
-                  <p className="font-mono font-bold text-sm tracking-wider text-[#5C4A3A] break-all">{bill.qrCodeId}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="text-center py-4 border-t border-[#E8DED8]">
-            <p className="text-xs font-semibold text-[#5C4A3A] mb-3">Don't have the Bean app yet? Download & scan</p>
-            <div className="flex items-center justify-center gap-6">
-              <div>
-                {iosQrUrl && <img src={iosQrUrl} alt="Download on iOS" className="w-24 h-24 mx-auto border-4 border-[#E8DED8] rounded-2xl" />}
-                <p className="text-xs text-[#8B7355] mt-1">iOS</p>
-              </div>
-              <div>
-                {androidQrUrl && <img src={androidQrUrl} alt="Download on Android" className="w-24 h-24 mx-auto border-4 border-[#E8DED8] rounded-2xl" />}
-                <p className="text-xs text-[#8B7355] mt-1">Android</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center pt-3 border-t border-[#E8DED8]">
-            <p className="text-sm text-[#8B7355] mb-1">Thank you for your purchase!</p>
-            <p className="text-xs text-[#C9B8A6]">Bean — More than just coffee, it's a community!</p>
-          </div>
+        {/* Thermal receipt preview — identical markup to the print page.
+            Print Receipt opens /thermal-receipt (same template, print mode);
+            Download Invoice generates the A4 PDF via jsPDF below. */}
+        <div style={{ background: "#eeeeee", padding: "24px", display: "flex", justifyContent: "center" }}>
+          <ReceiptTemplate
+            bill={bill}
+            qrCodeUrl={qrCodeUrl}
+            iosQrUrl={iosQrUrl}
+            androidQrUrl={androidQrUrl}
+            logoDataUrl={logoDataUrl}
+            paperWidth={paperWidth}
+          />
         </div>
       </motion.div>
     </div>
