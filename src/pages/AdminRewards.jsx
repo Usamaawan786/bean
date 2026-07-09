@@ -72,12 +72,13 @@ function RewardForm({ reward, onSave, onCancel }) {
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1 block">Points Required</label>
+          <label className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1 block">Points Required (min 100)</label>
           <input
             type="number"
+            min={100}
             className="w-full border border-[#E8DED8] rounded-xl px-3 py-2.5 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
             value={form.points_required}
-            onChange={e => setForm({ ...form, points_required: Number(e.target.value) })}
+            onChange={e => setForm({ ...form, points_required: Math.max(100, Number(e.target.value) || 100) })}
           />
         </div>
         <div>
