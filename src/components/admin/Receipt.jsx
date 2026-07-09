@@ -1,31 +1,27 @@
 import { format } from "date-fns";
 
 // ─────────────────────────────────────────────────────────────────────────
-// THE single receipt template. Rendered by:
-//   • BillGenerator        → mode="preview"  (grey, centered, no auto-print)
-//   • ThermalReceiptPage  → mode="print"    (white, flush, auto window.print())
+// THE receipt component — the single source of truth for the receipt layout.
+// Nothing else in the app renders a receipt.
 //
-// The ONLY differences allowed between modes are handled by the PARENT:
-// outer background, outer margins, and automatic print behaviour.
-// Everything below — logo, invoice no, items, totals, rewards, QR, footer,
-// spacing, typography, alignment — comes from this one JSX tree.
+// The SAME #receipt element is shown on screen (preview) and sent to the
+// browser print dialog by printReceipt.js. There is no second renderer, no
+// thermal page, and no PDF version of this layout.
 //
 // Pure inline styles, ZERO className — so Tailwind/global resets cannot
-// collapse the flex layout in print mode. "mm" units render at 96dpi.
+// collapse the flex layout in print. "mm" units render at 96dpi.
 // ─────────────────────────────────────────────────────────────────────────
 
 const FONT = "'Courier New', Courier, monospace";
 const money = (n) => `PKR ${Number(n || 0).toFixed(2)}`;
 
-export default function ReceiptTemplate({
+export default function Receipt({
   bill,
+  paperWidth = 80,
   qrCodeUrl,
   iosQrUrl,
   androidQrUrl,
   logoDataUrl,
-  paperWidth = 80,
-  onImageLoad,
-  domId = "receipt",
 }) {
   const pw = paperWidth === 58 ? 58 : 80;
   const is58 = pw === 58;
@@ -38,7 +34,6 @@ export default function ReceiptTemplate({
   const gstLabel = bill?.paymentMethod === "Card" ? "5%" : "17%";
   const pts = bill?.pointsToAward ?? Math.floor((bill?.subtotal || 0) / 100);
 
-  // Inline style helpers
   const row = (extra) => ({
     display: "flex",
     justifyContent: "space-between",
@@ -58,11 +53,8 @@ export default function ReceiptTemplate({
   const imgApp = (px) => ({ display: "block", width: px, height: px, margin: "0 auto" });
   const label = { fontFamily: FONT, fontSize: fs, color: "#000000" };
 
-  // Print mode tracks every image load to gate window.print(); preview ignores.
-  const imgProps = onImageLoad ? { onLoad: onImageLoad, onError: onImageLoad } : {};
-
   return (
-    <div id={domId} style={{
+    <div id="receipt" style={{
       width: `${pw}mm`,
       padding: "2mm 2mm 4mm",
       background: "#ffffff",
@@ -74,7 +66,7 @@ export default function ReceiptTemplate({
       {/* Store Header */}
       <div style={{ ...section, textAlign: "center" }}>
         {logoDataUrl && (
-          <img src={logoDataUrl} alt="Bean" {...imgProps}
+          <img src={logoDataUrl} alt="Bean"
             style={{ display: "block", width: "14mm", height: "14mm", margin: "0 auto 1mm", objectFit: "contain" }} />
         )}
         <div style={{ fontFamily: FONT, fontSize: fsBrand, fontWeight: 700, letterSpacing: "1px", color: "#000000" }}>Bean</div>
@@ -147,7 +139,7 @@ export default function ReceiptTemplate({
           <div style={divider} />
           <div style={{ ...section, textAlign: "center" }}>
             <div style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000" }}>Earn Rewards</div>
-            <img src={qrCodeUrl} alt="Rewards QR" {...imgProps} style={imgQr(qrLg)} />
+            <img src={qrCodeUrl} alt="Rewards QR" style={imgQr(qrLg)} />
             <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>Scan in the Bean Pakistan App to add points</div>
             {bill?.qrCodeId && (
               <>
@@ -166,11 +158,11 @@ export default function ReceiptTemplate({
         <div style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000" }}>Download the Bean app</div>
         <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1mm" }}>
           <div style={{ textAlign: "center" }}>
-            {iosQrUrl && <img src={iosQrUrl} alt="iOS" {...imgProps} style={imgApp(qrSm)} />}
+            {iosQrUrl && <img src={iosQrUrl} alt="iOS" style={imgApp(qrSm)} />}
             <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>iOS</div>
           </div>
           <div style={{ textAlign: "center" }}>
-            {androidQrUrl && <img src={androidQrUrl} alt="Android" {...imgProps} style={imgApp(qrSm)} />}
+            {androidQrUrl && <img src={androidQrUrl} alt="Android" style={imgApp(qrSm)} />}
             <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>Android</div>
           </div>
         </div>

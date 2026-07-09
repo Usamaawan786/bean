@@ -40,7 +40,6 @@ const FlashDropManager = lazy(() => import('./pages/FlashDropManager'));
 const SyrveIntegrationHub = lazy(() => import('./pages/SyrveIntegrationHub'));
 const SurveillanceVault = lazy(() => import('./pages/SurveillanceVault'));
 const InventoryAudit = lazy(() => import('./pages/InventoryAudit'));
-const ThermalReceiptPage = lazy(() => import('./pages/ThermalReceiptPage'));
 const MenuPage = lazy(() => import('./pages/MenuPage'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
@@ -104,7 +103,6 @@ function App() {
               <Route path="/syrve-integration-hub" element={<SyrveIntegrationHub />} />
               <Route path="/surveillance-vault" element={<SurveillanceVault />} />
               <Route path="/inventory-audit" element={<InventoryAudit />} />
-              <Route path="/thermal-receipt" element={<ThermalReceiptPage />} />
               <Route path="/menu" element={<MenuPage />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
