@@ -271,6 +271,10 @@ export default function BillGenerator({ bill, onClose }) {
       toast.error("Could not prepare receipt for printing.");
       return;
     }
+    // STEP 7: snapshot the preview's #receipt markup to diff against the
+    // print tab's [RECEIPT-PIPE] 6. outerHTML log. They must match.
+    const previewEl = document.getElementById("receipt");
+    console.log("[RECEIPT-PIPE] (BillGenerator preview) #receipt outerHTML:", previewEl ? previewEl.outerHTML : "NOT FOUND");
     window.open("/thermal-receipt", "_blank");
   }, [bill, qrReady, iosQrUrl, androidQrUrl, logoDataUrl, qrCodeUrl, paperWidth]);
 

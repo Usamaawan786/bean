@@ -44,10 +44,18 @@ export default function ThermalReceiptPage() {
 
   // Load receipt data + wait for fonts
   useEffect(() => {
-    setData(readData() || {});
+    const d = readData() || {};
+    setData(d);
+    console.log("[RECEIPT-PIPE] 1. Receipt data loaded from sessionStorage", {
+      hasBill: !!d.bill, paperWidth: d.paperWidth,
+      hasLogo: !!d.logoDataUrl, hasQr: !!d.qrCodeUrl, hasIos: !!d.iosQrUrl, hasAndroid: !!d.androidQrUrl,
+    });
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => setFontsReady(true)).catch(() => setFontsReady(true));
+      document.fonts.ready
+        .then(() => { console.log("[RECEIPT-PIPE] 3. Fonts ready"); setFontsReady(true); })
+        .catch(() => { console.log("[RECEIPT-PIPE] 3. Fonts ready (catch)"); setFontsReady(true); });
     } else {
+      console.log("[RECEIPT-PIPE] 3. Fonts ready (no document.fonts API)");
       setFontsReady(true);
     }
   }, []);
@@ -59,9 +67,11 @@ export default function ThermalReceiptPage() {
     (data?.iosQrUrl ? 1 : 0) +
     (data?.androidQrUrl ? 1 : 0);
 
-  const markLoaded = () => {
+  const markLoaded = (e) => {
+    const alt = e?.target?.alt || "unknown";
     loadedRef.current += 1;
     lastLoadAtRef.current = Date.now();
+    console.log(`[RECEIPT-PIPE] 2. Image loaded: "${alt}" (${loadedRef.current}/${expected})`);
     setLoaded(loadedRef.current);
   };
 
@@ -80,32 +90,58 @@ export default function ThermalReceiptPage() {
     };
   }, [data]);
 
+  // Confirm the shared ReceiptTemplate actually mounted into the DOM
+  useEffect(() => {
+    if (!data) return;
+    requestAnimationFrame(() => {
+      const el = document.getElementById("receipt");
+      console.log("[RECEIPT-PIPE] 0. ReceiptTemplate rendered in DOM:", !!el,
+        el ? `(${el.children.length} top-level children, ${Math.round(el.getBoundingClientRect().height)}px tall)` : ">>> MISSING <<<");
+    });
+  }, [data]);
+
   // Print gate: all images loaded + fonts ready + 300ms since last load.
   const doPrint = () => {
     if (printedRef.current) return;
     printedRef.current = true;
+    console.log("[RECEIPT-PIPE] 4. doPrint() fired — images + fonts ready");
     const pw = data.paperWidth === 58 ? 58 : 80;
+    const el = document.getElementById("receipt");
+    // STEP 1: confirm which URL receives window.print()
+    console.log("[RECEIPT-PIPE] 5. Printing URL:", window.location.pathname);
+    // STEP 2 + 7: dump the exact DOM being printed + verify it is the new shared template
+    console.log("[RECEIPT-PIPE] 6. outerHTML being printed (#receipt):", el ? el.outerHTML : "NOT FOUND");
+    const txt = el ? el.textContent || "" : "";
+    const hasNewTemplate = /Invoice No\.|Reward Points|TOTAL|Earn Rewards/.test(txt);
+    console.log("[RECEIPT-PIPE] 7. New shared ReceiptTemplate present in print DOM:", hasNewTemplate,
+      hasNewTemplate ? "" : ">>> STALE/CACHED BUNDLE SUSPECTED — the print tab is NOT running the new code <<<");
     // Measure the fully-laid-out receipt and fit the @page to it (the fix for
     // the A4 fallback — `size: Wmm auto` is invalid and was being dropped).
-    const el = document.getElementById("receipt");
     if (el && pageStyleRef.current) {
       const mmH = el.scrollHeight * MM_PER_PX;
+      console.log("[RECEIPT-PIPE] 8. Receipt measured:", el.scrollHeight, "px ->", Math.ceil(mmH) + 1, "mm");
       pageStyleRef.current.textContent =
         `@page { size: ${pw}mm ${Math.ceil(mmH) + 1}mm; margin: 0; }`;
+    } else {
+      console.log("[RECEIPT-PIPE] 8. Receipt measured: SKIPPED (no #receipt or no @page style)");
     }
     // Two rAF so the browser applies the measured page size before printing.
+    console.log("[RECEIPT-PIPE] 9. Awaiting 2x requestAnimationFrame before window.print()...");
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        try { window.print(); } catch (e) {}
-        setTimeout(() => { try { window.close(); } catch (e) {} }, 1200);
+        console.log("[RECEIPT-PIPE] 10. Calling window.print() — the ONLY print call in the pipeline");
+        try { window.print(); } catch (e) { console.log("[RECEIPT-PIPE] window.print() threw:", e?.message || e); }
+        setTimeout(() => { console.log("[RECEIPT-PIPE] 12. window.close() after 1200ms"); try { window.close(); } catch (e) {} }, 1200);
       })
     );
   };
 
   useEffect(() => {
     if (printedRef.current || !data) return;
+    console.log("[RECEIPT-PIPE] gate check:", { loaded, expected, fontsReady, ready: loaded >= expected && fontsReady });
     if (loaded < expected || !fontsReady) return;
     const wait = Math.max(0, 300 - (Date.now() - lastLoadAtRef.current));
+    console.log("[RECEIPT-PIPE] gate passed — scheduling doPrint in", wait, "ms");
     const timer = setTimeout(doPrint, wait);
     return () => clearTimeout(timer);
   }, [loaded, expected, fontsReady, data]);
@@ -146,11 +182,14 @@ export default function ThermalReceiptPage() {
       body.style.minHeight = "0";
     };
     screen();
+    const onAfterPrint = () => console.log("[RECEIPT-PIPE] 11. window.afterprint fired");
     window.addEventListener("beforeprint", print);
     window.addEventListener("afterprint", screen);
+    window.addEventListener("afterprint", onAfterPrint);
     return () => {
       window.removeEventListener("beforeprint", print);
       window.removeEventListener("afterprint", screen);
+      window.removeEventListener("afterprint", onAfterPrint);
     };
   }, [data]);
 
