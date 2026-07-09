@@ -19,6 +19,7 @@ export default function BillGenerator({ bill, onClose }) {
   const [iosQrUrl, setIosQrUrl] = useState("");
   const [androidQrUrl, setAndroidQrUrl] = useState("");
   const [logoDataUrl, setLogoDataUrl] = useState("");
+  const [printing, setPrinting] = useState(false);
   const [paperWidth, setPaperWidth] = useState(() => {
     const saved = localStorage.getItem(PAPER_WIDTH_KEY);
     return saved === "58" ? 58 : 80;
@@ -55,9 +56,21 @@ export default function BillGenerator({ bill, onClose }) {
 
   const assetsReady = !!(iosQrUrl && androidQrUrl && logoDataUrl);
 
-  // Print: open the browser print dialog on the current page. printReceipt
-  // isolates #receipt (this very element) via @media print — no separate page.
-  const handlePrint = () => printReceipt(paperWidth);
+  // Print: rasterize #receipt to a PNG (html2canvas) and print it via a hidden
+  // iframe. printReceipt logs every step and throws the exact failing step;
+  // we surface that real message (never a generic "Print failed") + full stack.
+  const handlePrint = async () => {
+    if (printing) return;
+    setPrinting(true);
+    try {
+      await printReceipt(paperWidth);
+    } catch (e) {
+      console.error("printReceipt failed:", e, "\nStack:", e.stack);
+      toast.error(e.message || "Print failed");
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   // Download: the A4 invoice PDF (a separate document, not the thermal receipt).
   const handleDownload = () => {
@@ -78,10 +91,12 @@ export default function BillGenerator({ bill, onClose }) {
         <div data-receipt-toolbar
           className="sticky top-0 z-10 mb-4 flex items-center gap-2 flex-wrap justify-center bg-white rounded-2xl shadow-lg p-3 max-w-2xl w-full">
           <h2 className="text-lg font-bold text-[#5C4A3A] mr-1">Receipt</h2>
-          <Button size="sm" variant="outline" onClick={handlePrint} disabled={!assetsReady} className="rounded-xl">
-            {assetsReady
-              ? <><Printer className="h-4 w-4 mr-2" />Print Receipt</>
-              : <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing…</>}
+          <Button size="sm" variant="outline" onClick={handlePrint} disabled={!assetsReady || printing} className="rounded-xl">
+            {printing
+              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Rendering...</>
+              : assetsReady
+                ? <><Printer className="h-4 w-4 mr-2" />Print Receipt</>
+                : <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing…</>}
           </Button>
           <Button size="sm" variant="outline" onClick={handleDownload} disabled={!assetsReady} className="rounded-xl">
             <Download className="h-4 w-4 mr-2" />Download Invoice
