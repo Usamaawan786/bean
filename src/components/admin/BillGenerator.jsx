@@ -249,34 +249,26 @@ export default function BillGenerator({ bill, onClose }) {
     }
   }, [bill]);
 
-  // Open a dedicated thermal-receipt tab with all assets inlined as base64.
+  // Print Receipt: open the SELF-CONTAINED thermal-receipt print page. The page
+  // generates its OWN QR codes + logo from the bill, so this handler passes ONLY
+  // { bill, paperWidth } — it never touches jsPDF, the invoice layout, or this
+  // component's invoice asset state. The print flow is fully decoupled.
   const handlePrintReceipt = useCallback(() => {
-    if (!qrReady || !iosQrUrl || !androidQrUrl || !logoDataUrl) {
-      toast.error("Preparing assets — please try again in a moment.");
-      return;
-    }
     try {
       sessionStorage.setItem(
         "thermalReceiptData",
-        JSON.stringify({
-          bill,
-          qrCodeUrl,
-          iosQrUrl,
-          androidQrUrl,
-          logoDataUrl,
-          paperWidth,
-        })
+        JSON.stringify({ bill, paperWidth })
       );
     } catch (e) {
       toast.error("Could not prepare receipt for printing.");
       return;
     }
-    // STEP 7: snapshot the preview's #receipt markup to diff against the
-    // print tab's [RECEIPT-PIPE] 6. outerHTML log. They must match.
+    // Snapshot the preview's #receipt markup to diff against the print tab's
+    // [RECEIPT-PIPE] 6. outerHTML log. They must match.
     const previewEl = document.getElementById("receipt");
     console.log("[RECEIPT-PIPE] (BillGenerator preview) #receipt outerHTML:", previewEl ? previewEl.outerHTML : "NOT FOUND");
     window.open("/thermal-receipt", "_blank");
-  }, [bill, qrReady, iosQrUrl, androidQrUrl, logoDataUrl, qrCodeUrl, paperWidth]);
+  }, [bill, paperWidth]);
 
   // Generate QR codes
   useEffect(() => {
@@ -316,12 +308,10 @@ export default function BillGenerator({ bill, onClose }) {
         className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
         
         <div className="sticky top-0 bg-white border-b border-[#E8DED8] p-4 flex items-center justify-between rounded-t-3xl">
-          <h2 className="text-xl font-bold text-[#5C4A3A]">Invoice</h2>
+          <h2 className="text-xl font-bold text-[#5C4A3A]">Receipt</h2>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="outline" onClick={handlePrintReceipt} className="rounded-xl">
-              {(!qrReady || !iosQrUrl || !androidQrUrl || !logoDataUrl)
-                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Preparing…</>
-                : <><Printer className="h-4 w-4 mr-2" />Print Receipt</>}
+              <Printer className="h-4 w-4 mr-2" />Print Receipt
             </Button>
             <Button size="sm" variant="outline" onClick={() => generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl, logoDataUrl)} className="rounded-xl">
               {(!iosQrUrl || !androidQrUrl || !logoDataUrl)

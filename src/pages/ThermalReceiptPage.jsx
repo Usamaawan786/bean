@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import ReceiptTemplate from "@/components/admin/ReceiptTemplate";
+import { generateReceiptAssets } from "@/lib/receiptAssets";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Thermal receipt PRINT page — opened in a NEW TAB by BillGenerator's
@@ -15,9 +16,13 @@ import ReceiptTemplate from "@/components/admin/ReceiptTemplate";
 //    fonts shrink. Instead we measure the rendered receipt height AFTER all
 //    images/fonts are ready and inject `@page { size: <w>mm <h>mm; margin: 0 }`
 //    so the page exactly fits the content: one page, no A4 fallback.
-//  • window.print() fires only after: document.fonts.ready AND every tracked
-//    image onLoad/onError, then 300ms settle + two requestAnimationFrame cycles
-//    (after measuring + setting @page). Then window.close() after 1200ms.
+//  • window.print() fires only after: assets generated, document.fonts.ready
+//    AND every tracked image onLoad/onError, then 300ms settle + two
+//    requestAnimationFrame cycles (after measuring + setting @page). Then
+//    window.close() after 1200ms.
+//  • SELF-CONTAINED: generates its OWN QR codes + logo from the bill — the print
+//    flow does NOT depend on the invoice modal, jsPDF, or any caller-supplied
+//    assets. The caller passes only { bill, paperWidth } in sessionStorage.
 //  • NEVER imports jsPDF, NEVER creates a Blob, NEVER downloads. The A4 invoice
 //    PDF is a fully independent path (BillGenerator "Download Invoice").
 // ─────────────────────────────────────────────────────────────────────────
@@ -35,6 +40,7 @@ function readData() {
 
 export default function ThermalReceiptPage() {
   const [data, setData] = useState(null);
+  const [assets, setAssets] = useState(null);
   const [loaded, setLoaded] = useState(0);
   const [fontsReady, setFontsReady] = useState(false);
   const loadedRef = useRef(0);
@@ -48,7 +54,6 @@ export default function ThermalReceiptPage() {
     setData(d);
     console.log("[RECEIPT-PIPE] 1. Receipt data loaded from sessionStorage", {
       hasBill: !!d.bill, paperWidth: d.paperWidth,
-      hasLogo: !!d.logoDataUrl, hasQr: !!d.qrCodeUrl, hasIos: !!d.iosQrUrl, hasAndroid: !!d.androidQrUrl,
     });
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready
@@ -60,12 +65,30 @@ export default function ThermalReceiptPage() {
     }
   }, []);
 
-  // Expected tracked images: logo + rewards QR + 2 app QRs
+  // SELF-CONTAINED: this page builds its OWN QR codes + logo from the bill, so the
+  // print flow never depends on the invoice modal (BillGenerator) or jsPDF. The
+  // caller only needs to pass { bill, paperWidth } in sessionStorage.
+  useEffect(() => {
+    if (!data?.bill) return;
+    let cancelled = false;
+    console.log("[RECEIPT-PIPE] 1b. Generating receipt assets (self-contained)");
+    generateReceiptAssets(data.bill).then((a) => {
+      if (cancelled) return;
+      console.log("[RECEIPT-PIPE] 1c. Receipt assets generated", {
+        hasLogo: !!a.logoDataUrl, hasQr: !!a.qrCodeUrl, hasIos: !!a.iosQrUrl, hasAndroid: !!a.androidQrUrl,
+      });
+      setAssets(a);
+    });
+    return () => { cancelled = true; };
+  }, [data]);
+
+  // Expected tracked images: logo + rewards QR + 2 app QRs (only the ones we
+  // generated / that are present). Counted from `assets`, not from caller data.
   const expected =
-    (data?.logoDataUrl ? 1 : 0) +
-    (data?.qrCodeUrl ? 1 : 0) +
-    (data?.iosQrUrl ? 1 : 0) +
-    (data?.androidQrUrl ? 1 : 0);
+    (assets?.logoDataUrl ? 1 : 0) +
+    (assets?.qrCodeUrl ? 1 : 0) +
+    (assets?.iosQrUrl ? 1 : 0) +
+    (assets?.androidQrUrl ? 1 : 0);
 
   const markLoaded = (e) => {
     const alt = e?.target?.alt || "unknown";
@@ -138,7 +161,7 @@ export default function ThermalReceiptPage() {
       console.log("[RECEIPT-PIPE] 0. ReceiptTemplate rendered in DOM:", !!el,
         el ? `(${el.children.length} top-level children, ${Math.round(el.getBoundingClientRect().height)}px tall)` : ">>> MISSING <<<");
     });
-  }, [data]);
+  }, [data, assets]);
 
   // Print gate: all images loaded + fonts ready + 300ms since last load.
   const doPrint = () => {
@@ -182,13 +205,14 @@ export default function ThermalReceiptPage() {
 
   useEffect(() => {
     if (printedRef.current || !data) return;
-    console.log("[RECEIPT-PIPE] gate check:", { loaded, expected, fontsReady, ready: loaded >= expected && fontsReady });
+    if (!assets) return;
+    console.log("[RECEIPT-PIPE] gate check:", { loaded, expected, fontsReady, assetsReady: true, ready: loaded >= expected && fontsReady });
     if (loaded < expected || !fontsReady) return;
     const wait = Math.max(0, 300 - (Date.now() - lastLoadAtRef.current));
     console.log("[RECEIPT-PIPE] gate passed — scheduling doPrint in", wait, "ms");
     const timer = setTimeout(doPrint, wait);
     return () => clearTimeout(timer);
-  }, [loaded, expected, fontsReady, data]);
+  }, [loaded, expected, fontsReady, data, assets]);
 
   // Inline body/html styling — screen (grey, centered) vs print (flush, pw mm).
   useEffect(() => {
@@ -250,10 +274,10 @@ export default function ThermalReceiptPage() {
   return (
     <ReceiptTemplate
       bill={data.bill}
-      qrCodeUrl={data.qrCodeUrl}
-      iosQrUrl={data.iosQrUrl}
-      androidQrUrl={data.androidQrUrl}
-      logoDataUrl={data.logoDataUrl}
+      qrCodeUrl={assets?.qrCodeUrl || ""}
+      iosQrUrl={assets?.iosQrUrl || ""}
+      androidQrUrl={assets?.androidQrUrl || ""}
+      logoDataUrl={assets?.logoDataUrl || ""}
       paperWidth={data.paperWidth}
       onImageLoad={markLoaded}
     />
