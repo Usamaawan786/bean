@@ -13,7 +13,7 @@ const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
 const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
 const LOGO_URL = "https://media.base44.com/images/public/6976cd7fe6e4b20fcb30cf61/f3d3c0edf_Group1302.png";
 
-export default function BillGenerator({ bill, onClose, autoDownload = false }) {
+export default function BillGenerator({ bill, onClose }) {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [qrReady, setQrReady] = useState(!bill.qrCodeId);
   const [iosQrUrl, setIosQrUrl] = useState("");
@@ -302,13 +302,6 @@ export default function BillGenerator({ bill, onClose, autoDownload = false }) {
     })();
     return () => { cancelled = true; };
   }, []);
-
-  // Auto-download once ALL QR codes AND the logo are ready
-  useEffect(() => {
-    if (autoDownload && qrReady && iosQrUrl && androidQrUrl && logoDataUrl) {
-      generatePDF(qrCodeUrl, iosQrUrl, androidQrUrl, logoDataUrl);
-    }
-  }, [autoDownload, qrReady, iosQrUrl, androidQrUrl, logoDataUrl, qrCodeUrl, generatePDF]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
