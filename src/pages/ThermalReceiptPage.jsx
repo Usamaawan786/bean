@@ -75,6 +75,46 @@ export default function ThermalReceiptPage() {
     setLoaded(loadedRef.current);
   };
 
+  // Serialize the computed layout of every label/value receipt row so the audit
+  // can distinguish a DOM-layout bug from a print-engine / printer-driver collapse.
+  // ReceiptTemplate uses pure inline styles (no classes), so we find rows by
+  // structure: a flex + space-between div with exactly two children.
+  const serializeReceiptRows = (tag) => {
+    const root = document.getElementById("receipt");
+    if (!root) { console.log(`[RECEIPT-PIPE] ${tag} — no #receipt element`); return; }
+    const rootRect = root.getBoundingClientRect();
+    const rows = Array.from(root.querySelectorAll("div")).filter((n) => {
+      if (n.children.length !== 2) return false;
+      const cs = getComputedStyle(n);
+      return cs.display === "flex" && cs.justifyContent === "space-between";
+    });
+    console.log(`[RECEIPT-PIPE] ${tag} — receipt width: ${root.clientWidth}px, rows found: ${rows.length}`);
+    rows.forEach((r, i) => {
+      const cs = getComputedStyle(r);
+      const kids = Array.from(r.children);
+      const labelEl = kids[0];
+      const valueEl = kids[1];
+      const lr = labelEl.getBoundingClientRect();
+      const vr = valueEl.getBoundingClientRect();
+      console.log(`[RECEIPT-PIPE] ${tag} Row ${i + 1}`, {
+        label: (labelEl.textContent || "").trim().slice(0, 32),
+        value: (valueEl.textContent || "").trim().slice(0, 32),
+        display: cs.display,
+        position: cs.position,
+        justifyContent: cs.justifyContent,
+        width: cs.width,
+        left: cs.left,
+        right: cs.right,
+        clientWidth: r.clientWidth,
+        rowRect: r.getBoundingClientRect(),
+        labelX: Math.round(lr.left - rootRect.left),
+        labelRight: Math.round(lr.right - rootRect.left),
+        valueX: Math.round(vr.left - rootRect.left),
+        valueRight: Math.round(vr.right - rootRect.left),
+      });
+    });
+  };
+
   // Create the single @page <style> element (placeholder size until measured).
   useEffect(() => {
     if (!data) return;
@@ -130,6 +170,10 @@ export default function ThermalReceiptPage() {
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         console.log("[RECEIPT-PIPE] 10. Calling window.print() — the ONLY print call in the pipeline");
+        // Serialize computed layout of every receipt row IMMEDIATELY before print.
+        // If labelX≈0 and valueRight≈receipt width here, the flex layout is already
+        // correct on screen — any paper collapse is the print engine / driver.
+        serializeReceiptRows("BEFORE PRINT");
         try { window.print(); } catch (e) { console.log("[RECEIPT-PIPE] window.print() threw:", e?.message || e); }
         setTimeout(() => { console.log("[RECEIPT-PIPE] 12. window.close() after 1200ms"); try { window.close(); } catch (e) {} }, 1200);
       })
@@ -182,7 +226,12 @@ export default function ThermalReceiptPage() {
       body.style.minHeight = "0";
     };
     screen();
-    const onAfterPrint = () => console.log("[RECEIPT-PIPE] 11. window.afterprint fired");
+    const onAfterPrint = () => {
+      console.log("[RECEIPT-PIPE] 11. window.afterprint fired");
+      // Re-serialize after print. If it matches BEFORE PRINT, the DOM layout was
+      // NOT mutated by the print cycle — divergence is print-engine / driver.
+      serializeReceiptRows("AFTER PRINT");
+    };
     window.addEventListener("beforeprint", print);
     window.addEventListener("afterprint", screen);
     window.addEventListener("afterprint", onAfterPrint);
