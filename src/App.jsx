@@ -5,42 +5,43 @@ import { queryClientInstance } from '@/lib/query-client'
 import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider } from '@/lib/AuthContext';
 import usePushNotifications from './hooks/usePushNotifications';
-import AdminEmails from './pages/AdminEmails';
-import AdminCommunity from './pages/AdminCommunity';
-import CashierTools from './pages/CashierTools';
-import StaffManagement from './pages/StaffManagement';
-import StaffLogin from './pages/StaffLogin';
-import StaffPortal from './pages/StaffPortal';
-import AdminChat from './pages/AdminChat';
-import UserMessages from './pages/UserMessages';
-import AdminFlashDrops from './pages/AdminFlashDrops';
-import AdminRewards from './pages/AdminRewards';
-import AdminRewardsRedemptions from './pages/AdminRewardsRedemptions';
-import AdminWhatsApp from './pages/AdminWhatsApp';
-import AdminPushNotifications from './pages/AdminPushNotifications.jsx';
-import AdminAppUsers from './pages/AdminAppUsers';
-import KitchenDisplay from './pages/KitchenDisplay';
-import OrderHistory from './pages/OrderHistory';
-import BarDisplay from './pages/BarDisplay';
-import OrderManager from './pages/OrderManager';
-import AdminReferrals from './pages/AdminReferrals';
-import AdminRedemptions from './pages/AdminRedemptions';
-import AdminStaffScrutiny from './pages/AdminStaffScrutiny';
-import Welcome from './pages/Welcome';
-import Leaderboard from './pages/Leaderboard';
-import UserProfile from './pages/UserProfile';
-import AdminLeadsDashboard from './pages/AdminLeadsDashboard';
-import CustomerDirectory from './pages/CustomerDirectory';
-import RewardAnalytics from './pages/RewardAnalytics';
-import FlashDropManager from './pages/FlashDropManager';
-import SyrveIntegrationHub from './pages/SyrveIntegrationHub';
-import SurveillanceVault from './pages/SurveillanceVault';
-import InventoryAudit from './pages/InventoryAudit';
-import ThermalReceiptPage from './pages/ThermalReceiptPage';
-import MenuPage from './pages/MenuPage';
+const AdminEmails = lazy(() => import('./pages/AdminEmails'));
+const AdminCommunity = lazy(() => import('./pages/AdminCommunity'));
+const CashierTools = lazy(() => import('./pages/CashierTools'));
+const StaffManagement = lazy(() => import('./pages/StaffManagement'));
+const StaffLogin = lazy(() => import('./pages/StaffLogin'));
+const StaffPortal = lazy(() => import('./pages/StaffPortal'));
+const AdminChat = lazy(() => import('./pages/AdminChat'));
+const UserMessages = lazy(() => import('./pages/UserMessages'));
+const AdminFlashDrops = lazy(() => import('./pages/AdminFlashDrops'));
+const AdminRewards = lazy(() => import('./pages/AdminRewards'));
+const AdminRewardsRedemptions = lazy(() => import('./pages/AdminRewardsRedemptions'));
+const AdminWhatsApp = lazy(() => import('./pages/AdminWhatsApp'));
+const AdminPushNotifications = lazy(() => import('./pages/AdminPushNotifications'));
+const AdminAppUsers = lazy(() => import('./pages/AdminAppUsers'));
+const KitchenDisplay = lazy(() => import('./pages/KitchenDisplay'));
+const OrderHistory = lazy(() => import('./pages/OrderHistory'));
+const BarDisplay = lazy(() => import('./pages/BarDisplay'));
+const OrderManager = lazy(() => import('./pages/OrderManager'));
+const AdminReferrals = lazy(() => import('./pages/AdminReferrals'));
+const AdminRedemptions = lazy(() => import('./pages/AdminRedemptions'));
+const AdminStaffScrutiny = lazy(() => import('./pages/AdminStaffScrutiny'));
+const Welcome = lazy(() => import('./pages/Welcome'));
+const Leaderboard = lazy(() => import('./pages/Leaderboard'));
+const UserProfile = lazy(() => import('./pages/UserProfile'));
+const AdminLeadsDashboard = lazy(() => import('./pages/AdminLeadsDashboard'));
+const CustomerDirectory = lazy(() => import('./pages/CustomerDirectory'));
+const RewardAnalytics = lazy(() => import('./pages/RewardAnalytics'));
+const FlashDropManager = lazy(() => import('./pages/FlashDropManager'));
+const SyrveIntegrationHub = lazy(() => import('./pages/SyrveIntegrationHub'));
+const SurveillanceVault = lazy(() => import('./pages/SurveillanceVault'));
+const InventoryAudit = lazy(() => import('./pages/InventoryAudit'));
+const ThermalReceiptPage = lazy(() => import('./pages/ThermalReceiptPage'));
+const MenuPage = lazy(() => import('./pages/MenuPage'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -59,53 +60,55 @@ function App() {
         <Router>
           <NavigationTracker />
           <PushNotificationInit />
-          <Routes>
-            <Route path="/" element={<Welcome />} />
-            {Object.entries(Pages).map(([path, Page]) => (
-              <Route
-                key={path}
-                path={`/${path}`}
-                element={
-                  <LayoutWrapper currentPageName={path}>
-                    <Page />
-                  </LayoutWrapper>
-                }
-              />
-            ))}
-            <Route path="/AdminEmails" element={<AdminEmails />} />
-            <Route path="/AdminReferrals" element={<AdminReferrals />} />
-            <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
-            <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
-            <Route path="/AdminAppUsers" element={<AdminAppUsers />} />
-            <Route path="/AdminRewards" element={<AdminRewards />} />
-            <Route path="/AdminRewardsRedemptions" element={<AdminRewardsRedemptions />} />
-            <Route path="/AdminWhatsApp" element={<AdminWhatsApp />} />
-            <Route path="/AdminChat" element={<AdminChat />} />
-            <Route path="/messages" element={<UserMessages />} />
-            <Route path="/AdminFlashDrops" element={<AdminFlashDrops />} />
-            <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
-            <Route path="/Leaderboard" element={<LayoutWrapper currentPageName="Leaderboard"><Leaderboard /></LayoutWrapper>} />
-            <Route path="/StaffManagement" element={<StaffManagement />} />
-            <Route path="/StaffPortal" element={<StaffPortal />} />
-            <Route path="/staff" element={<StaffLogin />} />
-            <Route path="/AdminCommunity" element={<AdminCommunity />} />
-            <Route path="/CashierTools" element={<CashierTools />} />
-            <Route path="/KitchenDisplay" element={<KitchenDisplay />} />
-            <Route path="/BarDisplay" element={<BarDisplay />} />
-            <Route path="/OrderManager" element={<OrderManager />} />
-            <Route path="/OrderHistory" element={<OrderHistory />} />
-            <Route path="/AdminStaffScrutiny" element={<AdminStaffScrutiny />} />
-            <Route path="/AdminLeadsDashboard" element={<AdminLeadsDashboard />} />
-            <Route path="/customer-directory" element={<CustomerDirectory />} />
-            <Route path="/reward-analytics" element={<RewardAnalytics />} />
-            <Route path="/flash-drop-manager" element={<FlashDropManager />} />
-            <Route path="/syrve-integration-hub" element={<SyrveIntegrationHub />} />
-            <Route path="/surveillance-vault" element={<SurveillanceVault />} />
-            <Route path="/inventory-audit" element={<InventoryAudit />} />
-            <Route path="/thermal-receipt" element={<ThermalReceiptPage />} />
-            <Route path="/menu" element={<MenuPage />} />
-            <Route path="*" element={<PageNotFound />} />
-          </Routes>
+          <Suspense fallback={<div className="min-h-screen bg-[#F5F1ED]" />}>
+            <Routes>
+              <Route path="/" element={<Welcome />} />
+              {Object.entries(Pages).map(([path, Page]) => (
+                <Route
+                  key={path}
+                  path={`/${path}`}
+                  element={
+                    <LayoutWrapper currentPageName={path}>
+                      <Page />
+                    </LayoutWrapper>
+                  }
+                />
+              ))}
+              <Route path="/AdminEmails" element={<AdminEmails />} />
+              <Route path="/AdminReferrals" element={<AdminReferrals />} />
+              <Route path="/AdminRedemptions" element={<AdminRedemptions />} />
+              <Route path="/AdminPushNotifications" element={<AdminPushNotifications />} />
+              <Route path="/AdminAppUsers" element={<AdminAppUsers />} />
+              <Route path="/AdminRewards" element={<AdminRewards />} />
+              <Route path="/AdminRewardsRedemptions" element={<AdminRewardsRedemptions />} />
+              <Route path="/AdminWhatsApp" element={<AdminWhatsApp />} />
+              <Route path="/AdminChat" element={<AdminChat />} />
+              <Route path="/messages" element={<UserMessages />} />
+              <Route path="/AdminFlashDrops" element={<AdminFlashDrops />} />
+              <Route path="/UserProfile" element={<LayoutWrapper currentPageName="UserProfile"><UserProfile /></LayoutWrapper>} />
+              <Route path="/Leaderboard" element={<LayoutWrapper currentPageName="Leaderboard"><Leaderboard /></LayoutWrapper>} />
+              <Route path="/StaffManagement" element={<StaffManagement />} />
+              <Route path="/StaffPortal" element={<StaffPortal />} />
+              <Route path="/staff" element={<StaffLogin />} />
+              <Route path="/AdminCommunity" element={<AdminCommunity />} />
+              <Route path="/CashierTools" element={<CashierTools />} />
+              <Route path="/KitchenDisplay" element={<KitchenDisplay />} />
+              <Route path="/BarDisplay" element={<BarDisplay />} />
+              <Route path="/OrderManager" element={<OrderManager />} />
+              <Route path="/OrderHistory" element={<OrderHistory />} />
+              <Route path="/AdminStaffScrutiny" element={<AdminStaffScrutiny />} />
+              <Route path="/AdminLeadsDashboard" element={<AdminLeadsDashboard />} />
+              <Route path="/customer-directory" element={<CustomerDirectory />} />
+              <Route path="/reward-analytics" element={<RewardAnalytics />} />
+              <Route path="/flash-drop-manager" element={<FlashDropManager />} />
+              <Route path="/syrve-integration-hub" element={<SyrveIntegrationHub />} />
+              <Route path="/surveillance-vault" element={<SurveillanceVault />} />
+              <Route path="/inventory-audit" element={<InventoryAudit />} />
+              <Route path="/thermal-receipt" element={<ThermalReceiptPage />} />
+              <Route path="/menu" element={<MenuPage />} />
+              <Route path="*" element={<PageNotFound />} />
+            </Routes>
+          </Suspense>
         </Router>
         <Toaster />
         <SonnerToaster position="top-center" />
