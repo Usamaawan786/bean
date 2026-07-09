@@ -1,102 +1,66 @@
-import html2canvas from "html2canvas";
-
 // ─────────────────────────────────────────────────────────────────────────
-// THE one and only print path in the application.
+// Thermal receipt printing — @media print isolation.
 //
-// The receipt (#receipt, rendered once by <Receipt> in BillGenerator) is
-// rasterized to a PNG with html2canvas, then printed through a hidden iframe
-// that contains ONLY that image. The thermal printer therefore receives a
-// bitmap — never HTML, extracted text, or a DOM — so the physical output is
-// pixel-identical to the on-screen preview regardless of the driver's mode.
+// Injects a print-only stylesheet that hides the app chrome (#root, the modal
+// overlay/toolbar) and reveals only #receipt at the exact paper width, then
+// opens the native browser print dialog synchronously from the click. No
+// separate page, no bitmaps — the browser sends the rendered receipt DOM
+// straight to the print spooler.
 // ─────────────────────────────────────────────────────────────────────────
-export async function printReceipt(paperWidth = 80) {
+export function printReceipt(paperWidth = 80) {
   const pw = paperWidth === 58 ? 58 : 80;
-  const node = document.getElementById("receipt");
-  if (!node) throw new Error("Receipt not found");
+  const STYLE_ID = "thermal-receipt-print-style";
 
-  // Pre-create the hidden iframe synchronously (within the click gesture) so
-  // the later print() call is not treated as a non-user-initiated popup.
-  const iframe = document.createElement("iframe");
-  iframe.style.cssText =
-    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;";
-  document.body.appendChild(iframe);
+  // Remove any leftover print style (e.g. rapid re-clicks).
+  document.getElementById(STYLE_ID)?.remove();
 
-  let printed = false;
-  try {
-    // Wait until fonts + a paint cycle are settled so the capture is complete.
-    try { await document.fonts.ready; } catch (e) {}
-    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-    // Ensure every inline image (logo, QR codes) is fully decoded.
-    await Promise.all(
-      Array.from(node.querySelectorAll("img")).map((img) =>
-        img.complete && img.naturalWidth > 0
-          ? Promise.resolve()
-          : new Promise((res) => {
-              img.addEventListener("load", res, { once: true });
-              img.addEventListener("error", res, { once: true });
-            })
-      )
-    );
-
-    // Drop the on-screen drop shadow so it never bleeds into the printed bitmap.
-    const prevShadow = node.style.boxShadow;
-    node.style.boxShadow = "none";
-    let canvas;
-    try {
-      canvas = await html2canvas(node, {
-        scale: 4,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-    } finally {
-      node.style.boxShadow = prevShadow;
+  const style = document.createElement("style");
+  style.id = STYLE_ID;
+  style.textContent = `
+    @media print {
+      @page { size: ${pw}mm auto; margin: 0; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+      /* Hide the rest of the app and the modal overlay/toolbar. */
+      #root { display: none !important; }
+      [data-receipt-backdrop] { display: none !important; }
+      [data-receipt-toolbar] { display: none !important; }
+      /* Un-float the stage so #receipt flows at the top of the page. */
+      [data-receipt-stage] {
+        position: static !important;
+        display: block !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      /* The receipt itself: exact paper width, no shadow, colors preserved. */
+      #receipt {
+        position: static !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        width: ${pw}mm !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      #receipt * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
     }
+  `;
+  document.head.appendChild(style);
 
-    if (!canvas || canvas.width === 0 || canvas.height === 0) throw new Error("Blank canvas");
-    const png = canvas.toDataURL("image/png");
-    if (!png || png === "data:,") throw new Error("Blank canvas");
+  const cleanup = () => {
+    document.getElementById(STYLE_ID)?.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup, { once: true });
+  // Fallback cleanup in case afterprint does not fire.
+  setTimeout(cleanup, 15000);
 
-    printed = await printPngInIframe(iframe, png, pw);
-  } finally {
-    if (!printed) {
-      // Capture/print failed or never completed — remove the orphaned iframe.
-      try { iframe.remove(); } catch (e) {}
-    }
-  }
-}
-
-function printPngInIframe(iframe, png, pw) {
-  return new Promise((resolve) => {
-    const w = iframe.contentWindow;
-    if (!w) return resolve(false);
-
-    let done = false;
-    const cleanup = () => {
-      if (done) return;
-      done = true;
-      try { iframe.remove(); } catch (e) {}
-      resolve(true);
-    };
-    w.onafterprint = cleanup;
-    setTimeout(cleanup, 60000); // safety net if afterprint never fires
-
-    w.document.open();
-    w.document.write(
-      "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>" +
-      "@page{size:" + pw + "mm auto;margin:0;}" +
-      "html,body{margin:0;padding:0;background:#fff;}" +
-      "img{display:block;width:100%;height:auto;}" +
-      "</style></head><body><img id=\"r\" src=\"" + png + "\"></body></html>"
-    );
-    w.document.close();
-
-    const img = w.document.getElementById("r");
-    const go = () => { w.focus(); w.print(); };
-    if (img && img.complete) go();
-    else if (img) { img.onload = go; img.onerror = () => resolve(false); }
-    else resolve(false);
-  });
+  window.print();
 }
