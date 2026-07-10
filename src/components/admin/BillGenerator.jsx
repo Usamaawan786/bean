@@ -56,20 +56,12 @@ export default function BillGenerator({ bill, onClose }) {
 
   const assetsReady = !!(iosQrUrl && androidQrUrl && logoDataUrl);
 
-  // Print: rasterize #receipt to a PNG (html2canvas) and print it via a hidden
-  // iframe. printReceipt logs every step and throws the exact failing step;
-  // we surface that real message (never a generic "Print failed") + full stack.
-  const handlePrint = async () => {
-    if (printing) return;
-    setPrinting(true);
-    try {
-      await printReceipt(paperWidth);
-    } catch (e) {
-      console.error("printReceipt failed:", e, "\nStack:", e.stack);
-      toast.error(e.message || "Print failed");
-    } finally {
-      setPrinting(false);
-    }
+  // Print: inject a print stylesheet sized to the selected paper width and call
+  // window.print() synchronously (within the click gesture). No html2canvas /
+  // no iframe / no async work — the browser prints the native #receipt element.
+  const handlePrint = () => {
+    if (!assetsReady || printing) return;
+    printReceipt(paperWidth);
   };
 
   // Download: the A4 invoice PDF (a separate document, not the thermal receipt).
