@@ -31,6 +31,14 @@ Deno.serve(async (req) => {
 
     const sale = sales[0];
 
+    // 1b. One-time enforcement. The atomic updateMany lock below only guards the
+    // concurrent FIRST-scan race; without this check, the SAME user re-scanning
+    // would pass the re-read (scanned_by === their email) and earn points again.
+    // Block any already-scanned bill immediately, by anyone.
+    if (sale.is_scanned) {
+      return Response.json({ success: false, error: 'Points already redeemed for this bill.' });
+    }
+
     // 2. Validate — expiry (check before claiming the lock so we don't mark
     // an expired sale as scanned)
     if (sale.qr_expires_at && new Date() > new Date(sale.qr_expires_at)) {
