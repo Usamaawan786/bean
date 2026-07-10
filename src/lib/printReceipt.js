@@ -40,7 +40,7 @@ export async function printReceipt(paperWidth = 80) {
     node.style.boxShadow = "none";
     try {
       canvas = await html2canvas(node, {
-        scale: 4,
+        scale: 6,
         useCORS: true,
         allowTaint: false,
         backgroundColor: "#ffffff",
@@ -86,12 +86,18 @@ export async function printReceipt(paperWidth = 80) {
   try {
     const w = iframe.contentWindow;
     if (!w) throw new Error("iframe.contentWindow is null");
+    // Size the page AND the image to the receipt's exact mm dimensions, so the
+    // printer gets one full page (no split) at native size — no up/down scaling
+    // means the bitmap stays crisp.
+    const MM_PER_PX = 25.4 / 96;
+    const pageWmm = (node.offsetWidth * MM_PER_PX).toFixed(2);
+    const pageHmm = (node.offsetHeight * MM_PER_PX).toFixed(2);
     w.document.open();
     w.document.write(
       "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>" +
-      "@page{size:" + pw + "mm auto;margin:0;}" +
+      "@page{size:" + pageWmm + "mm " + pageHmm + "mm;margin:0;}" +
       "html,body{margin:0;padding:0;background:#fff;}" +
-      "img{display:block;width:100%;height:auto;}" +
+      "img{display:block;width:" + pageWmm + "mm;height:" + pageHmm + "mm;}" +
       "</style></head><body><img id=\"r\" src=\"" + png + "\"></body></html>"
     );
     w.document.close();
