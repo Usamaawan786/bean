@@ -152,9 +152,11 @@ export default function QRScanner({ onScan, onClose }) {
       // Other errors (no camera, insecure context, etc.) — fall through to attempts
     }
 
-    // Try the resolved target first, then automatically fall back through progressively
-    // looser constraints — no manual user action required for these fallbacks.
-    const attempts = [cameraTarget, { facingMode: "environment" }, { video: true }];
+    // Try the BACK camera first — receipts are scanned with the rear camera.
+    // The probe above resolves the device's DEFAULT camera, which is often the
+    // front one; trying it first made the scanner open the front camera.
+    // Prioritize facingMode: "environment" (rear), then fall back as needed.
+    const attempts = [{ facingMode: "environment" }, cameraTarget, { video: true }];
     let lastErr = null;
     for (const target of attempts) {
       try {
