@@ -34,6 +34,7 @@ export default function AdminPOS() {
   const completingRef = useRef(false);
   const [orderType, setOrderType] = useState("dine_in"); // "dine_in" | "takeaway"
   const [counter, setCounter] = useState("counter_1");
+  const [tableNumber, setTableNumber] = useState(null); // dine-in table 1-15
   const [discountPct, setDiscountPct] = useState(0); // percentage discount 0-100
   const [discountInput, setDiscountInput] = useState(""); // local string for the custom input field
   const [activeTab, setActiveTab] = useState("pos");
@@ -151,7 +152,8 @@ export default function AdminPOS() {
           points_awarded: pointsToAward,
           qr_expires_at: qrExpiresAt,
           order_type: orderType,
-          counter
+          counter,
+          table_number: tableNumber || null
         }
       });
       if (!saveResp.data?.success) {
@@ -216,7 +218,8 @@ export default function AdminPOS() {
         billNumber,
         qrCodeId,
         pointsToAward,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        tableNumber
       };
       setGeneratedBill(bill);
       setShowBill(true);
@@ -233,6 +236,7 @@ export default function AdminPOS() {
     setCustomerInfo({ name: "", phone: "" });
     setPaymentMethod("Cash");
     setOrderType("dine_in");
+    setTableNumber(null);
     setDiscountPct(0);
     setDiscountInput("");
     setShowBill(false);
@@ -251,6 +255,7 @@ export default function AdminPOS() {
       setCustomerInfo({ name: ticket.customer_name || "", phone: ticket.customer_phone || "" });
       setOrderType(ticket.order_type || "dine_in");
       setCounter(ticket.counter || "counter_1");
+      setTableNumber(ticket.table_number || null);
       setActiveTicket(ticket);
       const kOrders = await base44.entities.KitchenOrder.filter({ bill_number: ticket.ticket_number });
       setTicketKitchenOrder(kOrders?.[0] || null);
@@ -276,6 +281,7 @@ export default function AdminPOS() {
           customer_phone: customerInfo.phone || "",
           order_type: orderType,
           counter,
+          table_number: tableNumber || null,
           status: "Open",
           opened_by: user.email,
           opened_by_name: user.full_name || "",
@@ -326,6 +332,7 @@ export default function AdminPOS() {
           customer_phone: customerInfo.phone || "",
           order_type: orderType,
           counter,
+          table_number: tableNumber || null,
           total_estimate: total
         });
         if (increases.length > 0) {
@@ -457,7 +464,7 @@ export default function AdminPOS() {
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${orderType === "dine_in" ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
                       🪑 Dine In
                     </button>
-                    <button type="button" onClick={() => setOrderType("takeaway")}
+                    <button type="button" onClick={() => { setOrderType("takeaway"); setTableNumber(null); }}
                       className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${orderType === "takeaway" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
                       🛍 Takeaway
                     </button>
@@ -472,6 +479,25 @@ export default function AdminPOS() {
                       Counter 2
                     </button>
                   </div>
+
+                  {/* Table Number (dine-in only) */}
+                  {orderType === "dine_in" && (
+                    <div className="mt-3">
+                      <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Table Number</label>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {Array.from({ length: 15 }, (_, i) => i + 1).map(n => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setTableNumber(tableNumber === n ? null : n)}
+                            className={`py-2 rounded-lg border text-xs font-semibold transition-all ${tableNumber === n ? "border-[#8B7355] bg-[#8B7355] text-white" : "border-[#E8DED8] bg-white text-[#8B7355] hover:border-[#C9B8A6]"}`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Customer Info */}

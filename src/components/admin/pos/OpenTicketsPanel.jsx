@@ -74,7 +74,7 @@ export default function OpenTicketsPanel({ user, onResume }) {
               {ticket.customer_name || "Walk-in Customer"}
             </p>
             <p className="text-xs text-[#8B7355] mb-3">
-              {ticket.order_type === "takeaway" ? "🛍 Takeaway" : "🪑 Dine In"} · {ticket.counter === "counter_2" ? "Counter 2" : "Counter 1"}
+              {ticket.order_type === "takeaway" ? "🛍 Takeaway" : "🪑 Dine In"}{ticket.order_type === "dine_in" && ticket.table_number ? ` · Table ${ticket.table_number}` : ""} · {ticket.counter === "counter_2" ? "Counter 2" : "Counter 1"}
             </p>
 
             <div className="flex items-center justify-between text-sm mb-1">

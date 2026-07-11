@@ -32,6 +32,10 @@
       "default": "counter_1",
       "description": "Which counter opened this ticket"
     },
+    "table_number": {
+      "type": "number",
+      "description": "Dine-in table number (1-15) for this ticket. Null/absent for takeaway."
+    },
     "status": {
       "type": "string",
       "enum": [

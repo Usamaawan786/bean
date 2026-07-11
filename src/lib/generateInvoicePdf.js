@@ -61,7 +61,7 @@ export function generateInvoicePdf(bill, qrUrl, iosUrl, androidUrl, logoUrl) {
     y += bandH + 6;
 
     // --- Customer info ---
-    if (bill.customerInfo?.name || bill.customerInfo?.phone) {
+    if (bill.customerInfo?.name || bill.customerInfo?.phone || bill.tableNumber) {
       doc.setFontSize(9);
       if (bill.customerInfo.name) {
         doc.setTextColor(...brownSec); doc.text("Customer", left, y);
@@ -74,6 +74,13 @@ export function generateInvoicePdf(bill, qrUrl, iosUrl, androidUrl, logoUrl) {
         doc.setTextColor(...brownSec); doc.text("Phone", left, y);
         doc.setTextColor(...brown); doc.setFont("helvetica", "bold");
         doc.text(String(bill.customerInfo.phone), left + 25, y);
+        doc.setFont("helvetica", "normal");
+        y += 6;
+      }
+      if (bill.tableNumber) {
+        doc.setTextColor(...brownSec); doc.text("Table", left, y);
+        doc.setTextColor(...brown); doc.setFont("helvetica", "bold");
+        doc.text(String(bill.tableNumber), left + 25, y);
         doc.setFont("helvetica", "normal");
         y += 6;
       }

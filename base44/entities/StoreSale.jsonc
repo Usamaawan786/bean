@@ -124,6 +124,10 @@
     "order_type": {
       "type": "string",
       "description": "dine_in or takeaway"
+    },
+    "table_number": {
+      "type": "number",
+      "description": "Dine-in table number (1-15). Null/absent for takeaway."
     }
   },
   "required": [

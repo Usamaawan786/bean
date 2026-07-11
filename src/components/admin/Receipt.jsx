@@ -81,6 +81,7 @@ export default function Receipt({
         <div style={row()}><span>Date</span><span>{bill?.date ? format(new Date(bill.date), "MMM dd, yyyy HH:mm") : ""}</span></div>
         {bill?.cashierName && <div style={row()}><span>Cashier</span><span>{bill.cashierName}</span></div>}
         {bill?.orderType && <div style={row()}><span>Order</span><span>{bill.orderType}</span></div>}
+        {bill?.tableNumber ? <div style={row()}><span>Table</span><span style={{ fontWeight: 700 }}>{bill.tableNumber}</span></div> : null}
         {bill?.customerInfo?.name && <div style={row()}><span>Customer</span><span>{bill.customerInfo.name}</span></div>}
         {bill?.customerInfo?.phone && <div style={row()}><span>Phone</span><span>{bill.customerInfo.phone}</span></div>}
       </div>
