@@ -605,7 +605,7 @@ export default function AdminPOS() {
                         <TrendingDown className="h-4 w-4 text-red-500" /> Discount %
                       </label>
                       <div className="flex gap-2 flex-wrap">
-                        {[0, 5, 10, 15, 20].map(pct => (
+                        {[0, 5, 10, 15, 20, 50].map(pct => (
                           <button key={pct} type="button" onClick={() => setDiscountPct(pct)}
                             className={`px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all ${discountPct === pct ? "border-red-400 bg-red-50 text-red-700" : "border-[#E8DED8] bg-white text-[#8B7355]"}`}>
                             {pct === 0 ? "None" : `${pct}%`}
