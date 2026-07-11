@@ -17,11 +17,17 @@ Deno.serve(async (req) => {
     const monthStartPKT = new Date(todayStartPKT.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Fetch all data via service role (no RLS, no limits)
-    const [allSales, allCustomers, allExpenses] = await Promise.all([
+    const [rawSales, allCustomers, allExpenses] = await Promise.all([
       base44.asServiceRole.entities.StoreSale.list('-created_date', 10000),
       base44.asServiceRole.entities.Customer.list('-created_date', 10000),
       base44.asServiceRole.entities.Expense.list('-created_date', 2000),
     ]);
+
+    // Launch cutoff (July 11, 2026 PKT): pre-launch sales remain in the DB
+    // and are queryable via the Sales History tab, but are excluded from all
+    // live KPIs (revenue, transactions, avg-order, charts, breakdowns).
+    const LAUNCH_DATE = new Date('2026-07-11T00:00:00+05:00');
+    const allSales = rawSales.filter(s => new Date(s.created_date) >= LAUNCH_DATE);
 
     // Segment sales by time period
     const todaySales = allSales.filter(s => new Date(s.created_date) >= todayStartPKT);

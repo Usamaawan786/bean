@@ -29,15 +29,35 @@ Deno.serve(async (req) => {
       cashier_role: user.role,
     };
 
-    // Collision-proof bill number: timestamp + random suffix.
-    // Replaces the old read-max-then-increment loop which raced when two
-    // cashiers saved simultaneously (both read the same maxNum and the
-    // 5-attempt collision check re-read independently, still producing A{n} dupes).
-    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const billNumber = `A-${Date.now()}-${rand}`;
-    enrichedSale.bill_number = billNumber;
-
-    const sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
+    // Sequential B-series bill number (B-001, B-002 … B-999, B-1000).
+    // Reads the current max B-series number across all StoreSales, increments,
+    // and retries up to 5 times to absorb collisions from concurrent cashiers.
+    let sale = null;
+    for (let attempt = 0; attempt < 5 && !sale; attempt++) {
+      const existing = await base44.asServiceRole.entities.StoreSale.list('-created_date', 10000);
+      let maxNum = 0;
+      existing.forEach(s => {
+        const m = (s.bill_number || '').match(/^B-(\d+)$/);
+        if (m) {
+          const n = parseInt(m[1], 10);
+          if (n > maxNum) maxNum = n;
+        }
+      });
+      const nextNum = maxNum + 1;
+      const padded = nextNum < 1000 ? String(nextNum).padStart(3, '0') : String(nextNum);
+      const candidate = `B-${padded}`;
+      // A concurrent cashier may have just written this number — retry to recompute
+      if (existing.some(s => s.bill_number === candidate)) continue;
+      enrichedSale.bill_number = candidate;
+      try {
+        sale = await base44.asServiceRole.entities.StoreSale.create(enrichedSale);
+      } catch (e) {
+        // create failed — retry to recompute the next number
+      }
+    }
+    if (!sale) {
+      return Response.json({ success: false, error: 'Could not allocate a unique bill number after 5 attempts' }, { status: 500 });
+    }
 
     // Deduct recipe/modifier ingredients from inventory. Fire-and-forget so a
     // failure here never blocks the sale from completing.

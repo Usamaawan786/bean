@@ -14,6 +14,7 @@ import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
 import ReceiptLookup from "@/components/admin/pos/ReceiptLookup";
+import SalesHistoryTab from "@/components/admin/pos/SalesHistoryTab";
 import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
 import POSCategoryNav from "@/components/admin/pos/POSCategoryNav";
@@ -435,6 +436,7 @@ export default function AdminPOS() {
             <TabsTrigger value="open-tickets">Open Tickets</TabsTrigger>
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
+            <TabsTrigger value="sales-history">Sales History</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
 
@@ -694,6 +696,10 @@ export default function AdminPOS() {
 
           <TabsContent value="launch-discount">
             <LaunchDiscountPanel />
+          </TabsContent>
+
+          <TabsContent value="sales-history">
+            <SalesHistoryTab />
           </TabsContent>
 
           {canManageProducts && (
