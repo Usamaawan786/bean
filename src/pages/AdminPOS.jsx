@@ -15,6 +15,7 @@ import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
 import ReceiptLookup from "@/components/admin/pos/ReceiptLookup";
 import SalesHistoryTab from "@/components/admin/pos/SalesHistoryTab";
+import RedemptionVerifier from "@/components/admin/pos/RedemptionVerifier";
 import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
 import POSCategoryNav from "@/components/admin/pos/POSCategoryNav";
@@ -437,6 +438,7 @@ export default function AdminPOS() {
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             <TabsTrigger value="sales-history">Sales History</TabsTrigger>
+            <TabsTrigger value="redemptions">Reward Redemptions</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
 
@@ -700,6 +702,10 @@ export default function AdminPOS() {
 
           <TabsContent value="sales-history">
             <SalesHistoryTab />
+          </TabsContent>
+
+          <TabsContent value="redemptions">
+            <RedemptionVerifier />
           </TabsContent>
 
           {canManageProducts && (
