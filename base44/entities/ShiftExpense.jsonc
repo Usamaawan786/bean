@@ -1,0 +1,110 @@
+{
+  "name": "ShiftExpense",
+  "type": "object",
+  "properties": {
+    "shift_id": {
+      "type": "string",
+      "description": "Reference to the Shift this entry belongs to"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "expense",
+        "petty_cash"
+      ],
+      "description": "Whether this is a free-form expense or a petty cash entry"
+    },
+    "description": {
+      "type": "string",
+      "description": "Free-text description (used for expenses)"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Supplies",
+        "Cleaning",
+        "Maintenance",
+        "Staff Meals",
+        "Miscellaneous"
+      ],
+      "description": "Category, required for petty cash entries"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Amount in PKR"
+    },
+    "added_by": {
+      "type": "string",
+      "description": "Email of the staff member who added this entry"
+    },
+    "added_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who added this entry"
+    }
+  },
+  "required": [
+    "shift_id",
+    "type",
+    "amount"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -78,10 +78,15 @@
       "enum": [
         "Cash",
         "Card",
-        "Mobile Payment"
+        "Mobile Payment",
+        "Complimentary"
       ],
       "default": "Cash",
       "description": "Payment method used"
+    },
+    "shift_id": {
+      "type": "string",
+      "description": "Reference to the Shift this sale was made during"
     },
     "qr_code_id": {
       "type": "string",

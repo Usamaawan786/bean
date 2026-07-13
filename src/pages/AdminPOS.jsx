@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield, Percent, ClipboardList } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Plus, Minus, Trash2, Receipt, Settings, CreditCard, Banknote, Package, TrendingDown, BarChart3, ListTodo, Users, Gift, Loader2, Shield, Percent, ClipboardList, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -20,6 +20,10 @@ import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
 import ItemDiscountSheet from "@/components/admin/pos/ItemDiscountSheet";
 import POSCategoryNav from "@/components/admin/pos/POSCategoryNav";
+import ShiftGate from "@/components/admin/pos/ShiftGate";
+import ShiftPanel from "@/components/admin/pos/ShiftPanel";
+import ShiftHistoryTab from "@/components/admin/pos/ShiftHistoryTab";
+import ShiftReportView from "@/components/admin/pos/ShiftReportView";
 import { SlidersHorizontal } from "lucide-react";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
 import { PKR_PER_POINT } from "@/lib/loyaltyConfig";
@@ -47,6 +51,7 @@ export default function AdminPOS() {
   const [savingTicket, setSavingTicket] = useState(false);
   const [modifierPickerItem, setModifierPickerItem] = useState(null);
   const [discountPickerItem, setDiscountPickerItem] = useState(null);
+  const [viewingClosedShift, setViewingClosedShift] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -64,6 +69,15 @@ export default function AdminPOS() {
   const { data: products = [] } = useQuery({
     queryKey: ["store-products-admin"],
     queryFn: () => base44.entities.StoreProduct.list(),
+    enabled: !!user
+  });
+
+  const { data: activeShift = null } = useQuery({
+    queryKey: ["active-shift"],
+    queryFn: async () => {
+      const shifts = await base44.entities.Shift.filter({ status: "open" }, "-opened_at", 1);
+      return shifts[0] || null;
+    },
     enabled: !!user
   });
 
@@ -116,6 +130,14 @@ export default function AdminPOS() {
   const total = discountedSubtotal + tax;
 
   const completeSale = async () => {
+    if (!activeShift) {
+      toast.error("Open a shift before taking sales");
+      return;
+    }
+    if (paymentMethod === "Complimentary" && !["admin", "manager", "super_admin"].includes(user?.role)) {
+      toast.error("Complimentary sales require manager or admin approval");
+      return;
+    }
     // Ref guard blocks a second tap that lands before the state re-render
     // propagates (< 16ms) — state-only guards let both taps through.
     if (completingRef.current) return;
@@ -164,7 +186,8 @@ export default function AdminPOS() {
           qr_expires_at: qrExpiresAt,
           order_type: orderType,
           counter,
-          table_number: tableNumber || null
+          table_number: tableNumber || null,
+          shift_id: activeShift.id
         }
       });
       if (!saveResp.data?.success) {
@@ -443,15 +466,20 @@ export default function AdminPOS() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-white border border-[#E8DED8]">
             <TabsTrigger value="pos">POS</TabsTrigger>
+            <TabsTrigger value="shift">Shift</TabsTrigger>
             <TabsTrigger value="open-tickets">Open Tickets</TabsTrigger>
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             <TabsTrigger value="sales-history">Sales History</TabsTrigger>
+            <TabsTrigger value="shift-history">Shift Reports</TabsTrigger>
             <TabsTrigger value="redemptions">Reward Redemptions</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="pos" className="space-y-6">
+            {!activeShift ? (
+              <ShiftGate user={user} onOpened={() => queryClient.invalidateQueries({ queryKey: ["active-shift"] })} />
+            ) : (
             <div className="grid lg:grid-cols-3 gap-6">
               <POSCategoryNav onAddToCart={addToCart} />
 
@@ -532,34 +560,48 @@ export default function AdminPOS() {
                 {/* Payment Method */}
                 <div className="mb-4">
                   <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Payment Method</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("Cash")}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
+                      className={`flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl border-2 transition-all ${
                         paymentMethod === "Cash"
                           ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
                           : "border-[#E8DED8] bg-white text-[#8B7355]"
                       }`}
                     >
                       <Banknote className="h-4 w-4" />
-                      <span className="text-sm font-medium">Cash</span>
+                      <span className="text-xs font-medium">Cash</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("Card")}
-                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${
+                      className={`flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl border-2 transition-all ${
                         paymentMethod === "Card"
                           ? "border-[#8B7355] bg-[#F5EBE8] text-[#5C4A3A]"
                           : "border-[#E8DED8] bg-white text-[#8B7355]"
                       }`}
                     >
                       <CreditCard className="h-4 w-4" />
-                      <span className="text-sm font-medium">Card</span>
+                      <span className="text-xs font-medium">Card</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { if (["admin", "manager", "super_admin"].includes(user?.role)) setPaymentMethod("Complimentary"); }}
+                      disabled={!["admin", "manager", "super_admin"].includes(user?.role)}
+                      title={!["admin", "manager", "super_admin"].includes(user?.role) ? "Manager or admin only" : undefined}
+                      className={`flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl border-2 transition-all ${
+                        paymentMethod === "Complimentary"
+                          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                          : "border-[#E8DED8] bg-white text-[#8B7355] disabled:opacity-40 disabled:cursor-not-allowed"
+                      }`}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span className="text-xs font-medium">Complimentary</span>
                     </button>
                   </div>
                   <p className="text-xs text-[#8B7355] mt-1">
-                    GST: {paymentMethod === "Card" ? "5%" : "17%"}
+                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : `GST: ${paymentMethod === "Card" ? "5%" : "17%"}`}
                   </p>
                 </div>
 
@@ -690,6 +732,9 @@ export default function AdminPOS() {
                         <span className="text-[#5C4A3A]">Total</span>
                         <span className="text-[#5C4A3A]">PKR {total.toFixed(2)}</span>
                       </div>
+                      {paymentMethod === "Complimentary" && (
+                        <p className="text-xs text-indigo-600 font-medium text-center pt-1">Complimentary — Total charged: PKR 0.00</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -722,6 +767,19 @@ export default function AdminPOS() {
                 )}
               </div>
             </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="shift">
+            <ShiftPanel
+              shift={activeShift}
+              user={user}
+              onClosed={(closedShift) => {
+                queryClient.invalidateQueries({ queryKey: ["active-shift"] });
+                queryClient.invalidateQueries({ queryKey: ["all-shifts"] });
+                setViewingClosedShift(closedShift);
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="open-tickets">
@@ -738,6 +796,10 @@ export default function AdminPOS() {
 
           <TabsContent value="sales-history">
             <SalesHistoryTab />
+          </TabsContent>
+
+          <TabsContent value="shift-history">
+            <ShiftHistoryTab />
           </TabsContent>
 
           <TabsContent value="redemptions">
@@ -785,6 +847,11 @@ export default function AdminPOS() {
           bill={generatedBill}
           onClose={clearCart}
         />
+      )}
+
+      {/* Shift Report (auto-shown after close, or from Shift Reports tab) */}
+      {viewingClosedShift && (
+        <ShiftReportView shift={viewingClosedShift} onClose={() => setViewingClosedShift(null)} />
       )}
     </div>
     </ScreenShareGate>

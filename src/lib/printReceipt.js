@@ -1,9 +1,11 @@
-// Native thermal receipt print: inject a print stylesheet sized to the chosen
-// paper width, then call window.print() synchronously inside the click gesture.
+// Native thermal print: inject a print stylesheet sized to the chosen paper
+// width, then call window.print() synchronously inside the click gesture.
 // No html2canvas / no iframe / no async work — the browser prints the native
-// #receipt element, so text and QR codes stay vector-crisp and the receipt
+// target element, so text and QR codes stay vector-crisp and the document
 // lands on a single page sized to its content (the DOM flows, unlike a bitmap).
-export function printReceipt(paperWidth = 80) {
+// elementId lets callers print any #id'd document staged under
+// [data-receipt-stage] (receipts, shift reports, ...).
+export function printThermalDocument(elementId, paperWidth = 80) {
   const pw = paperWidth === 58 ? 58 : 80;
 
   // Replace any stylesheet left over from a previous print.
@@ -21,7 +23,7 @@ export function printReceipt(paperWidth = 80) {
     "body > *:not([data-receipt-stage]) { display: none !important; }" +
     "[data-receipt-toolbar] { display: none !important; }" +
     "[data-receipt-stage] { position: static !important; display: block !important; padding: 0 !important; margin: 0 !important; background: #fff !important; overflow: visible !important; }" +
-    "#receipt { box-shadow: none !important; width: " + pw + "mm !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }" +
+    "#" + elementId + " { box-shadow: none !important; width: " + pw + "mm !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }" +
     "}";
   document.head.appendChild(style);
 
@@ -35,4 +37,8 @@ export function printReceipt(paperWidth = 80) {
 
   // Synchronous — must run within the user gesture so the dialog opens.
   window.print();
+}
+
+export function printReceipt(paperWidth = 80) {
+  return printThermalDocument("receipt", paperWidth);
 }

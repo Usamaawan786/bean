@@ -29,6 +29,14 @@ Deno.serve(async (req) => {
       cashier_role: user.role,
     };
 
+    // Complimentary sales require manager/admin approval and are always zero-charge
+    if (enrichedSale.payment_method === 'Complimentary') {
+      if (!['admin', 'super_admin', 'manager'].includes(user.role)) {
+        return Response.json({ error: 'Complimentary sales require manager or admin approval' }, { status: 403 });
+      }
+      enrichedSale.total_amount = 0;
+    }
+
     // Sequential B-series bill number (B-001, B-002 … B-999, B-1000).
     // Reads the current max B-series number across all StoreSales, increments,
     // and retries up to 5 times to absorb collisions from concurrent cashiers.

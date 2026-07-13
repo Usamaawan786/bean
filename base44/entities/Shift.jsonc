@@ -1,0 +1,147 @@
+{
+  "name": "Shift",
+  "type": "object",
+  "properties": {
+    "shift_type": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "evening"
+      ],
+      "description": "Morning or evening shift"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "closed"
+      ],
+      "default": "open",
+      "description": "Current shift status"
+    },
+    "opened_by": {
+      "type": "string",
+      "description": "Email of the staff member who opened the shift"
+    },
+    "opened_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who opened the shift"
+    },
+    "opened_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the shift was opened"
+    },
+    "closed_by": {
+      "type": "string",
+      "description": "Email of the staff member who closed the shift"
+    },
+    "closed_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who closed the shift"
+    },
+    "closed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the shift was closed"
+    },
+    "opening_float": {
+      "type": "number",
+      "description": "Opening cash float in PKR"
+    },
+    "closing_float": {
+      "type": "number",
+      "description": "Closing cash float physically counted, in PKR"
+    },
+    "cash_variance": {
+      "type": "number",
+      "description": "Variance between expected drawer cash and actual closing float"
+    },
+    "counter": {
+      "type": "string",
+      "enum": [
+        "counter_1",
+        "counter_2"
+      ],
+      "description": "Counter this shift was opened at"
+    }
+  },
+  "required": [
+    "shift_type",
+    "opened_by"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
