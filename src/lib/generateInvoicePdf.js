@@ -102,20 +102,40 @@ export function generateInvoicePdf(bill, qrUrl, iosUrl, androidUrl, logoUrl) {
     doc.text("Total", colTotal, y + 6, { align: "right" });
     y += 9;
     bill.items.forEach((item) => {
-      ensureSpace(11);
+      const pct = Number(item.item_discount_pct || 0);
+      const hasDisc = pct > 0;
+      const effective = hasDisc ? item.price * (1 - pct / 100) : item.price;
+      const lineTotal = effective * item.quantity;
+      const rowH = hasDisc ? 13 : 9;
+      ensureSpace(rowH + 2);
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
       doc.setTextColor(...brown);
-      doc.text(String(item.name).slice(0, 42), left + 4, y + 6);
+      const nameLine = hasDisc ? `${String(item.name).slice(0, 38)}  -${pct}%` : String(item.name).slice(0, 42);
+      doc.text(nameLine, left + 4, y + 6);
       doc.setTextColor(...brownSec);
       doc.text(String(item.quantity), colQty + 8, y + 6, { align: "center" });
-      doc.text(`PKR ${item.price.toFixed(2)}`, colPrice, y + 6, { align: "right" });
       doc.setTextColor(...brown);
       doc.setFont("helvetica", "bold");
-      doc.text(`PKR ${(item.price * item.quantity).toFixed(2)}`, colTotal, y + 6, { align: "right" });
+      doc.text(`PKR ${effective.toFixed(2)}`, colPrice, y + 6, { align: "right" });
+      if (hasDisc) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(170, 150, 130);
+        const origText = `PKR ${item.price.toFixed(2)}`;
+        doc.text(origText, colPrice, y + 11, { align: "right" });
+        const w = doc.getTextWidth(origText);
+        doc.setDrawColor(170, 150, 130);
+        doc.setLineWidth(0.3);
+        doc.line(colPrice - w, y + 8.6, colPrice, y + 8.6);
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(...brown);
+      doc.text(`PKR ${lineTotal.toFixed(2)}`, colTotal, y + 6, { align: "right" });
       doc.setDrawColor(...border); doc.setLineWidth(0.2);
-      doc.line(left, y + 9, right, y + 9);
-      y += 9;
+      doc.line(left, y + rowH, right, y + rowH);
+      y += rowH;
     });
     y += 6;
 

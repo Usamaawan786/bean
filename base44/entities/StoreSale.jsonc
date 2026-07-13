@@ -32,6 +32,11 @@
           "price": {
             "type": "number"
           },
+          "item_discount_pct": {
+            "type": "number",
+            "default": 0,
+            "description": "Per-item percentage discount applied to this line (0-100)"
+          },
           "selected_modifiers": {
             "type": "array",
             "items": {

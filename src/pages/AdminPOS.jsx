@@ -18,6 +18,7 @@ import SalesHistoryTab from "@/components/admin/pos/SalesHistoryTab";
 import RedemptionVerifier from "@/components/admin/pos/RedemptionVerifier";
 import ScreenShareGate from "@/components/admin/pos/ScreenShareGate";
 import ModifierPickerSheet from "@/components/admin/pos/ModifierPickerSheet";
+import ItemDiscountSheet from "@/components/admin/pos/ItemDiscountSheet";
 import POSCategoryNav from "@/components/admin/pos/POSCategoryNav";
 import { SlidersHorizontal } from "lucide-react";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
@@ -45,6 +46,7 @@ export default function AdminPOS() {
   const [ticketKitchenOrder, setTicketKitchenOrder] = useState(null); // linked KDS record
   const [savingTicket, setSavingTicket] = useState(false);
   const [modifierPickerItem, setModifierPickerItem] = useState(null);
+  const [discountPickerItem, setDiscountPickerItem] = useState(null);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function AdminPOS() {
           : item
       ));
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      setCart([...cart, { ...product, quantity: 1, item_discount_pct: 0 }]);
     }
   };
 
@@ -100,7 +102,13 @@ export default function AdminPOS() {
     setCart(cart.map(item => item.id === productId ? { ...item, selected_modifiers: modifierIds } : item));
   };
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const updateItemDiscount = (productId, pct) => {
+    setCart(cart.map(item => item.id === productId ? { ...item, item_discount_pct: Math.min(100, Math.max(0, Number(pct) || 0)) } : item));
+  };
+
+  const effectivePrice = (item) => item.price * (1 - (item.item_discount_pct || 0) / 100);
+  const grossSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + effectivePrice(item) * item.quantity, 0);
   const discountAmount = subtotal * (discountPct / 100);
   const discountedSubtotal = subtotal - discountAmount;
   const taxRate = paymentMethod === "Card" ? 0.05 : 0.17; // 5% for Card, 17% for Cash
@@ -140,10 +148,11 @@ export default function AdminPOS() {
             product_name: item.name,
             quantity: item.quantity,
             price: item.price,
+            item_discount_pct: item.item_discount_pct || 0,
             selected_modifiers: item.selected_modifiers || []
           })),
           subtotal: discountedSubtotal,
-          original_subtotal: subtotal,
+          original_subtotal: grossSubtotal,
           discount_pct: discountPct,
           discount_amount: discountAmount,
           tax,
@@ -562,10 +571,28 @@ export default function AdminPOS() {
                     cart.map(item => (
                       <div key={item.id} className="bg-[#F5EBE8] rounded-xl p-3">
                         <div className="flex items-center gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[#5C4A3A] text-sm truncate">{item.name}</p>
-                            <p className="text-xs text-[#8B7355]">PKR {item.price}</p>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setDiscountPickerItem(item)}
+                            className="flex-1 min-w-0 text-left"
+                          >
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-[#5C4A3A] text-sm truncate">{item.name}</p>
+                              {(item.item_discount_pct || 0) > 0 && (
+                                <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">-{item.item_discount_pct}%</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {(item.item_discount_pct || 0) > 0 ? (
+                                <>
+                                  <span className="text-xs text-[#C9B8A6] line-through">PKR {item.price}</span>
+                                  <span className="text-xs text-[#5C4A3A] font-medium">PKR {effectivePrice(item).toFixed(0)}</span>
+                                </>
+                              ) : (
+                                <span className="text-xs text-[#8B7355]">PKR {item.price}</span>
+                              )}
+                            </div>
+                          </button>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => updateQuantity(item.id, -1)}
@@ -588,13 +615,22 @@ export default function AdminPOS() {
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
-                        <button
-                          onClick={() => setModifierPickerItem(item)}
-                          className="mt-2 flex items-center gap-1 text-xs text-[#8B7355] hover:text-[#5C4A3A]"
-                        >
-                          <SlidersHorizontal className="h-3 w-3" />
-                          {item.selected_modifiers?.length ? `${item.selected_modifiers.length} modifier(s)` : "Add modifiers"}
-                        </button>
+                        <div className="mt-2 flex items-center gap-3">
+                          <button
+                            onClick={() => setModifierPickerItem(item)}
+                            className="flex items-center gap-1 text-xs text-[#8B7355] hover:text-[#5C4A3A]"
+                          >
+                            <SlidersHorizontal className="h-3 w-3" />
+                            {item.selected_modifiers?.length ? `${item.selected_modifiers.length} modifier(s)` : "Add modifiers"}
+                          </button>
+                          <button
+                            onClick={() => setDiscountPickerItem(item)}
+                            className="flex items-center gap-1 text-xs text-[#8B7355] hover:text-[#5C4A3A]"
+                          >
+                            <Percent className="h-3 w-3" />
+                            {(item.item_discount_pct || 0) > 0 ? `Item -${item.item_discount_pct}%` : "Item discount"}
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -722,6 +758,14 @@ export default function AdminPOS() {
           )}
         </Tabs>
       </div>
+
+      {/* Item Discount Picker */}
+      <ItemDiscountSheet
+        open={!!discountPickerItem}
+        onOpenChange={(open) => { if (!open) setDiscountPickerItem(null); }}
+        item={discountPickerItem}
+        onApply={updateItemDiscount}
+      />
 
       {/* Modifier Picker */}
       <ModifierPickerSheet

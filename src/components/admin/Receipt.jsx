@@ -90,17 +90,35 @@ export default function Receipt({
 
       {/* Items */}
       <div style={section}>
-        {bill?.items?.map((item, i) => (
-          <div key={i} style={{ marginBottom: "1.5mm" }}>
-            <div style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000", wordWrap: "break-word", overflowWrap: "break-word" }}>
-              {item.name}
+        {bill?.items?.map((item, i) => {
+          const pct = Number(item.item_discount_pct || 0);
+          const hasDisc = pct > 0;
+          const unitPrice = Number(item.price) || 0;
+          const effective = hasDisc ? unitPrice * (1 - pct / 100) : unitPrice;
+          const lineTotal = effective * item.quantity;
+          return (
+            <div key={i} style={{ marginBottom: "1.5mm" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000", wordWrap: "break-word", overflowWrap: "break-word" }}>
+                <span>{item.name}</span>
+                {hasDisc && <span style={{ color: "#cc0000", marginLeft: "2mm", whiteSpace: "nowrap" }}>-{pct}%</span>}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>
+                <span>
+                  {hasDisc ? (
+                    <>
+                      <span style={{ textDecoration: "line-through", color: "#666666" }}>{item.quantity} x {money(unitPrice)}</span>
+                      {" "}
+                      <span>{item.quantity} x {money(effective)}</span>
+                    </>
+                  ) : (
+                    <span>{item.quantity} x {money(unitPrice)}</span>
+                  )}
+                </span>
+                <span style={{ ...nowrap, fontWeight: 700 }}>{money(lineTotal)}</span>
+              </div>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>
-              <span>{item.quantity} x {money(item.price)}</span>
-              <span style={{ ...nowrap, fontWeight: 700 }}>{money(Number(item.price) * item.quantity)}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={divider} />
