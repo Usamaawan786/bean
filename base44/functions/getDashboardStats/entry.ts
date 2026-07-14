@@ -17,10 +17,11 @@ Deno.serve(async (req) => {
     const monthStartPKT = new Date(todayStartPKT.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     // Fetch all data via service role (no RLS, no limits)
-    const [rawSales, allCustomers, allExpenses] = await Promise.all([
+    const [rawSales, allCustomers, allExpenses, allShifts] = await Promise.all([
       base44.asServiceRole.entities.StoreSale.list('-created_date', 10000),
       base44.asServiceRole.entities.Customer.list('-created_date', 10000),
       base44.asServiceRole.entities.Expense.list('-created_date', 2000),
+      base44.asServiceRole.entities.Shift.list('-opened_at', 200),
     ]);
 
     // Launch cutoff (July 11, 2026 PKT): pre-launch sales remain in the DB
@@ -116,6 +117,38 @@ Deno.serve(async (req) => {
     });
     const dailyRevenue = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
+    // Shift-wise summary — group sales by shift_id (the active shift gets a
+    // running tally; closed shifts are frozen). Only post-launch sales are
+    // counted so KPIs stay consistent with the rest of the dashboard.
+    const shiftSalesMap = {};
+    allSales.forEach(s => {
+      const sid = s.shift_id;
+      if (!sid) return;
+      if (!shiftSalesMap[sid]) shiftSalesMap[sid] = { count: 0, revenue: 0, cash: 0, card: 0 };
+      shiftSalesMap[sid].count += 1;
+      shiftSalesMap[sid].revenue += Number(s.total_amount) || 0;
+      if (s.payment_method === 'Cash') shiftSalesMap[sid].cash += Number(s.total_amount) || 0;
+      if (s.payment_method === 'Card') shiftSalesMap[sid].card += Number(s.total_amount) || 0;
+    });
+    const shiftSummary = allShifts.map(shift => {
+      const agg = shiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
+      return {
+        shift_id: shift.id,
+        shift_type: shift.shift_type,
+        status: shift.status,
+        opened_by_name: shift.opened_by_name || shift.opened_by,
+        opened_at: shift.opened_at,
+        closed_at: shift.closed_at,
+        opening_float: Number(shift.opening_float || 0),
+        closing_float: Number(shift.closing_float || 0),
+        counter: shift.counter,
+        transactions: agg.count,
+        revenue: agg.revenue,
+        cash: agg.cash,
+        card: agg.card
+      };
+    }).sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''));
+
     return Response.json({
       // Customer stats
       totalCustomers,
@@ -158,6 +191,7 @@ Deno.serve(async (req) => {
       topProducts,
       hourly: hourly.filter((_, i) => i >= 7 && i <= 23),
       dailyRevenue,
+      shiftSummary,
     });
   } catch (error) {
     console.error('getDashboardStats error:', error);

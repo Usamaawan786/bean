@@ -24,6 +24,8 @@ import ShiftGate from "@/components/admin/pos/ShiftGate";
 import ShiftPanel from "@/components/admin/pos/ShiftPanel";
 import ShiftHistoryTab from "@/components/admin/pos/ShiftHistoryTab";
 import ShiftReportView from "@/components/admin/pos/ShiftReportView";
+import CashChangeCalculator from "@/components/admin/pos/CashChangeCalculator";
+import CustomerProfilePanel from "@/components/admin/pos/CustomerProfilePanel";
 import { SlidersHorizontal } from "lucide-react";
 import { buildKitchenOrder, syncTicketKitchenOrder } from "@/lib/kitchenOrderUtils";
 import { PKR_PER_POINT } from "@/lib/loyaltyConfig";
@@ -52,6 +54,7 @@ export default function AdminPOS() {
   const [modifierPickerItem, setModifierPickerItem] = useState(null);
   const [discountPickerItem, setDiscountPickerItem] = useState(null);
   const [viewingClosedShift, setViewingClosedShift] = useState(null);
+  const [cashReceived, setCashReceived] = useState(""); // cash change calculator input
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -80,6 +83,27 @@ export default function AdminPOS() {
     },
     enabled: !!user
   });
+
+  // Identify a customer at the POS by phone/name and load their saved recipes,
+  // so cart items matching a saved customization show a hint badge.
+  const { data: identifiedRecipes = [] } = useQuery({
+    queryKey: ["pos-identified-recipes", customerInfo.phone, customerInfo.name],
+    queryFn: async () => {
+      const phone = customerInfo.phone.trim();
+      const name = customerInfo.name.trim();
+      if (!phone && !name) return [];
+      const all = await base44.entities.Customer.list("-created_date", 500);
+      const match = all.find(c =>
+        (phone && (c.phone || "") === phone) ||
+        (name && (c.display_name || "").toLowerCase() === name.toLowerCase())
+      );
+      if (!match) return [];
+      const recipes = await base44.entities.CustomerProductRecipe.filter({ customer_email: match.user_email });
+      return recipes;
+    },
+    enabled: !!(customerInfo.phone.trim() || customerInfo.name.trim()) && !!user
+  });
+  const savedRecipeProductIds = new Set(identifiedRecipes.map(r => r.product_id));
 
   const filteredProducts = products.filter(p => 
     p.is_available && p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -196,6 +220,7 @@ export default function AdminPOS() {
 
       // Backend auto-generates sequential bill number (A1, A2, ...)
       const billNumber = saveResp.data.sale.bill_number;
+      const saleId = saveResp.data.sale.id;
 
       // Track analytics regardless of what happens next
       try {
@@ -250,6 +275,7 @@ export default function AdminPOS() {
         total,
         paymentMethod,
         billNumber,
+        saleId,
         qrCodeId,
         pointsToAward,
         date: new Date().toISOString(),
@@ -273,11 +299,42 @@ export default function AdminPOS() {
     setTableNumber(null);
     setDiscountPct(0);
     setDiscountInput("");
+    setCashReceived("");
     setShowBill(false);
     setGeneratedBill(null);
     setActiveTicket(null);
     setTicketBaseline([]);
     setTicketKitchenOrder(null);
+  };
+
+  // Edit Bill escape hatch: hard-deletes the just-saved StoreSale and restores
+  // the cart exactly as it was — cashier corrects and re-completes normally.
+  // The cart is NOT cleared (clearCart is only wired to the Close button), so
+  // items/customer/payment/discount/order type are preserved in state.
+  const handleEditBill = async (saleId) => {
+    if (!saleId) {
+      toast.error("Could not identify the sale to void");
+      return;
+    }
+    try {
+      await base44.entities.StoreSale.delete(saleId);
+      // Revert the linked open ticket back to Open so it can be re-completed
+      if (activeTicket) {
+        try {
+          await base44.entities.OpenTicket.update(activeTicket.id, { status: "Open", sale_bill_number: null });
+        } catch (e) { /* non-blocking */ }
+      }
+      setShowBill(false);
+      setGeneratedBill(null);
+      queryClient.invalidateQueries({ queryKey: ["sales-analytics"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["open-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ["shift-report-sales"] });
+      toast.success("Sale voided — cart restored for editing");
+    } catch (err) {
+      toast.error("Failed to void sale: " + (err?.message || "Unknown error"));
+      throw err;
+    }
   };
 
   const handleResumeTicket = async (ticket) => {
@@ -468,6 +525,7 @@ export default function AdminPOS() {
             <TabsTrigger value="pos">POS</TabsTrigger>
             <TabsTrigger value="shift">Shift</TabsTrigger>
             <TabsTrigger value="open-tickets">Open Tickets</TabsTrigger>
+            <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             <TabsTrigger value="sales-history">Sales History</TabsTrigger>
@@ -623,6 +681,11 @@ export default function AdminPOS() {
                               {(item.item_discount_pct || 0) > 0 && (
                                 <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">-{item.item_discount_pct}%</span>
                               )}
+                              {savedRecipeProductIds.has(item.id) && (
+                                <span className="shrink-0 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold leading-none" title="Customer has a saved recipe for this product">
+                                  ★ saved recipe
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                               {(item.item_discount_pct || 0) > 0 ? (
@@ -737,6 +800,10 @@ export default function AdminPOS() {
                       )}
                     </div>
 
+                    {paymentMethod === "Cash" && (
+                      <CashChangeCalculator total={total} cashReceived={cashReceived} onChange={setCashReceived} />
+                    )}
+
                     <div className="space-y-2">
                       <Button
                         onClick={completeSale}
@@ -784,6 +851,10 @@ export default function AdminPOS() {
 
           <TabsContent value="open-tickets">
             <OpenTicketsPanel user={user} onResume={handleResumeTicket} />
+          </TabsContent>
+
+          <TabsContent value="customers">
+            <CustomerProfilePanel products={products} />
           </TabsContent>
 
           <TabsContent value="receipts">
@@ -846,6 +917,8 @@ export default function AdminPOS() {
         <BillGenerator
           bill={generatedBill}
           onClose={clearCart}
+          onEditBill={handleEditBill}
+          saleId={generatedBill.saleId}
         />
       )}
 

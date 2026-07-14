@@ -137,6 +137,10 @@ export default function AdminDashboard() {
 
   const hourlySales = stats?.hourly || [];
 
+  // Shift-wise summary from backend (grouped by shift_id)
+  const shiftSummary = (stats?.shiftSummary || []).slice(0, 6);
+  const activeShiftSummary = shiftSummary.find(s => s.status === "open");
+
   // Expenses by category (from local fetch — smaller dataset)
   const expensesData = useMemo(() => {
     const map = {};
@@ -375,6 +379,61 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Shift Summary */}
+        <Card className="border-[#E8DED8]">
+          <CardHeader>
+            <CardTitle className="text-[#5C4A3A] flex items-center gap-2">
+              <Clock className="h-5 w-5" /> Shift Summary
+              {activeShiftSummary && (
+                <Badge className="bg-green-100 text-green-700 border-0">
+                  Active: {activeShiftSummary.shift_type === "morning" ? "Morning" : "Evening"} · {activeShiftSummary.transactions} sales
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {shiftSummary.length === 0 ? (
+              <p className="text-center text-[#8B7355] py-6 text-sm">No shifts recorded yet</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#E8DED8]">
+                      <th className="text-left py-2 px-3 text-[#5C4A3A] font-semibold">Shift</th>
+                      <th className="text-left py-2 px-3 text-[#5C4A3A] font-semibold">Opened By</th>
+                      <th className="text-center py-2 px-3 text-[#5C4A3A] font-semibold">Status</th>
+                      <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Txns</th>
+                      <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Cash</th>
+                      <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Card</th>
+                      <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shiftSummary.map(s => (
+                      <tr key={s.shift_id} className="border-b border-[#F5EBE8] hover:bg-[#F5EBE8] transition-colors">
+                        <td className="py-2 px-3 text-[#5C4A3A] font-medium">
+                          {s.shift_type === "morning" ? "Morning" : "Evening"}
+                          {s.counter && <span className="text-xs text-[#8B7355] ml-1">· {s.counter === "counter_1" ? "C1" : "C2"}</span>}
+                        </td>
+                        <td className="py-2 px-3 text-[#8B7355]">{s.opened_by_name}</td>
+                        <td className="py-2 px-3 text-center">
+                          <Badge variant="outline" className={s.status === "open" ? "bg-green-50 text-green-700 border-green-200" : "bg-[#F5EBE8] text-[#8B7355] border-[#E8DED8]"}>
+                            {s.status === "open" ? "OPEN" : "CLOSED"}
+                          </Badge>
+                        </td>
+                        <td className="py-2 px-3 text-right text-[#8B7355]">{s.transactions}</td>
+                        <td className="py-2 px-3 text-right text-[#8B7355]">Rs. {s.cash.toLocaleString()}</td>
+                        <td className="py-2 px-3 text-right text-[#8B7355]">Rs. {s.card.toLocaleString()}</td>
+                        <td className="py-2 px-3 text-right font-semibold text-[#5C4A3A]">Rs. {s.revenue.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Today's Hourly Activity */}
         <Card className="border-[#E8DED8]">

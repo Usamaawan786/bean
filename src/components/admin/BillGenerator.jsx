@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X, Printer, Download, Loader2 } from "lucide-react";
+import { X, Printer, Download, Loader2, PencilLine } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import QRCode from "qrcode";
@@ -14,12 +14,13 @@ const IOS_APP_URL = "https://apps.apple.com/pk/app/bean-pakistan/id6758788396";
 const ANDROID_APP_URL = "https://play.google.com/store/apps/details?id=com.base6976cd7fe6e4b20fcb30cf61.app";
 const LOGO_URL = "https://media.base44.com/images/public/6976cd7fe6e4b20fcb30cf61/f3d3c0edf_Group1302.png";
 
-export default function BillGenerator({ bill, onClose }) {
+export default function BillGenerator({ bill, onClose, onEditBill, saleId }) {
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [iosQrUrl, setIosQrUrl] = useState("");
   const [androidQrUrl, setAndroidQrUrl] = useState("");
   const [logoDataUrl, setLogoDataUrl] = useState("");
   const [printing, setPrinting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [paperWidth, setPaperWidth] = useState(() => {
     const saved = localStorage.getItem(PAPER_WIDTH_KEY);
     return saved === "58" ? 58 : 80;
@@ -70,6 +71,18 @@ export default function BillGenerator({ bill, onClose }) {
     if (!res.ok) toast.error(`PDF generation failed: ${res.error}`);
   };
 
+  // Edit Bill: voids the just-saved sale and restores the cart for correction.
+  // The parent handles the hard-delete; we just close the dialog on success.
+  const handleEditBill = async () => {
+    if (editing || !onEditBill) return;
+    setEditing(true);
+    try {
+      await onEditBill(saleId);
+    } finally {
+      setEditing(false);
+    }
+  };
+
   // Portaled to <body> so #receipt lives OUTSIDE #root — printReceipt hides
   // #root and the overlay chrome, leaving #receipt as the only printed content.
   return createPortal(
@@ -93,6 +106,12 @@ export default function BillGenerator({ bill, onClose }) {
           <Button size="sm" variant="outline" onClick={handleDownload} disabled={!assetsReady} className="rounded-xl">
             <Download className="h-4 w-4 mr-2" />Download Invoice
           </Button>
+          {onEditBill && saleId && (
+            <Button size="sm" onClick={handleEditBill} disabled={editing} className="rounded-xl bg-amber-500 hover:bg-amber-600 text-white">
+              {editing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PencilLine className="h-4 w-4 mr-2" />}
+              {editing ? "Voiding…" : "Edit Bill"}
+            </Button>
+          )}
           <div className="flex bg-[#F5EBE8] rounded-full p-0.5 border border-[#E8DED8]">
             <button onClick={() => setWidth(58)}
               className={`px-3 py-1 rounded-full text-xs transition-colors ${paperWidth === 58 ? "bg-[#5C4A3A] text-white" : "text-[#8B7355]"}`}>
