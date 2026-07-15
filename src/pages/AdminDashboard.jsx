@@ -57,9 +57,9 @@ export default function AdminDashboard() {
 
   // Single backend function for all accurate metrics
   const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", timeRange],
     queryFn: async () => {
-      const res = await base44.functions.invoke('getDashboardStats', {});
+      const res = await base44.functions.invoke('getDashboardStats', { period: timeRange });
       return res.data;
     },
     enabled: !!user,
@@ -109,7 +109,17 @@ export default function AdminDashboard() {
     }
   }, [user, queryClient]);
 
-  // Pull from backend stats (accurate, service-role, no RLS limits)
+  // Period-scoped (driven by the time-range selector)
+  const p = stats?.period || {};
+  const periodLabel = p.label || "Last 7 Days";
+  const periodRevenue = p.revenue || 0;
+  const periodTransactions = p.transactions || 0;
+  const periodAvgOrder = p.avgOrder || 0;
+  const periodItemsSold = p.itemsSold || 0;
+  const periodExpenses = p.expenses || 0;
+  const periodNetProfit = p.netProfit || 0;
+
+  // All-time / today figures (kept for the Financial Summary card + sub-labels)
   const totalRevenue = stats?.allTimeRevenue || 0;
   const todayRevenue = stats?.todayRevenue || 0;
   const totalTransactions = stats?.allTimeTransactions || 0;
@@ -117,22 +127,21 @@ export default function AdminDashboard() {
   const avgOrderValue = stats?.allTimeAvgOrder || 0;
   const totalExpenses = stats?.allTimeExpenses || 0;
   const netProfit = stats?.allTimeProfit || 0;
-  const totalItemsSold = stats?.todayItemsSold || 0;
   const scannedBills = stats?.scannedTotal || 0;
   const scanRate = stats?.scanRate || 0;
   const totalCustomers = stats?.totalCustomers || 0;
 
-  // Charts from backend stats
-  const salesTimeline = stats?.dailyRevenue?.map(d => ({
-    date: d.date.slice(5), // MM-DD
+  // Charts driven by the selected period
+  const salesTimeline = (p.timeline || []).map(d => ({
+    date: d.date,
     revenue: d.revenue,
     orders: d.orders
-  })) || [];
+  }));
 
-  const topProducts = stats?.topProducts || [];
+  const topProducts = p.topProducts || [];
 
-  const paymentData = stats?.paymentBreakdown
-    ? Object.entries(stats.paymentBreakdown).map(([name, value]) => ({ name, value }))
+  const paymentData = p.paymentBreakdown
+    ? Object.entries(p.paymentBreakdown).map(([name, value]) => ({ name, value }))
     : [];
 
   const hourlySales = stats?.hourly || [];
@@ -210,6 +219,7 @@ export default function AdminDashboard() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
                 <SelectItem value="7days">Last 7 Days</SelectItem>
                 <SelectItem value="30days">Last 30 Days</SelectItem>
                 <SelectItem value="90days">Last 90 Days</SelectItem>
@@ -220,10 +230,10 @@ export default function AdminDashboard() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard icon={DollarSign} label="Total Revenue" value={isLoadingStats ? '…' : `Rs. ${totalRevenue.toLocaleString()}`} sub={`Today: Rs. ${todayRevenue.toLocaleString()}`} delay={0} />
-            <StatCard icon={ShoppingCart} label="Transactions" value={isLoadingStats ? '…' : totalTransactions} sub={`Today: ${todayTransactions}`} delay={0.05} />
-            <StatCard icon={TrendingUp} label="Avg Order Value" value={isLoadingStats ? '…' : `Rs. ${avgOrderValue.toFixed(0)}`} sub={`Expenses: Rs. ${totalExpenses.toLocaleString()}`} delay={0.1} />
-            <StatCard icon={Package} label="Net Profit" value={isLoadingStats ? '…' : `Rs. ${netProfit.toLocaleString()}`} color={netProfit >= 0 ? "text-green-300" : "text-red-300"} sub={`Margin: ${totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : 0}%`} delay={0.15} />
+            <StatCard icon={DollarSign} label={`Revenue · ${periodLabel}`} value={isLoadingStats ? '…' : `Rs. ${periodRevenue.toLocaleString()}`} sub={`Today: Rs. ${todayRevenue.toLocaleString()}`} delay={0} />
+            <StatCard icon={ShoppingCart} label={`Transactions · ${periodLabel}`} value={isLoadingStats ? '…' : periodTransactions} sub={`Today: ${todayTransactions}`} delay={0.05} />
+            <StatCard icon={TrendingUp} label={`Avg Order · ${periodLabel}`} value={isLoadingStats ? '…' : `Rs. ${periodAvgOrder.toFixed(0)}`} sub={`Period expenses: Rs. ${periodExpenses.toLocaleString()}`} delay={0.1} />
+            <StatCard icon={Package} label={`Net Profit · ${periodLabel}`} value={isLoadingStats ? '…' : `Rs. ${periodNetProfit.toLocaleString()}`} color={periodNetProfit >= 0 ? "text-green-300" : "text-red-300"} sub={`Margin: ${periodRevenue > 0 ? ((periodNetProfit / periodRevenue) * 100).toFixed(1) : 0}%`} delay={0.15} />
           </div>
 
           {/* Secondary KPIs */}
@@ -242,7 +252,7 @@ export default function AdminDashboard() {
         {/* Revenue Area Chart */}
         <Card className="border-[#E8DED8]">
           <CardHeader>
-            <CardTitle className="text-[#5C4A3A]">Revenue & Orders Over Time</CardTitle>
+            <CardTitle className="text-[#5C4A3A]">Revenue & Orders · {periodLabel}</CardTitle>
           </CardHeader>
           <CardContent>
             {salesTimeline.length === 0 ? (
@@ -277,7 +287,7 @@ export default function AdminDashboard() {
           {/* Top Products */}
           <Card className="border-[#E8DED8]">
             <CardHeader>
-              <CardTitle className="text-[#5C4A3A]">Top Products by Revenue</CardTitle>
+              <CardTitle className="text-[#5C4A3A]">Top Products by Revenue · {periodLabel}</CardTitle>
             </CardHeader>
             <CardContent>
               {topProducts.length === 0 ? (
@@ -299,7 +309,7 @@ export default function AdminDashboard() {
           {/* Payment Methods */}
           <Card className="border-[#E8DED8]">
             <CardHeader>
-              <CardTitle className="text-[#5C4A3A]">Orders by Payment Method</CardTitle>
+              <CardTitle className="text-[#5C4A3A]">Orders by Payment Method · {periodLabel}</CardTitle>
             </CardHeader>
             <CardContent>
               {paymentData.length === 0 ? (
@@ -538,7 +548,7 @@ export default function AdminDashboard() {
         {/* Product Performance Table */}
         <Card className="border-[#E8DED8]">
           <CardHeader>
-            <CardTitle className="text-[#5C4A3A]">Product Performance</CardTitle>
+            <CardTitle className="text-[#5C4A3A]">Product Performance · {periodLabel}</CardTitle>
           </CardHeader>
           <CardContent>
             {topProducts.length === 0 ? (
@@ -565,7 +575,7 @@ export default function AdminDashboard() {
                         <td className="py-2 px-3 text-right font-semibold text-[#5C4A3A]">Rs. {p.revenue.toLocaleString()}</td>
                         <td className="py-2 px-3 text-right text-[#8B7355]">Rs. {(p.revenue / p.quantity).toFixed(0)}</td>
                         <td className="py-2 px-3 text-right text-[#8B7355]">
-                          {totalRevenue > 0 ? ((p.revenue / totalRevenue) * 100).toFixed(1) : 0}%
+                          {periodRevenue > 0 ? ((p.revenue / periodRevenue) * 100).toFixed(1) : 0}%
                         </td>
                       </tr>
                     ))}

@@ -8,6 +8,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    let body = {};
+    try { body = await req.json(); } catch (e) { body = {}; }
+    const period = body.period || '7days';
+
     // PKT timezone offset: UTC+5
     const now = new Date();
     const pktOffset = 5 * 60 * 60 * 1000;
@@ -149,7 +153,98 @@ Deno.serve(async (req) => {
       };
     }).sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''));
 
+    // ---- Period-scoped metrics (dashboard time-range selector) ----
+    const PERIOD_LABELS = {
+      today: 'Today', yesterday: 'Yesterday',
+      '7days': 'Last 7 Days', '30days': 'Last 30 Days',
+      '90days': 'Last 90 Days', all: 'All Time'
+    };
+    const periodLabel = PERIOD_LABELS[period] || 'Last 7 Days';
+    let periodStart, periodEnd = null;
+    if (period === 'today') {
+      periodStart = todayStartPKT;
+    } else if (period === 'yesterday') {
+      periodStart = new Date(todayStartPKT.getTime() - 1 * 86400000);
+      periodEnd = todayStartPKT;
+    } else if (period === '7days') {
+      periodStart = new Date(todayStartPKT.getTime() - 7 * 86400000);
+    } else if (period === '30days') {
+      periodStart = new Date(todayStartPKT.getTime() - 30 * 86400000);
+    } else if (period === '90days') {
+      periodStart = new Date(todayStartPKT.getTime() - 90 * 86400000);
+    } else {
+      periodStart = LAUNCH_DATE;
+    }
+    const inPeriod = (d) => {
+      const dt = new Date(d);
+      if (dt < periodStart) return false;
+      if (periodEnd && dt >= periodEnd) return false;
+      return true;
+    };
+    const periodSales = allSales.filter(s => inPeriod(s.created_date));
+    const periodExpenses = allExpenses.filter(e => inPeriod(e.created_date));
+    const periodRevenue = sum(periodSales, 'total_amount');
+    const periodTransactions = periodSales.length;
+    const periodAvgOrder = periodTransactions > 0 ? periodRevenue / periodTransactions : 0;
+    const periodItemsSold = periodSales.reduce((s, sale) =>
+      s + (sale.items?.reduce((a, i) => a + (i.quantity || 0), 0) || 0), 0);
+    const periodExpenseTotal = sum(periodExpenses, 'amount');
+    const periodNetProfit = periodRevenue - periodExpenseTotal;
+
+    const periodPayment = {};
+    periodSales.forEach(s => {
+      const m = s.payment_method || 'Cash';
+      periodPayment[m] = (periodPayment[m] || 0) + 1;
+    });
+
+    const periodProductMap = {};
+    periodSales.forEach(sale => {
+      sale.items?.forEach(item => {
+        if (!item.product_name) return;
+        if (!periodProductMap[item.product_name]) periodProductMap[item.product_name] = { name: item.product_name, quantity: 0, revenue: 0 };
+        periodProductMap[item.product_name].quantity += item.quantity || 0;
+        periodProductMap[item.product_name].revenue += (item.price || 0) * (item.quantity || 0);
+      });
+    });
+    const periodTopProducts = Object.values(periodProductMap).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+
+    let periodTimeline = [];
+    if (period === 'today' || period === 'yesterday') {
+      const buckets = Array.from({ length: 24 }, (_, h) => ({ hour: `${h}:00`, orders: 0, revenue: 0 }));
+      periodSales.forEach(s => {
+        const salePKT = new Date(new Date(s.created_date).getTime() + pktOffset);
+        const h = salePKT.getUTCHours();
+        buckets[h].orders += 1;
+        buckets[h].revenue += s.total_amount || 0;
+      });
+      periodTimeline = buckets.filter((_, i) => i >= 7 && i <= 23).map(b => ({ date: b.hour, revenue: b.revenue, orders: b.orders }));
+    } else {
+      const map = {};
+      periodSales.forEach(sale => {
+        const salePKT = new Date(new Date(sale.created_date).getTime() + pktOffset);
+        const d = `${salePKT.getUTCFullYear()}-${String(salePKT.getUTCMonth() + 1).padStart(2, '0')}-${String(salePKT.getUTCDate()).padStart(2, '0')}`;
+        if (!map[d]) map[d] = { date: d, revenue: 0, orders: 0 };
+        map[d].revenue += sale.total_amount || 0;
+        map[d].orders += 1;
+      });
+      periodTimeline = Object.values(map).sort((a, b) => a.date.localeCompare(b.date)).map(d => ({ date: d.date.slice(5), revenue: d.revenue, orders: d.orders }));
+    }
+
     return Response.json({
+      // Period-scoped (driven by selector)
+      period: {
+        label: periodLabel,
+        revenue: periodRevenue,
+        transactions: periodTransactions,
+        avgOrder: periodAvgOrder,
+        itemsSold: periodItemsSold,
+        expenses: periodExpenseTotal,
+        netProfit: periodNetProfit,
+        topProducts: periodTopProducts,
+        paymentBreakdown: periodPayment,
+        timeline: periodTimeline,
+      },
+
       // Customer stats
       totalCustomers,
       newCustomersToday,
