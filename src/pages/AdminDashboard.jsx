@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { format, subDays, startOfDay, isAfter } from "date-fns";
 import NegativeBalancePanel from "@/components/admin/inventory/NegativeBalancePanel";
+import SalesBreakdownCard from "@/components/admin/dashboard/SalesBreakdownCard";
 
 const COLORS = ['#8B7355', '#6B5744', '#D4C4B0', '#C9B8A6', '#B5A593', '#A08975', '#5C4A3A'];
 
@@ -282,6 +283,12 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+
+        <SalesBreakdownCard
+          periodLabel={periodLabel}
+          dailyBreakdown={p.dailyBreakdown}
+          shiftBreakdown={p.shiftBreakdown}
+        />
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Top Products */}

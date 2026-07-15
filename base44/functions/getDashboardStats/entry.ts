@@ -230,6 +230,60 @@ Deno.serve(async (req) => {
       periodTimeline = Object.values(map).sort((a, b) => a.date.localeCompare(b.date)).map(d => ({ date: d.date.slice(5), revenue: d.revenue, orders: d.orders }));
     }
 
+    // Daily breakdown (date-by-date) for the selected period
+    const dailyBreakdown = [];
+    if (period === 'today' || period === 'yesterday') {
+      dailyBreakdown.push({
+        date: periodLabel, revenue: periodRevenue,
+        transactions: periodTransactions, itemsSold: periodItemsSold, avgOrder: periodAvgOrder,
+      });
+    } else {
+      const dmap = {};
+      periodSales.forEach(sale => {
+        const salePKT = new Date(new Date(sale.created_date).getTime() + pktOffset);
+        const d = `${salePKT.getUTCFullYear()}-${String(salePKT.getUTCMonth() + 1).padStart(2, '0')}-${String(salePKT.getUTCDate()).padStart(2, '0')}`;
+        if (!dmap[d]) dmap[d] = { date: d, revenue: 0, transactions: 0, itemsSold: 0 };
+        dmap[d].revenue += sale.total_amount || 0;
+        dmap[d].transactions += 1;
+        dmap[d].itemsSold += sale.items?.reduce((a, i) => a + (i.quantity || 0), 0) || 0;
+      });
+      if (period !== 'all') {
+        let cursor = new Date(periodStart);
+        const stopAt = new Date(now.getTime() + pktOffset);
+        while (cursor <= stopAt) {
+          const d = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}-${String(cursor.getUTCDate()).padStart(2, '0')}`;
+          if (!dmap[d]) dmap[d] = { date: d, revenue: 0, transactions: 0, itemsSold: 0 };
+          cursor.setUTCDate(cursor.getUTCDate() + 1);
+        }
+      }
+      Object.values(dmap).sort((a, b) => a.date.localeCompare(b.date)).forEach(d => {
+        dailyBreakdown.push({ ...d, avgOrder: d.transactions > 0 ? d.revenue / d.transactions : 0 });
+      });
+    }
+
+    // Shift breakdown for the selected period
+    const shiftBreakdown = allShifts
+      .filter(shift => shift.opened_at && inPeriod(shift.opened_at))
+      .map(shift => {
+        const agg = shiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
+        const openedPKT = new Date(new Date(shift.opened_at).getTime() + pktOffset);
+        return {
+          shift_id: shift.id,
+          shift_type: shift.shift_type,
+          date: `${openedPKT.getUTCFullYear()}-${String(openedPKT.getUTCMonth() + 1).padStart(2, '0')}-${String(openedPKT.getUTCDate()).padStart(2, '0')}`,
+          counter: shift.counter,
+          opened_by_name: shift.opened_by_name || shift.opened_by,
+          opened_at: shift.opened_at,
+          closed_at: shift.closed_at,
+          status: shift.status,
+          transactions: agg.count,
+          revenue: agg.revenue,
+          cash: agg.cash,
+          card: agg.card,
+        };
+      })
+      .sort((a, b) => (b.opened_at || '').localeCompare(a.opened_at || ''));
+
     return Response.json({
       // Period-scoped (driven by selector)
       period: {
@@ -243,6 +297,8 @@ Deno.serve(async (req) => {
         topProducts: periodTopProducts,
         paymentBreakdown: periodPayment,
         timeline: periodTimeline,
+        dailyBreakdown,
+        shiftBreakdown,
       },
 
       // Customer stats
