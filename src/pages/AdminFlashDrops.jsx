@@ -7,7 +7,7 @@ import {
   Zap, Plus, ArrowLeft, Edit3, Trash2, Play, Pause, CheckCircle2,
   Clock, MapPin, Package, Users, Calendar, Coffee, Gift, Star,
   RefreshCw, X, Save, AlertTriangle, Eye, EyeOff, Loader2, Copy,
-  ChevronRight, BarChart2, QrCode, ShieldCheck, Search, XCircle
+  ChevronRight, BarChart2, QrCode, ShieldCheck, Search, XCircle, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, formatDistanceToNow, isPast, isFuture } from "date-fns";
@@ -106,11 +106,12 @@ function StatusBadge({ status }) {
   );
 }
 
-function DropCard({ drop, onEdit, onDelete, onActivate, onEnd }) {
+function DropCard({ drop, onEdit, onDelete, onActivate, onEnd, onNotifyAll }) {
   const claimedCount = (drop.claimed_by || []).length;
   const total = drop.total_items || 0;
   const remaining = drop.items_remaining ?? total;
   const pct = total > 0 ? Math.round(((total - remaining) / total) * 100) : 0;
+  const [sendingPush, setSendingPush] = useState(false);
 
   return (
     <motion.div
@@ -165,6 +166,14 @@ function DropCard({ drop, onEdit, onDelete, onActivate, onEnd }) {
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F5EBE8]">
           <button onClick={() => onEdit(drop)} className="flex items-center gap-1 text-xs text-[#8B7355] hover:text-[#5C4A3A] px-2 py-1.5 rounded-lg hover:bg-[#F5EBE8] transition-colors">
             <Edit3 className="h-3.5 w-3.5" /> Edit
+          </button>
+          <button
+            onClick={() => onNotifyAll(drop)}
+            disabled={sendingPush || drop.status === "ended"}
+            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Send push notification to all app users"
+          >
+            {sendingPush ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />} Notify All
           </button>
           <div className="flex-1" />
 
@@ -362,6 +371,25 @@ export default function AdminFlashDrops() {
     await base44.entities.FlashDrop.delete(id);
     queryClient.invalidateQueries({ queryKey: ["admin-flash-drops"] });
     showToast("Drop deleted.");
+  };
+
+  const handleNotifyAll = async (drop) => {
+    const ok = window.confirm(`Send a push notification to ALL app users about "${drop.title}"?`);
+    if (!ok) return;
+    try {
+      const res = await base44.functions.invoke("sendPushNotification", {
+        title: `⚡ Flash Drop: ${drop.title}`,
+        body: drop.description || "A new flash drop is live! Open the app to claim.",
+        target: "all",
+        deep_link: "/FlashDrops",
+      });
+      const sent = res?.data?.sent_count ?? 0;
+      const failed = res?.data?.failure_count ?? 0;
+      showToast(`🔔 Push sent to ${sent} device${sent === 1 ? "" : "s"}${failed ? ` (${failed} failed)` : ""}`);
+      queryClient.invalidateQueries({ queryKey: ["admin-flash-drops"] });
+    } catch (e) {
+      showToast("Failed to send push: " + (e.message || "error"), "error");
+    }
   };
 
   const handleEdit = (drop) => {
@@ -690,6 +718,7 @@ export default function AdminFlashDrops() {
                     onDelete={handleDelete}
                     onActivate={handleActivate}
                     onEnd={handleEnd}
+                    onNotifyAll={handleNotifyAll}
                   />
                 ))}
               </div>
