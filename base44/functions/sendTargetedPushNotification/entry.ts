@@ -16,8 +16,12 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // This function can be called by automations (service role) or admin users.
-    // We allow both — just parse the payload.
+    // Targeted pushes to specific users are an admin-only operation
+    const user = await base44.auth.me();
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      return Response.json({ error: 'Forbidden: admin access required' }, { status: 403 });
+    }
+
     const payload = await req.json();
     const { user_email, title, body, data = {}, image_url } = payload;
 

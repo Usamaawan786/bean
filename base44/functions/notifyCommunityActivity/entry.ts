@@ -99,11 +99,19 @@ async function sendPushToUser(userEmail, title, body, deepLink, base44, serviceA
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
     const payload = await req.json();
     const { type, toEmail, fromEmail, fromName, fromPicture, postId, postLikesCount, message } = payload;
 
     if (!type || !toEmail) {
       return Response.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    // The sender must be the authenticated user — prevents spoofed community notifications
+    if (fromEmail && fromEmail !== user.email) {
+      return Response.json({ error: "Forbidden: fromEmail must match the authenticated user" }, { status: 403 });
     }
 
     // Load FCM credentials

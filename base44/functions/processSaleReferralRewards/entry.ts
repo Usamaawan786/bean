@@ -3,11 +3,20 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const body = await req.json();
     const { customerEmail, totalSpend } = body;
 
     if (!customerEmail || totalSpend === undefined) {
       return Response.json({ error: 'customerEmail and totalSpend required' }, { status: 400 });
+    }
+
+    // Only the customer themselves (after their own spend) or an admin may trigger referral reward processing
+    const isAdmin = user.role === 'admin' || user.role === 'super_admin' || user.role === 'manager';
+    if (!isAdmin && user.email !== customerEmail) {
+      return Response.json({ error: 'Forbidden: can only process your own referral rewards' }, { status: 403 });
     }
 
     // Fetch customer to check if they have a referrer

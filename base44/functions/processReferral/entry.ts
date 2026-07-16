@@ -28,6 +28,13 @@ Deno.serve(async (req) => {
     const customers = await base44.asServiceRole.entities.Customer.filter({ id: customerId });
     if (customers.length === 0) return Response.json({ success: false, reason: 'customer_not_found' });
     const customer = customers[0];
+
+    // IDOR guard: the customer record must belong to the authenticated caller
+    const customerOwner = customer.user_email || customer.created_by;
+    if (customerOwner !== user.email) {
+      return Response.json({ error: 'Forbidden: you can only process your own referral' }, { status: 403 });
+    }
+
     if (customer.referred_by) {
       return Response.json({ success: false, reason: 'already_referred' });
     }
