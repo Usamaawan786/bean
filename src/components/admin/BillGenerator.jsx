@@ -62,7 +62,8 @@ export default function BillGenerator({ bill, onClose, onEditBill, saleId }) {
   // no iframe / no async work — the browser prints the native #receipt element.
   const handlePrint = () => {
     if (!assetsReady || printing) return;
-    printReceipt(paperWidth);
+    // copies=2 prints the store copy, then the customer copy automatically.
+    printReceipt(paperWidth, 2);
   };
 
   // Download: the A4 invoice PDF (a separate document, not the thermal receipt).

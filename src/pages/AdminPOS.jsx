@@ -317,12 +317,14 @@ export default function AdminPOS() {
       return;
     }
     try {
-      await base44.entities.StoreSale.delete(saleId);
-      // Revert the linked open ticket back to Open so it can be re-completed
-      if (activeTicket) {
-        try {
-          await base44.entities.OpenTicket.update(activeTicket.id, { status: "Open", sale_bill_number: null });
-        } catch (e) { /* non-blocking */ }
+      // Route through a service-role backend function — cashiers can't delete
+      // StoreSale rows via RLS, so the direct delete silently fails.
+      const resp = await base44.functions.invoke('voidSaleForEdit', {
+        sale_id: saleId,
+        ticket_id: activeTicket?.id || null,
+      });
+      if (!resp.data?.success) {
+        throw new Error(resp.data?.error || 'Failed to void sale');
       }
       setShowBill(false);
       setGeneratedBill(null);

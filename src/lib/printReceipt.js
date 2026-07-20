@@ -5,8 +5,12 @@
 // lands on a single page sized to its content (the DOM flows, unlike a bitmap).
 // elementId lets callers print any #id'd document staged under
 // [data-receipt-stage] (receipts, shift reports, ...).
-export function printThermalDocument(elementId, paperWidth = 80) {
+//
+// copies: 1 (default) prints once; 2 prints the store copy then an identical
+// customer copy automatically — used only from the BillGenerator print button.
+export function printThermalDocument(elementId, paperWidth = 80, copies = 1) {
   const pw = paperWidth === 58 ? 58 : 80;
+  const copyCount = Math.max(1, Math.min(2, Number(copies) || 1));
 
   // Replace any stylesheet left over from a previous print.
   const existing = document.getElementById("print-size");
@@ -27,18 +31,31 @@ export function printThermalDocument(elementId, paperWidth = 80) {
     "}";
   document.head.appendChild(style);
 
-  // Remove the injected stylesheet once printing is done.
+  // When copies=2, the first afterprint triggers the customer-copy print, and
+  // the second afterprint tears down the injected stylesheet.
+  let remaining = copyCount;
+
   const cleanup = () => {
-    window.removeEventListener("afterprint", cleanup);
+    window.removeEventListener("afterprint", handleAfterPrint);
     const s = document.getElementById("print-size");
     if (s) s.remove();
   };
-  window.addEventListener("afterprint", cleanup);
+
+  const handleAfterPrint = () => {
+    remaining -= 1;
+    if (remaining >= 1) {
+      window.print();
+    } else {
+      cleanup();
+    }
+  };
+
+  window.addEventListener("afterprint", handleAfterPrint);
 
   // Synchronous — must run within the user gesture so the dialog opens.
   window.print();
 }
 
-export function printReceipt(paperWidth = 80) {
-  return printThermalDocument("receipt", paperWidth);
+export function printReceipt(paperWidth = 80, copies = 1) {
+  return printThermalDocument("receipt", paperWidth, copies);
 }

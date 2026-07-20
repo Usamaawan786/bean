@@ -1,7 +1,7 @@
 import { Fragment, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Search, ChevronRight, ChevronDown, Loader2, Receipt } from "lucide-react";
+import { Search, ChevronRight, ChevronDown, Loader2, Receipt, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const LAUNCH_DATE = new Date("2026-07-11T00:00:00+05:00");
@@ -13,27 +13,35 @@ const PAYMENT_FILTERS = [
   { key: "Card", label: "Card" },
 ];
 
-const DATE_RANGES = [
-  { key: "all", label: "All Time" },
+// Quick-select presets — they populate the From/To datetime inputs with their
+// PKT boundaries so the user can see and fine-tune the exact window.
+const QUICK_RANGES = [
   { key: "today", label: "Today" },
   { key: "week", label: "This Week" },
   { key: "month", label: "This Month" },
 ];
 
 function pktStartOfToday() {
-  const now = new Date();
-  const pkt = new Date(now.getTime() + PKT_OFFSET);
+  const pkt = new Date(Date.now() + PKT_OFFSET);
   return new Date(Date.UTC(pkt.getUTCFullYear(), pkt.getUTCMonth(), pkt.getUTCDate()));
 }
 
-function getRangeStart(range) {
+function applyQuickRange(range) {
   const today = pktStartOfToday();
+  const now = new Date();
   switch (range) {
-    case "today": return today;
-    case "week": return new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    case "month": return new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    default: return null;
+    case "today": return { from: today, to: now };
+    case "week": return { from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), to: now };
+    case "month": return { from: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000), to: now };
+    default: return { from: null, to: null };
   }
+}
+
+// Convert a UTC Date to a "YYYY-MM-DDTHH:mm" string in PKT, for datetime-local
+// input values (the browser is in PKT, so the string round-trips correctly).
+function toDateTimeLocalString(date) {
+  const pkt = new Date(date.getTime() + PKT_OFFSET);
+  return pkt.toISOString().slice(0, 16);
 }
 
 function formatDateTime(iso) {
@@ -46,7 +54,9 @@ function formatDateTime(iso) {
 export default function SalesHistoryTab() {
   const [search, setSearch] = useState("");
   const [paymentFilter, setPaymentFilter] = useState("all");
-  const [dateRange, setDateRange] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [activeQuick, setActiveQuick] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
   const { data: sales = [], isLoading } = useQuery({
@@ -54,11 +64,27 @@ export default function SalesHistoryTab() {
     queryFn: () => base44.entities.StoreSale.list("-created_date", 5000),
   });
 
+  const handleQuickRange = (range) => {
+    setActiveQuick(range);
+    const { from, to } = applyQuickRange(range);
+    setFromDate(from ? toDateTimeLocalString(from) : "");
+    setToDate(to ? toDateTimeLocalString(to) : "");
+  };
+
+  const clearDates = () => {
+    setFromDate("");
+    setToDate("");
+    setActiveQuick("");
+  };
+
   const filtered = useMemo(() => {
-    const rangeStart = getRangeStart(dateRange);
+    const fromMs = fromDate ? new Date(fromDate).getTime() : null;
+    const toMs = toDate ? new Date(toDate).getTime() : null;
     const q = search.trim().toLowerCase();
     return sales.filter(s => {
-      if (rangeStart && new Date(s.created_date) < rangeStart) return false;
+      const created = new Date(s.created_date).getTime();
+      if (fromMs !== null && created < fromMs) return false;
+      if (toMs !== null && created > toMs) return false;
       if (paymentFilter !== "all" && (s.payment_method || "Cash") !== paymentFilter) return false;
       if (q) {
         const haystack = [
@@ -68,7 +94,7 @@ export default function SalesHistoryTab() {
       }
       return true;
     });
-  }, [sales, search, paymentFilter, dateRange]);
+  }, [sales, search, paymentFilter, fromDate, toDate]);
 
   const toggleRow = (id) => setExpandedId(prev => prev === id ? null : id);
 
@@ -93,12 +119,39 @@ export default function SalesHistoryTab() {
             </button>
           ))}
           <div className="w-px h-6 bg-[#E8DED8] mx-1" />
-          {DATE_RANGES.map(r => (
-            <button key={r.key} onClick={() => setDateRange(r.key)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${dateRange === r.key ? "border-[#8B7355] bg-[#8B7355] text-white" : "border-[#E8DED8] bg-white text-[#8B7355] hover:border-[#C9B8A6]"}`}>
+          {QUICK_RANGES.map(r => (
+            <button key={r.key} onClick={() => handleQuickRange(r.key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${activeQuick === r.key ? "border-[#8B7355] bg-[#8B7355] text-white" : "border-[#E8DED8] bg-white text-[#8B7355] hover:border-[#C9B8A6]"}`}>
               {r.label}
             </button>
           ))}
+        </div>
+        {/* From / To datetime range (PKT) */}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#8B7355]">From</label>
+            <input
+              type="datetime-local"
+              value={fromDate}
+              onChange={e => { setFromDate(e.target.value); setActiveQuick(""); }}
+              className="border border-[#E8DED8] rounded-xl px-3 py-1.5 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-[#8B7355]">To</label>
+            <input
+              type="datetime-local"
+              value={toDate}
+              onChange={e => { setToDate(e.target.value); setActiveQuick(""); }}
+              className="border border-[#E8DED8] rounded-xl px-3 py-1.5 text-sm text-[#5C4A3A] focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+            />
+          </div>
+          {(fromDate || toDate) && (
+            <button onClick={clearDates}
+              className="inline-flex items-center gap-1 text-xs text-[#8B7355] hover:text-[#5C4A3A] underline pb-2">
+              <X className="h-3 w-3" /> Clear
+            </button>
+          )}
         </div>
       </div>
 
