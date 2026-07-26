@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, Percent } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export default function SoftLaunchBanner() {
   return (
@@ -15,22 +15,21 @@ export default function SoftLaunchBanner() {
       <div className="relative">
         <div className="flex items-center gap-2 mb-3">
           <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
-            Soft Launch
+            Thank You
           </span>
-          <span className="text-xs text-amber-200/80 font-medium">This Weekend</span>
+          <span className="text-xs text-amber-200/80 font-medium">Soft Launch Recap</span>
         </div>
 
-        <h3 className="text-xl font-bold mb-2 leading-tight">We're opening our doors! ☕</h3>
+        <h3 className="text-xl font-bold mb-2 leading-tight">Thank you for a beautiful soft launch! ☕</h3>
 
-        <div className="flex items-center gap-2 text-sm text-[#E8DED8] mb-3">
-          <Clock className="h-4 w-4 text-amber-300 flex-shrink-0" />
-          <span>7 PM, Friday 10th July → Sunday 12th July</span>
-        </div>
+        <p className="text-sm text-[#E8DED8] leading-relaxed mb-3">
+          Our community showed up in full force — thank you for being part of our first chapter. We can't wait to do it all over again.
+        </p>
 
         <div className="flex items-start gap-2 bg-white/10 backdrop-blur rounded-2xl p-3 border border-white/15">
-          <Percent className="h-5 w-5 text-amber-300 flex-shrink-0 mt-0.5" />
+          <Sparkles className="h-5 w-5 text-amber-300 flex-shrink-0 mt-0.5" />
           <p className="text-sm leading-relaxed">
-            <span className="font-bold text-white">Club members get 10% off</span> their first three orders during launch weekend.
+            <span className="font-bold text-white">Stay tuned</span> — our grand opening is coming soon.
           </p>
         </div>
       </div>

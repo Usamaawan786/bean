@@ -32,18 +32,12 @@ export default function Home() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const { data: activeDrops = [] } = useQuery({
-    queryKey: ["active-drops"],
-    queryFn: () => base44.entities.FlashDrop.filter({ status: "active" }),
-    refetchInterval: 30000,
-    enabled: authChecked && !!user,
-    staleTime: 30000,
-    initialData: []
-  });
-
-  const { data: upcomingDrops = [] } = useQuery({
-    queryKey: ["upcoming-drops"],
-    queryFn: () => base44.entities.FlashDrop.filter({ status: "upcoming" }),
+  // Most recent drops — we surface a single highlight of the latest past
+  // Flash Drop now that the soft launch is over. Live/upcoming drops still
+  // live on the dedicated Flash Drops page (via "See all").
+  const { data: recentDrops = [] } = useQuery({
+    queryKey: ["recent-drops"],
+    queryFn: () => base44.entities.FlashDrop.list("-start_time", 20),
     enabled: authChecked && !!user,
     staleTime: 60000,
     initialData: []
@@ -89,7 +83,10 @@ export default function Home() {
     }
   };
 
-  const allDrops = [...activeDrops, ...upcomingDrops];
+  const nowMs = Date.now();
+  const previousDrop = recentDrops.find(
+    d => d.status === "ended" || (d.end_time && new Date(d.end_time).getTime() < nowMs)
+  ) || null;
 
   const handleNameComplete = (name, phone) => {
     setShowNameModal(false);
@@ -121,10 +118,7 @@ export default function Home() {
   };
 
   const handleRefresh = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["active-drops"] }),
-      queryClient.invalidateQueries({ queryKey: ["upcoming-drops"] })
-    ]);
+    await queryClient.invalidateQueries({ queryKey: ["recent-drops"] });
   };
 
   useEffect(() => {
@@ -491,7 +485,7 @@ export default function Home() {
             </motion.div>
           )}
 
-          {allDrops.length > 0 && (
+          {previousDrop && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -502,34 +496,20 @@ export default function Home() {
                   <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>
                     <Zap className="h-5 w-5 text-amber-500" />
                   </motion.div>
-                  <h2 className="text-lg font-bold text-[#5C4A3A]">Flash Drops</h2>
-                  {activeDrops.length > 0 && (
-                    <motion.span
-                      animate={{ scale: [1, 1.1, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                      className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-lg"
-                    >
-                      LIVE
-                    </motion.span>
-                  )}
+                  <h2 className="text-lg font-bold text-[#5C4A3A]">Flash Drop Highlight</h2>
                 </div>
                 <Link to={createPageUrl("FlashDrops")} className="text-[#8B7355] text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
                   See all <ChevronRight className="h-4 w-4" />
                 </Link>
               </div>
 
-              <div className="space-y-4">
-                {allDrops.slice(0, 2).map((drop, index) => (
-                  <motion.div
-                    key={drop.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1 + index * 0.1 }}
-                  >
-                    <FlashDropCard drop={drop} currentUserEmail={user?.email} onClaim={handleClaimDrop} />
-                  </motion.div>
-                ))}
-              </div>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1 }}
+              >
+                <FlashDropCard drop={previousDrop} currentUserEmail={user?.email} onClaim={handleClaimDrop} />
+              </motion.div>
             </motion.div>
           )}
 
