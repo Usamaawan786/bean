@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Image as ImageIcon, X, Loader2, Video, BarChart2, Plus, Trash2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import MentionTextarea from "./MentionTextarea";
 import { toast } from "sonner";
-import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
-import { Capacitor } from "@capacitor/core";
-import { FilePicker } from "@capawesome/capacitor-file-picker";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PostComposer({ onPost, userName, currentUserEmail }) {
@@ -26,6 +23,14 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
   const [isPollMode, setIsPollMode] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
+
+  // Hidden file inputs — used on BOTH web and the Capacitor native WebView.
+  // Capacitor's WebView intercepts <input type="file"> and shows the native
+  // picker (with the camera/photo permissions already declared in the OS
+  // manifests), so this is more reliable than the Camera/FilePicker plugins
+  // which can break after a native rebuild or OS update.
+  const photoInputRef = useRef(null);
+  const videoInputRef = useRef(null);
 
   const withTermsCheck = (action) => {
     if (hasAcceptedTerms) {
@@ -52,7 +57,6 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
     return file_url;
   };
 
-  // Compress + downscale images on the client before upload — dramatically
   // Compress + downscale images on the client before upload — dramatically
   // reduces upload time on mobile. Falls back to the original file if
   // compression fails (e.g. unsupported format like HEIC on some browsers).
@@ -84,122 +88,56 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
     });
   };
 
-  const doCapturePhoto = async () => {
+  // Photo picked from the hidden file input (web or native WebView picker).
+  const handlePhotoFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file
+    if (!file) return;
     if (isUploadingImage) return;
-
-    // On web, use a plain file input — Camera API hangs on web
-    if (!Capacitor.isNativePlatform()) {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) { setIsUploadingImage(false); return; }
-        setIsUploadingImage(true);
-        try {
-          const blob = await compressImage(file);
-          const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.jpg`);
-          setImageUrl(url);
-          toast.success("Photo uploaded!");
-        } catch {
-          toast.error("Failed to upload photo. Please try again.");
-        } finally {
-          setIsUploadingImage(false);
-        }
-      };
-      input.click();
-      return;
-    }
-
     setIsUploadingImage(true);
     try {
-      // Let Camera.getPhoto handle permissions internally — calling
-      // requestPermissions separately consumes the iOS user-gesture
-      // context and causes the picker to require a second tap.
-      const photo = await Camera.getPhoto({
-        quality: 80,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Prompt,
-        saveToGallery: false,
-      });
-      if (!photo?.dataUrl) return;
-      // Convert data-URL to Blob via fetch — fast native implementation
-      const response = await fetch(photo.dataUrl);
-      const rawBlob = await response.blob();
-      const blob = await compressImage(rawBlob);
-      const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.${photo.format || 'jpg'}`);
+      const blob = await compressImage(file);
+      const url = await uploadFileFromBlob(blob, `photo_${Date.now()}.jpg`);
       setImageUrl(url);
       toast.success("Photo uploaded!");
-    } catch (error) {
-      const msg = error?.message || String(error);
-      if (!msg.toLowerCase().includes("cancel") && !msg.toLowerCase().includes("user cancelled")) {
-        toast.error("Failed to capture photo. Please try again.");
-      }
+    } catch (err) {
+      toast.error("Failed to upload photo: " + (err?.message || "Please try again."));
     } finally {
       setIsUploadingImage(false);
     }
   };
 
-  const doVideoFromGallery = async () => {
+  // Video picked from the hidden file input.
+  const handleVideoFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
     if (isUploadingVideo) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Video is too large (max 50MB). Try a shorter clip.");
+      return;
+    }
     setIsUploadingVideo(true);
     try {
-      if (Capacitor.isNativePlatform()) {
-        // Let FilePicker handle permissions internally — calling
-        // requestPermissions separately consumes the iOS gesture context.
-        const result = await FilePicker.pickMedia({ multiple: false });
-        const fileData = result.files[0];
-        if (!fileData) return;
-        const videoSrc = fileData.webPath || fileData.path;
-        if (!videoSrc) throw new Error("Could not get video path");
-        const response = await fetch(videoSrc);
-        const blob = await response.blob();
-        const url = await uploadFileFromBlob(blob, fileData.name || `video_${Date.now()}.mp4`);
-        setVideoUrl(url);
-        toast.success("Video uploaded!");
-      } else {
-        // Web fallback: file input — manage loading state inside onchange
-        // (the finally below must NOT reset it, or the spinner vanishes before
-        // the file is even picked and upload failures go unnoticed).
-        setIsUploadingVideo(false); // undo the early set from the top of the fn
-        const input = document.createElement("input");
-        input.type = "file";
-        input.accept = "video/*";
-        input.onchange = async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          if (file.size > 50 * 1024 * 1024) {
-            toast.error("Video is too large (max 50MB). Try a shorter clip.");
-            return;
-          }
-          setIsUploadingVideo(true);
-          try {
-            const { file_url } = await base44.integrations.Core.UploadFile({ file });
-            setVideoUrl(file_url);
-            toast.success("Video uploaded!");
-          } catch {
-            toast.error("Failed to upload video. Please try again.");
-          } finally {
-            setIsUploadingVideo(false);
-          }
-        };
-        input.click();
-        return; // skip the finally's reset — onchange handles it
-      }
-    } catch (error) {
-      const msg = error?.message || String(error);
-      if (!msg.toLowerCase().includes("cancel")) {
-        toast.error("Failed to upload video. Please try again.");
-      }
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setVideoUrl(file_url);
+      toast.success("Video uploaded!");
+    } catch (err) {
+      toast.error("Failed to upload video: " + (err?.message || "Please try again."));
     } finally {
       setIsUploadingVideo(false);
     }
   };
 
   // Uploads open the picker immediately — terms check is only on the Post button.
-  const handleImageClick = () => doCapturePhoto();
-  const handleVideoClick = () => doVideoFromGallery();
+  const handleImageClick = () => {
+    if (isUploadingImage || videoUrl) return;
+    photoInputRef.current?.click();
+  };
+  const handleVideoClick = () => {
+    if (isUploadingVideo || imageUrl) return;
+    videoInputRef.current?.click();
+  };
 
   const togglePollMode = () => {
     setIsPollMode(p => !p);
@@ -270,6 +208,10 @@ export default function PostComposer({ onPost, userName, currentUserEmail }) {
 
   return (
     <>
+      {/* Hidden file inputs — the source of truth for picking media on every platform */}
+      <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoFile} />
+      <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={handleVideoFile} />
+
       {/* Terms Modal — shown only once */}
       <AnimatePresence>
         {showTermsModal && (
