@@ -1,0 +1,89 @@
+{
+  "name": "DeliverySettings",
+  "type": "object",
+  "properties": {
+    "flat_delivery_fee": {
+      "type": "number",
+      "default": 150,
+      "description": "Flat delivery fee in PKR (used when no fee tiers are defined)"
+    },
+    "fee_tiers": {
+      "type": "array",
+      "description": "Distance-based fee tiers. If empty, flat_delivery_fee is used.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "max_km": {
+            "type": "number"
+          },
+          "fee": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "min_order_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum order subtotal in PKR required for delivery"
+    },
+    "estimated_prep_minutes": {
+      "type": "number",
+      "default": 15,
+      "description": "Estimated preparation time in minutes"
+    },
+    "is_delivery_open": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether delivery is currently accepting orders"
+    }
+  },
+  "required": [
+    "flat_delivery_fee"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    }
+  }
+}

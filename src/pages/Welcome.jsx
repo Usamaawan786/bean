@@ -39,8 +39,9 @@ export default function Welcome() {
     base44.auth.isAuthenticated().then(async isAuth => {
       if (isAuth) {
         const u = await base44.auth.me();
-        const isStaff = ["cashier", "manager", "admin", "super_admin"].includes(u?.role);
-        if (isStaff) {
+        if (u?.role === "rider") {
+          navigate("/RiderPortal", { replace: true });
+        } else if (["cashier", "manager", "admin", "super_admin"].includes(u?.role)) {
           navigate("/StaffPortal", { replace: true });
         } else {
           navigate(ref ? `/Home?ref=${ref}` : "/Home", { replace: true });

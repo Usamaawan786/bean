@@ -1,0 +1,105 @@
+{
+  "name": "RiderLocation",
+  "type": "object",
+  "properties": {
+    "rider_email": {
+      "type": "string",
+      "description": "Email of the rider broadcasting location"
+    },
+    "rider_name": {
+      "type": "string",
+      "description": "Display name of the rider"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "DeliveryOrder ID this location track belongs to"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Current latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Current longitude"
+    },
+    "heading": {
+      "type": "number",
+      "description": "Direction of travel in degrees (0-360)"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the location was last updated"
+    }
+  },
+  "required": [
+    "rider_email",
+    "order_id",
+    "latitude",
+    "longitude"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    }
+  }
+}

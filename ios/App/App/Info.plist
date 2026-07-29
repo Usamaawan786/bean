@@ -58,6 +58,8 @@
 	<string>We need access to your photo library to save photos.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for video uploads.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need access to your location to track deliveries and share your rider position with customers.</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>

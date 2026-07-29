@@ -9,7 +9,8 @@
         "cashier",
         "manager",
         "admin",
-        "super_admin"
+        "super_admin",
+        "rider"
       ],
       "default": "user",
       "description": "Staff role"
@@ -22,6 +23,10 @@
         ""
       ],
       "description": "For cashiers: which counter they are assigned to (counter_1=Takeaway, counter_2=Dine In)"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number (used for riders to be callable by customers)"
     }
   },
   "required": [

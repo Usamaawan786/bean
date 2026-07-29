@@ -1,0 +1,193 @@
+{
+  "name": "DeliveryOrder",
+  "type": "object",
+  "properties": {
+    "order_number": {
+      "type": "string",
+      "description": "Auto-generated delivery order number, e.g. DO-000001"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Email of the customer who placed the order"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer display name"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Customer phone number for delivery contact"
+    },
+    "delivery_address": {
+      "type": "string",
+      "description": "Free-text delivery address"
+    },
+    "delivery_lat": {
+      "type": "number",
+      "description": "Optional map pin latitude for delivery address"
+    },
+    "delivery_lng": {
+      "type": "number",
+      "description": "Optional map pin longitude for delivery address"
+    },
+    "delivery_notes": {
+      "type": "string",
+      "description": "Optional delivery instructions from customer"
+    },
+    "items": {
+      "type": "array",
+      "description": "Ordered items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "description": "Sum of item prices before delivery fee"
+    },
+    "delivery_fee": {
+      "type": "number",
+      "description": "Delivery fee charged"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Final total including delivery fee"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "cash_on_delivery"
+      ],
+      "default": "cash_on_delivery",
+      "description": "Payment method"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "preparing",
+        "out_for_delivery",
+        "delivered",
+        "cancelled"
+      ],
+      "default": "pending",
+      "description": "Current order status"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason if order was rejected/cancelled"
+    },
+    "rider_email": {
+      "type": "string",
+      "description": "Email of the assigned rider"
+    },
+    "rider_name": {
+      "type": "string",
+      "description": "Display name of the assigned rider"
+    },
+    "rider_phone": {
+      "type": "string",
+      "description": "Phone number of the assigned rider for customer call button"
+    },
+    "placed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was placed"
+    },
+    "accepted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was accepted by admin"
+    },
+    "delivered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the order was marked delivered"
+    }
+  },
+  "required": [
+    "order_number",
+    "customer_email",
+    "items",
+    "total_amount"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "$or": [
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "data.rider_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "data.rider_email": "{{user.email}}"
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    }
+  }
+}

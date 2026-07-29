@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell, Truck, Bike } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
@@ -22,6 +22,8 @@ const ROLE_FEATURES = {
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
     { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
     { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
+    { icon: Truck, label: "Delivery Orders", desc: "Manage incoming delivery orders", link: "/AdminDeliveryOrders", color: "from-indigo-600 to-indigo-700" },
+    { icon: Bike, label: "Riders", desc: "Manage riders & assignments", link: "/AdminRiders", color: "from-teal-600 to-teal-700" },
   ],
   admin: [
     { icon: ShoppingCart, label: "POS Terminal", desc: "Process sales & print bills", link: "/AdminPOS", color: "from-[#8B7355] to-[#6B5744]" },
@@ -32,6 +34,9 @@ const ROLE_FEATURES = {
     { icon: Package, label: "Inventory", desc: "Manage stock levels", link: "/AdminInventory", color: "from-orange-600 to-orange-700" },
     { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
     { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
+    { icon: Truck, label: "Delivery Orders", desc: "Manage incoming delivery orders", link: "/AdminDeliveryOrders", color: "from-indigo-600 to-indigo-700" },
+    { icon: Package, label: "Delivery Menu", desc: "Manage delivery products & fees", link: "/AdminDeliveryMenu", color: "from-cyan-600 to-cyan-700" },
+    { icon: Bike, label: "Riders", desc: "Manage riders & assignments", link: "/AdminRiders", color: "from-teal-600 to-teal-700" },
     { icon: Users, label: "Referrals", desc: "View referral activity", link: "/AdminReferrals", color: "from-purple-600 to-purple-700" },
     { icon: MessageSquare, label: "Admin Chat", desc: "Chat with customers & manage support", link: "/AdminChat", color: "from-teal-600 to-teal-700" },
     { icon: Bell, label: "Push Notifications", desc: "Send & schedule push notifications to users", link: "/AdminPushNotifications", color: "from-violet-600 to-violet-700" },
@@ -45,6 +50,9 @@ const ROLE_FEATURES = {
     { icon: Package, label: "Inventory", desc: "Manage stock levels", link: "/AdminInventory", color: "from-orange-600 to-orange-700" },
     { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
     { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
+    { icon: Truck, label: "Delivery Orders", desc: "Manage incoming delivery orders", link: "/AdminDeliveryOrders", color: "from-indigo-600 to-indigo-700" },
+    { icon: Package, label: "Delivery Menu", desc: "Manage delivery products & fees", link: "/AdminDeliveryMenu", color: "from-cyan-600 to-cyan-700" },
+    { icon: Bike, label: "Riders", desc: "Manage riders & assignments", link: "/AdminRiders", color: "from-teal-600 to-teal-700" },
     { icon: Users, label: "Staff Management", desc: "Invite & manage team access", link: "/StaffManagement", color: "from-purple-600 to-purple-700" },
     { icon: Shield, label: "Staff Scrutiny", desc: "Audit trail, fraud detection & staff performance", link: "/AdminStaffScrutiny", color: "from-red-700 to-red-900" },
   ],
@@ -55,6 +63,7 @@ const ROLE_LABELS = {
   manager: { label: "Manager", icon: "📊" },
   admin: { label: "Admin", icon: "🔴" },
   super_admin: { label: "Super Admin", icon: "👑" },
+  rider: { label: "Rider", icon: "🛵" },
 };
 
 export default function StaffPortal() {
@@ -120,6 +129,16 @@ export default function StaffPortal() {
         >
           Sign out
         </button>
+      </div>
+    );
+  }
+
+  // Rider — redirect to Rider Portal
+  if (user.role === "rider") {
+    window.location.replace("/RiderPortal");
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-amber-400/30 border-t-amber-400 rounded-full animate-spin" />
       </div>
     );
   }

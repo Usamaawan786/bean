@@ -41,6 +41,12 @@ const SyrveIntegrationHub = lazy(() => import('./pages/SyrveIntegrationHub'));
 const SurveillanceVault = lazy(() => import('./pages/SurveillanceVault'));
 const InventoryAudit = lazy(() => import('./pages/InventoryAudit'));
 const MenuPage = lazy(() => import('./pages/MenuPage'));
+const Delivery = lazy(() => import('./pages/Delivery'));
+const DeliveryTracking = lazy(() => import('./pages/DeliveryTracking'));
+const AdminDeliveryOrders = lazy(() => import('./pages/AdminDeliveryOrders'));
+const AdminDeliveryMenu = lazy(() => import('./pages/AdminDeliveryMenu'));
+const AdminRiders = lazy(() => import('./pages/AdminRiders'));
+const RiderPortal = lazy(() => import('./pages/RiderPortal'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -104,6 +110,12 @@ function App() {
               <Route path="/surveillance-vault" element={<SurveillanceVault />} />
               <Route path="/inventory-audit" element={<InventoryAudit />} />
               <Route path="/menu" element={<MenuPage />} />
+              <Route path="/Delivery" element={<LayoutWrapper currentPageName="Delivery"><Delivery /></LayoutWrapper>} />
+              <Route path="/DeliveryTracking" element={<LayoutWrapper currentPageName="DeliveryTracking"><DeliveryTracking /></LayoutWrapper>} />
+              <Route path="/AdminDeliveryOrders" element={<AdminDeliveryOrders />} />
+              <Route path="/AdminDeliveryMenu" element={<AdminDeliveryMenu />} />
+              <Route path="/AdminRiders" element={<AdminRiders />} />
+              <Route path="/RiderPortal" element={<RiderPortal />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </Suspense>
