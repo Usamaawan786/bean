@@ -29,7 +29,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Bottom Navigation */}
       {showNav && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[var(--bg-card)] border-t border-[#E8DED8] dark:border-[var(--border-light)] pb-safe z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[var(--bg-card)] border-t border-[#E8DED8] dark:border-[var(--border-light)] z-50" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 16px)' }}>
           <div className="max-w-lg mx-auto px-2">
             <div className="flex items-center justify-around select-none">
               {navItems.map(item => {
