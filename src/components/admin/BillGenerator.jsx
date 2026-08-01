@@ -55,6 +55,16 @@ export default function BillGenerator({ bill, onClose, onEditBill, saleId }) {
     return () => { cancelled = true; };
   }, [bill.qrCodeId]);
 
+  // Safety net: if afterprint never fires (mobile/Capacitor WebView), the
+  // injected print stylesheet can stay active and hide the entire app.
+  // Remove it on unmount so closing the receipt always returns to the POS.
+  useEffect(() => {
+    return () => {
+      const s = document.getElementById("print-size");
+      if (s) s.remove();
+    };
+  }, []);
+
   const assetsReady = !!(iosQrUrl && androidQrUrl && logoDataUrl);
 
   // Print: inject a print stylesheet sized to the selected paper width and call

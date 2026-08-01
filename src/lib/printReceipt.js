@@ -34,8 +34,10 @@ export function printThermalDocument(elementId, paperWidth = 80, copies = 1) {
   // When copies=2, the first afterprint triggers the customer-copy print, and
   // the second afterprint tears down the injected stylesheet.
   let remaining = copyCount;
+  let fallback = null;
 
   const cleanup = () => {
+    if (fallback) clearTimeout(fallback);
     window.removeEventListener("afterprint", handleAfterPrint);
     const s = document.getElementById("print-size");
     if (s) s.remove();
@@ -51,6 +53,11 @@ export function printThermalDocument(elementId, paperWidth = 80, copies = 1) {
   };
 
   window.addEventListener("afterprint", handleAfterPrint);
+
+  // Fallback: some mobile/Capacitor WebView environments never fire
+  // afterprint, leaving the injected stylesheet active and the app
+  // hidden behind a blank screen. Clean up after 30s as a safety net.
+  fallback = setTimeout(cleanup, 30000);
 
   // Synchronous — must run within the user gesture so the dialog opens.
   window.print();

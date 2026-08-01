@@ -19,8 +19,17 @@ import {
 import { format, subDays, startOfDay, isAfter } from "date-fns";
 import NegativeBalancePanel from "@/components/admin/inventory/NegativeBalancePanel";
 import SalesBreakdownCard from "@/components/admin/dashboard/SalesBreakdownCard";
+import SalesInsightsCard from "@/components/admin/dashboard/SalesInsightsCard";
 
 const COLORS = ['#8B7355', '#6B5744', '#D4C4B0', '#C9B8A6', '#B5A593', '#A08975', '#5C4A3A'];
+
+const PKT_OFFSET = 5 * 60 * 60 * 1000;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function formatPKT(iso) {
+  if (!iso) return "—";
+  const pkt = new Date(new Date(iso).getTime() + PKT_OFFSET);
+  return `${MONTHS[pkt.getUTCMonth()]} ${pkt.getUTCDate()}, ${String(pkt.getUTCHours()).padStart(2,'0')}:${String(pkt.getUTCMinutes()).padStart(2,'0')}`;
+}
 
 function StatCard({ icon: Icon, label, value, sub, color = "text-white", delay = 0 }) {
   return (
@@ -43,6 +52,8 @@ function StatCard({ icon: Icon, label, value, sub, color = "text-white", delay =
 export default function AdminDashboard() {
   const [user, setUser] = useState(null);
   const [timeRange, setTimeRange] = useState("7days");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const queryClient = useQueryClient();
 
@@ -58,9 +69,14 @@ export default function AdminDashboard() {
 
   // Single backend function for all accurate metrics
   const { data: stats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ["dashboard-stats", timeRange],
+    queryKey: ["dashboard-stats", timeRange, customFrom, customTo],
     queryFn: async () => {
-      const res = await base44.functions.invoke('getDashboardStats', { period: timeRange });
+      const payload = { period: timeRange };
+      if (customFrom && customTo) {
+        payload.from = new Date(customFrom).toISOString();
+        payload.to = new Date(customTo).toISOString();
+      }
+      const res = await base44.functions.invoke('getDashboardStats', payload);
       return res.data;
     },
     enabled: !!user,
@@ -214,19 +230,39 @@ export default function AdminDashboard() {
                 Live · Last updated {format(lastRefresh, "HH:mm:ss")}
               </p>
             </div>
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="yesterday">Yesterday</SelectItem>
-                <SelectItem value="7days">Last 7 Days</SelectItem>
-                <SelectItem value="30days">Last 30 Days</SelectItem>
-                <SelectItem value="90days">Last 90 Days</SelectItem>
-                <SelectItem value="all">All Time</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={timeRange} onValueChange={(v) => { setTimeRange(v); if (v !== "custom") { setCustomFrom(""); setCustomTo(""); } }}>
+                <SelectTrigger className="w-36 bg-white/10 border-white/20 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="7days">Last 7 Days</SelectItem>
+                  <SelectItem value="30days">Last 30 Days</SelectItem>
+                  <SelectItem value="90days">Last 90 Days</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+              {timeRange === "custom" && (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="datetime-local"
+                    value={customFrom}
+                    onChange={e => setCustomFrom(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-xs text-white [color-scheme:dark]"
+                  />
+                  <span className="text-white/50 text-xs">to</span>
+                  <input
+                    type="datetime-local"
+                    value={customTo}
+                    onChange={e => setCustomTo(e.target.value)}
+                    className="bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-xs text-white [color-scheme:dark]"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* KPI Cards */}
@@ -288,6 +324,13 @@ export default function AdminDashboard() {
           periodLabel={periodLabel}
           dailyBreakdown={p.dailyBreakdown}
           shiftBreakdown={p.shiftBreakdown}
+        />
+
+        <SalesInsightsCard
+          periodLabel={periodLabel}
+          paymentAmounts={p.paymentAmounts}
+          orderType={p.orderType}
+          discountStats={p.discountStats}
         />
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -542,7 +585,7 @@ export default function AdminDashboard() {
                             : <span className="text-[#C9B8A6] text-xs">Pending</span>}
                         </td>
                         <td className="py-2 px-3 text-right font-semibold text-[#5C4A3A]">Rs. {(sale.total_amount || 0).toLocaleString()}</td>
-                        <td className="py-2 px-3 text-right text-[#8B7355] text-xs">{format(new Date(sale.created_date), "MMM dd, HH:mm")}</td>
+                        <td className="py-2 px-3 text-right text-[#8B7355] text-xs">{formatPKT(sale.created_date)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -587,6 +630,15 @@ export default function AdminDashboard() {
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-[#E8DED8] bg-[#F5F1ED]">
+                      <td className="py-2 px-3 text-[#5C4A3A] font-bold" colSpan={2}>Grand Total</td>
+                      <td className="py-2 px-3 text-right text-[#5C4A3A] font-bold">{periodItemsSold}</td>
+                      <td className="py-2 px-3 text-right text-[#5C4A3A] font-bold">Rs. {periodRevenue.toLocaleString()}</td>
+                      <td className="py-2 px-3 text-right text-[#8B7355]">—</td>
+                      <td className="py-2 px-3 text-right text-[#8B7355]">100%</td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             )}

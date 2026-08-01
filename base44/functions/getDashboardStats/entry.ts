@@ -11,6 +11,8 @@ Deno.serve(async (req) => {
     let body = {};
     try { body = await req.json(); } catch (e) { body = {}; }
     const period = body.period || '7days';
+    const customFrom = body.from ? new Date(body.from) : null;
+    const customTo = body.to ? new Date(body.to) : null;
 
     // PKT timezone offset: UTC+5
     const now = new Date();
@@ -159,9 +161,13 @@ Deno.serve(async (req) => {
       '7days': 'Last 7 Days', '30days': 'Last 30 Days',
       '90days': 'Last 90 Days', all: 'All Time'
     };
-    const periodLabel = PERIOD_LABELS[period] || 'Last 7 Days';
+    let periodLabel = PERIOD_LABELS[period] || 'Last 7 Days';
     let periodStart, periodEnd = null;
-    if (period === 'today') {
+    if (customFrom && customTo) {
+      periodStart = customFrom;
+      periodEnd = customTo;
+      periodLabel = 'Custom Range';
+    } else if (period === 'today') {
       periodStart = todayStartPKT;
     } else if (period === 'yesterday') {
       periodStart = new Date(todayStartPKT.getTime() - 1 * 86400000);
@@ -196,6 +202,29 @@ Deno.serve(async (req) => {
       const m = s.payment_method || 'Cash';
       periodPayment[m] = (periodPayment[m] || 0) + 1;
     });
+
+    // Payment method amounts (revenue per method) for the selected period
+    const periodPaymentAmounts = {};
+    periodSales.forEach(s => {
+      const m = s.payment_method || 'Cash';
+      if (!periodPaymentAmounts[m]) periodPaymentAmounts[m] = { count: 0, revenue: 0 };
+      periodPaymentAmounts[m].count += 1;
+      periodPaymentAmounts[m].revenue += Number(s.total_amount) || 0;
+    });
+
+    // Order type breakdown (dine_in / takeaway) for the selected period
+    const periodOrderType = {};
+    periodSales.forEach(s => {
+      const ot = s.order_type || 'dine_in';
+      if (!periodOrderType[ot]) periodOrderType[ot] = { count: 0, revenue: 0 };
+      periodOrderType[ot].count += 1;
+      periodOrderType[ot].revenue += Number(s.total_amount) || 0;
+    });
+
+    // Discount insights for the selected period
+    const salesWithDiscount = periodSales.filter(s => (s.discount_pct || 0) > 0).length;
+    const totalDiscountAmount = sum(periodSales, 'discount_amount');
+    const totalOriginalSubtotal = sum(periodSales, 'original_subtotal');
 
     const periodProductMap = {};
     periodSales.forEach(sale => {
@@ -296,6 +325,14 @@ Deno.serve(async (req) => {
         netProfit: periodNetProfit,
         topProducts: periodTopProducts,
         paymentBreakdown: periodPayment,
+        paymentAmounts: periodPaymentAmounts,
+        orderType: periodOrderType,
+        discountStats: {
+          salesWithDiscount,
+          totalDiscountAmount,
+          totalOriginalSubtotal,
+          discountPct: totalOriginalSubtotal > 0 ? (totalDiscountAmount / totalOriginalSubtotal) * 100 : 0,
+        },
         timeline: periodTimeline,
         dailyBreakdown,
         shiftBreakdown,
