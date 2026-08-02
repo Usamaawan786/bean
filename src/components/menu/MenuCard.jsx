@@ -1,18 +1,27 @@
-import { Heart, Clock } from "lucide-react";
+import { useState } from "react";
+import { Heart, Clock, Coffee } from "lucide-react";
 
 const fmtPKR = (n) => `Rs. ${Number(n || 0).toLocaleString("en-PK")}`;
 
 export default function MenuCard({ item, image, isMostLiked, likes }) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="flex gap-3 bg-[#926A54] rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
       <div className="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0">
-        <img
-          src={image}
-          alt={item.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-          onError={(e) => { e.target.style.display = "none"; }}
-        />
+        {imgError ? (
+          <div className="w-full h-full bg-gradient-to-br from-[#6B4A3A] to-[#855F4B] flex items-center justify-center">
+            <Coffee className="h-8 w-8 text-white/30" />
+          </div>
+        ) : (
+          <img
+            src={image}
+            alt={item.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        )}
         {isMostLiked && (
           <div className="absolute top-2 left-2 bg-black/40 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
             <Heart className="h-3 w-3 text-white fill-white" />
