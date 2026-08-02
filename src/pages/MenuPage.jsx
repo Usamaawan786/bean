@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Coffee } from "lucide-react";
+import { Coffee, Heart, Search, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { base44 } from "@/api/base44Client";
+import MenuCard from "@/components/menu/MenuCard";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
@@ -9,13 +10,56 @@ const fadeUp = (delay = 0) => ({
   transition: { delay, duration: 0.45 }
 });
 
-const formatPKR = (n) => `PKR ${Number(n || 0).toLocaleString("en-PK")}`;
+// "Most Liked" items — matched by name (case-insensitive contains)
+const MOST_LIKED_QUERIES = [
+  { query: "eggs bruschetta", likes: 12 },
+  { query: "club sandwich", likes: 11 },
+  { query: "mushroom cheese omelette", likes: 10 },
+  { query: "lotus french toast", likes: 8 },
+  { query: "spanish latte", likes: 6 },
+];
+
+const CATEGORY_ORDER = [
+  "Breakfast",
+  "Hot Coffee",
+  "Cold Coffee",
+  "Matcha",
+  "Smoothies",
+  "Fresher",
+  "Teas & More",
+  "Pastry",
+  "Sweeter",
+  "Add-Ons",
+  "Other",
+];
+
+const CATEGORY_IMAGES = {
+  "Breakfast": "https://images.unsplash.com/photo-1533089860892-a7c6f0a886de?w=400&q=80",
+  "Hot Coffee": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80",
+  "Cold Coffee": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=400&q=80",
+  "Matcha": "https://images.unsplash.com/photo-1515823668373-6c12b5b0389f?w=400&q=80",
+  "Smoothies": "https://images.unsplash.com/photo-1505252585461-04db1eb5465f?w=400&q=80",
+  "Fresher": "https://images.unsplash.com/photo-1610970881699-46a35a1a6f4f?w=400&q=80",
+  "Teas & More": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&q=80",
+  "Pastry": "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=400&q=80",
+  "Sweeter": "https://images.unsplash.com/photo-1551024601-bec78aea6be4?w=400&q=80",
+  "Add-Ons": "https://images.unsplash.com/photo-1497935586351-b67f49ee9fee?w=400&q=80",
+  "Other": "https://images.unsplash.com/photo-1495474472287-4d71bcdd6005?w=400&q=80",
+};
+
+const MOST_LIKED_IMAGES = {
+  "eggs bruschetta": "https://images.unsplash.com/photo-1525351484163-8eb3a73b78a3?w=400&q=80",
+  "club sandwich": "https://images.unsplash.com/photo-1539252554453-67c171fc0df2?w=400&q=80",
+  "mushroom cheese omelette": "https://images.unsplash.com/photo-1510693206972-df098062cb71?w=400&q=80",
+  "lotus french toast": "https://images.unsplash.com/photo-1485962398705-ef6a13c41ec8?w=400&q=80",
+  "spanish latte": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=400&q=80",
+};
 
 export default function MenuPage() {
-  const [categories, setCategories] = useState([]);
-  const [itemsByCat, setItemsByCat] = useState({});
+  const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeCat, setActiveCat] = useState(null);
+  const [activeCat, setActiveCat] = useState("most-liked");
+  const [search, setSearch] = useState("");
   const sectionRefs = useRef({});
   const navRef = useRef(null);
   const pillRefs = useRef({});
@@ -25,28 +69,9 @@ export default function MenuPage() {
     let mounted = true;
     (async () => {
       try {
-        const [cats, items] = await Promise.all([
-          base44.entities.MenuCategory.list(),
-          base44.entities.MenuItem.list()
-        ]);
+        const items = await base44.entities.StoreProduct.list("-created_date", 200);
         if (!mounted) return;
-
-        const sortedCats = (cats || [])
-          .filter((c) => c.is_active !== false)
-          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-
-        const available = (items || []).filter((i) => i.is_available !== false);
-        const grouped = {};
-        available.forEach((it) => {
-          grouped[it.category_id] = grouped[it.category_id] || [];
-          grouped[it.category_id].push(it);
-        });
-
-        const catsWithItems = sortedCats.filter((c) => grouped[c.id]?.length);
-
-        setCategories(catsWithItems);
-        setItemsByCat(grouped);
-        if (catsWithItems.length) setActiveCat(catsWithItems[0].id);
+        setAllItems((items || []).filter((i) => i.is_available !== false));
       } catch (e) {
         console.error("Menu load error", e);
       } finally {
@@ -56,13 +81,49 @@ export default function MenuPage() {
     return () => { mounted = false; };
   }, []);
 
+  // Match Most Liked items by name
+  const mostLikedItems = [];
+  const usedIds = new Set();
+  MOST_LIKED_QUERIES.forEach(({ query, likes }) => {
+    const match = allItems.find(
+      (p) => !usedIds.has(p.id) && p.name.toLowerCase().includes(query)
+    );
+    if (match) {
+      mostLikedItems.push({ ...match, _likes: likes, _img: MOST_LIKED_IMAGES[query] });
+      usedIds.add(match.id);
+    }
+  });
+
+  // Group remaining items by category
+  const remaining = allItems.filter((p) => !usedIds.has(p.id));
+  const grouped = {};
+  remaining.forEach((p) => {
+    const cat = p.category || "Other";
+    (grouped[cat] = grouped[cat] || []).push(p);
+  });
+
+  const categories = CATEGORY_ORDER.filter((c) => grouped[c]?.length);
+  // Include any categories not in our predefined order
+  const extraCats = Object.keys(grouped).filter((c) => !CATEGORY_ORDER.includes(c)).sort();
+  const allCategories = [...categories, ...extraCats];
+
+  // Build the full section list: Most Liked first, then categories
+  const sections = [
+    { id: "most-liked", label: "Most Liked", items: mostLikedItems, isMostLiked: true },
+    ...allCategories.map((cat) => ({
+      id: cat,
+      label: cat,
+      items: grouped[cat] || [],
+      isMostLiked: false,
+    })),
+  ].filter((s) => s.items.length > 0);
+
   // IntersectionObserver to highlight active pill
   useEffect(() => {
-    if (!categories.length) return;
+    if (sections.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (pendingScroll.current) return;
-        // pick the topmost intersecting section
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -75,9 +136,9 @@ export default function MenuPage() {
     );
     Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, [categories]);
+  }, [sections.length]);
 
-  // auto-scroll active pill into view in nav
+  // auto-scroll active pill into view
   useEffect(() => {
     const pill = pillRefs.current[activeCat];
     if (pill && navRef.current) {
@@ -90,116 +151,170 @@ export default function MenuPage() {
     if (!el) return;
     setActiveCat(catId);
     pendingScroll.current = true;
-    const top = el.getBoundingClientRect().top + window.scrollY - 64; // nav height offset
+    const top = el.getBoundingClientRect().top + window.scrollY - 120;
     window.scrollTo({ top, behavior: "smooth" });
     setTimeout(() => { pendingScroll.current = false; }, 700);
   }, []);
 
+  // Filter by search
+  const searching = search.trim().length > 0;
+  const searchResults = searching
+    ? allItems.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    : [];
+
   return (
-    <div className="min-h-screen bg-[#F5F1ED]">
+    <div className="min-h-screen bg-[#A37960]">
       {/* ── HERO ── */}
-      <div className="relative bg-gradient-to-br from-[#8B7355] via-[#6B5744] to-[#5C4A3A] text-white overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#855F4B] via-[#926A54] to-[#6B4A3A] text-white overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <motion.div animate={{ x: [0, 80, 0], y: [0, 40, 0] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
-          <motion.div animate={{ x: [0, -60, 0], y: [0, -30, 0] }} transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl" />
+          <motion.div
+            animate={{ x: [0, 80, 0], y: [0, 40, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"
+          />
+          <motion.div
+            animate={{ x: [0, -60, 0], y: [0, -30, 0] }}
+            transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+            className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl"
+          />
         </div>
-        <div className="relative max-w-2xl mx-auto px-6 py-14 text-center w-full">
+        <div className="relative max-w-2xl mx-auto px-6 pt-12 pb-8 text-center">
           <motion.div {...fadeUp(0)} className="flex items-center justify-center gap-2 mb-6">
-            <Coffee className="h-6 w-6 text-white" />
-            <span className="text-lg font-semibold tracking-wide">Bean</span>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#8B7355] flex items-center justify-center shadow-lg">
+              <Coffee className="h-6 w-6 text-[#1a1208]" />
+            </div>
+            <span className="text-xl font-bold tracking-wide">Bean</span>
           </motion.div>
-          <motion.h1 {...fadeUp(0.1)} className="text-3xl sm:text-4xl font-bold leading-tight mb-3">
-            Our Menu
+          <motion.h1 {...fadeUp(0.1)} className="text-2xl sm:text-3xl font-bold leading-tight mb-2">
+            Your daily dose of coffee happiness
           </motion.h1>
-          <motion.p {...fadeUp(0.2)} className="text-[#E8DED8] text-sm sm:text-base">
-            Islamabad's First Coffee Lover's Club
-          </motion.p>
+          <motion.div {...fadeUp(0.2)} className="flex items-center justify-center gap-1.5 text-white/70 text-sm">
+            <Info className="h-4 w-4" />
+            <span>Islamabad's First Coffee Lover's Club</span>
+          </motion.div>
         </div>
       </div>
 
-      {/* ── STICKY CATEGORY NAV ── */}
-      {categories.length > 0 && (
-        <div ref={navRef} className="sticky top-0 z-50 bg-[#F5F1ED]/95 backdrop-blur-md border-b border-[#E8DED8]">
-          <div className="max-w-2xl mx-auto px-3 py-3 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 min-w-max justify-start">
-              {categories.map((c) => {
-                const isActive = activeCat === c.id;
-                return (
-                  <button
-                    key={c.id}
-                    ref={(el) => (pillRefs.current[c.id] = el)}
-                    onClick={() => scrollToCat(c.id)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      isActive
-                        ? "bg-[#8B7355] text-white shadow-sm"
-                        : "bg-white text-[#8B7355] border border-[#E8DED8] hover:border-[#D4C4B0]"
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                );
-              })}
+      {/* ── SEARCH + STICKY CATEGORY NAV ── */}
+      {sections.length > 0 && (
+        <div className="sticky top-0 z-50 bg-[#855F4B]/95 backdrop-blur-md shadow-md">
+          {/* Search bar */}
+          <div className="max-w-2xl mx-auto px-4 pt-3 pb-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search the menu..."
+                className="w-full bg-white/10 border border-white/20 rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+              />
             </div>
           </div>
+          {/* Category pills */}
+          {!searching && (
+            <div ref={navRef} className="max-w-2xl mx-auto px-3 pb-3 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 min-w-max">
+                {sections.map((s) => {
+                  const isActive = activeCat === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      ref={(el) => (pillRefs.current[s.id] = el)}
+                      onClick={() => scrollToCat(s.id)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                        isActive
+                          ? "bg-white text-[#6B4A3A] shadow-sm"
+                          : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
+                      }`}
+                    >
+                      {s.isMostLiked && <Heart className="h-3.5 w-3.5 fill-current" />}
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── MENU SECTIONS ── */}
-      <div className="max-w-2xl mx-auto px-5 py-8">
+      {/* ── CONTENT ── */}
+      <div className="max-w-2xl mx-auto px-4 py-6">
         {loading ? (
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-7 w-40 bg-[#EBE5DF] rounded-lg mb-4" />
+                <div className="h-7 w-40 bg-[#926A54] rounded-lg mb-4" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[1, 2, 3, 4].map((j) => (
-                    <div key={j} className="h-16 bg-white rounded-2xl border border-[#E8DED8]" />
+                    <div key={j} className="h-32 bg-[#926A54] rounded-2xl" />
                   ))}
                 </div>
               </div>
             ))}
           </div>
-        ) : categories.length === 0 ? (
-          <div className="text-center py-20 text-[#8B7355]">
+        ) : searching ? (
+          /* Search results */
+          <div>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for "{search}"
+            </h2>
+            {searchResults.length === 0 ? (
+              <div className="text-center py-20 text-white/60">
+                <Coffee className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                <p className="text-sm">No items found. Try a different search.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {searchResults.map((item) => (
+                  <MenuCard
+                    key={item.id}
+                    item={item}
+                    image={item.image_url || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES["Other"]}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : sections.length === 0 ? (
+          <div className="text-center py-20 text-white/60">
             <Coffee className="h-10 w-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">Menu is being updated. Please check back soon.</p>
           </div>
         ) : (
-          <div className="space-y-12">
-            {categories.map((cat, idx) => (
+          <div className="space-y-10">
+            {sections.map((section, idx) => (
               <motion.section
-                key={cat.id}
-                data-cat-id={cat.id}
-                ref={(el) => (sectionRefs.current[cat.id] = el)}
+                key={section.id}
+                data-cat-id={section.id}
+                ref={(el) => (sectionRefs.current[section.id] = el)}
                 {...fadeUp(idx * 0.05)}
-                className="scroll-mt-20"
+                className="scroll-mt-32"
               >
-                <h2 className="text-xl font-bold text-[#5C4A3A] mb-4 pb-2 border-b border-[#E8DED8]">
-                  {cat.name}
-                </h2>
+                {/* Section header */}
+                <div className="mb-4">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    {section.isMostLiked && <Heart className="h-5 w-5 fill-white" />}
+                    {section.label}
+                  </h2>
+                  {section.isMostLiked && (
+                    <p className="text-sm text-white/60 mt-0.5">According to real person likes</p>
+                  )}
+                </div>
+
+                {/* Cards grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {(itemsByCat[cat.id] || [])
-                    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white rounded-2xl border border-[#E8DED8] shadow-sm px-4 py-3.5 flex items-center justify-between gap-3 hover:shadow-md transition-shadow"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold text-[#5C4A3A] text-sm sm:text-base leading-snug truncate">
-                            {item.name}
-                          </p>
-                          {item.description && (
-                            <p className="text-xs text-[#8B7355] mt-0.5 line-clamp-1">{item.description}</p>
-                          )}
-                        </div>
-                        <p className="font-semibold text-[#8B7355] text-sm whitespace-nowrap">
-                          {formatPKR(item.base_price)}
-                        </p>
-                      </div>
-                    ))}
+                  {section.items.map((item) => (
+                    <MenuCard
+                      key={item.id}
+                      item={item}
+                      isMostLiked={section.isMostLiked}
+                      likes={item._likes}
+                      image={item._img || item.image_url || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES["Other"]}
+                    />
+                  ))}
                 </div>
               </motion.section>
             ))}
