@@ -55,6 +55,9 @@ const MOST_LIKED_IMAGES = {
   "spanish latte": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=400&q=80",
 };
 
+// Force image refresh — products now have image_url from DB
+const USE_DB_IMAGE = true;
+
 export default function MenuPage() {
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
