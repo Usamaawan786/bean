@@ -216,6 +216,12 @@ export default function useAutoScreenSurveillance(user) {
       displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 6 }, audio: true });
       displayStreamRef.current = displayStream;
 
+      if (displayStream.getAudioTracks().length === 0) {
+        displayStream.getTracks().forEach(t => t.stop());
+        displayStreamRef.current = null;
+        throw new Error("Audio sharing is required. Please re-share and tick the 'Share audio' checkbox when prompted.");
+      }
+
       try {
         micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch (e) {
