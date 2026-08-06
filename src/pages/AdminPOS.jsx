@@ -149,7 +149,7 @@ export default function AdminPOS() {
   const subtotal = cart.reduce((sum, item) => sum + effectivePrice(item) * item.quantity, 0);
   const discountAmount = subtotal * (discountPct / 100);
   const discountedSubtotal = subtotal - discountAmount;
-  const taxRate = paymentMethod === "Card" ? 0.05 : 0.17; // 5% for Card, 17% for Cash
+  const taxRate = paymentMethod === "Card" ? 0.08 : 0.17; // 8% for Card, 17% for Cash
   const tax = discountedSubtotal * taxRate;
   const total = discountedSubtotal + tax;
 
@@ -661,7 +661,7 @@ export default function AdminPOS() {
                     </button>
                   </div>
                   <p className="text-xs text-[#8B7355] mt-1">
-                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : `GST: ${paymentMethod === "Card" ? "5%" : "17%"}`}
+                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : `GST: ${paymentMethod === "Card" ? "8%" : "17%"}`}
                   </p>
                 </div>
 
@@ -790,7 +790,7 @@ export default function AdminPOS() {
                         </div>
                       )}
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "5%" : "17%"})</span>
+                        <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "8%" : "17%"})</span>
                         <span className="text-[#5C4A3A] font-medium">PKR {tax.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold border-t border-[#E8DED8] pt-2">

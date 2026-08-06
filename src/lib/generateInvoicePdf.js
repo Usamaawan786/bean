@@ -158,7 +158,7 @@ export function generateInvoicePdf(bill, qrUrl, iosUrl, androidUrl, logoUrl) {
     } else {
       totalsRow("Subtotal", `PKR ${bill.subtotal.toFixed(2)}`);
     }
-    const gstLabel = bill.paymentMethod === "Card" ? "5%" : "17%";
+    const gstLabel = bill.paymentMethod === "Card" ? "8%" : "17%";
     totalsRow(`GST (${gstLabel})`, `PKR ${bill.tax.toFixed(2)}`);
     ensureSpace(8);
     doc.setDrawColor(...brown); doc.setLineWidth(0.5);
