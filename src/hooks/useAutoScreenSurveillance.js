@@ -213,13 +213,21 @@ export default function useAutoScreenSurveillance(user) {
     let displayStream = null;
     let micStream = null;
     try {
-      displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 6 }, audio: true });
+      displayStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 6, displaySurface: "monitor" }, audio: true });
       displayStreamRef.current = displayStream;
 
       if (displayStream.getAudioTracks().length === 0) {
         displayStream.getTracks().forEach(t => t.stop());
         displayStreamRef.current = null;
-        throw new Error("Audio sharing is required. Please re-share and tick the 'Share audio' checkbox when prompted.");
+        throw new Error("System audio sharing is required. Please re-share and tick the 'Share audio' checkbox when prompted.");
+      }
+
+      const videoTrack = displayStream.getVideoTracks()[0];
+      const surface = videoTrack?.getSettings?.().displaySurface;
+      if (surface && surface !== "monitor") {
+        displayStream.getTracks().forEach(t => t.stop());
+        displayStreamRef.current = null;
+        throw new Error("Full screen sharing is required. Please select your entire screen, not a single window or tab.");
       }
 
       try {
@@ -232,16 +240,14 @@ export default function useAutoScreenSurveillance(user) {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       audioCtxRef.current = audioCtx;
       const dest = audioCtx.createMediaStreamDestination();
-      if (displayStream.getAudioTracks().length > 0) {
-        audioCtx.createMediaStreamSource(displayStream).connect(dest);
-      }
+      audioCtx.createMediaStreamSource(displayStream).connect(dest);
       audioCtx.createMediaStreamSource(micStream).connect(dest);
 
-      const videoTrack = displayStream.getVideoTracks()[0];
       combinedStreamRef.current = new MediaStream([videoTrack, ...dest.stream.getAudioTracks()]);
 
       videoTrack.onended = () => handleInterruption("Screen sharing was stopped or lost.");
       micStream.getAudioTracks()[0].onended = () => handleInterruption("Microphone access was stopped or lost.");
+      displayStream.getAudioTracks()[0].onended = () => handleInterruption("System audio sharing was stopped or lost.");
 
       setNeedsShare(false);
       setIsRecording(true);

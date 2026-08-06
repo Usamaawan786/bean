@@ -35,10 +35,9 @@ export default function ScreenShareGate({ user, children }) {
           <div className="bg-red-50 rounded-2xl p-4 inline-flex mb-4">
             <ShieldAlert className="h-8 w-8 text-red-500" />
           </div>
-          <h2 className="text-lg font-bold text-[#5C4A3A] mb-2">Screen & Microphone Recording Required</h2>
+          <h2 className="text-lg font-bold text-[#5C4A3A] mb-2">Full Screen + System Audio Recording Required</h2>
           <p className="text-sm text-[#8B7355] mb-6">
-            For security, this POS session must be screen and audio recorded while in use.
-            Click below to share your screen and microphone to continue. This cannot be turned off from this device — only an admin can stop it.
+            For security, this POS session must be recorded while in use. You must share your <strong>entire screen</strong> (not a window or tab) <strong>and</strong> enable <strong>system audio</strong> sharing, plus your microphone. This cannot be turned off from this device — only an admin can stop it.
           </p>
           {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
           <Button onClick={startSharing} className="w-full bg-[#8B7355] hover:bg-[#6B5744] gap-2">

@@ -98,7 +98,7 @@ export default function BillGenerator({ bill, onClose, onEditBill, saleId }) {
   // #root and the overlay chrome, leaving #receipt as the only printed content.
   return createPortal(
     <>
-      <div data-receipt-backdrop className="fixed inset-0 bg-black/50 z-40" />
+      <div data-receipt-backdrop className="fixed inset-0 bg-black/50 z-40" onClick={onClose} />
 
       <div data-receipt-stage
         className="fixed inset-0 z-50 overflow-auto flex flex-col items-center p-4"
@@ -133,8 +133,9 @@ export default function BillGenerator({ bill, onClose, onEditBill, saleId }) {
               80mm
             </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[#F5EBE8] rounded-full transition-colors ml-auto">
+          <button type="button" onClick={onClose} className="flex items-center gap-1.5 px-3 py-2 hover:bg-[#F5EBE8] rounded-full transition-colors ml-auto text-[#5C4A3A] font-medium text-sm">
             <X className="h-5 w-5 text-[#8B7355]" />
+            Close
           </button>
         </div>
 
