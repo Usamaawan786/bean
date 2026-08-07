@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronDown, ChevronUp, Gift, Share2, ShoppingBag, UserCheck, Activity, AlertTriangle, Users } from "lucide-react";
+import { Star, ChevronDown, ChevronUp, Gift, Share2, ShoppingBag, UserCheck, Activity, AlertTriangle, Users, Pencil, Save, X, RefreshCw } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const TIER_COLORS = {
   Platinum: "bg-purple-100 text-purple-700",
@@ -43,8 +46,12 @@ function detectAnomalies(customer, userActivities, redemptions) {
   return flags;
 }
 
-function UserRow({ customer, activities, redemptions, rank }) {
+function UserRow({ customer, activities, redemptions, rank, onAdjust }) {
   const [expanded, setExpanded] = useState(false);
+  const [adjusting, setAdjusting] = useState(false);
+  const [newBalance, setNewBalance] = useState(customer.points_balance || 0);
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
   const userActivities = activities.filter(a => a.user_email === customer.created_by);
   const userRedemptions = redemptions.filter(r => r.customer_email === customer.created_by);
   const anomalies = detectAnomalies(customer, userActivities, redemptions);
@@ -139,6 +146,52 @@ function UserRow({ customer, activities, redemptions, rank }) {
                 </div>
               </div>
 
+              {/* Adjust points */}
+              <div className="bg-[#F5F1ED] border border-[#E8DED8] rounded-xl p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide flex items-center gap-1">
+                    <Pencil className="h-3.5 w-3.5" /> Adjust Points
+                  </p>
+                  <span className="text-xs text-[#5C4A3A]">Current: <strong>{customer.points_balance || 0}</strong></span>
+                </div>
+                {adjusting ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-[#8B7355] whitespace-nowrap">New balance</label>
+                      <input type="number" min={0}
+                        className="flex-1 border border-[#E8DED8] rounded-lg px-2.5 py-1.5 text-sm text-[#5C4A3A] bg-white focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+                        value={newBalance} onChange={e => setNewBalance(Math.max(0, Number(e.target.value)))} />
+                    </div>
+                    <input
+                      className="w-full border border-[#E8DED8] rounded-lg px-2.5 py-1.5 text-sm text-[#5C4A3A] bg-white focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
+                      placeholder="Reason (e.g. fraud correction, duplicate award)"
+                      value={reason} onChange={e => setReason(e.target.value)} />
+                    <div className="flex gap-2">
+                      <button onClick={async () => {
+                        if (newBalance === (customer.points_balance || 0) && !reason.trim()) { toast.error("Enter a reason for the change"); return; }
+                        setSaving(true);
+                        await onAdjust(customer, newBalance, reason.trim());
+                        setSaving(false);
+                        setAdjusting(false);
+                        setReason("");
+                      }} disabled={saving}
+                        className="flex-1 bg-[#8B7355] hover:bg-[#6B5744] text-white text-xs font-semibold rounded-lg py-2 flex items-center justify-center gap-1 disabled:opacity-60">
+                        {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
+                      </button>
+                      <button onClick={() => { setAdjusting(false); setNewBalance(customer.points_balance || 0); setReason(""); }}
+                        className="px-3 bg-white border border-[#E8DED8] text-[#8B7355] text-xs rounded-lg py-2">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { setNewBalance(customer.points_balance || 0); setAdjusting(true); }}
+                    className="w-full bg-white border border-[#E8DED8] text-[#5C4A3A] text-xs font-semibold rounded-lg py-2 hover:bg-[#F5EBE8] flex items-center justify-center gap-1">
+                    <Pencil className="h-3.5 w-3.5" /> Adjust / Reset Balance
+                  </button>
+                )}
+              </div>
+
               {/* Activity log */}
               {userActivities.length > 0 && (
                 <div>
@@ -177,6 +230,19 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("points_balance");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
+  const queryClient = useQueryClient();
+
+  const handleAdjust = async (customer, newBalance, reason) => {
+    const oldBalance = customer.points_balance || 0;
+    try {
+      await base44.entities.Customer.update(customer.id, { points_balance: newBalance });
+      await queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
+      const delta = newBalance - oldBalance;
+      toast.success(`Points updated: ${oldBalance} → ${newBalance}${delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""}${reason ? ` — ${reason}` : ""}`);
+    } catch (e) {
+      toast.error("Failed to update points: " + (e?.message || e));
+    }
+  };
 
   const filtered = customers
     .filter(c => !search || (c.created_by || "").toLowerCase().includes(search.toLowerCase()))
@@ -236,6 +302,7 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
             activities={activities}
             redemptions={redemptions}
             rank={i + 1}
+            onAdjust={handleAdjust}
           />
         ))}
         {filtered.length === 0 && (
