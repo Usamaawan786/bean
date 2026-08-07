@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldCheck, Star, Gift, Zap, Activity, AlertTriangle, Loader2, BarChart3, ScanLine, Repeat } from "lucide-react";
+import { ShieldCheck, Star, Gift, Zap, Activity, AlertTriangle, Loader2, BarChart3, ScanLine, Repeat, Pencil } from "lucide-react";
 import AppHeader from "@/components/shared/AppHeader";
 import SurveillanceFilters from "@/components/surveillance/SurveillanceFilters";
 import PointsEarningTable from "@/components/surveillance/PointsEarningTable";
@@ -9,6 +9,7 @@ import RedemptionTable from "@/components/surveillance/RedemptionTable";
 import FlashDropTable from "@/components/surveillance/FlashDropTable";
 import ActivityTable from "@/components/surveillance/ActivityTable";
 import AnomalyPanel, { detectAnomalies } from "@/components/surveillance/AnomalyPanel";
+import PointsAdjustmentTable from "@/components/surveillance/PointsAdjustmentTable";
 
 export default function RewardsSurveillance() {
   const [user, setUser] = useState(null);
@@ -45,6 +46,9 @@ export default function RewardsSurveillance() {
   const { data: settingsList = [] } = useQuery({
     queryKey: ["surv-settings"], queryFn: () => base44.entities.RewardSettings.list(), enabled: !!user,
   });
+  const { data: adjustments = [] } = useQuery({
+    queryKey: ["surv-adjustments"], queryFn: () => base44.entities.PointsAdjustment.list("-created_date", 1000), enabled: !!user,
+  });
   const pkrPerPoint = settingsList[0]?.pkr_per_point || 10;
 
   const inRange = (iso) => {
@@ -64,6 +68,7 @@ export default function RewardsSurveillance() {
   const fRedemptions = useMemo(() => redemptions.filter((r) => inRange(r.created_date) && matchesSearch(r.redemption_code, r.customer_email, r.reward_name)), [redemptions, search, dateFrom, dateTo]);
   const fClaims = useMemo(() => claims.filter((c) => inRange(c.created_date) && matchesSearch(c.user_email, c.drop_title, c.qr_code)), [claims, search, dateFrom, dateTo]);
   const fActivities = useMemo(() => activities.filter((a) => inRange(a.created_date) && matchesSearch(a.user_email, a.description, a.action_type)), [activities, search, dateFrom, dateTo]);
+  const fAdjustments = useMemo(() => adjustments.filter((a) => inRange(a.adjusted_at || a.created_date) && matchesSearch(a.customer_email, a.reason, a.adjusted_by)), [adjustments, search, dateFrom, dateTo]);
 
   const scannedSales = fSales.filter((s) => s.is_scanned);
   const totalPointsEarned = fSales.reduce((s, r) => s + (r.points_awarded || 0), 0);
@@ -78,6 +83,7 @@ export default function RewardsSurveillance() {
     { id: "redemptions", label: "Redemptions", icon: Gift, count: fRedemptions.length },
     { id: "flashdrops", label: "Flash Drops", icon: Zap, count: fClaims.length },
     { id: "activity", label: "Activity Log", icon: Activity, count: fActivities.length },
+    { id: "adjustments", label: "Adjustments", icon: Pencil, count: fAdjustments.length },
     { id: "anomalies", label: "Anomalies", icon: AlertTriangle, count: anomalies.length, alert: anomalies.length },
   ];
 
@@ -169,6 +175,7 @@ export default function RewardsSurveillance() {
             {activeTab === "redemptions" && <RedemptionTable redemptions={fRedemptions} />}
             {activeTab === "flashdrops" && <FlashDropTable claims={fClaims} />}
             {activeTab === "activity" && <ActivityTable activities={fActivities} />}
+            {activeTab === "adjustments" && <PointsAdjustmentTable adjustments={fAdjustments} />}
             {activeTab === "anomalies" && <AnomalyPanel sales={sales} redemptions={redemptions} customers={customers} pkrPerPoint={pkrPerPoint} />}
           </>
         )}

@@ -162,13 +162,13 @@ function UserRow({ customer, activities, redemptions, rank, onAdjust }) {
                         className="flex-1 border border-[#E8DED8] rounded-lg px-2.5 py-1.5 text-sm text-[#5C4A3A] bg-white focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
                         value={newBalance} onChange={e => setNewBalance(Math.max(0, Number(e.target.value)))} />
                     </div>
-                    <input
-                      className="w-full border border-[#E8DED8] rounded-lg px-2.5 py-1.5 text-sm text-[#5C4A3A] bg-white focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30"
-                      placeholder="Reason (e.g. fraud correction, duplicate award)"
+                    <textarea
+                      className="w-full border border-[#E8DED8] rounded-lg px-2.5 py-1.5 text-sm text-[#5C4A3A] bg-white focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30 min-h-[72px] resize-y"
+                      placeholder="Full reason — permanently logged & shown to the customer (e.g. fraud correction, duplicate award, manual removal of X points from bill #...)"
                       value={reason} onChange={e => setReason(e.target.value)} />
                     <div className="flex gap-2">
                       <button onClick={async () => {
-                        if (newBalance === (customer.points_balance || 0) && !reason.trim()) { toast.error("Enter a reason for the change"); return; }
+                        if (!reason.trim()) { toast.error("A reason is required and will be permanently logged"); return; }
                         setSaving(true);
                         await onAdjust(customer, newBalance, reason.trim());
                         setSaving(false);
@@ -235,10 +235,23 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
   const handleAdjust = async (customer, newBalance, reason) => {
     const oldBalance = customer.points_balance || 0;
     try {
+      const me = await base44.auth.me();
       await base44.entities.Customer.update(customer.id, { points_balance: newBalance });
-      await queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
       const delta = newBalance - oldBalance;
-      toast.success(`Points updated: ${oldBalance} → ${newBalance}${delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""}${reason ? ` — ${reason}` : ""}`);
+      await base44.entities.PointsAdjustment.create({
+        customer_email: customer.created_by,
+        customer_name: customer.display_name || "",
+        old_balance: oldBalance,
+        new_balance: newBalance,
+        delta,
+        reason,
+        adjusted_by: me.email,
+        adjusted_by_name: me.full_name || me.email,
+        adjusted_at: new Date().toISOString(),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["admin-customers"] });
+      await queryClient.invalidateQueries({ queryKey: ["surv-adjustments"] });
+      toast.success(`Points updated: ${oldBalance} → ${newBalance}${delta !== 0 ? ` (${delta > 0 ? "+" : ""}${delta})` : ""} — logged to audit trail`);
     } catch (e) {
       toast.error("Failed to update points: " + (e?.message || e));
     }

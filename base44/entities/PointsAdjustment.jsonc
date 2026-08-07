@@ -1,0 +1,79 @@
+{
+  "name": "PointsAdjustment",
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string",
+      "description": "Email of the customer whose points were adjusted"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Display name of the customer"
+    },
+    "old_balance": {
+      "type": "number",
+      "description": "Points balance before adjustment"
+    },
+    "new_balance": {
+      "type": "number",
+      "description": "Points balance after adjustment"
+    },
+    "delta": {
+      "type": "number",
+      "description": "Change in points (new - old); negative for removals"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Full explanation of why points were adjusted/removed \u2014 shown to the customer"
+    },
+    "adjusted_by": {
+      "type": "string",
+      "description": "Email of the admin who made the adjustment"
+    },
+    "adjusted_by_name": {
+      "type": "string",
+      "description": "Display name of the admin"
+    },
+    "adjusted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the adjustment was made (UTC)"
+    }
+  },
+  "required": [
+    "customer_email",
+    "old_balance",
+    "new_balance",
+    "reason",
+    "adjusted_by"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
