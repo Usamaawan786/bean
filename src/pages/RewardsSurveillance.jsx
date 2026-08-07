@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldCheck, Star, Gift, Zap, Activity, AlertTriangle, Loader2, BarChart3, ScanLine, Repeat, Pencil } from "lucide-react";
+import { ShieldCheck, Star, Gift, Zap, Activity, AlertTriangle, Loader2, BarChart3, ScanLine, Repeat, Pencil, Clock } from "lucide-react";
 import AppHeader from "@/components/shared/AppHeader";
 import SurveillanceFilters from "@/components/surveillance/SurveillanceFilters";
 import PointsEarningTable from "@/components/surveillance/PointsEarningTable";
@@ -10,6 +10,7 @@ import FlashDropTable from "@/components/surveillance/FlashDropTable";
 import ActivityTable from "@/components/surveillance/ActivityTable";
 import AnomalyPanel, { detectAnomalies } from "@/components/surveillance/AnomalyPanel";
 import PointsAdjustmentTable from "@/components/surveillance/PointsAdjustmentTable";
+import ScanTimingPanel from "@/components/surveillance/ScanTimingPanel";
 
 export default function RewardsSurveillance() {
   const [user, setUser] = useState(null);
@@ -83,6 +84,7 @@ export default function RewardsSurveillance() {
     { id: "redemptions", label: "Redemptions", icon: Gift, count: fRedemptions.length },
     { id: "flashdrops", label: "Flash Drops", icon: Zap, count: fClaims.length },
     { id: "activity", label: "Activity Log", icon: Activity, count: fActivities.length },
+    { id: "scan-timing", label: "Scan Timing", icon: Clock, count: fSales.filter((s) => s.is_scanned && s.scanned_at).length },
     { id: "adjustments", label: "Adjustments", icon: Pencil, count: fAdjustments.length },
     { id: "anomalies", label: "Anomalies", icon: AlertTriangle, count: anomalies.length, alert: anomalies.length },
   ];
@@ -175,6 +177,7 @@ export default function RewardsSurveillance() {
             {activeTab === "redemptions" && <RedemptionTable redemptions={fRedemptions} />}
             {activeTab === "flashdrops" && <FlashDropTable claims={fClaims} />}
             {activeTab === "activity" && <ActivityTable activities={fActivities} />}
+            {activeTab === "scan-timing" && <ScanTimingPanel sales={fSales} />}
             {activeTab === "adjustments" && <PointsAdjustmentTable adjustments={fAdjustments} />}
             {activeTab === "anomalies" && <AnomalyPanel sales={sales} redemptions={redemptions} customers={customers} pkrPerPoint={pkrPerPoint} />}
           </>

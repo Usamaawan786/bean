@@ -1,5 +1,6 @@
-import { AlertTriangle, UserX, Scale, Zap, Repeat } from "lucide-react";
+import { AlertTriangle, UserX, Scale, Zap, Repeat, Timer, MoonStar } from "lucide-react";
 import { utcToPktDisplay } from "@/lib/pktTime";
+import { SCAN_DELAY_THRESHOLDS, delaySeverity, formatDelay, isAfterHours } from "./ScanTimingPanel";
 
 // Detects suspicious rewards activity for theft prevention.
 export function detectAnomalies({ sales, redemptions, customers, pkrPerPoint }) {
@@ -14,6 +15,59 @@ export function detectAnomalies({ sales, redemptions, customers, pkrPerPoint }) 
         title: "Cashier self-scan",
         detail: `${s.cashier_email} scanned bill ${s.bill_number} (their own sale) for ${s.points_awarded} pts`,
         time: s.scanned_at || s.created_date,
+      });
+    }
+  });
+
+  // 1b. Delayed scans — customer scanned bill long after purchase (theft signal)
+  sales.forEach((s) => {
+    if (!s.is_scanned || !s.scanned_at) return;
+    const delay = new Date(s.scanned_at) - new Date(s.created_date);
+    if (delay < 0) return;
+    const sev = delaySeverity(delay);
+    if (sev === "high" || sev === "critical") {
+      flags.push({
+        severity: sev === "critical" ? "high" : "medium",
+        icon: Timer,
+        title: sev === "critical" ? "Critical delayed scan" : "Delayed scan",
+        detail: `${s.scanned_by} scanned bill ${s.bill_number} ${formatDelay(delay)} after sale (PKT ${utcToPktDisplay(s.scanned_at)}) — ${s.points_awarded} pts`,
+        time: s.scanned_at,
+      });
+    }
+  });
+
+  // 1c. After-hours scans (22:00–06:00 PKT, near closing/overnight)
+  sales.forEach((s) => {
+    if (!s.is_scanned || !s.scanned_at) return;
+    if (isAfterHours(s.scanned_at)) {
+      flags.push({
+        severity: "medium",
+        icon: MoonStar,
+        title: "After-hours scan",
+        detail: `${s.scanned_by} scanned bill ${s.bill_number} at ${utcToPktDisplay(s.scanned_at)} (PKT night) — ${s.points_awarded} pts`,
+        time: s.scanned_at,
+      });
+    }
+  });
+
+  // 1d. Repeated delayed scans by same user (3+ delayed >2h)
+  const delayedByUser = {};
+  sales.forEach((s) => {
+    if (!s.is_scanned || !s.scanned_at) return;
+    const delay = new Date(s.scanned_at) - new Date(s.created_date);
+    if (delay > SCAN_DELAY_THRESHOLDS.normal) {
+      const e = s.scanned_by || "unknown";
+      (delayedByUser[e] ||= []).push(s);
+    }
+  });
+  Object.entries(delayedByUser).forEach(([email, list]) => {
+    if (list.length >= 3) {
+      flags.push({
+        severity: "high",
+        icon: Repeat,
+        title: "Repeated delayed scans",
+        detail: `${email} has ${list.length} delayed scans (>2h after sale) — pattern suggests hoarding/late scanning`,
+        time: list[list.length - 1].scanned_at,
       });
     }
   });

@@ -1,5 +1,6 @@
 import { Star, ScanLine, AlertTriangle } from "lucide-react";
 import { utcToPktDisplay } from "@/lib/pktTime";
+import { scanDelay, delaySeverity, formatDelay } from "./ScanTimingPanel";
 
 export default function PointsEarningTable({ sales, pkrPerPoint }) {
   if (!sales.length) {
@@ -23,6 +24,7 @@ export default function PointsEarningTable({ sales, pkrPerPoint }) {
             <th className="text-center px-3 py-3 text-[#8B7355] font-semibold">Mult</th>
             <th className="text-left px-3 py-3 text-[#8B7355] font-semibold">Sale Time (PKT)</th>
             <th className="text-left px-3 py-3 text-[#8B7355] font-semibold">Scan Time (PKT)</th>
+            <th className="text-right px-3 py-3 text-[#8B7355] font-semibold">Scan Delay</th>
             <th className="text-center px-3 py-3 text-[#8B7355] font-semibold">Status</th>
           </tr>
         </thead>
@@ -31,8 +33,10 @@ export default function PointsEarningTable({ sales, pkrPerPoint }) {
             const selfScan = s.scanned_by && s.cashier_email && s.scanned_by === s.cashier_email;
             const expected = pkrPerPoint ? Math.floor((s.total_amount || 0) / pkrPerPoint) * (s.points_multiplier || 1) : null;
             const mismatch = expected != null && Math.abs((s.points_awarded || 0) - expected) > 1 && s.points_awarded > 0;
+            const delay = scanDelay(s);
+            const sev = delaySeverity(delay);
             return (
-              <tr key={s.id} className="border-t border-[#F5EBE8] hover:bg-[#FDF9F7]">
+              <tr key={s.id} className={`border-t border-[#F5EBE8] hover:bg-[#FDF9F7] ${sev === "critical" ? "bg-red-50/40" : sev === "high" ? "bg-orange-50/40" : ""}`}>
                 <td className="px-3 py-2.5 font-mono font-bold text-[#5C4A3A] whitespace-nowrap">{s.bill_number || "—"}</td>
                 <td className="px-3 py-2.5 text-[#5C4A3A]">
                   <div className="flex items-center gap-1">
@@ -52,6 +56,14 @@ export default function PointsEarningTable({ sales, pkrPerPoint }) {
                 <td className="px-3 py-2.5 text-center text-[#8B7355]">{s.points_multiplier && s.points_multiplier > 1 ? `${s.points_multiplier}x` : "1x"}</td>
                 <td className="px-3 py-2.5 text-[#8B7355] whitespace-nowrap">{utcToPktDisplay(s.created_date)}</td>
                 <td className="px-3 py-2.5 text-[#8B7355] whitespace-nowrap">{s.is_scanned ? utcToPktDisplay(s.scanned_at) : "—"}</td>
+                <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                  {s.is_scanned ? (
+                    <span className={`flex items-center justify-end gap-1 font-medium ${sev === "critical" ? "text-red-600" : sev === "high" ? "text-orange-600" : sev === "suspicious" ? "text-amber-600" : "text-[#8B7355]"}`}>
+                      {formatDelay(delay)}
+                      {sev && sev !== "normal" && <AlertTriangle className="h-3 w-3" />}
+                    </span>
+                  ) : "—"}
+                </td>
                 <td className="px-3 py-2.5 text-center">
                   {s.is_scanned ? (
                     <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Scanned</span>
