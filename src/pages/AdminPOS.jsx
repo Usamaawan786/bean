@@ -521,7 +521,9 @@ export default function AdminPOS() {
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
             <TabsTrigger value="sales-history">Sales History</TabsTrigger>
-            <TabsTrigger value="shift-history">Shift Reports</TabsTrigger>
+            {["admin", "super_admin", "manager"].includes(user?.role) && (
+              <TabsTrigger value="shift-history">Shift Reports</TabsTrigger>
+            )}
             <TabsTrigger value="redemptions">Reward Redemptions</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
           </TabsList>
@@ -876,9 +878,11 @@ export default function AdminPOS() {
             <SalesHistoryTab />
           </TabsContent>
 
-          <TabsContent value="shift-history">
-            <ShiftHistoryTab />
-          </TabsContent>
+          {["admin", "super_admin", "manager"].includes(user?.role) && (
+            <TabsContent value="shift-history">
+              <ShiftHistoryTab />
+            </TabsContent>
+          )}
 
           <TabsContent value="redemptions">
             <RedemptionVerifier />
@@ -927,8 +931,8 @@ export default function AdminPOS() {
         />
       )}
 
-      {/* Shift Report (auto-shown after close, or from Shift Reports tab) */}
-      {viewingClosedShift && (
+      {/* Shift Report (auto-shown after close, or from Shift Reports tab) — cashiers cannot view */}
+      {viewingClosedShift && ["admin", "super_admin", "manager"].includes(user?.role) && (
         <ShiftReportView shift={viewingClosedShift} onClose={() => setViewingClosedShift(null)} />
       )}
     </div>
