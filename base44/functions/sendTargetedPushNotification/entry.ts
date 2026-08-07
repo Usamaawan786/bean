@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createInAppNotificationsForPush } from '../../shared/pushInAppNotifier.ts';
 
 /**
  * Sends targeted push notifications to specific users based on their email(s).
@@ -98,6 +99,23 @@ Deno.serve(async (req) => {
           await base44.asServiceRole.entities.DeviceToken.update(record.id, { is_active: false });
         }
       }
+    }
+
+    // Mirror the push into the in-app notification center so users can review history
+    try {
+      const deepLinkValue = (data && data.deep_link) || undefined;
+      await createInAppNotificationsForPush(base44, {
+        emails: targetEmails,
+        title,
+        body,
+        image_url,
+        deep_link: deepLinkValue,
+        from_email: user.email,
+        from_name: "BEAN",
+        type: deepLinkValue && /reward|flash/i.test(deepLinkValue) ? "offer" : "announcement",
+      });
+    } catch (e) {
+      console.error("In-app notification mirror failed:", e?.message || e);
     }
 
     return Response.json({

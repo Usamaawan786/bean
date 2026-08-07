@@ -25,13 +25,27 @@
         "like",
         "comment",
         "mention",
-        "reply"
+        "reply",
+        "announcement",
+        "offer"
       ],
       "description": "Notification type"
     },
     "message": {
       "type": "string",
       "description": "Notification message"
+    },
+    "title": {
+      "type": "string",
+      "description": "Optional title (used for push/announcement notifications)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Optional image URL (used for push notifications)"
+    },
+    "deep_link": {
+      "type": "string",
+      "description": "In-app route to open when tapped (used for push notifications)"
     },
     "post_id": {
       "type": "string",

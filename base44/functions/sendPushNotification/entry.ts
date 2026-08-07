@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createInAppNotificationsForPush } from '../../shared/pushInAppNotifier.ts';
 
 // Get OAuth2 access token from service account
 async function getAccessToken(serviceAccount) {
@@ -301,6 +302,44 @@ Deno.serve(async (req) => {
         failure_count: failureCount,
         sent_by: user.email
       });
+    }
+
+    // Mirror the push into the in-app notification center so users can review history
+    try {
+      let recipientEmails: string[] = [];
+      if (specific_emails && specific_emails.length > 0) {
+        recipientEmails = specific_emails.filter(Boolean);
+      } else if (target && String(target).includes('@')) {
+        recipientEmails = [target];
+      } else {
+        const audienceVal = (target || notification.audience || 'all') as string;
+        const customers = await base44.asServiceRole.entities.Customer.list();
+        if (audienceVal === 'all') {
+          recipientEmails = customers.map((c: any) => c.user_email).filter(Boolean);
+        } else if (audienceVal.startsWith('tier_')) {
+          const tier = audienceVal.replace('tier_', '');
+          const tierCapitalized = tier.charAt(0).toUpperCase() + tier.slice(1);
+          recipientEmails = customers
+            .filter((c: any) => c.tier === tierCapitalized)
+            .map((c: any) => c.user_email)
+            .filter(Boolean);
+        }
+      }
+      if (recipientEmails.length > 0) {
+        const deepLinkValue = notification.deep_link || deep_link || undefined;
+        await createInAppNotificationsForPush(base44, {
+          emails: recipientEmails,
+          title: notification.title,
+          body: notification.body,
+          image_url: notification.image_url || undefined,
+          deep_link: deepLinkValue,
+          from_email: user.email,
+          from_name: "BEAN",
+          type: deepLinkValue && /reward|flash/i.test(deepLinkValue) ? "offer" : "announcement",
+        });
+      }
+    } catch (e) {
+      console.error("In-app notification mirror failed:", e?.message || e);
     }
 
     console.log(`Done — success: ${successCount}, failed: ${failureCount}`);

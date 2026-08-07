@@ -230,7 +230,9 @@ export default function NotificationBell({ userEmail }) {
                           markNotifRead(item);
                           setOpen(false);
                           const type = item.type;
-                          if (type === "follow" && item.from_email) {
+                          if (item.deep_link) {
+                            navigate(item.deep_link);
+                          } else if (type === "follow" && item.from_email) {
                             navigate(`/UserProfile?email=${encodeURIComponent(item.from_email)}`);
                           } else if (type === "offer") {
                             navigate("/Rewards");
@@ -247,17 +249,24 @@ export default function NotificationBell({ userEmail }) {
                       }}
                     >
                       <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 bg-[#F5EBE8] overflow-hidden">
-                        {item.from_picture ? (
-                          <img src={item.from_picture} alt="" className="w-full h-full object-cover" />
+                        {item.from_picture || item.image_url ? (
+                          <img src={item.from_picture || item.image_url} alt="" className="w-full h-full object-cover" />
                         ) : (
                           notifIcon(item.type)
                         )}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[#5C4A3A] leading-snug line-clamp-2">
-                          {isAdminMsg ? item.content : item.message}
-                        </p>
+                        {isAdminMsg ? (
+                          <p className="text-sm text-[#5C4A3A] leading-snug line-clamp-2">{item.content}</p>
+                        ) : item.title ? (
+                          <>
+                            <p className="text-sm font-semibold text-[#5C4A3A] leading-snug line-clamp-1">{item.title}</p>
+                            <p className="text-xs text-[#8B7355] leading-snug line-clamp-2">{item.message}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-[#5C4A3A] leading-snug line-clamp-2">{item.message}</p>
+                        )}
                         <p className="text-[10px] text-[#C9B8A6] mt-1">{timeAgo(item.created_date)}</p>
                       </div>
 
