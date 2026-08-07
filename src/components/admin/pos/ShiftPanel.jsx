@@ -12,7 +12,7 @@ const CATEGORIES = ["Supplies", "Cleaning", "Maintenance", "Staff Meals", "Misce
 
 export default function ShiftPanel({ shift, user, onClosed }) {
   const queryClient = useQueryClient();
-  const canClose = ["admin", "manager", "super_admin"].includes(user?.role);
+  const canClose = ["admin", "manager", "super_admin", "cashier"].includes(user?.role);
   const [entryType, setEntryType] = useState("expense");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
