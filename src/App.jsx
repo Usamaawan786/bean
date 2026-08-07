@@ -47,6 +47,7 @@ const AdminDeliveryOrders = lazy(() => import('./pages/AdminDeliveryOrders'));
 const AdminDeliveryMenu = lazy(() => import('./pages/AdminDeliveryMenu'));
 const AdminRiders = lazy(() => import('./pages/AdminRiders'));
 const RiderPortal = lazy(() => import('./pages/RiderPortal'));
+const RewardsSurveillance = lazy(() => import('./pages/RewardsSurveillance'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -116,6 +117,7 @@ function App() {
               <Route path="/AdminDeliveryMenu" element={<AdminDeliveryMenu />} />
               <Route path="/AdminRiders" element={<AdminRiders />} />
               <Route path="/RiderPortal" element={<RiderPortal />} />
+              <Route path="/RewardsSurveillance" element={<RewardsSurveillance />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </Suspense>

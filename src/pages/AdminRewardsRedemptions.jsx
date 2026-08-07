@@ -455,10 +455,13 @@ export default function AdminRewardsRedemptions() {
           </Link>
           <div className="flex items-center gap-4 mb-6">
             <div className="bg-white/15 rounded-2xl p-3"><Gift className="h-7 w-7" /></div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl font-bold">Rewards & Redemptions</h1>
               <p className="text-white/70 text-sm">Full control over points, rewards, codes, FM/EBA discounts</p>
             </div>
+            <Link to="/RewardsSurveillance" className="bg-white/15 hover:bg-white/25 rounded-xl px-4 py-2.5 text-sm font-semibold flex items-center gap-2 transition-colors">
+              <Shield className="h-4 w-4" /> Surveillance Vault
+            </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
