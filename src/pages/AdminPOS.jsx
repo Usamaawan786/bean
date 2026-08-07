@@ -329,38 +329,6 @@ export default function AdminPOS() {
     setTicketKitchenOrder(null);
   };
 
-  // Edit Bill escape hatch: hard-deletes the just-saved StoreSale and restores
-  // the cart exactly as it was — cashier corrects and re-completes normally.
-  // The cart is NOT cleared (clearCart is only wired to the Close button), so
-  // items/customer/payment/discount/order type are preserved in state.
-  const handleEditBill = async (saleId) => {
-    if (!saleId) {
-      toast.error("Could not identify the sale to void");
-      return;
-    }
-    try {
-      // Route through a service-role backend function — cashiers can't delete
-      // StoreSale rows via RLS, so the direct delete silently fails.
-      const resp = await base44.functions.invoke('voidSaleForEdit', {
-        sale_id: saleId,
-        ticket_id: activeTicket?.id || null,
-      });
-      if (!resp.data?.success) {
-        throw new Error(resp.data?.error || 'Failed to void sale');
-      }
-      setShowBill(false);
-      setGeneratedBill(null);
-      queryClient.invalidateQueries({ queryKey: ["sales-analytics"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["open-tickets"] });
-      queryClient.invalidateQueries({ queryKey: ["shift-report-sales"] });
-      toast.success("Sale voided — cart restored for editing");
-    } catch (err) {
-      toast.error("Failed to void sale: " + (err?.message || "Unknown error"));
-      throw err;
-    }
-  };
-
   const handleResumeTicket = async (ticket) => {
     try {
       const items = await base44.entities.OpenTicketItem.filter({ ticket_id: ticket.id });
@@ -956,8 +924,6 @@ export default function AdminPOS() {
         <BillGenerator
           bill={generatedBill}
           onClose={clearCart}
-          onEditBill={handleEditBill}
-          saleId={generatedBill.saleId}
         />
       )}
 
