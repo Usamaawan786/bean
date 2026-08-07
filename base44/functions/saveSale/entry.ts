@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { getActiveMultiplier } from '../../shared/pointsMultiplier.ts';
 
 Deno.serve(async (req) => {
   try {
@@ -37,9 +38,24 @@ Deno.serve(async (req) => {
       enrichedSale.total_amount = 0;
     }
 
+    // ── Authoritative points calculation (backend is source of truth) ──
+    // Fetch pkr_per_point and the live multiplier, then compute points_awarded.
+    // This overrides whatever the frontend sent so cashiers cannot inflate points.
+    let pkrPerPoint = 100;
+    try {
+      const settings = await base44.asServiceRole.entities.RewardSettings.list('-created_date', 1);
+      if (settings.length > 0 && settings[0].pkr_per_point) {
+        pkrPerPoint = settings[0].pkr_per_point;
+      }
+    } catch (e) { /* default fallback */ }
+
+    const multiplier = await getActiveMultiplier(base44);
+    const billAmount = enrichedSale.subtotal || enrichedSale.total_amount || 0;
+    const basePoints = Math.floor(billAmount / pkrPerPoint);
+    enrichedSale.points_awarded = basePoints * multiplier;
+    enrichedSale.points_multiplier = multiplier;
+
     // Sequential B-series bill number (B-001, B-002 … B-999, B-1000).
-    // Reads the current max B-series number across all StoreSales, increments,
-    // and retries up to 5 times to absorb collisions from concurrent cashiers.
     let sale = null;
     for (let attempt = 0; attempt < 5 && !sale; attempt++) {
       const existing = await base44.asServiceRole.entities.StoreSale.list('-created_date', 10000);
@@ -54,7 +70,6 @@ Deno.serve(async (req) => {
       const nextNum = maxNum + 1;
       const padded = nextNum < 1000 ? String(nextNum).padStart(3, '0') : String(nextNum);
       const candidate = `B-${padded}`;
-      // A concurrent cashier may have just written this number — retry to recompute
       if (existing.some(s => s.bill_number === candidate)) continue;
       enrichedSale.bill_number = candidate;
       try {

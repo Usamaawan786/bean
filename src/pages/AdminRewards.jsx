@@ -8,6 +8,7 @@ import {
   PackageCheck, ArrowLeft, DollarSign, RefreshCw, Check
 } from "lucide-react";
 import UsersLeaderboard from "../components/admin/UsersLeaderboard";
+import PointsCampaignManager from "../components/admin/PointsCampaignManager";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { createPageUrl } from "@/utils";
@@ -238,6 +239,7 @@ export default function AdminRewards() {
     { id: "users", label: "Users", icon: Users },
     { id: "rewards", label: "Rewards", icon: Gift },
     { id: "settings", label: "Settings", icon: Settings },
+    { id: "campaigns", label: "Campaigns", icon: Zap },
     { id: "redemptions", label: "Redemptions", icon: PackageCheck },
   ];
 
@@ -548,6 +550,11 @@ export default function AdminRewards() {
               )}
             </Button>
           </div>
+        )}
+
+        {/* CAMPAIGNS TAB */}
+        {activeTab === "campaigns" && (
+          <PointsCampaignManager settings={settings} />
         )}
 
         {/* USERS TAB */}

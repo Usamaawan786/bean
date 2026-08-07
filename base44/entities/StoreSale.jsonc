@@ -113,7 +113,12 @@
     },
     "points_awarded": {
       "type": "number",
-      "description": "Points awarded from this sale"
+      "description": "Points awarded from this sale (already includes any active multiplier at sale time)"
+    },
+    "points_multiplier": {
+      "type": "number",
+      "default": 1,
+      "description": "Active points multiplier captured at sale time (2 = double points were active, etc.)"
     },
     "cashier_email": {
       "type": "string",

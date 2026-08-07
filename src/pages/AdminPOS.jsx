@@ -84,6 +84,33 @@ export default function AdminPOS() {
     enabled: !!user
   });
 
+  // Live points multiplier for POS display (backend recomputes authoritatively on save)
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ["points-campaigns-pos"],
+    queryFn: () => base44.entities.PointsCampaign.list("-created_date", 100),
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+  const { data: rewardSettingsList = [] } = useQuery({
+    queryKey: ["pos-reward-settings"],
+    queryFn: () => base44.entities.RewardSettings.list("-created_date", 1),
+    enabled: !!user,
+  });
+  const pkrPerPointSetting = rewardSettingsList[0]?.pkr_per_point || PKR_PER_POINT;
+  const liveMultiplier = (() => {
+    const now = new Date();
+    let m = 1;
+    for (const c of campaigns) {
+      if (!c.is_active || !c.multiplier || c.multiplier <= 1) continue;
+      const start = c.start_at ? new Date(c.start_at) : null;
+      const end = c.end_at ? new Date(c.end_at) : null;
+      if (start && now < start) continue;
+      if (end && now > end) continue;
+      if (c.multiplier > m) m = c.multiplier;
+    }
+    return m;
+  })();
+
   // Identify a customer at the POS by phone/name and load their saved recipes,
   // so cart items matching a saved customization show a hint badge.
   const { data: identifiedRecipes = [] } = useQuery({
@@ -172,16 +199,10 @@ export default function AdminPOS() {
       // still unique per millisecond + disambiguator for same-ms sales.
       const qrCodeId = "B" + Date.now().toString(36).slice(-6).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
 
-      // Fetch reward settings for dynamic points calculation
-      let pkrPerPoint = PKR_PER_POINT; // default fallback (RewardSettings overrides)
-      try {
-        const settings = await base44.entities.RewardSettings.list("-created_date", 1);
-        if (settings.length > 0 && settings[0].pkr_per_point) {
-          pkrPerPoint = settings[0].pkr_per_point;
-        }
-      } catch (e) { /* use default */ }
-
-      const pointsToAward = Math.floor(discountedSubtotal / pkrPerPoint);
+      // Points preview from live queries (backend recomputes authoritatively in saveSale)
+      const pkrPerPoint = pkrPerPointSetting;
+      const basePoints = Math.floor(discountedSubtotal / pkrPerPoint);
+      const pointsToAward = basePoints * liveMultiplier; // preview; backend overrides
       const qrExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days
 
       // Use backend function (service role) to guarantee save
@@ -277,7 +298,8 @@ export default function AdminPOS() {
         billNumber,
         saleId,
         qrCodeId,
-        pointsToAward,
+        pointsToAward: saveResp.data.sale.points_awarded ?? pointsToAward,
+        pointsMultiplier: saveResp.data.sale.points_multiplier ?? 1,
         date: new Date().toISOString(),
         tableNumber
       };
@@ -797,6 +819,21 @@ export default function AdminPOS() {
                         <span className="text-[#5C4A3A]">Total</span>
                         <span className="text-[#5C4A3A]">PKR {total.toFixed(2)}</span>
                       </div>
+                      {paymentMethod !== "Complimentary" && (
+                        <div className="flex justify-between items-center text-sm pt-1">
+                          <span className="text-[#8B7355] flex items-center gap-1.5">
+                            Reward Points
+                            {liveMultiplier > 1 && (
+                              <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                                {liveMultiplier}× BONUS
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-[#5C4A3A] font-bold">
+                            {Math.max(0, Math.floor(discountedSubtotal / (pkrPerPointSetting || 100)) * liveMultiplier)} pts
+                          </span>
+                        </div>
+                      )}
                       {paymentMethod === "Complimentary" && (
                         <p className="text-xs text-indigo-600 font-medium text-center pt-1">Complimentary — Total charged: PKR 0.00</p>
                       )}

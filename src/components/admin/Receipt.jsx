@@ -33,6 +33,7 @@ export default function Receipt({
   const qrSm = is58 ? 78 : 100;
   const gstLabel = bill?.paymentMethod === "Card" ? "8%" : "17%";
   const pts = bill?.pointsToAward ?? Math.floor((bill?.subtotal || 0) / 100);
+  const mult = Number(bill?.pointsMultiplier) > 1 ? Number(bill.pointsMultiplier) : null;
 
   const row = (extra) => ({
     display: "flex",
@@ -148,7 +149,17 @@ export default function Receipt({
 
       {/* Rewards + Payment */}
       <div style={section}>
-        <div style={row()}><span>Reward Points</span><span style={{ fontWeight: 700 }}>{pts} pts</span></div>
+        {mult && (
+          <div style={{ ...row({ justifyContent: "center" }), marginBottom: "1mm" }}>
+            <span style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#cc0000", textAlign: "center", width: "100%" }}>
+              ★ {mult}x POINTS BONUS ACTIVE ★
+            </span>
+          </div>
+        )}
+        <div style={row()}>
+          <span>Reward Points{mult ? ` (${mult}x)` : ""}</span>
+          <span style={{ fontWeight: 700 }}>{pts} pts</span>
+        </div>
         <div style={row()}><span>Payment</span><span>{bill?.paymentMethod}</span></div>
       </div>
 

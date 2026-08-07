@@ -1,0 +1,84 @@
+{
+  "name": "PointsCampaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Campaign name e.g. Double Points Weekend"
+    },
+    "multiplier": {
+      "type": "number",
+      "minimum": 1,
+      "default": 1,
+      "description": "Points multiplier applied to base points (2 = double, 3 = triple, 1.5 = half-extra)"
+    },
+    "start_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the campaign becomes active (UTC). Null = always active from the past."
+    },
+    "end_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the campaign stops being active (UTC). Null = never ends."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Manual on/off toggle. When false the campaign is paused regardless of schedule."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes about this campaign"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the admin who created the campaign"
+    }
+  },
+  "required": [
+    "name",
+    "multiplier"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

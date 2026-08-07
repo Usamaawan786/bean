@@ -170,12 +170,13 @@ export function generateInvoicePdf(bill, qrUrl, iosUrl, androidUrl, logoUrl) {
     // --- Reward points pill ---
     ensureSpace(12);
     const pts = bill.pointsToAward ?? Math.floor(bill.subtotal / 100);
+    const mult = Number(bill.pointsMultiplier) > 1 ? Number(bill.pointsMultiplier) : null;
     doc.setFillColor(...accent);
     doc.roundedRect(labelX, y, valueX - labelX, 10, 2, 2, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
     doc.setTextColor(...brown);
-    doc.text("Reward Points Earned", labelX + 4, y + 6.5);
+    doc.text(mult ? `Reward Points Earned (${mult}x Bonus)` : "Reward Points Earned", labelX + 4, y + 6.5);
     doc.setFontSize(11);
     doc.text(`${pts} pts`, valueX - 4, y + 6.5, { align: "right" });
     y += 12;
