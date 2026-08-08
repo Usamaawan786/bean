@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
@@ -11,16 +11,20 @@ export default function CloseShiftDialog({ shift, user, onClose, onClosed }) {
   const [closingFloat, setClosingFloat] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const canSeeReport = ["admin", "super_admin", "manager"].includes(user?.role);
+
   const { data: sales = [], isLoading: loadingSales } = useQuery({
     queryKey: ["shift-sales", shift.id],
-    queryFn: () => base44.entities.StoreSale.filter({ shift_id: shift.id })
+    queryFn: () => base44.entities.StoreSale.filter({ shift_id: shift.id }),
+    enabled: canSeeReport
   });
   const { data: entries = [], isLoading: loadingEntries } = useQuery({
     queryKey: ["shift-entries", shift.id],
-    queryFn: () => base44.entities.ShiftExpense.filter({ shift_id: shift.id })
+    queryFn: () => base44.entities.ShiftExpense.filter({ shift_id: shift.id }),
+    enabled: canSeeReport
   });
 
-  const isLoading = loadingSales || loadingEntries;
+  const isLoading = canSeeReport && (loadingSales || loadingEntries);
   const sum = (arr, key) => arr.reduce((s, x) => s + (Number(x[key]) || 0), 0);
 
   const cashSales = sales.filter(s => s.payment_method === "Cash");
@@ -70,10 +74,15 @@ export default function CloseShiftDialog({ shift, user, onClose, onClosed }) {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-[#5C4A3A]">Close Shift</DialogTitle>
+          {!canSeeReport && (
+            <DialogDescription className="text-[#8B7355]">
+              Count the cash in the drawer and enter the total below. Sales figures are visible to managers only.
+            </DialogDescription>
+          )}
         </DialogHeader>
         {isLoading ? (
           <p className="text-sm text-[#8B7355] text-center py-6">Loading summary...</p>
-        ) : (
+        ) : canSeeReport ? (
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-[#F5EBE8] rounded-xl p-3">
@@ -109,6 +118,17 @@ export default function CloseShiftDialog({ shift, user, onClose, onClosed }) {
             )}
 
             <Button onClick={handleConfirm} disabled={saving} className="w-full bg-[#5C4A3A] hover:bg-[#4a3a2c] rounded-xl mt-2">
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {saving ? "Closing..." : "Confirm & Close Shift"}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="pt-2">
+              <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Closing Float (Actual counted PKR)</label>
+              <Input type="number" value={closingFloat} onChange={e => setClosingFloat(e.target.value)} placeholder="e.g. 12000" className="border-[#E8DED8]" />
+            </div>
+            <Button onClick={handleConfirm} disabled={saving} className="w-full bg-[#5C4A3A] hover:bg-[#4a3a2c] rounded-xl">
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               {saving ? "Closing..." : "Confirm & Close Shift"}
             </Button>
