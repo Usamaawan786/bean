@@ -69,6 +69,17 @@ export default function AdminPOS() {
     loadUser();
   }, []);
 
+  // Safety net: if a cashier somehow lands on a sales-revealing tab, bounce them back to POS.
+  // This guards against stale state or direct tab selection before the role check hides the trigger.
+  useEffect(() => {
+    if (!user) return;
+    const restrictedForCashier = ["shift-history", "sales-history"];
+    const isCashier = !["admin", "super_admin", "manager"].includes(user?.role);
+    if (isCashier && restrictedForCashier.includes(activeTab)) {
+      setActiveTab("pos");
+    }
+  }, [user, activeTab]);
+
   const { data: products = [] } = useQuery({
     queryKey: ["store-products-admin"],
     queryFn: () => base44.entities.StoreProduct.list(),
