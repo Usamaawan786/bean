@@ -439,6 +439,8 @@ export default function AdminPOS() {
   };
 
   const canManageProducts = ["admin", "super_admin", "manager"].includes(user?.role);
+  // Shift reports & sales history reveal sales totals — managers/admins only, never cashiers
+  const canViewSalesReports = ["admin", "super_admin", "manager"].includes(user?.role);
 
   if (!user) return null;
 
@@ -520,8 +522,10 @@ export default function AdminPOS() {
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
             <TabsTrigger value="launch-discount">Soft-Launch 10%</TabsTrigger>
-            <TabsTrigger value="sales-history">Sales History</TabsTrigger>
-            {["admin", "super_admin", "manager"].includes(user?.role) && (
+            {canViewSalesReports && (
+              <TabsTrigger value="sales-history">Sales History</TabsTrigger>
+            )}
+            {canViewSalesReports && (
               <TabsTrigger value="shift-history">Shift Reports</TabsTrigger>
             )}
             <TabsTrigger value="redemptions">Reward Redemptions</TabsTrigger>
@@ -874,11 +878,13 @@ export default function AdminPOS() {
             <LaunchDiscountPanel />
           </TabsContent>
 
-          <TabsContent value="sales-history">
-            <SalesHistoryTab />
-          </TabsContent>
+          {canViewSalesReports && (
+            <TabsContent value="sales-history">
+              <SalesHistoryTab />
+            </TabsContent>
+          )}
 
-          {["admin", "super_admin", "manager"].includes(user?.role) && (
+          {canViewSalesReports && (
             <TabsContent value="shift-history">
               <ShiftHistoryTab />
             </TabsContent>
@@ -932,7 +938,7 @@ export default function AdminPOS() {
       )}
 
       {/* Shift Report (auto-shown after close, or from Shift Reports tab) — cashiers cannot view */}
-      {viewingClosedShift && ["admin", "super_admin", "manager"].includes(user?.role) && (
+      {viewingClosedShift && canViewSalesReports && (
         <ShiftReportView shift={viewingClosedShift} onClose={() => setViewingClosedShift(null)} />
       )}
     </div>
