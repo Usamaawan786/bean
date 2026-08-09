@@ -233,6 +233,30 @@ export default function QRScanner({ onScan, onClose }) {
         )}
 
         <div className="space-y-4">
+          {/* Manual entry — placed first so it's always visible even when the
+              camera scanner fails on iOS. Feeds the same onScan flow. */}
+          <div className="bg-[#F5EBE8] rounded-2xl p-4">
+            <p className="text-sm font-semibold text-[#5C4A3A] mb-1">Enter code manually</p>
+            <p className="text-xs text-[#8B7355] mb-3">Find the code printed below the QR on your receipt.</p>
+            <div className="flex gap-2">
+              <Input
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value.toUpperCase())}
+                placeholder="e.g. QR-17234560-AB12C3"
+                className="font-mono text-sm tracking-wider border-[#E8DED8] [font-feature-settings:'zero']"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                onKeyDown={(e) => { if (e.key === "Enter" && manualCode.trim()) { onScanRef.current(manualCode.trim()); setManualCode(""); } }}
+              />
+              <Button onClick={() => { if (manualCode.trim()) { onScanRef.current(manualCode.trim()); setManualCode(""); } }} className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl px-5">Look Up</Button>
+            </div>
+            <p className="text-[10px] text-[#C9B8A6] mt-2 font-mono">Tip: use digit 0 (zero), not the letter O — they look similar.</p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-[#C9B8A6]"><div className="flex-1 h-px bg-[#E8DED8]" />or scan with camera<div className="flex-1 h-px bg-[#E8DED8]" /></div>
+
+          {/* Camera scanner — below manual entry so it never hides the fallback */}
           {/* Container needs explicit min dimensions for html5-qrcode to initialize (web/Android live scan) */}
           <div
             id="qr-reader"
@@ -273,22 +297,6 @@ export default function QRScanner({ onScan, onClose }) {
           <div className="bg-[#F5EBE8] rounded-2xl p-4 text-center">
             <p className="text-sm text-[#5C4A3A]">Point your camera at the QR code on your receipt to earn reward points!</p>
             <p className="text-xs text-[#8B7355] mt-2">Collect points with every purchase</p>
-          </div>
-
-          {/* Manual entry fallback — guarantees the launch works even if the
-              camera/native scanner fails on a device. Feeds the same onScan flow. */}
-          <div className="border-t border-[#E8DED8] pt-3">
-            <div className="flex items-center gap-2 text-xs text-[#C9B8A6] mb-2"><div className="flex-1 h-px bg-[#E8DED8]" />or enter code manually<div className="flex-1 h-px bg-[#E8DED8]" /></div>
-            <div className="flex gap-2">
-              <Input
-                value={manualCode}
-                onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                placeholder="e.g. QR-17234560-AB12C3"
-                className="font-mono text-sm border-[#E8DED8]"
-                onKeyDown={(e) => { if (e.key === "Enter" && manualCode.trim()) { onScanRef.current(manualCode.trim()); setManualCode(""); } }}
-              />
-              <Button onClick={() => { if (manualCode.trim()) { onScanRef.current(manualCode.trim()); setManualCode(""); } }} className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl px-5">Look Up</Button>
-            </div>
           </div>
         </div>
       </motion.div>
