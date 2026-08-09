@@ -401,10 +401,13 @@ export default function Rewards() {
       </div>}
 
       {/* Rewards disclaimer — points terms */}
-      <div className="max-w-lg mx-auto px-5 pb-10">
-        <p className="text-[10px] leading-relaxed text-[#C9B8A6] text-center">
-          Bean Rewards points have no cash value, are non-transferable, and cannot be exchanged for cash or combined with other offers unless stated. Points and rewards may expire and are subject to availability. Bean reserves the right to modify, suspend, or cancel the rewards program at any time without notice. Redemption of points does not guarantee product availability and is subject to these terms.
-        </p>
+      <div className="max-w-lg mx-auto px-5 pb-28 pt-2">
+        <div className="bg-white/60 rounded-2xl border border-[#E8DED8] p-4">
+          <p className="text-[11px] font-semibold text-[#8B7355] mb-2 text-center">Bean Rewards — Terms & Conditions</p>
+          <p className="text-[10px] leading-relaxed text-[#A89B8C] text-center">
+            Bean Rewards points have no cash value, are non-transferable, and cannot be exchanged for cash or combined with other offers unless explicitly stated. Points are earned at Bean's discretion based on qualifying purchases and may be adjusted, suspended, or revoked at any time. Bean reserves the right to modify, suspend, or cancel the rewards program, alter earning rates, or change redemption values at any time without prior notice. Points and rewards may expire and are subject to availability. Bean retains full authority to revoke, remove, or reset any individual's reward points — in whole or in part — where fraud, misuse, system error, suspicious activity, or violation of these terms is suspected or identified, without liability to the member. Accounts found engaging in fraudulent activity, point farming, or abuse of the program may be suspended or terminated. Redemption of points does not guarantee product availability and is subject to these terms. Participation in the program constitutes acceptance of these terms.
+          </p>
+        </div>
       </div>
 
       {/* Success Dialog */}
