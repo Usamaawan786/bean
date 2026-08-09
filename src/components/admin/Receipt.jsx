@@ -171,6 +171,7 @@ export default function Receipt({
             <div style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000" }}>Earn Rewards</div>
             <img src={qrCodeUrl} alt="Rewards QR" style={imgQr(qrLg)} />
             <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>Scan in the Bean Pakistan App to add points</div>
+            <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#cc0000", marginTop: "0.5mm" }}>Valid for 2 hours only</div>
             {bill?.qrCodeId && (
               <>
                 <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>or enter code manually:</div>

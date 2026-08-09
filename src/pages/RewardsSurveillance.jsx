@@ -11,6 +11,8 @@ import ActivityTable from "@/components/surveillance/ActivityTable";
 import AnomalyPanel, { detectAnomalies } from "@/components/surveillance/AnomalyPanel";
 import PointsAdjustmentTable from "@/components/surveillance/PointsAdjustmentTable";
 import ScanTimingPanel from "@/components/surveillance/ScanTimingPanel";
+import ExpiredBillsPanel from "@/components/surveillance/ExpiredBillsPanel";
+import SuspiciousActivityPanel from "@/components/surveillance/SuspiciousActivityPanel";
 
 export default function RewardsSurveillance() {
   const [user, setUser] = useState(null);
@@ -84,6 +86,8 @@ export default function RewardsSurveillance() {
     { id: "redemptions", label: "Redemptions", icon: Gift, count: fRedemptions.length },
     { id: "flashdrops", label: "Flash Drops", icon: Zap, count: fClaims.length },
     { id: "activity", label: "Activity Log", icon: Activity, count: fActivities.length },
+    { id: "suspicious", label: "Suspicious Activity", icon: ShieldCheck, alert: true },
+    { id: "expired", label: "Expired Bills", icon: Clock, count: fSales.filter((s) => !s.is_scanned && s.qr_expires_at && new Date(s.qr_expires_at) < new Date()).length },
     { id: "scan-timing", label: "Scan Timing", icon: Clock, count: fSales.filter((s) => s.is_scanned && s.scanned_at).length },
     { id: "adjustments", label: "Adjustments", icon: Pencil, count: fAdjustments.length },
     { id: "anomalies", label: "Anomalies", icon: AlertTriangle, count: anomalies.length, alert: anomalies.length },
@@ -177,6 +181,8 @@ export default function RewardsSurveillance() {
             {activeTab === "redemptions" && <RedemptionTable redemptions={fRedemptions} />}
             {activeTab === "flashdrops" && <FlashDropTable claims={fClaims} />}
             {activeTab === "activity" && <ActivityTable activities={fActivities} />}
+            {activeTab === "suspicious" && <SuspiciousActivityPanel sales={fSales} adjustments={fAdjustments} anomalies={anomalies} />}
+            {activeTab === "expired" && <ExpiredBillsPanel sales={fSales} />}
             {activeTab === "scan-timing" && <ScanTimingPanel sales={fSales} />}
             {activeTab === "adjustments" && <PointsAdjustmentTable adjustments={fAdjustments} />}
             {activeTab === "anomalies" && <AnomalyPanel sales={sales} redemptions={redemptions} customers={customers} pkrPerPoint={pkrPerPoint} />}

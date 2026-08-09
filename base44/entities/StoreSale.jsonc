@@ -95,7 +95,7 @@
     "qr_expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "When the QR code expires (7 days after sale)"
+      "description": "When the QR code expires (2 hours after sale). Set authoritatively by the backend."
     },
     "is_scanned": {
       "type": "boolean",
@@ -119,6 +119,19 @@
       "type": "number",
       "default": 1,
       "description": "Active points multiplier captured at sale time (2 = double points were active, etc.)"
+    },
+    "reallocated_by": {
+      "type": "string",
+      "description": "Email of admin who re-allocated expired points to a customer"
+    },
+    "reallocated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When expired points were manually re-allocated to a customer"
+    },
+    "reallocated_reason": {
+      "type": "string",
+      "description": "Reason recorded when expired points were re-allocated"
     },
     "cashier_email": {
       "type": "string",
