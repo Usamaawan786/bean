@@ -7,10 +7,11 @@ import {
   Star, TrendingUp, Users, Zap, PackageCheck, ArrowLeft,
   DollarSign, RefreshCw, Check, Search, CheckCircle, XCircle,
   Clock, AlertTriangle, Shield, Tag, ChevronDown, ChevronUp,
-  Loader2, ToggleLeft, ToggleRight, Filter, Eye, ScanLine
+  Loader2, ToggleLeft, ToggleRight, Filter, Eye, ScanLine, Ban
 } from "lucide-react";
 import FlashDropScannerModal from "../components/admin/FlashDropScannerModal";
 import UsersLeaderboard from "../components/admin/UsersLeaderboard";
+import VoidRedemptionDialog from "../components/admin/VoidRedemptionDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ const redeemStatusConfig = {
   pending:  { label: "Valid – Unclaimed",  color: "bg-green-100 text-green-700 border-green-200" },
   claimed:  { label: "Claimed",            color: "bg-gray-100 text-gray-500 border-gray-200" },
   expired:  { label: "Expired",            color: "bg-red-100 text-red-600 border-red-200" },
+  voided:   { label: "Voided (Fraud)",     color: "bg-red-900 text-white border-red-800" },
 };
 
 // ─── Small Components ────────────────────────────────────────────────────────
@@ -266,6 +268,10 @@ export default function AdminRewardsRedemptions() {
   const [redeemFilter, setRedeemFilter] = useState("all");
   const [redeemSearch, setRedeemSearch] = useState("");
 
+  // Void dialog state
+  const [voidingRedemption, setVoidingRedemption] = useState(null);
+  const [voidPending, setVoidPending] = useState(false);
+
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -328,6 +334,7 @@ export default function AdminRewardsRedemptions() {
 
   const pendingRedemptions  = redemptions.filter(r => r.status === "pending");
   const claimedRedemptions  = redemptions.filter(r => r.status === "claimed");
+  const voidedRedemptions   = redemptions.filter(r => r.status === "voided");
 
   const redemptionByReward = redemptions.reduce((acc, r) => { acc[r.reward_name] = (acc[r.reward_name] || 0) + 1; return acc; }, {});
   const topRewards = Object.entries(redemptionByReward).sort((a, b) => b[1] - a[1]).slice(0, 5);
@@ -428,6 +435,37 @@ export default function AdminRewardsRedemptions() {
     await base44.entities.Redemption.update(r.id, { status: "claimed" });
     queryClient.invalidateQueries({ queryKey: ["admin-redemptions-all"] });
     toast.success("Marked as claimed!");
+  };
+
+  const handleVoidRedemption = async (reason) => {
+    if (!voidingRedemption) return;
+    setVoidPending(true);
+    try {
+      const me = await base44.auth.me();
+      await base44.entities.Redemption.update(voidingRedemption.id, {
+        status: "voided",
+        void_reason: reason,
+        voided_by: me?.email || "admin",
+        voided_at: new Date().toISOString(),
+      });
+      // Log activity for the audit trail
+      await base44.entities.Activity.create({
+        user_email: voidingRedemption.customer_email,
+        action_type: "redemption_voided",
+        description: `Redemption ${voidingRedemption.redemption_code} (${voidingRedemption.reward_name}) voided as fraudulent: ${reason}`,
+        points_amount: voidingRedemption.points_spent,
+        metadata: { redemption_id: voidingRedemption.id, reason },
+      });
+      setLookedUp(prev => prev ? { ...prev, status: "voided", void_reason: reason } : null);
+      queryClient.invalidateQueries({ queryKey: ["admin-redemptions-all"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-activities"] });
+      toast.success("Redemption voided — code can no longer be honoured at the counter.");
+      setVoidingRedemption(null);
+    } catch (err) {
+      toast.error(err.message || "Failed to void redemption");
+    } finally {
+      setVoidPending(false);
+    }
   };
 
   const tabs = [
@@ -703,6 +741,10 @@ export default function AdminRewardsRedemptions() {
                     {lookedUp.status === "pending" && <div className="flex items-center gap-2 mb-4 text-green-700 font-bold text-lg"><CheckCircle className="h-6 w-6" />✅ Valid Code — OK to Honour</div>}
                     {lookedUp.status === "claimed" && <div className="flex items-center gap-2 mb-4 text-gray-600 font-bold text-lg"><AlertTriangle className="h-6 w-6" />⚠️ Already Claimed — Do NOT Honour Again</div>}
                     {lookedUp.status === "expired"  && <div className="flex items-center gap-2 mb-4 text-red-600 font-bold text-lg"><XCircle className="h-6 w-6" />❌ Expired — Do Not Honour</div>}
+                    {lookedUp.status === "voided"  && <div className="flex items-center gap-2 mb-4 text-red-700 font-bold text-lg"><Ban className="h-6 w-6" />🚫 Voided (Fraudulent) — Do NOT Honour</div>}
+                    {lookedUp.status === "voided" && lookedUp.void_reason && (
+                      <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700"><strong>Void reason:</strong> {lookedUp.void_reason}</div>
+                    )}
                     <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                       <div><p className="text-[#8B7355] text-xs">Code</p><p className="font-mono font-bold text-[#5C4A3A] text-lg tracking-widest">{lookedUp.redemption_code}</p></div>
                       <div><p className="text-[#8B7355] text-xs">Reward</p><p className="font-bold text-[#5C4A3A]">{lookedUp.reward_name}</p></div>
@@ -715,6 +757,7 @@ export default function AdminRewardsRedemptions() {
                       <div className="flex gap-3">
                         <Button onClick={() => handleClaim(lookedUp)} className="flex-1 bg-green-600 hover:bg-green-700 rounded-xl"><CheckCircle className="h-4 w-4 mr-2" />Mark as Claimed</Button>
                         <Button onClick={() => handleExpire(lookedUp)} variant="outline" className="rounded-xl border-red-200 text-red-600 hover:bg-red-50">Expire</Button>
+                        <Button onClick={() => setVoidingRedemption(lookedUp)} variant="outline" className="rounded-xl border-red-800 text-white bg-red-700 hover:bg-red-800"><Ban className="h-4 w-4 mr-2" />Void (Fraud)</Button>
                       </div>
                     )}
                   </motion.div>
@@ -750,20 +793,24 @@ export default function AdminRewardsRedemptions() {
         {/* ─── REDEMPTIONS HISTORY ─── */}
         {activeTab === "redemptions" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-                <div className="text-2xl font-bold text-[#5C4A3A]">{redemptions.length}</div>
-                <div className="text-xs text-[#8B7355] mt-1">Total</div>
-              </div>
-              <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-                <div className="text-2xl font-bold text-amber-600">{pendingRedemptions.length}</div>
-                <div className="text-xs text-[#8B7355] mt-1">Pending</div>
-              </div>
-              <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
-                <div className="text-2xl font-bold text-green-600">{claimedRedemptions.length}</div>
-                <div className="text-xs text-[#8B7355] mt-1">Claimed</div>
-              </div>
-            </div>
+            <div className="grid grid-cols-4 gap-3">
+               <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
+                 <div className="text-2xl font-bold text-[#5C4A3A]">{redemptions.length}</div>
+                 <div className="text-xs text-[#8B7355] mt-1">Total</div>
+               </div>
+               <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
+                 <div className="text-2xl font-bold text-amber-600">{pendingRedemptions.length}</div>
+                 <div className="text-xs text-[#8B7355] mt-1">Pending</div>
+               </div>
+               <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
+                 <div className="text-2xl font-bold text-green-600">{claimedRedemptions.length}</div>
+                 <div className="text-xs text-[#8B7355] mt-1">Claimed</div>
+               </div>
+               <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 text-center">
+                 <div className="text-2xl font-bold text-red-700">{voidedRedemptions.length}</div>
+                 <div className="text-xs text-[#8B7355] mt-1">Voided</div>
+               </div>
+             </div>
 
             {/* Filters */}
             <div className="flex gap-3 flex-wrap">
@@ -774,7 +821,7 @@ export default function AdminRewardsRedemptions() {
                   className="w-full border border-[#E8DED8] rounded-xl pl-9 pr-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#8B7355]/30" />
               </div>
               <div className="flex gap-2">
-                {[{ id: "all", label: "All" }, { id: "pending", label: "⏳ Pending" }, { id: "claimed", label: "✅ Claimed" }, { id: "expired", label: "❌ Expired" }].map(f => (
+                {[{ id: "all", label: "All" }, { id: "pending", label: "⏳ Pending" }, { id: "claimed", label: "✅ Claimed" }, { id: "expired", label: "❌ Expired" }, { id: "voided", label: "🚫 Voided" }].map(f => (
                   <button key={f.id} onClick={() => setRedeemFilter(f.id)}
                     className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${redeemFilter === f.id ? "bg-[#5C4A3A] text-white" : "bg-white border border-[#E8DED8] text-[#8B7355] hover:bg-[#F5EBE8]"}`}>
                     {f.label}
@@ -815,10 +862,17 @@ export default function AdminRewardsRedemptions() {
                             <td className="px-4 py-3 font-medium text-[#5C4A3A]">{r.points_spent}</td>
                             <td className="px-4 py-3 text-[#8B7355] whitespace-nowrap">{format(new Date(r.created_date), "MMM d, HH:mm")}</td>
                             <td className="px-4 py-3"><Badge className={`${cfg.color} border text-xs`}>{cfg.label}</Badge></td>
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 flex gap-1">
                               {r.status === "pending" && (
-                                <Button size="sm" onClick={() => handleQuickClaim(r)}
-                                  className="bg-green-600 hover:bg-green-700 rounded-lg h-7 text-xs px-3">Claim</Button>
+                                <>
+                                  <Button size="sm" onClick={() => handleQuickClaim(r)}
+                                    className="bg-green-600 hover:bg-green-700 rounded-lg h-7 text-xs px-3">Claim</Button>
+                                  <Button size="sm" onClick={() => setVoidingRedemption(r)}
+                                    className="bg-red-700 hover:bg-red-800 text-white rounded-lg h-7 text-xs px-3" title="Void as fraudulent"><Ban className="h-3 w-3" /></Button>
+                                </>
+                              )}
+                              {r.status === "voided" && r.void_reason && (
+                                <span className="text-[10px] text-red-600 max-w-[140px] truncate block" title={r.void_reason}>{r.void_reason}</span>
                               )}
                             </td>
                           </tr>
@@ -982,11 +1036,19 @@ export default function AdminRewardsRedemptions() {
               {savingSettings ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Saving...</> :
                settingsSaved  ? <><Check className="h-4 w-4 mr-2" /> Saved!</>                   :
                <><Save className="h-4 w-4 mr-2" /> Save All Settings</>}
-            </Button>
-          </div>
-        )}
+               </Button>
+               </div>
+               )}
 
-      </div>
-    </div>
-  );
-}
+               </div>
+
+               {/* Void Redemption Dialog */}
+               <VoidRedemptionDialog
+               redemption={voidingRedemption}
+               onConfirm={handleVoidRedemption}
+               onClose={() => setVoidingRedemption(null)}
+               pending={voidPending}
+               />
+               </div>
+               );
+               }

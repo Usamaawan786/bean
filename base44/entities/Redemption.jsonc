@@ -23,10 +23,24 @@
       "enum": [
         "pending",
         "claimed",
-        "expired"
+        "expired",
+        "voided"
       ],
       "default": "pending",
-      "description": "Redemption status"
+      "description": "Redemption status. 'voided' = admin cancelled a fraudulent redemption so it can never be honoured at the counter."
+    },
+    "void_reason": {
+      "type": "string",
+      "description": "Reason recorded when the redemption was voided (fraud, system error, etc.)"
+    },
+    "voided_by": {
+      "type": "string",
+      "description": "Email of the admin who voided this redemption"
+    },
+    "voided_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the redemption was voided"
     }
   },
   "required": [

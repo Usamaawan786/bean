@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Search, CheckCircle, XCircle, Clock, Gift, AlertTriangle, Loader2, Sparkles } from "lucide-react";
+import { Search, CheckCircle, XCircle, Clock, Gift, AlertTriangle, Loader2, Sparkles, Ban } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ const STATUS_CONFIG = {
   pending: { label: "Pending", color: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500", icon: Clock },
   claimed: { label: "Fulfilled", color: "bg-green-100 text-green-700 border-green-200", dot: "bg-green-500", icon: CheckCircle },
   expired: { label: "Expired", color: "bg-red-100 text-red-600 border-red-200", dot: "bg-red-500", icon: XCircle },
+  voided:  { label: "Voided (Fraud)", color: "bg-red-900 text-white border-red-800", dot: "bg-red-700", icon: Ban },
 };
 
 export default function RedemptionVerifier() {
@@ -33,6 +34,7 @@ export default function RedemptionVerifier() {
     pending: redemptions.filter(r => r.status === "pending").length,
     claimed: redemptions.filter(r => r.status === "claimed").length,
     expired: redemptions.filter(r => r.status === "expired").length,
+    voided: redemptions.filter(r => r.status === "voided").length,
   }), [redemptions]);
 
   const filtered = useMemo(() => {
@@ -108,9 +110,11 @@ export default function RedemptionVerifier() {
         ? "pending"
         : verifyResult.reason === "not_found"
           ? "not_found"
-          : verifyResult.reason === "expired" || verifyResult.redemption.status === "expired"
-            ? "expired"
-            : "already_claimed"
+          : verifyResult.reason === "voided" || verifyResult.redemption.status === "voided"
+            ? "voided"
+            : verifyResult.reason === "expired" || verifyResult.redemption.status === "expired"
+              ? "expired"
+              : "already_claimed"
     : null;
 
   return (
@@ -158,6 +162,14 @@ export default function RedemptionVerifier() {
                   {resultState === "expired" && (
                     <div className="flex items-center gap-2 mb-4 text-red-600 font-bold"><XCircle className="h-6 w-6" /> Expired — Do Not Honour</div>
                   )}
+                  {resultState === "voided" && (
+                    <>
+                      <div className="flex items-center gap-2 mb-2 text-red-700 font-bold text-lg"><Ban className="h-6 w-6" /> 🚫 VOIDED (FRAUDULENT) — DO NOT HONOUR</div>
+                      {verifyResult.redemption?.void_reason && (
+                        <div className="mb-4 bg-red-50 border border-red-300 rounded-xl p-3 text-sm text-red-700"><strong>Void reason:</strong> {verifyResult.redemption.void_reason}</div>
+                      )}
+                    </>
+                  )}
                   <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                     <div><p className="text-[#8B7355] text-xs">Code</p><p className="font-mono font-bold text-[#5C4A3A] tracking-widest">{verifyResult.redemption.redemption_code}</p></div>
                     <div><p className="text-[#8B7355] text-xs">Reward</p><p className="font-bold text-[#5C4A3A]">{verifyResult.redemption.reward_name}</p></div>
@@ -179,11 +191,12 @@ export default function RedemptionVerifier() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-4 gap-3">
         {[
           { label: "Pending", value: stats.pending, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
           { label: "Fulfilled", value: stats.claimed, color: "text-green-600", bg: "bg-green-50 border-green-200" },
           { label: "Expired", value: stats.expired, color: "text-red-500", bg: "bg-red-50 border-red-200" },
+          { label: "Voided", value: stats.voided, color: "text-red-700", bg: "bg-red-100 border-red-300" },
         ].map(s => (
           <div key={s.label} className={`rounded-2xl border p-4 text-center ${s.bg}`}>
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>

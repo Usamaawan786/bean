@@ -34,6 +34,15 @@ Deno.serve(async (req) => {
       redemption_code: r.redemption_code
     };
 
+    // Voided redemptions (fraudulent) must never be honoured.
+    if (r.status === 'voided') {
+      return Response.json({
+        valid: false,
+        reason: 'voided',
+        redemption: { ...safe, status: 'voided', void_reason: r.void_reason }
+      });
+    }
+
     if (!claim) {
       return Response.json({
         valid: r.status === 'pending',
