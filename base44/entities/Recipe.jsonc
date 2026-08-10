@@ -23,6 +23,11 @@
       "default": 0,
       "description": "Percentage loss/waste applied on top of required qty (0-100)"
     },
+    "is_admin_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this recipe row is hidden from managers \u2014 only admins can view, edit, or delete it."
+    },
     "notes": {
       "type": "string"
     }
@@ -40,9 +45,18 @@
           }
         },
         {
-          "user_condition": {
-            "role": "manager"
-          }
+          "$and": [
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "data.is_admin_only": {
+                "$ne": true
+              }
+            }
+          ]
         }
       ]
     },
@@ -54,9 +68,18 @@
           }
         },
         {
-          "user_condition": {
-            "role": "manager"
-          }
+          "$and": [
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "data.is_admin_only": {
+                "$ne": true
+              }
+            }
+          ]
         }
       ]
     },
@@ -68,9 +91,18 @@
           }
         },
         {
-          "user_condition": {
-            "role": "manager"
-          }
+          "$and": [
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "data.is_admin_only": {
+                "$ne": true
+              }
+            }
+          ]
         }
       ]
     },
@@ -82,9 +114,18 @@
           }
         },
         {
-          "user_condition": {
-            "role": "manager"
-          }
+          "$and": [
+            {
+              "user_condition": {
+                "role": "manager"
+              }
+            },
+            {
+              "data.is_admin_only": {
+                "$ne": true
+              }
+            }
+          ]
         }
       ]
     }
