@@ -60,17 +60,17 @@ export default function Rewards() {
     queryKey: ["leaderboard-users"],
     queryFn: () => base44.entities.User.list(),
     enabled: activeTab === "leaderboard",
-    staleTime: 300000,
+    staleTime: 300000
   });
 
-  const leaderboardUserMap = leaderboardUsers.reduce((acc, u) => { acc[u.email] = u; return acc; }, {});
+  const leaderboardUserMap = leaderboardUsers.reduce((acc, u) => {acc[u.email] = u;return acc;}, {});
   const getLeaderboardName = (c) => {
     const u = leaderboardUserMap[c.created_by];
     return u?.display_name || u?.full_name || c.created_by?.split("@")[0] || "Coffee Lover";
   };
 
   const topCustomers = allCustomers.slice(0, 10);
-  const userRank = allCustomers.findIndex(c => c.created_by === user?.email) + 1;
+  const userRank = allCustomers.findIndex((c) => c.created_by === user?.email) + 1;
 
   const redeemMutation = useMutation({
     mutationFn: async (reward) => {
@@ -91,7 +91,7 @@ export default function Rewards() {
         cups_redeemed: newCups
       });
 
-      setCustomer(prev => ({
+      setCustomer((prev) => ({
         ...prev,
         points_balance: newBalance,
         cups_redeemed: newCups
@@ -116,9 +116,9 @@ export default function Rewards() {
   const categories = ["all", "Drinks", "Food"];
 
   const rewardList = Array.isArray(rewards) ? rewards : [];
-  const filteredRewards = selectedCategory === "all"
-    ? rewardList
-    : rewardList.filter(r => r.category === selectedCategory);
+  const filteredRewards = selectedCategory === "all" ?
+  rewardList :
+  rewardList.filter((r) => r.category === selectedCategory);
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-b from-[#F5F1ED] to-[#EBE5DF]">
@@ -128,19 +128,19 @@ export default function Rewards() {
           <motion.div
             animate={{ x: [0, 60, 0], y: [0, 40, 0] }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute top-10 right-5 w-64 h-64 bg-[#D4C4B0]/40 rounded-full blur-3xl"
-          />
+            className="absolute top-10 right-5 w-64 h-64 bg-[#D4C4B0]/40 rounded-full blur-3xl" />
+          
           <motion.div
             animate={{ x: [0, -50, 0], y: [0, -30, 0] }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute bottom-5 left-10 w-56 h-56 bg-[#C9B8A6]/30 rounded-full blur-3xl"
-          />
+            className="absolute bottom-5 left-10 w-56 h-56 bg-[#C9B8A6]/30 rounded-full blur-3xl" />
+          
         </div>
         <div className="relative max-w-lg mx-auto px-5 pt-6 pb-8">
           <Link
             to={createPageUrl("Home")}
-            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors"
-          >
+            className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm mb-4 hover:text-white transition-colors">
+            
             <ArrowLeft className="h-4 w-4" />
             Back
           </Link>
@@ -148,16 +148,16 @@ export default function Rewards() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-6 gap-3"
-          >
+            className="flex items-center justify-between mb-6 gap-3">
+            
             <div className="min-w-0">
               <h1 className="text-2xl font-bold">Rewards</h1>
               <p className="text-[#E8DED8] text-sm mt-1">Treat yourself!</p>
             </div>
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="bg-white/10 backdrop-blur-lg rounded-2xl px-4 py-3 border border-white/20 shadow-lg flex-shrink-0"
-            >
+              className="bg-white/10 backdrop-blur-lg rounded-2xl px-4 py-3 border border-white/20 shadow-lg flex-shrink-0">
+              
               <div className="flex items-center gap-2">
                 <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}>
                   <Star className="h-4 w-4 text-amber-300 fill-amber-300" />
@@ -169,12 +169,12 @@ export default function Rewards() {
           </motion.div>
 
           {/* Tier Badge */}
-          {customer && (
-            <TierBadge
-              tier={customer.tier || "Bronze"}
-              totalPoints={customer.total_points_earned || 0}
-            />
-          )}
+          {customer &&
+          <TierBadge
+            tier={customer.tier || "Bronze"}
+            totalPoints={customer.total_points_earned || 0} />
+
+          }
         </div>
       </div>
 
@@ -183,103 +183,103 @@ export default function Rewards() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="max-w-lg mx-auto px-5 py-4"
-      >
+        className="max-w-lg mx-auto px-5 py-4">
+        
         <div className="flex gap-1.5 bg-white rounded-2xl p-1.5 border border-[#E8DED8] shadow-sm">
           {[
-            { key: "rewards", label: "Rewards", icon: Gift },
-            { key: "tiers", label: "Tiers", icon: Medal },
-            { key: "leaderboard", label: "Top", icon: Trophy },
-          ].map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${activeTab === key
-                ? "bg-[#8B7355] text-white shadow-sm"
-                : "text-[#5C4A3A] hover:bg-[#F5EBE8]"
-              }`}
-            >
+          { key: "rewards", label: "Rewards", icon: Gift },
+          { key: "tiers", label: "Tiers", icon: Medal },
+          { key: "leaderboard", label: "Top", icon: Trophy }].
+          map(({ key, label, icon: Icon }) =>
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`flex-1 py-2.5 px-2 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 ${activeTab === key ?
+            "bg-[#8B7355] text-white shadow-sm" :
+            "text-[#5C4A3A] hover:bg-[#F5EBE8]"}`
+            }>
+            
               <Icon className="h-3.5 w-3.5" />
               {label}
             </button>
-          ))}
+          )}
         </div>
       </motion.div>
 
       {/* Tiers tab content */}
-      {activeTab === "tiers" && (
-        <div className="max-w-lg mx-auto px-5 pb-24 pt-2">
+      {activeTab === "tiers" &&
+      <div className="max-w-lg mx-auto px-5 pb-24 pt-2">
           <AllTiersPanel
-            currentTier={customer?.tier || "Bronze"}
-            totalPoints={customer?.total_points_earned || 0}
-          />
+          currentTier={customer?.tier || "Bronze"}
+          totalPoints={customer?.total_points_earned || 0} />
+        
         </div>
-      )}
+      }
 
       {/* Categories - Only show for rewards tab */}
-      {activeTab === "rewards" && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto"
-        >
+      {activeTab === "rewards" &&
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.3 }}
+        className="max-w-lg mx-auto px-5 pb-4 overflow-x-auto">
+        
           <div className="flex gap-2">
-            {categories.map((cat, idx) => (
-              <motion.button
-                key={cat}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat
-                    ? "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md"
-                    : "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0] hover:shadow-md"
-                  }`}
-              >
+            {categories.map((cat, idx) =>
+          <motion.button
+            key={cat}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSelectedCategory(cat)}
+            className={`px-5 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition-all ${selectedCategory === cat ?
+            "bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white shadow-md" :
+            "bg-white text-[#5C4A3A] border border-[#E8DED8] hover:border-[#D4C4B0] hover:shadow-md"}`
+            }>
+            
                 {cat === "all" ? "All Rewards" : cat}
               </motion.button>
-            ))}
+          )}
           </div>
         </motion.div>
-      )}
+      }
 
       {/* Main Content */}
       {activeTab !== "tiers" && <div className="max-w-lg mx-auto px-5 pb-24 space-y-6">
-        {activeTab === "rewards" ? (
-          <>
+        {activeTab === "rewards" ?
+        <>
             {/* Tier Benefits */}
-            {customer && (
-              <TierBenefits tier={customer.tier || "Bronze"} />
-            )}
+            {customer &&
+          <TierBenefits tier={customer.tier || "Bronze"} />
+          }
 
             {/* Progress to Next Tier */}
-            {customer && getTierData(customer.tier).nextTier && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-3xl border border-[#E8DED8] p-6"
-              >
+            {customer && getTierData(customer.tier).nextTier &&
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-3xl border border-[#E8DED8] p-6">
+            
                 <div className="flex items-center gap-2 mb-4">
                   <TrendingUp className="h-5 w-5 text-[#8B7355]" />
                   <h3 className="font-bold text-[#5C4A3A]">Next Tier Progress</h3>
                 </div>
 
                 {(() => {
-                  const currentTierData = getTierData(customer.tier);
-                  const totalPoints = customer.total_points_earned || 0;
-                  const pointsNeeded = currentTierData.pointsNeeded;
-                  const progress = (totalPoints / pointsNeeded) * 100;
-                  const remaining = pointsNeeded - totalPoints;
+              const currentTierData = getTierData(customer.tier);
+              const totalPoints = customer.total_points_earned || 0;
+              const pointsNeeded = currentTierData.pointsNeeded;
+              const progress = totalPoints / pointsNeeded * 100;
+              const remaining = pointsNeeded - totalPoints;
 
-                  return (
-                    <>
+              return (
+                <>
                       <div className="relative h-3 bg-[#F5EBE8] rounded-full overflow-hidden mb-3">
                         <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(progress, 100)}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                          className="absolute h-full bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-full"
-                        />
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(progress, 100)}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="absolute h-full bg-gradient-to-r from-[#8B7355] to-[#6B5744] rounded-full" />
+                    
                       </div>
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-[#8B7355]">
@@ -289,60 +289,60 @@ export default function Rewards() {
                           {remaining} more to {currentTierData.nextTier}
                         </span>
                       </div>
-                    </>
-                  );
-                })()}
+                    </>);
+
+            })()}
               </motion.div>
-            )}
+          }
 
             {/* Section Title */}
             <div>
               <h2 className="text-xl font-bold text-[#5C4A3A] mb-1">Available Rewards</h2>
               <p className="text-sm text-[#8B7355]">Redeem your points for treats</p>
             </div>
-            {isLoading ? (
-              <div className="grid grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map(i => (
-                  <div key={i} className="aspect-[3/4] bg-stone-200 rounded-3xl animate-pulse" />
-                ))}
-              </div>
-            ) : filteredRewards.length === 0 ? (
-              <div className="text-center py-12">
+            {isLoading ?
+          <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) =>
+            <div key={i} className="aspect-[3/4] bg-stone-200 rounded-3xl animate-pulse" />
+            )}
+              </div> :
+          filteredRewards.length === 0 ?
+          <div className="text-center py-12">
                 <Gift className="h-12 w-12 text-stone-300 mx-auto mb-4" />
                 <p className="text-stone-500">No rewards available in this category</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
+              </div> :
+
+          <div className="grid grid-cols-2 gap-4">
                 <AnimatePresence>
-                  {filteredRewards.map((reward, i) => (
-                    <motion.div
-                      key={reward.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                    >
+                  {filteredRewards.map((reward, i) =>
+              <motion.div
+                key={reward.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}>
+                
                       <RewardCard
-                        reward={reward}
-                        userPoints={customer?.points_balance || 0}
-                        onRedeem={() => redeemMutation.mutate(reward)}
-                        isRedeeming={redeemMutation.isPending}
-                      />
+                  reward={reward}
+                  userPoints={customer?.points_balance || 0}
+                  onRedeem={() => redeemMutation.mutate(reward)}
+                  isRedeeming={redeemMutation.isPending} />
+                
                     </motion.div>
-                  ))}
+              )}
                 </AnimatePresence>
               </div>
-            )}
-          </>
-        ) : (
-          /* Leaderboard Teaser */
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
+          }
+          </> : (
+
+        /* Leaderboard Teaser */
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4">
+          
             {/* Your rank teaser */}
-            {customer && userRank > 0 && (
-              <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white rounded-3xl p-5 shadow-lg flex items-center justify-between">
+            {customer && userRank > 0 &&
+          <div className="bg-gradient-to-r from-[#8B7355] to-[#6B5744] text-white rounded-3xl p-5 shadow-lg flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
                     <Trophy className="h-6 w-6" />
@@ -357,18 +357,18 @@ export default function Rewards() {
                   <div className="text-2xl font-bold">{customer.total_points_earned || 0}</div>
                 </div>
               </div>
-            )}
+          }
 
             {/* Top 3 preview */}
-            {loadingLeaderboard ? (
-              <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 bg-white rounded-2xl animate-pulse" />)}</div>
-            ) : (
-              <div className="space-y-2">
+            {loadingLeaderboard ?
+          <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-16 bg-white rounded-2xl animate-pulse" />)}</div> :
+
+          <div className="space-y-2">
                 {topCustomers.slice(0, 3).map((c, i) => {
-                  const medals = ["🥇", "🥈", "🥉"];
-                  const isMe = c.created_by === user?.email;
-                  return (
-                    <div key={c.id} className={`bg-white rounded-2xl border px-4 py-3 flex items-center gap-3 ${isMe ? "border-[#8B7355]" : "border-[#E8DED8]"}`}>
+              const medals = ["🥇", "🥈", "🥉"];
+              const isMe = c.created_by === user?.email;
+              return (
+                <div key={c.id} className={`bg-white rounded-2xl border px-4 py-3 flex items-center gap-3 ${isMe ? "border-[#8B7355]" : "border-[#E8DED8]"}`}>
                       <span className="text-xl w-8 text-center">{medals[i]}</span>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-[#5C4A3A] text-sm truncate">
@@ -380,32 +380,32 @@ export default function Rewards() {
                         <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                         <span className="font-bold text-[#5C4A3A] text-sm">{c.total_points_earned || 0}</span>
                       </div>
-                    </div>
-                  );
-                })}
+                    </div>);
+
+            })}
               </div>
-            )}
+          }
 
             <Link to="/Leaderboard">
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full bg-[#F5EBE8] hover:bg-[#EDE3DF] border border-[#E8DED8] text-[#8B7355] font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors"
-              >
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-[#F5EBE8] hover:bg-[#EDE3DF] border border-[#E8DED8] text-[#8B7355] font-semibold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors">
+              
                 <Trophy className="h-4 w-4" />
                 View Full Leaderboard
               </motion.div>
             </Link>
-          </motion.div>
-        )}
+          </motion.div>)
+        }
       </div>}
 
       {/* Rewards disclaimer — points terms */}
       <div className="max-w-lg mx-auto px-5 pb-28 pt-2">
         <div className="bg-white/60 rounded-2xl border border-[#E8DED8] p-4">
           <p className="text-[11px] font-semibold text-[#8B7355] mb-2 text-center">Bean Rewards — Terms & Conditions</p>
-          <p className="text-[10px] leading-relaxed text-[#A89B8C] text-center">
-            Bean Rewards points have no cash value, are non-transferable, and cannot be exchanged for cash or combined with other offers unless explicitly stated. Points are earned at Bean's discretion based on qualifying purchases and may be adjusted, suspended, or revoked at any time. Bean reserves the right to modify, suspend, or cancel the rewards program, alter earning rates, or change redemption values at any time without prior notice. Points and rewards may expire and are subject to availability. Bean retains full authority to revoke, remove, or reset any individual's reward points — in whole or in part — where fraud, misuse, system error, suspicious activity, or violation of these terms is suspected or identified, without liability to the member. Accounts found engaging in fraudulent activity, point farming, or abuse of the program may be suspended or terminated. Redemption of points does not guarantee product availability and is subject to these terms. Participation in the program constitutes acceptance of these terms.
+          <p className="text-[10px] leading-relaxed text-[#A89B8C] text-center">Bean Rewards points have no cash value, are non-transferable, and cannot be exchanged for cash or combined with other offers unless explicitly stated. Points are earned at Bean's discretion based on qualifying purchases and may be adjusted, suspended, or revoked at any time. Bean reserves the right to modify, suspend, or cancel the rewards program, alter earning rates, or change redemption values at any time without prior notice. Points and rewards may expire and are subject to availability. Bean retains full authority to revoke, remove, or reset any individual's reward points — in whole or in part — where fraud, misuse, system error, suspicious activity, or violation of these terms is suspected or identified, without liability to the member. Accounts found engaging in fraudulent activity, point farming, or abuse of the program may be suspended or terminated. Redemption of points does not guarantee product availability and is subject to these terms. All rewards get expired within 2 hours if not cpParticipation in the program constitutes acceptance of these terms.
+
           </p>
         </div>
       </div>
@@ -418,8 +418,8 @@ export default function Rewards() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", bounce: 0.5 }}
-              className="w-20 h-20 rounded-full bg-[#EDE8E3] flex items-center justify-center mx-auto mb-4"
-            >
+              className="w-20 h-20 rounded-full bg-[#EDE8E3] flex items-center justify-center mx-auto mb-4">
+              
               <Check className="h-10 w-10 text-[#8B7355]" />
             </motion.div>
             <h3 className="text-xl font-bold text-[#5C4A3A]">Reward Redeemed!</h3>
@@ -447,19 +447,19 @@ export default function Rewards() {
                 date: new Date().toLocaleString()
               })}
               variant="outline"
-              className="w-full mt-6 rounded-xl border-[#E8DED8] text-[#8B7355] hover:bg-[#F5EBE8] gap-2"
-            >
+              className="w-full mt-6 rounded-xl border-[#E8DED8] text-[#8B7355] hover:bg-[#F5EBE8] gap-2">
+              
               <Printer className="h-4 w-4" /> Print / Save Voucher
             </Button>
             <Button
               onClick={() => setSuccessDialog({ open: false, reward: null, code: "" })}
-              className="w-full mt-3 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]"
-            >
+              className="w-full mt-3 rounded-xl bg-[#8B7355] hover:bg-[#6B5744]">
+              
               Awesome!
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>);
+
 }
