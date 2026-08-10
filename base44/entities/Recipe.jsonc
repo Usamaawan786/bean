@@ -23,10 +23,10 @@
       "default": 0,
       "description": "Percentage loss/waste applied on top of required qty (0-100)"
     },
-    "is_admin_only": {
+    "is_locked": {
       "type": "boolean",
       "default": false,
-      "description": "When true, this recipe row is hidden from managers \u2014 only admins can view, edit, or delete it."
+      "description": "When true, this recipe row is locked \u2014 managers must enter a password to view its ingredient details."
     },
     "notes": {
       "type": "string"
@@ -45,18 +45,9 @@
           }
         },
         {
-          "$and": [
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            },
-            {
-              "data.is_admin_only": {
-                "$ne": true
-              }
-            }
-          ]
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
@@ -68,18 +59,9 @@
           }
         },
         {
-          "$and": [
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            },
-            {
-              "data.is_admin_only": {
-                "$ne": true
-              }
-            }
-          ]
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
@@ -91,18 +73,9 @@
           }
         },
         {
-          "$and": [
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            },
-            {
-              "data.is_admin_only": {
-                "$ne": true
-              }
-            }
-          ]
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     },
@@ -114,18 +87,9 @@
           }
         },
         {
-          "$and": [
-            {
-              "user_condition": {
-                "role": "manager"
-              }
-            },
-            {
-              "data.is_admin_only": {
-                "$ne": true
-              }
-            }
-          ]
+          "user_condition": {
+            "role": "manager"
+          }
         }
       ]
     }
