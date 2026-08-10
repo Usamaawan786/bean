@@ -43,6 +43,7 @@ export default function Receipt({
     margin: "1.5mm 0",
     fontFamily: FONT,
     fontSize: fs,
+    fontWeight: 700,
     color: "#000000",
     ...extra,
   });
@@ -52,7 +53,7 @@ export default function Receipt({
   const section = { marginBottom: "3mm" };
   const imgQr = (px) => ({ display: "block", width: px, height: px, margin: "1mm auto" });
   const imgApp = (px) => ({ display: "block", width: px, height: px, margin: "0 auto" });
-  const label = { fontFamily: FONT, fontSize: fs, color: "#000000" };
+  const label = { fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000" };
 
   return (
     <div id="receipt" style={{
@@ -71,7 +72,7 @@ export default function Receipt({
             style={{ display: "block", width: "14mm", height: "14mm", margin: "0 auto 1mm", objectFit: "contain" }} />
         )}
         <div style={{ fontFamily: FONT, fontSize: fsBrand, fontWeight: 700, letterSpacing: "1px", color: "#000000" }}>Bean</div>
-        <div style={{ fontFamily: FONT, fontSize: fsSm, fontStyle: "italic", color: "#000000" }}>More than just coffee, it's a community!</div>
+        <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, fontStyle: "italic", color: "#000000" }}>More than just coffee, it's a community!</div>
       </div>
 
       <div style={divider} />
@@ -103,11 +104,11 @@ export default function Receipt({
                 <span>{item.name}</span>
                 {hasDisc && <span style={{ color: "#cc0000", marginLeft: "2mm", whiteSpace: "nowrap" }}>-{pct}%</span>}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#000000" }}>
                 <span>
                   {hasDisc ? (
                     <>
-                      <span style={{ textDecoration: "line-through", color: "#666666" }}>{item.quantity} x {money(unitPrice)}</span>
+                      <span style={{ textDecoration: "line-through", fontWeight: 700, color: "#666666" }}>{item.quantity} x {money(unitPrice)}</span>
                       {" "}
                       <span>{item.quantity} x {money(effective)}</span>
                     </>
@@ -170,11 +171,11 @@ export default function Receipt({
           <div style={{ ...section, textAlign: "center" }}>
             <div style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, color: "#000000" }}>Earn Rewards</div>
             <img src={qrCodeUrl} alt="Rewards QR" style={imgQr(qrLg)} />
-            <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>Scan in the Bean Pakistan App to add points</div>
+            <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#000000" }}>Scan in the Bean Pakistan App to add points</div>
             <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#cc0000", marginTop: "0.5mm" }}>Valid for 2 hours only</div>
             {bill?.qrCodeId && (
               <>
-                <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>or enter code manually:</div>
+                <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#000000" }}>or enter code manually:</div>
                 <div style={{ fontFamily: FONT, fontSize: fs, fontWeight: 700, letterSpacing: "1px", wordBreak: "break-all", color: "#000000" }}>{bill.qrCodeId}</div>
               </>
             )}
@@ -190,11 +191,11 @@ export default function Receipt({
         <div style={{ display: "flex", justifyContent: "space-around", marginTop: "1mm" }}>
           <div style={{ textAlign: "center" }}>
             {iosQrUrl && <img src={iosQrUrl} alt="iOS" style={imgApp(qrSm)} />}
-            <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>iOS</div>
+            <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#000000" }}>iOS</div>
           </div>
           <div style={{ textAlign: "center" }}>
             {androidQrUrl && <img src={androidQrUrl} alt="Android" style={imgApp(qrSm)} />}
-            <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>Android</div>
+            <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#000000" }}>Android</div>
           </div>
         </div>
       </div>
@@ -204,7 +205,7 @@ export default function Receipt({
       {/* Footer */}
       <div style={{ textAlign: "center" }}>
         <div style={label}>Thank you for your purchase!</div>
-        <div style={{ fontFamily: FONT, fontSize: fsSm, color: "#000000" }}>Bean — More than just coffee, it's a community!</div>
+        <div style={{ fontFamily: FONT, fontSize: fsSm, fontWeight: 700, color: "#000000" }}>Bean — More than just coffee, it's a community!</div>
         <div style={{ height: "6mm" }} />
       </div>
     </div>
