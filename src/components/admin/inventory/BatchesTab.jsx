@@ -10,14 +10,15 @@ import { Plus, Trash2, Factory, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-export default function BatchesTab() {
+export default function BatchesTab({ user }) {
   const queryClient = useQueryClient();
+  const isAdmin = user?.role === "admin";
   const [showNew, setShowNew] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [showProduce, setShowProduce] = useState(false);
   const [multiplier, setMultiplier] = useState("1");
   const [newBatch, setNewBatch] = useState({ name: "", output_inventory_item_id: "", batch_yield_qty_base_unit: "" });
-  const [newRow, setNewRow] = useState({ inventory_item_id: "", required_qty_base_unit: "", loss_pct: "0" });
+  const [newRow, setNewRow] = useState({ inventory_item_id: "", required_qty_base_unit: "", loss_pct: "0", is_admin_only: false });
 
   const { data: batches = [] } = useQuery({ queryKey: ["composite-batches"], queryFn: () => base44.entities.CompositeBatch.list("-created_date") });
   const { data: ingredients = [] } = useQuery({ queryKey: ["inventory-items"], queryFn: () => base44.entities.InventoryItem.list() });
@@ -33,7 +34,7 @@ export default function BatchesTab() {
   });
   const addRowMutation = useMutation({
     mutationFn: (data) => base44.entities.Recipe.create(data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["batch-recipe-rows", selectedBatch.id] }); setNewRow({ inventory_item_id: "", required_qty_base_unit: "", loss_pct: "0" }); }
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["batch-recipe-rows", selectedBatch.id] }); setNewRow({ inventory_item_id: "", required_qty_base_unit: "", loss_pct: "0", is_admin_only: false }); }
   });
   const deleteRowMutation = useMutation({
     mutationFn: (id) => base44.entities.Recipe.delete(id),
@@ -68,7 +69,8 @@ export default function BatchesTab() {
       composite_batch_id: selectedBatch.id,
       inventory_item_id: newRow.inventory_item_id,
       required_qty_base_unit: parseFloat(newRow.required_qty_base_unit),
-      loss_pct: parseFloat(newRow.loss_pct) || 0
+      loss_pct: parseFloat(newRow.loss_pct) || 0,
+      is_admin_only: !!newRow.is_admin_only
     });
   };
 
@@ -83,7 +85,7 @@ export default function BatchesTab() {
             <div key={row.id} className="flex items-center justify-between bg-white rounded-xl border border-[#E8DED8] p-3">
               <div>
                 <p className="text-sm font-medium text-[#5C4A3A]">{itemName(row.inventory_item_id)}</p>
-                <p className="text-xs text-[#8B7355]">{row.required_qty_base_unit} {itemUnit(row.inventory_item_id)} {row.loss_pct > 0 ? `· ${row.loss_pct}% loss` : ""}</p>
+                <p className="text-xs text-[#8B7355]">{row.required_qty_base_unit} {itemUnit(row.inventory_item_id)} {row.loss_pct > 0 ? `· ${row.loss_pct}% loss` : ""} {row.is_admin_only && <span className="ml-1 text-[#5C4A3A] font-medium bg-[#F5EBE8] px-1.5 py-0.5 rounded">Admin only</span>}</p>
               </div>
               <Button size="sm" variant="outline" className="text-red-500" onClick={() => deleteRowMutation.mutate(row.id)}><Trash2 className="h-4 w-4" /></Button>
             </div>
@@ -101,6 +103,12 @@ export default function BatchesTab() {
             <Input type="number" step="0.01" placeholder="Qty (base unit)" value={newRow.required_qty_base_unit} onChange={e => setNewRow(r => ({ ...r, required_qty_base_unit: e.target.value }))} />
             <Input type="number" step="0.1" placeholder="Loss %" value={newRow.loss_pct} onChange={e => setNewRow(r => ({ ...r, loss_pct: e.target.value }))} />
           </div>
+          {isAdmin && (
+            <label className="flex items-center gap-2 text-xs text-[#5C4A3A] cursor-pointer">
+              <input type="checkbox" checked={newRow.is_admin_only} onChange={e => setNewRow(r => ({ ...r, is_admin_only: e.target.checked }))} className="h-4 w-4 rounded border-[#D4C4B0]" />
+              <span>Admin only — hide from managers</span>
+            </label>
+          )}
           <Button onClick={handleAddRow} className="w-full bg-[#8B7355] hover:bg-[#6B5744]"><Plus className="h-4 w-4 mr-2" />Add</Button>
         </div>
 

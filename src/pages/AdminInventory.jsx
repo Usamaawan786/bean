@@ -11,6 +11,8 @@ import BatchesTab from "@/components/admin/inventory/BatchesTab";
 import NegativeBalancePanel from "@/components/admin/inventory/NegativeBalancePanel";
 import CatalogTab from "@/components/admin/catalog/CatalogTab";
 import DemandForecastTab from "@/components/admin/inventory/DemandForecastTab";
+import AuditTab from "@/components/admin/inventory/AuditTab";
+import LedgerTab from "@/components/admin/inventory/LedgerTab";
 
 export default function AdminInventory() {
   const [user, setUser] = useState(null);
@@ -51,20 +53,24 @@ export default function AdminInventory() {
         <NegativeBalancePanel />
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid grid-cols-6 w-full bg-white rounded-xl p-1">
+          <TabsList className="flex flex-wrap gap-1 w-full bg-white rounded-xl p-1">
             <TabsTrigger value="catalog">Catalog</TabsTrigger>
             <TabsTrigger value="ingredients">Ingredients</TabsTrigger>
             <TabsTrigger value="recipes">Recipes</TabsTrigger>
             <TabsTrigger value="modifiers">Modifiers</TabsTrigger>
             <TabsTrigger value="batches">Batches</TabsTrigger>
             <TabsTrigger value="forecast">Forecast</TabsTrigger>
+            <TabsTrigger value="ledger">Ledger</TabsTrigger>
+            <TabsTrigger value="audit">Audit</TabsTrigger>
           </TabsList>
           <TabsContent value="catalog" className="mt-4"><CatalogTab /></TabsContent>
           <TabsContent value="ingredients" className="mt-4"><IngredientsTab /></TabsContent>
-          <TabsContent value="recipes" className="mt-4"><RecipesTab /></TabsContent>
+          <TabsContent value="recipes" className="mt-4"><RecipesTab user={user} /></TabsContent>
           <TabsContent value="modifiers" className="mt-4"><ModifiersTab /></TabsContent>
-          <TabsContent value="batches" className="mt-4"><BatchesTab /></TabsContent>
+          <TabsContent value="batches" className="mt-4"><BatchesTab user={user} /></TabsContent>
           <TabsContent value="forecast" className="mt-4"><DemandForecastTab /></TabsContent>
+          <TabsContent value="ledger" className="mt-4"><LedgerTab /></TabsContent>
+          <TabsContent value="audit" className="mt-4"><AuditTab /></TabsContent>
         </Tabs>
       </div>
     </div>
