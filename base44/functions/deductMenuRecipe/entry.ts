@@ -7,6 +7,18 @@ function roundQty(n) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+
+    let user;
+    try {
+      user = await base44.auth.me();
+    } catch (e) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+    const allowedRoles = ['admin', 'super_admin', 'manager', 'cashier'];
+    if (!user || !allowedRoles.includes(user.role)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { sale_id } = await req.json();
     if (!sale_id) return Response.json({ error: 'sale_id is required' }, { status: 400 });
 
