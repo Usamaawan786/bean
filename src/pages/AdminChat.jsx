@@ -19,7 +19,7 @@ function formatMsgTime(dateStr) {
     const today = new Date();
     const isToday = msgDate.toDateString() === today.toDateString();
     return isToday ? format(msgDate, "h:mm a") : format(msgDate, "MMM d, h:mm a");
-  } catch { return ""; }
+  } catch (e) { return ""; }
 }
 
 function FileAttachment({ url, isFromAdmin }) {
