@@ -96,7 +96,19 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No message data provided' }, { status: 400 });
     }
 
-    const { conversation_id, sender_role, sender_email, sender_name, content, file_url } = msgData;
+    // Security: re-fetch the ChatMessage from the database by id to confirm this is a real
+    // persisted record and not a fabricated direct POST. Entity automations include the
+    // entity id in the payload; direct HTTP callers cannot forge a valid id.
+    const messageId = msgData.id;
+    if (!messageId) {
+      return Response.json({ error: 'Missing message id' }, { status: 400 });
+    }
+    const realMsg = await base44.asServiceRole.entities.ChatMessage.get(messageId);
+    if (!realMsg) {
+      return Response.json({ error: 'Message not found' }, { status: 404 });
+    }
+
+    const { conversation_id, sender_role, sender_email, sender_name, content, file_url } = realMsg;
 
     if (!conversation_id || !sender_role) {
       return Response.json({ error: 'Missing conversation_id or sender_role' }, { status: 400 });
@@ -107,6 +119,19 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, message: "Unknown sender_role, skipping" });
     }
 
+    // Fetch admin users once — used for anti-spoofing verification and recipient routing
+    const adminUsers = await base44.asServiceRole.entities.User.filter({ role: "admin" });
+    const adminEmails = new Set(adminUsers.map(u => u.email).filter(Boolean));
+
+    // Anti-spoofing: a message claiming sender_role="admin" must come from a real admin
+    // email. RLS lets regular users create messages only with their own sender_email but
+    // does not restrict the sender_role field — without this check a non-admin could set
+    // sender_role="admin" and trigger "Bean Support" push notifications (phishing).
+    if (sender_role === "admin" && !adminEmails.has(sender_email)) {
+      console.log(`[notifyChatMessage] sender_role=admin but sender_email not an admin, rejecting: ${sender_email}`);
+      return Response.json({ error: 'Forbidden: sender is not an admin' }, { status: 403 });
+    }
+
     console.log(`[notifyChatMessage] sender_role=${sender_role}, sender_email=${sender_email}, conv_id=${conversation_id}`);
 
     // Determine the EXACT set of recipient emails — one email for user path, admin emails for user→admin path
@@ -114,7 +139,6 @@ Deno.serve(async (req) => {
 
     if (sender_role === "admin") {
       // Admin sent a message → notify ONLY the specific user of this conversation
-      // Use get() with the conversation_id directly
       const conv = await base44.asServiceRole.entities.Conversation.get(conversation_id);
 
       if (!conv || !conv.user_email) {
@@ -125,9 +149,6 @@ Deno.serve(async (req) => {
       const userEmail = conv.user_email;
 
       // Safety: never notify an admin back when they are also the conversation user
-      const adminUsers = await base44.asServiceRole.entities.User.filter({ role: "admin" });
-      const adminEmails = new Set(adminUsers.map(u => u.email).filter(Boolean));
-
       if (adminEmails.has(userEmail)) {
         console.log(`[notifyChatMessage] conversation user_email is an admin, skipping: ${userEmail}`);
         return Response.json({ success: true, message: "User is admin, skipping" });
@@ -138,11 +159,10 @@ Deno.serve(async (req) => {
 
     } else {
       // User sent a message → notify ONLY admins, never the sending user
-      const adminUsers = await base44.asServiceRole.entities.User.filter({ role: "admin" });
-      const adminEmails = adminUsers.map(u => u.email).filter(Boolean);
+      const adminEmailList = adminUsers.map(u => u.email).filter(Boolean);
 
       // Strictly exclude the sender from admin list (in case an admin is messaging from user role)
-      recipientEmails = adminEmails.filter(email => email !== sender_email);
+      recipientEmails = adminEmailList.filter(email => email !== sender_email);
       console.log(`[notifyChatMessage] User→Admin: will notify ${recipientEmails.length} admin(s), sender excluded`);
     }
 

@@ -4,10 +4,11 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    // Allow scheduled automation (no user) OR an admin invoking manually.
-    // Block any non-admin user from triggering directly.
+    // Admin-only: the scheduled automation runs with an admin/service context, and manual
+    // invocations require an admin. Block anonymous callers (no user) and non-admins from
+    // triggering flash drop state transitions directly.
     const user = await base44.auth.me();
-    if (user && user.role !== 'admin') {
+    if (!user || user.role !== 'admin') {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 

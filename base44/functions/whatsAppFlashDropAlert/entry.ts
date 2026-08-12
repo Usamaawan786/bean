@@ -37,8 +37,16 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json();
-    const drop = body?.data;
+    const payload = body?.data;
 
+    if (!payload || !payload.id) {
+      return Response.json({ skipped: true, reason: 'No drop data' });
+    }
+
+    // Security: re-fetch the FlashDrop from the database to confirm this is a real persisted
+    // record with status="active", not a fabricated direct POST. Only a real active drop
+    // (set by an admin via RLS) should trigger a mass WhatsApp broadcast to all users.
+    const drop = await base44.asServiceRole.entities.FlashDrop.get(payload.id);
     if (!drop || drop.status !== 'active') {
       return Response.json({ skipped: true, reason: 'Drop not active' });
     }
