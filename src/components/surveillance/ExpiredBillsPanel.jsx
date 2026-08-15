@@ -81,7 +81,7 @@ export default function ExpiredBillsPanel({ sales }) {
           <AlertTriangle className="h-4 w-4 text-red-500" /> Expired Bills Awaiting Re-allocation ({expired.length})
         </h3>
         <p className="text-xs text-[#8B7355] mb-3">
-          These bills passed the 2-hour scan window without being scanned. Use "Re-allocate" to award the same points to an upset customer — every re-allocation is logged in the permanent audit trail.
+          These bills passed the 3-hour scan window without being scanned. Use "Re-allocate" to award the same points to an upset customer — every re-allocation is logged in the permanent audit trail.
         </p>
         {expired.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700 text-center">
@@ -192,7 +192,7 @@ export default function ExpiredBillsPanel({ sales }) {
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Customer missed the 2-hour window and requested points be added"
+                  placeholder="e.g. Customer missed the 3-hour window and requested points be added"
                   rows={3}
                   className="w-full rounded-xl border border-[#E8DED8] px-3 py-2 text-sm focus:outline-none focus:border-[#8B7355] resize-none"
                 />

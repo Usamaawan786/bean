@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Re-allocates reward points from an expired (unscanned) bill to a customer.
-// Used when a customer missed the 2-hour scan window and is upset — an admin
+// Used when a customer missed the 3-hour scan window and is upset — an admin
 // can manually award the same points with a full audit trail.
 //
 // Authority: admin / super_admin only.

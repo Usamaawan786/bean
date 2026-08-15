@@ -95,7 +95,7 @@
     "qr_expires_at": {
       "type": "string",
       "format": "date-time",
-      "description": "When the QR code expires (2 hours after sale). Set authoritatively by the backend."
+      "description": "When the QR code expires (3 hours after sale). Set authoritatively by the backend."
     },
     "is_scanned": {
       "type": "boolean",

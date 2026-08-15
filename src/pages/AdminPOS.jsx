@@ -214,7 +214,7 @@ export default function AdminPOS() {
       const pkrPerPoint = pkrPerPointSetting;
       const basePoints = Math.floor(discountedSubtotal / pkrPerPoint);
       const pointsToAward = basePoints * liveMultiplier; // preview; backend overrides
-      const qrExpiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours
+      const qrExpiresAt = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(); // 3 hours
 
       // Use backend function (service role) to guarantee save
       const saveResp = await base44.functions.invoke('saveSale', {

@@ -55,10 +55,10 @@ Deno.serve(async (req) => {
     enrichedSale.points_awarded = basePoints * multiplier;
     enrichedSale.points_multiplier = multiplier;
 
-    // ── Authoritative 2-hour QR expiry (backend is source of truth) ──
+    // ── Authoritative 3-hour QR expiry (backend is source of truth) ──
     // Override whatever the frontend sent so cashiers cannot extend the scan
-    // window. Points must be claimed within 2 hours of purchase.
-    enrichedSale.qr_expires_at = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+    // window. Points must be claimed within 3 hours of purchase.
+    enrichedSale.qr_expires_at = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
 
     // Sequential B-series bill number (B-001, B-002 … B-999, B-1000).
     let sale = null;

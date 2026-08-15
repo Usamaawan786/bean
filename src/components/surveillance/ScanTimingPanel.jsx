@@ -129,7 +129,7 @@ export default function ScanTimingPanel({ sales }) {
         </p>
         {userRows.length === 0 ? (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700 text-center">
-            No delayed scans — all bills were scanned within 2 hours of purchase.
+            No delayed scans — all bills were scanned within 3 hours of purchase.
           </div>
         ) : (
           <div className="bg-white rounded-2xl border border-[#E8DED8] overflow-hidden overflow-x-auto">

@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
     // 2. Validate — expiry (check before claiming the lock so we don't mark
     // an expired sale as scanned)
     if (sale.qr_expires_at && new Date() > new Date(sale.qr_expires_at)) {
-      return Response.json({ success: false, error: 'Your points have expired. Reward points must be claimed within 2 hours of purchase. Please ask our staff for assistance.' });
+      return Response.json({ success: false, error: 'Your points have expired. Reward points must be claimed within 3 hours of purchase. Please ask our staff for assistance.' });
     }
 
     // 3. ATOMIC SCAN LOCK — claim the sale BEFORE awarding any points.
