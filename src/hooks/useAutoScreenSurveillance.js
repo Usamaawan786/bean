@@ -17,6 +17,11 @@ const RECONNECT_GRACE_MS = 20 * 1000;
 // screen or microphone share is lost, staff get a short grace period to
 // resume before the POS is hard-locked. Recording can only be stopped for
 // real from the admin side (SurveillanceSession.status).
+// Temporary per-user exemption: these staff can use the POS without the
+// screen + system-audio recording requirement. Remove an email here to
+// re-enable mandatory surveillance for that user.
+const SURVEILLANCE_EXEMPT_EMAILS = ["zaibs6462@gmail.com"];
+
 export default function useAutoScreenSurveillance(user) {
   const [needsShare, setNeedsShare] = useState(false);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -41,7 +46,9 @@ export default function useAutoScreenSurveillance(user) {
   const sessionRef = useRef(null);
   const isRecordingRef = useRef(false);
 
-  const eligible = !!user && ["cashier", "manager"].includes(user.role);
+  const eligible = !!user
+    && ["cashier", "manager"].includes(user.role)
+    && !SURVEILLANCE_EXEMPT_EMAILS.includes((user.email || "").toLowerCase());
 
   useEffect(() => { isRecordingRef.current = isRecording; }, [isRecording]);
 
