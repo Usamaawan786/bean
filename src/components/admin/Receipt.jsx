@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { utcToPktDisplay } from "@/lib/pktTime";
 
 // ─────────────────────────────────────────────────────────────────────────
 // THE receipt component — the single source of truth for the receipt layout.
@@ -80,7 +80,8 @@ export default function Receipt({
       {/* Invoice Details */}
       <div style={section}>
         <div style={row()}><span>Invoice No.</span><span style={{ fontWeight: 700 }}>{bill?.billNumber}</span></div>
-        <div style={row()}><span>Date</span><span>{bill?.date ? format(new Date(bill.date), "MMM dd, yyyy HH:mm") : ""}</span></div>
+        <div style={row()}><span>Date</span><span style={nowrap}>{bill?.date ? utcToPktDisplay(bill.date).split(" ").slice(0, 3).join(" ") : ""}</span></div>
+        <div style={row()}><span>Time</span><span style={nowrap}>{bill?.date ? utcToPktDisplay(bill.date).split(" ").slice(3).join(" ") : ""}</span></div>
         {bill?.cashierName && <div style={row()}><span>Cashier</span><span>{bill.cashierName}</span></div>}
         {bill?.orderType && <div style={row()}><span>Order</span><span>{bill.orderType}</span></div>}
         {bill?.tableNumber ? <div style={row()}><span>Table</span><span style={{ fontWeight: 700 }}>{bill.tableNumber}</span></div> : null}
