@@ -5,7 +5,8 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, TrendingUp, ShoppingCart, DollarSign, Package, Bell,
   MessageSquare, RefreshCw, Users, Gift, CreditCard, Banknote,
-  TrendingDown, BarChart3, Clock, CheckCircle2, AlertTriangle, Loader2
+  TrendingDown, BarChart3, Clock, CheckCircle2, AlertTriangle, Loader2,
+  Copy, Printer
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -17,6 +18,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area
 } from "recharts";
 import { format, subDays, startOfDay, isAfter } from "date-fns";
+import { toast } from "sonner";
 import NegativeBalancePanel from "@/components/admin/inventory/NegativeBalancePanel";
 import SalesBreakdownCard from "@/components/admin/dashboard/SalesBreakdownCard";
 import SalesInsightsCard from "@/components/admin/dashboard/SalesInsightsCard";
@@ -598,7 +600,75 @@ export default function AdminDashboard() {
         {/* Product Performance Table */}
         <Card className="border-[#E8DED8]">
           <CardHeader>
-            <CardTitle className="text-[#5C4A3A]">Product Performance · {periodLabel}</CardTitle>
+            <CardTitle className="text-[#5C4A3A] flex items-center justify-between flex-wrap gap-2">
+              <span>Product Performance · {periodLabel}</span>
+              {topProducts.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const header = ["#", "Product", "Units Sold", "Revenue (PKR)", "Avg Price (PKR)", "% of Revenue"];
+                      const rows = topProducts.map((p, i) => [
+                        i + 1,
+                        p.name,
+                        p.quantity,
+                        p.revenue,
+                        Math.round(p.revenue / p.quantity),
+                        periodRevenue > 0 ? ((p.revenue / periodRevenue) * 100).toFixed(1) : "0",
+                      ].join("\t"));
+                      const tsv = [header.join("\t"), ...rows].join("\n");
+                      navigator.clipboard.writeText(tsv).then(() => {
+                        toast.success("Product performance copied to clipboard");
+                      }).catch(() => toast.error("Failed to copy"));
+                    }}
+                    className="inline-flex items-center gap-1.5 bg-[#8B7355] hover:bg-[#6B5744] text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Copy className="h-3.5 w-3.5" /> Copy
+                  </button>
+                  <button
+                    onClick={() => {
+                      const w = window.open("", "_blank", "width=900,height=700");
+                      const rowsHtml = topProducts.map((p, i) => `
+                        <tr>
+                          <td>${i + 1}</td>
+                          <td>${p.name}</td>
+                          <td style="text-align:right">${p.quantity}</td>
+                          <td style="text-align:right">Rs. ${p.revenue.toLocaleString()}</td>
+                          <td style="text-align:right">Rs. ${Math.round(p.revenue / p.quantity)}</td>
+                          <td style="text-align:right">${periodRevenue > 0 ? ((p.revenue / periodRevenue) * 100).toFixed(1) : 0}%</td>
+                        </tr>`).join("");
+                      w.document.write(`<html><head><title>Product Performance · ${periodLabel}</title>
+                        <style>body{font-family:Arial,sans-serif;padding:24px;color:#5C4A3A}
+                        h1{font-size:20px;margin:0 0 4px}h2{font-size:13px;font-weight:normal;color:#8B7355;margin:0 0 16px}
+                        table{width:100%;border-collapse:collapse;font-size:13px}
+                        th,td{padding:8px 10px;border-bottom:1px solid #E8DED8;text-align:left}
+                        th{background:#F5F1ED;font-weight:600}
+                        tfoot td{font-weight:bold;border-top:2px solid #E8DED8;background:#F5F1ED}
+                        .meta{margin-top:16px;font-size:11px;color:#8B7355}</style></head>
+                        <body><h1>Bean — Product Performance Report</h1>
+                        <h2>Period: ${periodLabel} · Generated ${format(new Date(), "MMM dd, yyyy HH:mm")}</h2>
+                        <table><thead><tr>
+                          <th>#</th><th>Product</th><th style="text-align:right">Units Sold</th>
+                          <th style="text-align:right">Revenue</th><th style="text-align:right">Avg Price</th>
+                          <th style="text-align:right">% of Revenue</th>
+                        </tr></thead><tbody>${rowsHtml}</tbody>
+                        <tfoot><tr>
+                          <td colspan="2">Grand Total</td>
+                          <td style="text-align:right">${periodItemsSold}</td>
+                          <td style="text-align:right">Rs. ${periodRevenue.toLocaleString()}</td>
+                          <td style="text-align:right">—</td><td style="text-align:right">100%</td>
+                        </tr></tfoot></table>
+                        <p class="meta">Bean — More than just coffee, it's a community!</p>
+                        <script>window.onload=function(){window.print()}</script>
+                        </body></html>`);
+                      w.document.close();
+                    }}
+                    className="inline-flex items-center gap-1.5 bg-white border border-[#8B7355] text-[#5C4A3A] hover:bg-[#F5F1ED] text-xs px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Print
+                  </button>
+                </div>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {topProducts.length === 0 ? (
