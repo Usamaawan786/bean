@@ -344,7 +344,7 @@ export default function AdminDashboard() {
                 <div className="h-48 flex items-center justify-center text-[#8B7355] text-sm">No sales data</div>
               ) : (
                 <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={topProducts} layout="vertical">
+                  <BarChart data={topProducts.slice(0, 10)} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="#E8DED8" />
                     <XAxis type="number" stroke="#8B7355" fontSize={11} tickFormatter={v => `Rs.${(v/1000).toFixed(0)}k`} />
                     <YAxis dataKey="name" type="category" stroke="#8B7355" fontSize={10} width={90} />

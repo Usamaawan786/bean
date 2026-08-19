@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
         periodProductMap[item.product_name].revenue += (item.price || 0) * (item.quantity || 0);
       });
     });
-    const periodTopProducts = Object.values(periodProductMap).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+    const periodTopProducts = Object.values(periodProductMap).sort((a, b) => b.revenue - a.revenue);
 
     let periodTimeline = [];
     if (period === 'today' || period === 'yesterday') {
