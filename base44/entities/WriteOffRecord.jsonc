@@ -1,0 +1,153 @@
+{
+  "name": "WriteOffRecord",
+  "type": "object",
+  "properties": {
+    "doc_number": {
+      "type": "string",
+      "description": "Auto-generated write-off document number, e.g. WO-000001"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Write-off date (YYYY-MM-DD)"
+    },
+    "storage": {
+      "type": "string",
+      "description": "Storage / branch location"
+    },
+    "to_account": {
+      "type": "string",
+      "enum": [
+        "Spoilage",
+        "Staff Consumption",
+        "Expired",
+        "Drop",
+        "Other"
+      ],
+      "default": "Spoilage",
+      "description": "Expense account the loss is booked under"
+    },
+    "comment": {
+      "type": "string",
+      "description": "Internal comment / reason"
+    },
+    "lines": {
+      "type": "array",
+      "description": "Line items written off",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inventory_item_id": {
+            "type": "string"
+          },
+          "item_name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "package_quantity": {
+            "type": "number",
+            "description": "Quantity in storage/package units"
+          },
+          "quantity_in_units": {
+            "type": "number",
+            "description": "Quantity in base measurement units (deducted from stock)"
+          },
+          "unit_cost": {
+            "type": "number",
+            "description": "Cost per base unit (PKR)"
+          },
+          "total_cost": {
+            "type": "number",
+            "description": "quantity_in_units * unit_cost (PKR)"
+          }
+        }
+      }
+    },
+    "total_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of line total_cost values (PKR) \u2014 the loss booked to the expense ledger"
+    },
+    "posted": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether the write-off has been committed to the stock ledger"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of staff who created the record"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Display name of staff who created the record"
+    }
+  },
+  "required": [
+    "doc_number",
+    "date",
+    "to_account",
+    "lines",
+    "total_cost"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

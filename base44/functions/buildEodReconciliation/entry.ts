@@ -93,7 +93,10 @@ export default async function(req) {
       return {
         inventory_item_id: item.id,
         item_name: item.name,
+        sku: item.sku || "",
         unit,
+        storage_unit: item.storage_unit || "",
+        conversion_rate: item.conversion_rate || 1,
         opening_stock: roundQty(opening),
         purchases_in: roundQty(purchases),
         transfers_in: roundQty(transfers_in),
@@ -108,9 +111,17 @@ export default async function(req) {
       };
     });
 
+    let surplusAmount = 0;
+    let shortageAmount = 0;
+    for (const l of lines) {
+      if (l.variance > 0) surplusAmount += l.variance * (l.unit_cost || 0);
+      else if (l.variance < 0) shortageAmount += Math.abs(l.variance) * (l.unit_cost || 0);
+    }
     return Response.json({
       date: today,
       lines,
+      surplus_amount: Math.round(surplusAmount * 100) / 100,
+      shortage_amount: Math.round(shortageAmount * 100) / 100,
       locked: existing?.status === 'Locked',
       existing_id: existing?.id || null
     });

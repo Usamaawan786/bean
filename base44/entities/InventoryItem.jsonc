@@ -8,7 +8,7 @@
     },
     "sku": {
       "type": "string",
-      "description": "Stock keeping unit code"
+      "description": "Stock keeping unit / product code"
     },
     "base_unit": {
       "type": "string",
@@ -21,12 +21,24 @@
     },
     "storage_unit": {
       "type": "string",
-      "description": "Purchasing unit, e.g. '1kg bag'"
+      "description": "Purchasing / package unit, e.g. '1kg bag'"
     },
     "conversion_rate": {
       "type": "number",
       "default": 1,
       "description": "Base units per one storage unit, e.g. 1000"
+    },
+    "item_class": {
+      "type": "string",
+      "enum": [
+        "Product",
+        "Item",
+        "Semi-finished",
+        "Service",
+        "Modifier"
+      ],
+      "default": "Item",
+      "description": "Syrve-style classification for the line-item picker. Product = finished sellable, Item = raw ingredient, Semi-finished = prep batch, Service = freight/charges, Modifier = add-on cost."
     },
     "current_stock_base_qty": {
       "type": "number",

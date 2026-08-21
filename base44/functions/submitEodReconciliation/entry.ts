@@ -29,8 +29,13 @@ export default async function(req) {
     }
 
     let totalLoss = 0;
+    let surplusAmount = 0;
+    let shortageAmount = 0;
     for (const l of lines) {
       totalLoss += l.financial_loss_value || 0;
+      const amt = Math.abs(l.variance || 0) * (l.unit_cost || 0);
+      if ((l.variance || 0) > 0) surplusAmount += amt;
+      else if ((l.variance || 0) < 0) shortageAmount += amt;
       if (l.variance && Math.abs(l.variance) > 0.0001) {
         await applyStockDelta(base44, {
           inventory_item_id: l.inventory_item_id,
@@ -47,6 +52,8 @@ export default async function(req) {
       audit_date: date,
       status: 'Locked',
       lines,
+      surplus_amount: Math.round(surplusAmount * 100) / 100,
+      shortage_amount: Math.round(shortageAmount * 100) / 100,
       total_financial_loss: totalLoss,
       locked_by: user.email,
       locked_at: new Date().toISOString(),

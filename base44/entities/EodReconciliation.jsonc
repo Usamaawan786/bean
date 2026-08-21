@@ -14,7 +14,7 @@
         "Locked"
       ],
       "default": "Draft",
-      "description": "Locked = immutable nightly audit submitted; editing requires Manager PIN override"
+      "description": "Locked = posted nightly audit; editing requires Manager PIN override"
     },
     "lines": {
       "type": "array",
@@ -28,8 +28,17 @@
           "item_name": {
             "type": "string"
           },
+          "sku": {
+            "type": "string"
+          },
           "unit": {
             "type": "string"
+          },
+          "storage_unit": {
+            "type": "string"
+          },
+          "conversion_rate": {
+            "type": "number"
           },
           "opening_stock": {
             "type": "number"
@@ -67,6 +76,16 @@
         }
       }
     },
+    "surplus_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of positive variance amounts (PKR)"
+    },
+    "shortage_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of negative variance amounts (PKR), displayed as a loss"
+    },
     "total_financial_loss": {
       "type": "number",
       "default": 0,
@@ -74,7 +93,7 @@
     },
     "locked_by": {
       "type": "string",
-      "description": "Email of staff who locked the sheet"
+      "description": "Email of staff who posted the sheet"
     },
     "locked_at": {
       "type": "string",

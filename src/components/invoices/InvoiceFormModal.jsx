@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2, Loader2, Save, Send } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import LineItemCategoryTabs from "@/components/inventoryhub/LineItemCategoryTabs";
 
 const EMPTY_LINE = { item_id: "", item_name: "", unit: "", unit_cost: 0, quantity: 1 };
 
@@ -23,6 +24,20 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [cat, setCat] = useState("All");
+
+  const filteredItems = useMemo(() => {
+    if (cat === "All") return inventoryItems;
+    return inventoryItems.filter((i) => (i.item_class || "Item") === cat);
+  }, [inventoryItems, cat]);
+  const catCounts = useMemo(() => {
+    const c = { All: inventoryItems.length };
+    for (const i of inventoryItems) {
+      const k = i.item_class || "Item";
+      c[k] = (c[k] || 0) + 1;
+    }
+    return c;
+  }, [inventoryItems]);
 
   // Prefill when cloning from an existing invoice + its items
   useEffect(() => {
@@ -183,6 +198,11 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Row
               </Button>
             </div>
+            {type === "PURCHASE_INVOICE" && inventoryItems.length > 0 && (
+              <div className="mb-2">
+                <LineItemCategoryTabs active={cat} onChange={setCat} counts={catCounts} />
+              </div>
+            )}
             <div className="overflow-x-auto rounded-lg border border-[#E8DED8]">
               <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-[#F5EBE8] text-[#8B7355] text-xs">
@@ -208,7 +228,7 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
                               className="w-full h-9 rounded-md border border-[#E8DED8] bg-white px-2 text-sm text-[#5C4A3A]"
                             >
                               <option value="">{l.item_name || "— select item —"}</option>
-                              {inventoryItems.map((inv) => (
+                              {filteredItems.map((inv) => (
                                 <option key={inv.id} value={inv.id}>{inv.name}</option>
                               ))}
                             </select>
