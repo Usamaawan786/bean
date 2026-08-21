@@ -10,14 +10,20 @@ import { Badge } from "@/components/ui/badge";
 
 const PKT_OFFSET = 5 * 60 * 60 * 1000;
 
+function toUtc(iso) {
+  if (!iso) return null;
+  let str = String(iso);
+  if (!/Z$|[+-]\d\d:?\d\d$/.test(str)) str = str + "Z";
+  return new Date(str);
+}
 function pktDateKey(iso) {
   if (!iso) return "";
-  const d = new Date(new Date(iso).getTime() + PKT_OFFSET);
+  const d = new Date(toUtc(iso).getTime() + PKT_OFFSET);
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 function pktHour(iso) {
   if (!iso) return -1;
-  return new Date(new Date(iso).getTime() + PKT_OFFSET).getUTCHours();
+  return new Date(toUtc(iso).getTime() + PKT_OFFSET).getUTCHours();
 }
 
 const SOURCE_CFG = {

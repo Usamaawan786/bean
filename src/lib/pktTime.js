@@ -21,9 +21,15 @@ export function utcToPktInput(utcIso) {
 }
 
 // UTC ISO string → "DD MMM yyyy HH:mm PKT" for display
+// Normalizes naive datetime strings (no timezone suffix, e.g. built-in
+// created_date/updated_date) to UTC before converting, so they aren't
+// mis-read as local time by the browser.
 export function utcToPktDisplay(utcIso) {
   if (!utcIso) return "—";
-  const utc = new Date(utcIso);
+  let str = String(utcIso);
+  // No "Z" or explicit offset → treat the stored value as UTC
+  if (!/Z$|[+-]\d\d:?\d\d$/.test(str)) str = str + "Z";
+  const utc = new Date(str);
   const pkt = new Date(utc.getTime() + 5 * 60 * 60 * 1000);
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const dd = String(pkt.getUTCDate()).padStart(2, "0");
