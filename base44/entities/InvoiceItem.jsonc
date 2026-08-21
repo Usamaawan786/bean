@@ -1,0 +1,105 @@
+{
+  "name": "InvoiceItem",
+  "type": "object",
+  "properties": {
+    "invoice_id": {
+      "type": "string",
+      "description": "Reference to the parent Invoice"
+    },
+    "item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem (empty for ad-hoc expenditure lines)"
+    },
+    "item_name": {
+      "type": "string",
+      "description": "Snapshot of the item / line description"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Snapshot of the unit (storage unit) the cost is quoted in"
+    },
+    "unit_cost": {
+      "type": "number",
+      "description": "Cost per unit (PKR)"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantity in units"
+    },
+    "line_total": {
+      "type": "number",
+      "description": "quantity * unit_cost (PKR)"
+    }
+  },
+  "required": [
+    "invoice_id",
+    "item_name",
+    "unit_cost",
+    "quantity",
+    "line_total"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

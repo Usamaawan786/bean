@@ -1,0 +1,137 @@
+{
+  "name": "Invoice",
+  "type": "object",
+  "properties": {
+    "invoice_number": {
+      "type": "string",
+      "description": "Auto-generated invoice number, e.g. INV-000123"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "PURCHASE_INVOICE",
+        "EXPENDITURE_INVOICE"
+      ],
+      "description": "PURCHASE_INVOICE adds stock + updates MAC on submit; EXPENDITURE_INVOICE is a record-only store expense"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Invoice date (YYYY-MM-DD)"
+    },
+    "supplier_name": {
+      "type": "string",
+      "description": "Supplier / vendor name"
+    },
+    "branch_name": {
+      "type": "string",
+      "description": "Branch / location this invoice applies to"
+    },
+    "comments": {
+      "type": "string",
+      "description": "Internal comments / notes"
+    },
+    "total_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of all line_total values (PKR)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Submitted"
+      ],
+      "default": "Draft",
+      "description": "Draft = editable, not yet ledger-posted; Submitted = locked, stock ledger fired for purchase invoices"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the invoice was submitted (UTC)"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Email of the staff member who submitted"
+    },
+    "submitted_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who submitted"
+    },
+    "cloned_from": {
+      "type": "string",
+      "description": "Invoice number this invoice was cloned from, if any"
+    }
+  },
+  "required": [
+    "invoice_number",
+    "type",
+    "date",
+    "total_amount",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
