@@ -50,6 +50,7 @@ const RiderPortal = lazy(() => import('./pages/RiderPortal'));
 const RewardsSurveillance = lazy(() => import('./pages/RewardsSurveillance'));
 const AdminInvoices = lazy(() => import('./pages/AdminInvoices'));
 const AdminYieldProcessing = lazy(() => import('./pages/AdminYieldProcessing'));
+const AdminEodReconciliation = lazy(() => import('./pages/AdminEodReconciliation'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -122,6 +123,7 @@ function App() {
               <Route path="/RewardsSurveillance" element={<RewardsSurveillance />} />
               <Route path="/admin-invoices" element={<AdminInvoices />} />
               <Route path="/admin-yield" element={<AdminYieldProcessing />} />
+              <Route path="/admin-eod" element={<AdminEodReconciliation />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </Suspense>

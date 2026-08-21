@@ -1,0 +1,156 @@
+{
+  "name": "EodReconciliation",
+  "type": "object",
+  "properties": {
+    "audit_date": {
+      "type": "string",
+      "format": "date",
+      "description": "PKT calendar day this EOD sheet covers (YYYY-MM-DD)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Draft",
+        "Locked"
+      ],
+      "default": "Draft",
+      "description": "Locked = immutable nightly audit submitted; editing requires Manager PIN override"
+    },
+    "lines": {
+      "type": "array",
+      "description": "Per-item reconciliation rows captured at lock time",
+      "items": {
+        "type": "object",
+        "properties": {
+          "inventory_item_id": {
+            "type": "string"
+          },
+          "item_name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "opening_stock": {
+            "type": "number"
+          },
+          "purchases_in": {
+            "type": "number"
+          },
+          "transfers_in": {
+            "type": "number"
+          },
+          "transfers_out": {
+            "type": "number"
+          },
+          "sales_deductions": {
+            "type": "number"
+          },
+          "logged_wastage": {
+            "type": "number"
+          },
+          "theoretical_closing": {
+            "type": "number"
+          },
+          "actual_closing": {
+            "type": "number"
+          },
+          "variance": {
+            "type": "number"
+          },
+          "financial_loss_value": {
+            "type": "number"
+          },
+          "unit_cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_financial_loss": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of ABS(variance)*unit_cost across all lines (PKR)"
+    },
+    "locked_by": {
+      "type": "string",
+      "description": "Email of staff who locked the sheet"
+    },
+    "locked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "audit_date",
+    "status",
+    "lines"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
