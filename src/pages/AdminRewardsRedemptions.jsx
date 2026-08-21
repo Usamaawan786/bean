@@ -7,11 +7,13 @@ import {
   Star, TrendingUp, Users, Zap, PackageCheck, ArrowLeft,
   DollarSign, RefreshCw, Check, Search, CheckCircle, XCircle,
   Clock, AlertTriangle, Shield, Tag, ChevronDown, ChevronUp,
-  Loader2, ToggleLeft, ToggleRight, Filter, Eye, ScanLine, Ban
+  Loader2, ToggleLeft, ToggleRight, Filter, Eye, ScanLine, Ban,
+  ShieldAlert
 } from "lucide-react";
 import FlashDropScannerModal from "../components/admin/FlashDropScannerModal";
 import UsersLeaderboard from "../components/admin/UsersLeaderboard";
 import VoidRedemptionDialog from "../components/admin/VoidRedemptionDialog";
+import PointsAuditTab from "../components/admin/rewards/PointsAuditTab";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -473,6 +475,7 @@ export default function AdminRewardsRedemptions() {
     { id: "rewards",    label: "Rewards",         icon: Gift },
     { id: "verify",     label: "Verify Code",     icon: Search },
     { id: "redemptions",label: "Redemptions",     icon: PackageCheck },
+    { id: "audit",      label: "Points Audit",    icon: ShieldAlert },
     { id: "discounts",  label: "FM & EBA",        icon: Shield },
     { id: "users",      label: "Users",           icon: Users },
     { id: "settings",   label: "Settings",        icon: Settings },
@@ -884,6 +887,11 @@ export default function AdminRewardsRedemptions() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ─── POINTS AUDIT (SUSPICIOUS ACTIVITY) ─── */}
+        {activeTab === "audit" && (
+          <PointsAuditTab sales={sales} settings={settings} />
         )}
 
         {/* ─── FM & EBA DISCOUNTS ─── */}
