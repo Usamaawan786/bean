@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Loader2, Save, Send } from "lucide-react";
+import { Plus, Trash2, Loader2, Save, Send, List } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import LineItemCategoryTabs from "@/components/inventoryhub/LineItemCategoryTabs";
 
@@ -50,7 +50,7 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
       setBranchName(cloneFrom.branch_name || "");
       setComments(cloneFrom.comments || "");
       const prefilled = (cloneFrom.items || []).map((it) => ({
-        item_id: it.item_id || "",
+        item_id: it.item_id || (it.item_name ? "__custom__" : ""),
         item_name: it.item_name || "",
         unit: it.unit || "",
         unit_cost: Number(it.unit_cost) || 0,
@@ -100,7 +100,7 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
     comments,
     cloned_from: cloneFrom?.invoice_number || "",
     items: lines.map((l) => ({
-      item_id: l.item_id,
+      item_id: l.item_id === "__custom__" ? "" : l.item_id,
       item_name: l.item_name,
       unit: l.unit,
       unit_cost: Number(l.unit_cost) || 0,
@@ -198,7 +198,7 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Row
               </Button>
             </div>
-            {type === "PURCHASE_INVOICE" && inventoryItems.length > 0 && (
+            {inventoryItems.length > 0 && (
               <div className="mb-2">
                 <LineItemCategoryTabs active={cat} onChange={setCat} counts={catCounts} />
               </div>
@@ -221,24 +221,44 @@ export default function InvoiceFormModal({ open, onClose, onSaved, inventoryItem
                     return (
                       <tr key={idx} className="border-t border-[#E8DED8]">
                         <td className="px-2 py-1.5">
-                          {type === "PURCHASE_INVOICE" && inventoryItems.length ? (
+                          {inventoryItems.length > 0 && l.item_id !== "__custom__" ? (
                             <select
                               value={l.item_id}
-                              onChange={(e) => onPickItem(idx, e.target.value)}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                if (v === "__custom__") {
+                                  updateLine(idx, { item_id: "__custom__", item_name: "", unit: "", unit_cost: 0 });
+                                } else {
+                                  onPickItem(idx, v);
+                                }
+                              }}
                               className="w-full h-9 rounded-md border border-[#E8DED8] bg-white px-2 text-sm text-[#5C4A3A]"
                             >
-                              <option value="">{l.item_name || "— select item —"}</option>
+                              <option value="">— select item —</option>
+                              <option value="__custom__">✏️ Custom entry…</option>
                               {filteredItems.map((inv) => (
                                 <option key={inv.id} value={inv.id}>{inv.name}</option>
                               ))}
                             </select>
                           ) : (
-                            <Input
-                              value={l.item_name}
-                              onChange={(e) => updateLine(idx, { item_name: e.target.value })}
-                              placeholder="Item / description"
-                              className="h-9"
-                            />
+                            <div className="flex items-center gap-1">
+                              <Input
+                                value={l.item_name}
+                                onChange={(e) => updateLine(idx, { item_name: e.target.value })}
+                                placeholder="Item / description"
+                                className="h-9"
+                              />
+                              {inventoryItems.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateLine(idx, { item_id: "", item_name: "", unit: "", unit_cost: 0 })}
+                                  title="Pick from list"
+                                  className="text-[#C9B8A6] hover:text-[#8B7355] px-1"
+                                >
+                                  <List className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
                           )}
                         </td>
                         <td className="px-2 py-1.5">
