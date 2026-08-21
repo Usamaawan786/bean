@@ -1,6 +1,16 @@
-import { AlertTriangle, UserX, Scale, Zap, Repeat, Timer, MoonStar } from "lucide-react";
+import { AlertTriangle, UserX, Scale, Zap, Repeat, Timer, MoonStar, CalendarClock } from "lucide-react";
 import { utcToPktDisplay } from "@/lib/pktTime";
 import { SCAN_DELAY_THRESHOLDS, delaySeverity, formatDelay, isAfterHours } from "./ScanTimingPanel";
+
+// PKT day key from an ISO timestamp (naive datetime safe — treated as UTC)
+const PKT_OFFSET = 5 * 60 * 60 * 1000;
+function pktDayKey(iso) {
+  if (!iso) return "";
+  let str = String(iso);
+  if (!/Z$|[+-]\d\d:?\d\d$/.test(str)) str += "Z";
+  const d = new Date(new Date(str).getTime() + PKT_OFFSET);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+}
 
 // Detects suspicious rewards activity for theft prevention.
 export function detectAnomalies({ sales, redemptions, customers, pkrPerPoint }) {
@@ -67,6 +77,52 @@ export function detectAnomalies({ sales, redemptions, customers, pkrPerPoint }) 
         icon: Repeat,
         title: "Repeated delayed scans",
         detail: `${email} has ${list.length} delayed scans (>2h after sale) — pattern suggests hoarding/late scanning`,
+        time: list[list.length - 1].scanned_at,
+      });
+    }
+  });
+
+  // 1e. Repeated daily points earning — same profile earning points every day
+  // (daily streak >= 5, or 6+/7 active days, or 5+ scans in one day)
+  const earningByUser = {};
+  sales.forEach((s) => {
+    if (!s.is_scanned || !(s.points_awarded > 0) || !s.scanned_by) return;
+    (earningByUser[s.scanned_by] ||= []).push(s);
+  });
+  Object.entries(earningByUser).forEach(([email, list]) => {
+    const days = list.map((s) => pktDayKey(s.scanned_at || s.created_date)).filter(Boolean);
+    const distinct = [...new Set(days)].sort();
+    if (distinct.length < 3) return;
+
+    // longest streak of consecutive calendar days
+    let streak = 1, maxStreak = 1;
+    for (let i = 1; i < distinct.length; i++) {
+      const diff = Math.round((new Date(distinct[i] + "T00:00:00Z") - new Date(distinct[i - 1] + "T00:00:00Z")) / 86400000);
+      if (diff === 1) { streak += 1; maxStreak = Math.max(maxStreak, streak); } else streak = 1;
+    }
+
+    // last-7-days activity
+    const todayKey = pktDayKey(new Date().toISOString());
+    const today = new Date(todayKey + "T00:00:00Z");
+    const last7 = new Set();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today.getTime() - i * 86400000);
+      last7.add(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`);
+    }
+    const activeLast7 = distinct.filter((d) => last7.has(d)).length;
+
+    // scans in a single day
+    const perDay = {};
+    days.forEach((d) => { perDay[d] = (perDay[d] || 0) + 1; });
+    const maxPerDay = Math.max(...Object.values(perDay));
+
+    const totalPoints = list.reduce((s, e) => s + (e.points_awarded || 0), 0);
+    if (maxStreak >= 7 || activeLast7 >= 6 || maxPerDay >= 5) {
+      flags.push({
+        severity: maxStreak >= 7 || maxPerDay >= 5 ? "high" : "medium",
+        icon: CalendarClock,
+        title: "Repeated daily points earning",
+        detail: `${email}: ${maxStreak}-day streak, active ${activeLast7}/7 last days, ${maxPerDay} scans on busiest day — ${list.length} scans / ${totalPoints} pts total`,
         time: list[list.length - 1].scanned_at,
       });
     }
