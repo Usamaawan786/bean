@@ -1,0 +1,115 @@
+{
+  "name": "YieldConversion",
+  "type": "object",
+  "properties": {
+    "raw_item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem (raw ingredient, e.g. raw unpeeled mango)"
+    },
+    "processed_item_id": {
+      "type": "string",
+      "description": "Reference to InventoryItem (processed/usable output, e.g. peeled mango chunks)"
+    },
+    "gross_input_weight": {
+      "type": "number",
+      "description": "Gross input weight, in the raw item's base unit"
+    },
+    "net_usable_output_weight": {
+      "type": "number",
+      "description": "Net usable output weight, in the processed item's base unit"
+    },
+    "waste_weight": {
+      "type": "number",
+      "description": "gross_input_weight - net_usable_output_weight"
+    },
+    "yield_percentage": {
+      "type": "number",
+      "description": "(net_usable_output_weight / gross_input_weight) * 100"
+    },
+    "raw_unit_cost": {
+      "type": "number",
+      "description": "Snapshot of the raw item's cost per base unit at processing time (MAC)"
+    },
+    "effective_unit_cost": {
+      "type": "number",
+      "description": "raw_unit_cost / (yield_percentage / 100) \u2014 cost per net usable base unit"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Base unit used for the weights (snapshot)"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the staff member who processed the batch"
+    }
+  },
+  "required": [
+    "raw_item_id",
+    "processed_item_id",
+    "gross_input_weight",
+    "net_usable_output_weight",
+    "yield_percentage"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

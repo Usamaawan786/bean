@@ -1,0 +1,91 @@
+{
+  "name": "WasteLog",
+  "type": "object",
+  "properties": {
+    "raw_item_id": {
+      "type": "string",
+      "description": "Reference to the InventoryItem (raw ingredient) that produced this waste"
+    },
+    "processed_item_id": {
+      "type": "string",
+      "description": "Reference to the processed InventoryItem this waste is associated with, if applicable"
+    },
+    "waste_weight": {
+      "type": "number",
+      "description": "Waste weight in base unit (gross - net)"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Base unit of the waste weight"
+    },
+    "yield_percentage": {
+      "type": "number",
+      "description": "Yield percentage recorded for this processing batch"
+    },
+    "yield_conversion_id": {
+      "type": "string",
+      "description": "Reference to the YieldConversion record that generated this waste"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string",
+      "description": "Email of the staff member who logged this waste"
+    }
+  },
+  "required": [
+    "raw_item_id",
+    "waste_weight"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

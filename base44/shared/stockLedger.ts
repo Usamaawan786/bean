@@ -65,3 +65,47 @@ export async function applyPurchaseLine(base44, opts) {
     new_mac: newMAC
   };
 }
+
+// Applies a signed stock delta to an InventoryItem: writes an InventoryTransaction
+// (ledger entry), atomically increments the stock balance, and refreshes the
+// negative-flag. Used by yield processing (debit raw / credit processed) and any
+// other stock-moving operation. qty_change_base_unit is positive for stock-in,
+// negative for stock-out.
+export async function applyStockDelta(base44, opts) {
+  const {
+    inventory_item_id,
+    qty_change_base_unit,
+    transaction_type,
+    created_by,
+    batch_id,
+    notes
+  } = opts;
+
+  const qtyChange = roundQty(qty_change_base_unit);
+  const item = await base44.asServiceRole.entities.InventoryItem.get(inventory_item_id);
+  if (!item) throw new Error("Inventory item not found: " + inventory_item_id);
+
+  await base44.asServiceRole.entities.InventoryTransaction.create({
+    inventory_item_id,
+    transaction_type,
+    qty_change_base_unit: qtyChange,
+    unit_cost_at_time: item.moving_average_cost || item.cost_per_base_unit || 0,
+    batch_id: batch_id || "",
+    created_by: created_by || "system",
+    is_negative_flag: (item.current_stock_base_qty || 0) + qtyChange < 0,
+    notes: notes || ""
+  });
+
+  await base44.asServiceRole.entities.InventoryItem.updateMany(
+    { id: inventory_item_id },
+    { $inc: { current_stock_base_qty: qtyChange } }
+  );
+
+  const updated = await base44.asServiceRole.entities.InventoryItem.get(inventory_item_id);
+  const newStock = roundQty(updated.current_stock_base_qty || 0);
+  const negativeFlag = newStock < 0;
+  if (negativeFlag !== updated.is_negative_flagged) {
+    await base44.asServiceRole.entities.InventoryItem.update(inventory_item_id, { is_negative_flagged: negativeFlag });
+  }
+  return { inventory_item_id, new_stock: newStock };
+}

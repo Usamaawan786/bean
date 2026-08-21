@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, ShieldCheck, Receipt } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Receipt, Recycle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,6 +39,9 @@ export default function AdminInventory() {
           <div className="flex items-center justify-between mb-4">
             <Link to={createPageUrl("AdminPOS")} className="inline-flex items-center gap-1 text-[#D4C4B0] text-sm">
               <ArrowLeft className="h-4 w-4" /> Back to POS
+            </Link>
+            <Link to="/admin-yield" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-3 py-2 rounded-xl border border-white/20">
+              <Recycle className="h-4 w-4" /> Yield
             </Link>
             <Link to="/admin-invoices" className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-sm px-3 py-2 rounded-xl border border-white/20">
               <Receipt className="h-4 w-4" /> Invoices
