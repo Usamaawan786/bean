@@ -606,10 +606,12 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => {
-                      const header = ["#", "Product", "Units Sold", "Revenue (PKR)", "Avg Price (PKR)", "% of Revenue"];
+                      const header = ["#", "Product", "Dine-in Qty", "Takeaway Qty", "Units Sold", "Revenue (PKR)", "Avg Price (PKR)", "% of Revenue"];
                       const rows = topProducts.map((p, i) => [
                         i + 1,
                         p.name,
+                        p.dineInQty || 0,
+                        p.takeawayQty || 0,
                         p.quantity,
                         p.revenue,
                         Math.round(p.revenue / p.quantity),
@@ -627,10 +629,14 @@ export default function AdminDashboard() {
                   <button
                     onClick={() => {
                       const w = window.open("", "_blank", "width=900,height=700");
+                      const totDineIn = topProducts.reduce((s, p) => s + (p.dineInQty || 0), 0);
+                      const totTakeaway = topProducts.reduce((s, p) => s + (p.takeawayQty || 0), 0);
                       const rowsHtml = topProducts.map((p, i) => `
                         <tr>
                           <td>${i + 1}</td>
                           <td>${p.name}</td>
+                          <td style="text-align:right">${p.dineInQty || 0}</td>
+                          <td style="text-align:right">${p.takeawayQty || 0}</td>
                           <td style="text-align:right">${p.quantity}</td>
                           <td style="text-align:right">Rs. ${p.revenue.toLocaleString()}</td>
                           <td style="text-align:right">Rs. ${Math.round(p.revenue / p.quantity)}</td>
@@ -647,12 +653,17 @@ export default function AdminDashboard() {
                         <body><h1>Bean — Product Performance Report</h1>
                         <h2>Period: ${periodLabel} · Generated ${format(new Date(), "MMM dd, yyyy HH:mm")}</h2>
                         <table><thead><tr>
-                          <th>#</th><th>Product</th><th style="text-align:right">Units Sold</th>
+                          <th>#</th><th>Product</th>
+                          <th style="text-align:right">Dine-in Qty</th>
+                          <th style="text-align:right">Takeaway Qty</th>
+                          <th style="text-align:right">Units Sold</th>
                           <th style="text-align:right">Revenue</th><th style="text-align:right">Avg Price</th>
                           <th style="text-align:right">% of Revenue</th>
                         </tr></thead><tbody>${rowsHtml}</tbody>
                         <tfoot><tr>
                           <td colspan="2">Grand Total</td>
+                          <td style="text-align:right">${totDineIn}</td>
+                          <td style="text-align:right">${totTakeaway}</td>
                           <td style="text-align:right">${periodItemsSold}</td>
                           <td style="text-align:right">Rs. ${periodRevenue.toLocaleString()}</td>
                           <td style="text-align:right">—</td><td style="text-align:right">100%</td>
@@ -680,6 +691,8 @@ export default function AdminDashboard() {
                     <tr className="border-b border-[#E8DED8]">
                       <th className="text-left py-2 px-3 text-[#5C4A3A] font-semibold">#</th>
                       <th className="text-left py-2 px-3 text-[#5C4A3A] font-semibold">Product</th>
+                      <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Dine-in</th>
+                      <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Takeaway</th>
                       <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Units Sold</th>
                       <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Revenue</th>
                       <th className="text-right py-2 px-3 text-[#5C4A3A] font-semibold">Avg Price</th>
@@ -691,6 +704,8 @@ export default function AdminDashboard() {
                       <tr key={i} className="border-b border-[#F5EBE8] hover:bg-[#F5EBE8] transition-colors">
                         <td className="py-2 px-3 text-[#C9B8A6] font-bold">{i + 1}</td>
                         <td className="py-2 px-3 text-[#5C4A3A] font-medium">{p.name}</td>
+                        <td className="py-2 px-3 text-right text-[#8B7355]">{p.dineInQty || 0}</td>
+                        <td className="py-2 px-3 text-right text-[#8B7355]">{p.takeawayQty || 0}</td>
                         <td className="py-2 px-3 text-right text-[#8B7355]">{p.quantity}</td>
                         <td className="py-2 px-3 text-right font-semibold text-[#5C4A3A]">Rs. {p.revenue.toLocaleString()}</td>
                         <td className="py-2 px-3 text-right text-[#8B7355]">Rs. {(p.revenue / p.quantity).toFixed(0)}</td>
@@ -703,6 +718,8 @@ export default function AdminDashboard() {
                   <tfoot>
                     <tr className="border-t-2 border-[#E8DED8] bg-[#F5F1ED]">
                       <td className="py-2 px-3 text-[#5C4A3A] font-bold" colSpan={2}>Grand Total</td>
+                      <td className="py-2 px-3 text-right text-[#5C4A3A] font-bold">{topProducts.reduce((s, p) => s + (p.dineInQty || 0), 0)}</td>
+                      <td className="py-2 px-3 text-right text-[#5C4A3A] font-bold">{topProducts.reduce((s, p) => s + (p.takeawayQty || 0), 0)}</td>
                       <td className="py-2 px-3 text-right text-[#5C4A3A] font-bold">{periodItemsSold}</td>
                       <td className="py-2 px-3 text-right text-[#5C4A3A] font-bold">Rs. {periodRevenue.toLocaleString()}</td>
                       <td className="py-2 px-3 text-right text-[#8B7355]">—</td>

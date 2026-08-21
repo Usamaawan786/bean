@@ -230,9 +230,11 @@ Deno.serve(async (req) => {
     periodSales.forEach(sale => {
       sale.items?.forEach(item => {
         if (!item.product_name) return;
-        if (!periodProductMap[item.product_name]) periodProductMap[item.product_name] = { name: item.product_name, quantity: 0, revenue: 0 };
+        if (!periodProductMap[item.product_name]) periodProductMap[item.product_name] = { name: item.product_name, quantity: 0, revenue: 0, dineInQty: 0, takeawayQty: 0 };
         periodProductMap[item.product_name].quantity += item.quantity || 0;
         periodProductMap[item.product_name].revenue += (item.price || 0) * (item.quantity || 0);
+        if ((sale.order_type || 'dine_in') === 'takeaway') periodProductMap[item.product_name].takeawayQty += item.quantity || 0;
+        else periodProductMap[item.product_name].dineInQty += item.quantity || 0;
       });
     });
     const periodTopProducts = Object.values(periodProductMap).sort((a, b) => b.revenue - a.revenue);
