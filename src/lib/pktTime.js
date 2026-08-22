@@ -20,7 +20,7 @@ export function utcToPktInput(utcIso) {
   return pkt.toISOString().slice(0, 16);
 }
 
-// UTC ISO string → "DD MMM yyyy HH:mm PKT" for display
+// UTC ISO string → "DD MMM yyyy h:mm AM/PM PKT" for display (12-hour clock).
 // Normalizes naive datetime strings (no timezone suffix, e.g. built-in
 // created_date/updated_date) to UTC before converting, so they aren't
 // mis-read as local time by the browser.
@@ -35,9 +35,11 @@ export function utcToPktDisplay(utcIso) {
   const dd = String(pkt.getUTCDate()).padStart(2, "0");
   const mm = months[pkt.getUTCMonth()];
   const yyyy = pkt.getUTCFullYear();
-  const hh = String(pkt.getUTCHours()).padStart(2, "0");
+  const h24 = pkt.getUTCHours();
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  const ampm = h24 < 12 ? "AM" : "PM";
   const min = String(pkt.getUTCMinutes()).padStart(2, "0");
-  return `${dd} ${mm} ${yyyy} ${hh}:${min} PKT`;
+  return `${dd} ${mm} ${yyyy} ${h12}:${min} ${ampm} PKT`;
 }
 
 // Current PKT time as a datetime-local value

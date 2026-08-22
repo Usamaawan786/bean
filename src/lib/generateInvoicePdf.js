@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { format } from "date-fns";
+import { utcToPktDisplay } from "@/lib/pktTime";
 
 // The A4 invoice PDF — a separate downloadable document (NOT the thermal
 // receipt). The thermal receipt is never converted to a PDF; it is printed
@@ -57,7 +57,7 @@ export function generateInvoicePdf(bill, qrUrl, iosUrl, androidUrl, logoUrl) {
     doc.setFontSize(9);
     doc.setTextColor(...brownSec);
     doc.text(`No. ${bill.billNumber}`, right - 5, y + 7, { align: "right" });
-    doc.text(format(new Date(bill.date), "MMM dd, yyyy HH:mm"), right - 5, y + 14, { align: "right" });
+    doc.text(utcToPktDisplay(bill.date), right - 5, y + 14, { align: "right" });
     y += bandH + 6;
 
     // --- Customer info ---
