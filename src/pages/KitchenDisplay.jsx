@@ -16,6 +16,18 @@ function elapsed(placedAt) {
   return mins;
 }
 
+// A KitchenOrder counts as "active" for the kitchen station only when the
+// kitchen still has pending/in_progress work AND the order hasn't reached a
+// terminal overall state. Shared by the fetch and the realtime handlers so a
+// lagging kitchen_status can never resurrect a ready/completed/cancelled order.
+function isOrderActive(o) {
+  return !!o &&
+    (o.kitchen_status === "pending" || o.kitchen_status === "in_progress") &&
+    o.overall_status !== "ready" &&
+    o.overall_status !== "completed" &&
+    o.overall_status !== "cancelled";
+}
+
 function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-4">
@@ -169,13 +181,16 @@ export default function KitchenDisplay() {
       "-placed_at",
       50
     );
-    // Sort: takeaway first, then by time
-    data.sort((a, b) => {
+    // Drop any orders already in a terminal overall state (e.g. ready but
+    // kitchen_status lagged) so the periodic reconcile can never resurrect
+    // phantom orders.
+    const active = data.filter(isOrderActive);
+    active.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
       return new Date(a.placed_at) - new Date(b.placed_at);
     });
-    setOrders(data);
+    setOrders(active);
   };
 
   const loadHistory = async () => {
@@ -197,13 +212,6 @@ export default function KitchenDisplay() {
     // set every 30s clears any ghost orders and recovers from missed events.
     const reconcile = setInterval(loadOrders, 30000);
 
-    const isActive = (o) =>
-      o &&
-      (o.kitchen_status === "pending" || o.kitchen_status === "in_progress") &&
-      o.overall_status !== "ready" &&
-      o.overall_status !== "completed" &&
-      o.overall_status !== "cancelled";
-
     const sortByPriority = (arr) => arr.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
@@ -216,14 +224,14 @@ export default function KitchenDisplay() {
       if (!o || !o.id) return;
       if (event.type === "create") {
         // Ignore stale/replayed creates for orders that are already finished.
-        if (!isActive(o)) return;
+        if (!isOrderActive(o)) return;
         setOrders(prev => {
           if (prev.some(x => x.id === o.id)) return prev; // dedup replayed create
           return sortByPriority([o, ...prev]);
         });
         try { audioRef.current?.play(); } catch(e) {}
       } else if (event.type === "update") {
-        if (!isActive(o)) {
+        if (!isOrderActive(o)) {
           setOrders(prev => prev.filter(x => x.id !== o.id));
         } else {
           setOrders(prev => {
