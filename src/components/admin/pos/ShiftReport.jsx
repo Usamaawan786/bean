@@ -1,4 +1,5 @@
-import { format, formatDistanceStrict } from "date-fns";
+import { formatDistanceStrict } from "date-fns";
+import { utcToPktDisplay } from "@/lib/pktTime";
 
 const FONT = "'Courier New', Courier, monospace";
 const money = (n) => `PKR ${Number(n || 0).toFixed(2)}`;
@@ -65,9 +66,9 @@ export default function ShiftReport({ shift, sales = [], entries = [] }) {
       <div style={section}>
         <div style={row()}><span>Shift Type</span><span style={{ fontWeight: 700 }}>{shift.shift_type === "morning" ? "Morning" : "Evening"}</span></div>
         <div style={row()}><span>Opened By</span><span>{shift.opened_by_name || shift.opened_by}</span></div>
-        <div style={row()}><span>Opened At</span><span>{opened ? format(opened, "MMM dd, HH:mm") : "—"}</span></div>
+        <div style={row()}><span>Opened At</span><span>{shift.opened_at ? utcToPktDisplay(shift.opened_at) : "—"}</span></div>
         <div style={row()}><span>Closed By</span><span>{shift.closed_by_name || "—"}</span></div>
-        <div style={row()}><span>Closed At</span><span>{closed ? format(closed, "MMM dd, HH:mm") : "—"}</span></div>
+        <div style={row()}><span>Closed At</span><span>{shift.closed_at ? utcToPktDisplay(shift.closed_at) : "—"}</span></div>
         <div style={row()}><span>Duration</span><span>{duration}</span></div>
       </div>
       <div style={divider} />
