@@ -8,8 +8,6 @@ import { applyStockDelta } from "../../shared/stockLedger.ts";
 //  - If a sheet for the day is already Locked, a Manager PIN override is required
 //    to re-submit; otherwise editing is blocked.
 
-const MANAGER_PIN = "Istuser786";
-
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -22,10 +20,17 @@ export default async function(req) {
       return Response.json({ error: 'date and lines[] are required' }, { status: 400 });
     }
 
+    // Manager PIN is stored as a secret so it never appears in source code.
+    const expectedPin = Deno.env.get('MANAGER_PIN');
     const sheets = await base44.asServiceRole.entities.EodReconciliation.list("-audit_date", 50);
     const existing = sheets.find(s => s.audit_date === date);
-    if (existing && existing.status === 'Locked' && manager_pin !== MANAGER_PIN) {
-      return Response.json({ error: 'Sheet is locked. Manager PIN override required to re-submit.' }, { status: 403 });
+    if (existing && existing.status === 'Locked') {
+      if (!expectedPin) {
+        return Response.json({ error: 'MANAGER_PIN not configured' }, { status: 500 });
+      }
+      if (manager_pin !== expectedPin) {
+        return Response.json({ error: 'Sheet is locked. Manager PIN override required to re-submit.' }, { status: 403 });
+      }
     }
 
     let totalLoss = 0;

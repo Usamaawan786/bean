@@ -96,12 +96,20 @@ export default function AdminEodReconciliation() {
     }
   };
 
-  const handleOverride = () => {
-    if (pin === "Istuser786") {
-      setOverrideUnlocked(true);
-      setError("");
-    } else {
-      setError("Incorrect Manager PIN.");
+  const handleOverride = async () => {
+    setError("");
+    setBusy(true);
+    try {
+      const res = await base44.functions.invoke("verifyManagerPin", { pin });
+      if (res.data?.ok) {
+        setOverrideUnlocked(true);
+      } else {
+        setError("Incorrect Manager PIN.");
+      }
+    } catch (e) {
+      setError(e?.response?.data?.error || e.message || "PIN verification failed");
+    } finally {
+      setBusy(false);
     }
   };
 

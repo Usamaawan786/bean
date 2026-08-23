@@ -8,6 +8,14 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
+    // Admin-only: the scheduled automation runs with an admin/service context,
+    // and manual invocations require an admin. Blocks anonymous callers from
+    // triggering pending push notifications directly.
+    const user = await base44.auth.me();
+    if (!user || user.role !== 'admin') {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const scheduled = await base44.asServiceRole.entities.PushNotification.filter({ status: 'scheduled' });
     const now = new Date();
 
