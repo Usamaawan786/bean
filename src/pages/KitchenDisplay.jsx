@@ -123,7 +123,7 @@ function OrderCard({ order, onMarkItemDone, onMarkStationDone }) {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <ElapsedTimer placedAt={order.placed_at} />
+          <ElapsedTimer placedAt={order.created_date} />
           {allDone && (
             <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
               DONE ✓
@@ -195,27 +195,30 @@ export default function KitchenDisplay() {
   const audioRef = useRef(null);
 
   const loadOrders = async () => {
+    // Use $or (documented) — the SDK does NOT treat { field: [...] } as an IN
+    // query, so the old array filter was returning every order. Sort by the
+    // server-set created_date, not the client-set placed_at (which was 12h off
+    // because the POS device clock had drifted).
     const data = await base44.entities.KitchenOrder.filter(
-      { kitchen_status: ["pending", "in_progress"] },
-      "-placed_at",
+      { $or: [{ kitchen_status: "pending" }, { kitchen_status: "in_progress" }] },
+      "-created_date",
       50
     );
-    // Drop any orders already in a terminal overall state (e.g. ready but
-    // kitchen_status lagged) so the periodic reconcile can never resurrect
-    // phantom orders.
-    const active = data.filter(o => isOrderActive(o) && isRecent(o.placed_at));
+    // Drop terminal-state orders and anything older than the recency cutoff.
+    // created_date is server time, so it's always correct even if placed_at isn't.
+    const active = data.filter(o => isOrderActive(o) && isRecent(o.created_date));
     active.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
-      return new Date(a.placed_at) - new Date(b.placed_at);
+      return new Date(a.created_date) - new Date(b.created_date);
     });
     setOrders(active);
   };
 
   const loadHistory = async () => {
     const data = await base44.entities.KitchenOrder.filter(
-      { overall_status: ["ready", "completed", "cancelled"] },
-      "-placed_at",
+      { $or: [{ overall_status: "ready" }, { overall_status: "completed" }, { overall_status: "cancelled" }] },
+      "-created_date",
       200
     );
     setHistoryOrders(data);
@@ -234,7 +237,7 @@ export default function KitchenDisplay() {
     const sortByPriority = (arr) => arr.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
-      return new Date(a.placed_at) - new Date(b.placed_at);
+      return new Date(a.created_date) - new Date(b.created_date);
     });
 
     // Real-time subscription
@@ -244,14 +247,14 @@ export default function KitchenDisplay() {
       if (event.type === "create") {
         // Ignore stale/replayed creates for orders that are already finished
         // or were placed long ago (previous shift/day).
-        if (!isOrderActive(o) || !isRecent(o.placed_at)) return;
+        if (!isOrderActive(o) || !isRecent(o.created_date)) return;
         setOrders(prev => {
           if (prev.some(x => x.id === o.id)) return prev; // dedup replayed create
           return sortByPriority([o, ...prev]);
         });
         try { audioRef.current?.play(); } catch(e) {}
       } else if (event.type === "update") {
-        if (!isOrderActive(o) || !isRecent(o.placed_at)) {
+        if (!isOrderActive(o) || !isRecent(o.created_date)) {
           setOrders(prev => prev.filter(x => x.id !== o.id));
         } else {
           setOrders(prev => {
@@ -390,7 +393,7 @@ export default function KitchenDisplay() {
               const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
               
               const filtered = historyOrders.filter(o => {
-                const placed = new Date(o.placed_at);
+                const placed = new Date(o.created_date);
                 if (filterDate === "today" && placed < todayStart) return false;
                 if (filterDate === "week" && placed < weekStart) return false;
                 if (filterType === "dine_in" && o.order_type !== "dine_in") return false;
@@ -473,7 +476,7 @@ export default function KitchenDisplay() {
                                 </span>
                               </div>
                               <div className="flex items-center gap-3 mt-1 flex-wrap text-xs text-gray-500">
-                                <span>Placed: {order.placed_at ? format(new Date(order.placed_at), "HH:mm") : "—"}</span>
+                                <span>Placed: {order.created_date ? format(new Date(order.created_date), "HH:mm") : "—"}</span>
                                 {order.ready_at && <span>Ready: {format(new Date(order.ready_at), "HH:mm")}</span>}
                                 <span className="text-gray-600">{order.items?.length} item{order.items?.length !== 1 ? "s" : ""}</span>
                               </div>
