@@ -28,6 +28,25 @@ function isOrderActive(o) {
     o.overall_status !== "cancelled";
 }
 
+// PKT = UTC+5. An order is only shown if it was placed within the current PKT
+// day AND no more than 4 hours ago. This stops orders from previous shifts or
+// previous days (never marked done at the station) from lingering on the KDS.
+const PKT_OFFSET_MS = 5 * 60 * 60 * 1000;
+const STALE_AFTER_MS = 4 * 60 * 60 * 1000;
+
+function activeCutoff() {
+  const now = Date.now();
+  const pktNow = new Date(now + PKT_OFFSET_MS);
+  const pktMidnightUTC = Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate());
+  const startOfTodayPKT = pktMidnightUTC - PKT_OFFSET_MS;
+  return Math.max(startOfTodayPKT, now - STALE_AFTER_MS);
+}
+
+function isRecent(placedAt) {
+  if (!placedAt) return false;
+  return new Date(placedAt).getTime() >= activeCutoff();
+}
+
 function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-4">
@@ -184,7 +203,7 @@ export default function KitchenDisplay() {
     // Drop any orders already in a terminal overall state (e.g. ready but
     // kitchen_status lagged) so the periodic reconcile can never resurrect
     // phantom orders.
-    const active = data.filter(isOrderActive);
+    const active = data.filter(o => isOrderActive(o) && isRecent(o.placed_at));
     active.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
@@ -223,15 +242,16 @@ export default function KitchenDisplay() {
       const o = event.data;
       if (!o || !o.id) return;
       if (event.type === "create") {
-        // Ignore stale/replayed creates for orders that are already finished.
-        if (!isOrderActive(o)) return;
+        // Ignore stale/replayed creates for orders that are already finished
+        // or were placed long ago (previous shift/day).
+        if (!isOrderActive(o) || !isRecent(o.placed_at)) return;
         setOrders(prev => {
           if (prev.some(x => x.id === o.id)) return prev; // dedup replayed create
           return sortByPriority([o, ...prev]);
         });
         try { audioRef.current?.play(); } catch(e) {}
       } else if (event.type === "update") {
-        if (!isOrderActive(o)) {
+        if (!isOrderActive(o) || !isRecent(o.placed_at)) {
           setOrders(prev => prev.filter(x => x.id !== o.id));
         } else {
           setOrders(prev => {
