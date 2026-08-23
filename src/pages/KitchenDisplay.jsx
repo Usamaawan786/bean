@@ -190,41 +190,52 @@ export default function KitchenDisplay() {
   useEffect(() => {
     loadOrders();
     if (showHistory) loadHistory();
+
+    // Safety net: the realtime channel can replay stale `create` events on
+    // reconnect (network blip / tab refocus), which re-adds already-completed
+    // orders as "active". Re-fetching the authoritative pending/in_progress
+    // set every 30s clears any ghost orders and recovers from missed events.
+    const reconcile = setInterval(loadOrders, 30000);
+
+    const isActive = (o) =>
+      o &&
+      (o.kitchen_status === "pending" || o.kitchen_status === "in_progress") &&
+      o.overall_status !== "ready" &&
+      o.overall_status !== "completed" &&
+      o.overall_status !== "cancelled";
+
+    const sortByPriority = (arr) => arr.sort((a, b) => {
+      if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
+      if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
+      return new Date(a.placed_at) - new Date(b.placed_at);
+    });
+
     // Real-time subscription
     const unsub = base44.entities.KitchenOrder.subscribe((event) => {
+      const o = event.data;
+      if (!o || !o.id) return;
       if (event.type === "create") {
-        const o = event.data;
-        if (o.kitchen_status === "pending" || o.kitchen_status === "in_progress") {
-          setOrders(prev => {
-            const next = [o, ...prev.filter(x => x.id !== o.id)];
-            next.sort((a, b) => {
-              if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
-              if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
-              return new Date(a.placed_at) - new Date(b.placed_at);
-            });
-            return next;
-          });
-          // Play alert sound
-          try { audioRef.current?.play(); } catch(e) {}
-        }
+        // Ignore stale/replayed creates for orders that are already finished.
+        if (!isActive(o)) return;
+        setOrders(prev => {
+          if (prev.some(x => x.id === o.id)) return prev; // dedup replayed create
+          return sortByPriority([o, ...prev]);
+        });
+        try { audioRef.current?.play(); } catch(e) {}
       } else if (event.type === "update") {
-        const o = event.data;
-        if (o.kitchen_status === "done" || o.kitchen_status === "not_applicable" || o.overall_status === "completed" || o.overall_status === "cancelled") {
+        if (!isActive(o)) {
           setOrders(prev => prev.filter(x => x.id !== o.id));
         } else {
           setOrders(prev => {
-            const next = prev.map(x => x.id === o.id ? o : x);
-            next.sort((a, b) => {
-              if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
-              if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
-              return new Date(a.placed_at) - new Date(b.placed_at);
-            });
-            return next;
+            if (!prev.some(x => x.id === o.id)) return sortByPriority([o, ...prev]); // re-opened
+            return sortByPriority(prev.map(x => x.id === o.id ? o : x));
           });
         }
+      } else if (event.type === "delete") {
+        setOrders(prev => prev.filter(x => x.id !== o.id));
       }
     });
-    return () => unsub();
+    return () => { clearInterval(reconcile); unsub(); };
   }, []);
 
   const markItemDone = async (orderId, itemIndex, item) => {
