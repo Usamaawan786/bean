@@ -24,7 +24,19 @@
     },
     "yield_conversion_id": {
       "type": "string",
-      "description": "Reference to the YieldConversion record that generated this waste"
+      "description": "Reference to the YieldConversion record that generated this waste. Empty for standalone disposal entries logged via the Waste Log form."
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "Spoilage",
+        "Expired",
+        "Drop",
+        "Preparation Waste",
+        "Staff Consumption",
+        "Other"
+      ],
+      "description": "Reason for disposal. Set for standalone waste entries; batch-processing waste leaves this unset."
     },
     "notes": {
       "type": "string"

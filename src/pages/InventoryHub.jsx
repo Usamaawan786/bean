@@ -2,19 +2,21 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Boxes, Receipt, ClipboardCheck, FileX, Recycle, Loader2 } from "lucide-react";
+import { ArrowLeft, Boxes, Receipt, ClipboardCheck, FileX, Recycle, Trash2, Loader2 } from "lucide-react";
 import StockOverviewTab from "@/components/inventoryhub/StockOverviewTab";
 import InvoicesTab from "@/components/inventoryhub/InvoicesTab";
 import ReconciliationTab from "@/components/inventoryhub/ReconciliationTab";
 import WriteOffTab from "@/components/inventoryhub/WriteOffTab";
 import YieldTab from "@/components/inventoryhub/YieldTab";
+import WasteTab from "@/components/inventoryhub/WasteTab";
 
 const TABS = [
   { key: "stock", label: "Stock Overview", icon: Boxes },
   { key: "invoices", label: "Invoices & Procurement", icon: Receipt },
   { key: "reconciliation", label: "Inventory Reconciliation", icon: ClipboardCheck },
   { key: "writeoff", label: "Write-Off Records", icon: FileX },
-  { key: "yield", label: "Yield & Batch Processing", icon: Recycle }
+  { key: "yield", label: "Yield & Batch Processing", icon: Recycle },
+  { key: "waste", label: "Waste Log", icon: Trash2 }
 ];
 
 export default function InventoryHub() {
@@ -59,6 +61,7 @@ export default function InventoryHub() {
       case "reconciliation": return <ReconciliationTab />;
       case "writeoff": return <WriteOffTab />;
       case "yield": return <YieldTab />;
+      case "waste": return <WasteTab />;
       default: return null;
     }
   };
