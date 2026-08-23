@@ -4,8 +4,6 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell, Truck, Bike } from "lucide-react";
 import { motion } from "framer-motion";
-import Staff2FAGate from "@/components/Staff2FAGate";
-import { clearStaff2FA } from "@/lib/staff2FA";
 
 const ROLE_FEATURES = {
   cashier: [
@@ -85,7 +83,7 @@ export default function StaffPortal() {
     });
   }, []);
 
-  const handleLogout = () => { clearStaff2FA(user?.email); base44.auth.logout("/"); };
+  const handleLogout = () => base44.auth.logout("/");
 
   if (loading) {
     return (
@@ -154,7 +152,6 @@ export default function StaffPortal() {
   const roleInfo = ROLE_LABELS[user?.role] || { label: "Staff", icon: "👤" };
 
   return (
-    <Staff2FAGate user={user}>
     <div className="min-h-screen bg-[#F5F1ED]">
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#5C4A3A] text-white">
@@ -217,6 +214,5 @@ export default function StaffPortal() {
         </p>
       </div>
     </div>
-    </Staff2FAGate>
   );
 }
