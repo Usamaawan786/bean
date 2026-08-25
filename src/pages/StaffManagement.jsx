@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserPlus, Users, Shield, ChevronDown, Loader2, Mail, Lock, Monitor } from "lucide-react";
+import { ArrowLeft, UserPlus, Users, Shield, ChevronDown, Loader2, Mail, Lock, Monitor, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,7 @@ export default function StaffManagement() {
   const [showMatrix, setShowMatrix] = useState(false);
   const [matrix, setMatrix] = useState(loadMatrix);
   const [matrixDirty, setMatrixDirty] = useState(false);
+  const [staffSearch, setStaffSearch] = useState("");
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -73,6 +74,16 @@ export default function StaffManagement() {
   // Also show regular users who were recently invited (so admin can assign their role)
   const pendingUsers = allUsers.filter(u => u.role === "user");
   const roleCounts = staffUsers.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {});
+
+  // Search filter — match name or email so admins can jump straight to a user
+  // to assign/adjust their role without scrolling the whole list.
+  const q = staffSearch.trim().toLowerCase();
+  const filteredStaff = q
+    ? staffUsers.filter(u => (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q))
+    : staffUsers;
+  const filteredPending = q
+    ? pendingUsers.filter(u => (u.full_name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q))
+    : pendingUsers;
 
   // Invite fix: Base44 inviteUser only accepts "user" or "admin"
   // We invite as "user", then immediately update role once they appear
@@ -222,16 +233,29 @@ export default function StaffManagement() {
 
         {/* Current Staff */}
         <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm">
-          <h2 className="font-bold text-[#5C4A3A] mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5 text-[#8B7355]" /> Current Staff
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h2 className="font-bold text-[#5C4A3A] flex items-center gap-2">
+              <Users className="h-5 w-5 text-[#8B7355]" /> Current Staff
+            </h2>
+            <div className="relative">
+              <Search className="h-4 w-4 text-[#C9B8A6] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Input
+                placeholder="Search by name or email to assign a role…"
+                value={staffSearch}
+                onChange={e => setStaffSearch(e.target.value)}
+                className="pl-9 border-[#E8DED8] sm:w-80 text-sm"
+              />
+            </div>
+          </div>
           {isLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#8B7355]" /></div>
-          ) : staffUsers.length === 0 && pendingUsers.length === 0 ? (
-            <p className="text-center text-[#8B7355] py-8">No staff members yet.</p>
+          ) : filteredStaff.length === 0 && filteredPending.length === 0 ? (
+            <p className="text-center text-[#8B7355] py-8">
+              {staffUsers.length === 0 && pendingUsers.length === 0 ? "No staff members yet." : "No matches found."}
+            </p>
           ) : (
             <div className="space-y-3">
-              {staffUsers.map(u => {
+              {filteredStaff.map(u => {
                 const cfg = ROLE_CONFIG[u.role] || ROLE_CONFIG.user;
                 const isSelf = u.email === user.email;
                 const locked = !canChangeRole(u);
@@ -288,14 +312,14 @@ export default function StaffManagement() {
                 );
               })}
               {/* Pending users — invited but not yet assigned a staff role */}
-              {pendingUsers.length > 0 && (
+              {filteredPending.length > 0 && (
                 <>
                   <div className="flex items-center gap-2 pt-2 pb-1">
                     <div className="h-px flex-1 bg-[#E8DED8]" />
                     <span className="text-xs text-[#C9B8A6] font-medium">Awaiting Role Assignment</span>
                     <div className="h-px flex-1 bg-[#E8DED8]" />
                   </div>
-                  {pendingUsers.map(u => (
+                  {filteredPending.map(u => (
                     <div key={u.id} className="flex items-center gap-3 p-3 rounded-2xl bg-amber-50 border border-amber-200">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-200 to-amber-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
                         {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
