@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 // Scans every InventoryItem for stock at or below its minimum par level and
-// pings admins/managers via email + in-app notification + mobile push so
-// procurement can happen before peak hours. Triggered by a scheduled
-// automation (twice daily) but also manually invokable by admins.
+// pings admins/managers via email + in-app notification only. Mobile push is
+// intentionally NOT used here — the shared sendPushNotification path can
+// broadcast to unintended devices, which previously leaked an alert to a
+// customer. Email + in-app notifications are per-recipient and RLS-locked.
 
 Deno.serve(async (req) => {
   try {
@@ -84,18 +85,6 @@ Deno.serve(async (req) => {
       } catch (e) {
         console.error(`Low-stock in-app notification for ${email} failed:`, e.message);
       }
-    }
-
-    // 3) Mobile push (best-effort — no registered device = skipped gracefully).
-    try {
-      await base44.asServiceRole.functions.invoke('sendPushNotification', {
-        title: subject,
-        body: `${shown.length} item(s) below par. Open Inventory Hub to review.`,
-        specific_emails: recipientEmails,
-        deep_link: '/inventory-hub',
-      });
-    } catch (e) {
-      console.error('Low-stock push notification failed:', e.message);
     }
 
     console.log(`Low-stock alert sent to ${recipientEmails.length} recipient(s) for ${low.length} item(s).`);
