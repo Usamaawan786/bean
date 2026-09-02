@@ -12,8 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@base44/sdk": "^0.8.44",
-    "@base44/vite-plugin": "^1.0.33",
+    "@base44/sdk": "^0.8.45",
+    "@base44/vite-plugin": "^1.0.34",
     "@capacitor/android": "^8.0.2",
     "@capacitor/barcode-scanner": "^3.0.2",
     "@capacitor/camera": "^8.0.0",
