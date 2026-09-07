@@ -1,0 +1,37 @@
+{
+  "name": "WhatsApp \u2014 Personalized Offer Created",
+  "description": "Fires when a new PersonalizedOffer is created \u2014 sends a targeted WhatsApp message to that specific user.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "PersonalizedOffer"
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "whatsapp_personalized_offer_created",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "run_function": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "whatsAppPersonalizedOffer",
+            "args": {}
+          },
+          "then": "end"
+        }
+      }
+    ]
+  },
+  "x-base44-migrated-from-automation": {
+    "legacy_payload_function": "whatsAppPersonalizedOffer"
+  }
+}
