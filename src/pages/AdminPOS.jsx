@@ -24,6 +24,7 @@ import ShiftGate from "@/components/admin/pos/ShiftGate";
 import ShiftPanel from "@/components/admin/pos/ShiftPanel";
 import ShiftHistoryTab from "@/components/admin/pos/ShiftHistoryTab";
 import ShiftReportView from "@/components/admin/pos/ShiftReportView";
+import DiscountsReportTab from "@/components/admin/pos/DiscountsReportTab";
 import CashChangeCalculator from "@/components/admin/pos/CashChangeCalculator";
 import CustomerProfilePanel from "@/components/admin/pos/CustomerProfilePanel";
 import { SlidersHorizontal } from "lucide-react";
@@ -452,6 +453,8 @@ export default function AdminPOS() {
   const canManageProducts = ["admin", "super_admin", "manager"].includes(user?.role);
   // Shift reports & sales history reveal sales totals — managers/admins only, never cashiers
   const canViewSalesReports = ["admin", "super_admin", "manager"].includes(user?.role);
+  // Discounts report is a sensitive audit — admins only (never managers or cashiers)
+  const canViewDiscountsReport = ["admin", "super_admin"].includes(user?.role);
 
   if (!user) return null;
 
@@ -538,6 +541,9 @@ export default function AdminPOS() {
             )}
             {canViewSalesReports && (
               <TabsTrigger value="shift-history">Shift Reports</TabsTrigger>
+            )}
+            {canViewDiscountsReport && (
+              <TabsTrigger value="discounts-report">Discounts Report</TabsTrigger>
             )}
             <TabsTrigger value="redemptions">Reward Redemptions</TabsTrigger>
             {canManageProducts && <TabsTrigger value="products">Product Management</TabsTrigger>}
@@ -898,6 +904,12 @@ export default function AdminPOS() {
           {canViewSalesReports && (
             <TabsContent value="shift-history">
               <ShiftHistoryTab />
+            </TabsContent>
+          )}
+
+          {canViewDiscountsReport && (
+            <TabsContent value="discounts-report">
+              <DiscountsReportTab />
             </TabsContent>
           )}
 
