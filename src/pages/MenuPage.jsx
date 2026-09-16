@@ -62,14 +62,6 @@ const CATEGORY_DESCRIPTIONS = {
   "Other": "A little something extra.",
 };
 
-const MOST_LIKED_IMAGES = {
-  "eggs bruschetta": "https://images.unsplash.com/photo-1525351484163-8eb3a73b78a3?w=400&q=80",
-  "club sandwich": "https://images.unsplash.com/photo-1539252554453-67c171fc0df2?w=400&q=80",
-  "mushroom cheese omelette": "https://images.unsplash.com/photo-1510693206972-df098062cb71?w=400&q=80",
-  "lotus french toast": "https://images.unsplash.com/photo-1485962398705-ef6a13c41ec8?w=400&q=80",
-  "spanish latte": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=400&q=80",
-};
-
 export default function MenuPage() {
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +104,7 @@ export default function MenuPage() {
       (p) => !usedIds.has(p.id) && p.name.toLowerCase().includes(query)
     );
     if (match) {
-      mostLikedItems.push({ ...match, _likes: likes, _img: MOST_LIKED_IMAGES[query] });
+      mostLikedItems.push({ ...match, _likes: likes });
       usedIds.add(match.id);
     }
   });
@@ -364,7 +356,7 @@ export default function MenuPage() {
                       item={item}
                       isMostLiked={section.isMostLiked}
                       likes={item._likes}
-                      image={item._img || item.image_url || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES["Other"]}
+                      image={item.image_url || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES["Other"]}
                     />
                   ))}
                 </div>
