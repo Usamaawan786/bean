@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, Clock, Coffee } from "lucide-react";
 
 const fmtPKR = (n) => `Rs. ${Number(n || 0).toLocaleString("en-PK")}`;
@@ -7,6 +7,10 @@ const fmtPKR = (n) => `Rs. ${Number(n || 0).toLocaleString("en-PK")}`;
 // white border, prep-time pill, and a like badge for "Most Liked" items.
 export default function MenuCard({ item, image, isMostLiked, likes }) {
   const [imgError, setImgError] = useState(false);
+
+  // Reset the error state whenever a new image URL arrives so a freshly
+  // uploaded/generated photo is retried instead of staying on the placeholder.
+  useEffect(() => { setImgError(false); }, [image]);
 
   return (
     <div className="flex gap-2 bg-[#936548] rounded-2xl overflow-hidden shadow-md">
