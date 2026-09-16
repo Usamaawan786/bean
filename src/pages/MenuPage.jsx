@@ -101,7 +101,7 @@ export default function MenuPage() {
     const map = {};
     allItems.forEach((p) => {
       const c = p.category || "Other";
-      if (!map[c] && p.image_url && p.image_url.includes("base44.app/api/apps")) map[c] = p.image_url;
+      if (!map[c] && p.image_url && !p.image_url.includes("images.unsplash.com")) map[c] = p.image_url;
     });
     return map;
   }, [allItems]);
