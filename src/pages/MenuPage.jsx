@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { Coffee, Heart, Search, SlidersHorizontal, Menu as MenuIcon, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -95,6 +95,17 @@ export default function MenuPage() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Build a category thumbnail from the first uploaded product photo in each category
+  const categoryImages = useMemo(() => {
+    const map = {};
+    allItems.forEach((p) => {
+      const c = p.category || "Other";
+      if (!map[c] && p.image_url && p.image_url.includes("base44.app/api/apps")) map[c] = p.image_url;
+    });
+    return map;
+  }, [allItems]);
+  const catImg = (cat) => categoryImages[cat] || CATEGORY_IMAGES[cat] || CATEGORY_IMAGES["Other"];
 
   // Match Most Liked items by name
   const mostLikedItems = [];
@@ -230,7 +241,7 @@ export default function MenuPage() {
                 <div className="flex gap-3 min-w-max">
                   {sections.map((s) => {
                     const isActive = activeCat === s.id;
-                    const img = s.isMostLiked ? null : (CATEGORY_IMAGES[s.label] || CATEGORY_IMAGES["Other"]);
+                    const img = s.isMostLiked ? null : catImg(s.label);
                     return (
                       <button
                         key={s.id}
@@ -333,7 +344,7 @@ export default function MenuPage() {
                   <div className="mb-5">
                     <div className="rounded-2xl overflow-hidden h-32 sm:h-40 mb-3 shadow-md">
                       <img
-                        src={CATEGORY_IMAGES[section.label] || CATEGORY_IMAGES["Other"]}
+                        src={catImg(section.label)}
                         alt={section.label}
                         className="w-full h-full object-cover"
                         loading="lazy"
