@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Coffee, Heart, Search, Info } from "lucide-react";
+import { Coffee, Heart, Search, SlidersHorizontal, Menu as MenuIcon, ArrowUp } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import MenuCard from "@/components/menu/MenuCard";
 
@@ -34,17 +35,31 @@ const CATEGORY_ORDER = [
 ];
 
 const CATEGORY_IMAGES = {
-  "Breakfast": "https://images.unsplash.com/photo-1533089860892-a7c6f0a886de?w=400&q=80",
-  "Hot Coffee": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80",
-  "Cold Coffee": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=400&q=80",
-  "Matcha": "https://images.unsplash.com/photo-1515823668373-6c12b5b0389f?w=400&q=80",
-  "Smoothies": "https://images.unsplash.com/photo-1505252585461-04db1eb5465f?w=400&q=80",
-  "Fresher": "https://images.unsplash.com/photo-1610970881699-46a35a1a6f4f?w=400&q=80",
-  "Teas & More": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400&q=80",
-  "Pastry": "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=400&q=80",
-  "Sweeter": "https://images.unsplash.com/photo-1551024601-bec78aea6be4?w=400&q=80",
-  "Add-Ons": "https://images.unsplash.com/photo-1497935586351-b67f49ee9fee?w=400&q=80",
-  "Other": "https://images.unsplash.com/photo-1495474472287-4d71bcdd6005?w=400&q=80",
+  "Breakfast": "https://images.unsplash.com/photo-1533089860892-a7c6f0a886de?w=800&q=80",
+  "Hot Coffee": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80",
+  "Cold Coffee": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=800&q=80",
+  "Matcha": "https://images.unsplash.com/photo-1515823668373-6c12b5b0389f?w=800&q=80",
+  "Smoothies": "https://images.unsplash.com/photo-1505252585461-04db1eb5465f?w=800&q=80",
+  "Fresher": "https://images.unsplash.com/photo-1610970881699-46a35a1a6f4f?w=800&q=80",
+  "Teas & More": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80",
+  "Pastry": "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=800&q=80",
+  "Sweeter": "https://images.unsplash.com/photo-1551024601-bec78aea6be4?w=800&q=80",
+  "Add-Ons": "https://images.unsplash.com/photo-1497935586351-b67f49ee9fee?w=800&q=80",
+  "Other": "https://images.unsplash.com/photo-1495474472287-4d71bcdd6005?w=800&q=80",
+};
+
+const CATEGORY_DESCRIPTIONS = {
+  "Breakfast": "Served with Bean's special sauce and your choice of a side salad or potatoes.",
+  "Hot Coffee": "Single-origin beans, roasted locally and pulled to order.",
+  "Cold Coffee": "Chilled, smooth and refreshing — perfect for Islamabad afternoons.",
+  "Matcha": "Stone-ground ceremonial matcha, whisked the traditional way.",
+  "Smoothies": "Blended fresh with seasonal fruit and no added sugar.",
+  "Fresher": "Light, bright and citrusy — our cold-pressed refreshers.",
+  "Teas & More": "Loose-leaf teas and house specialties.",
+  "Pastry": "Baked fresh every morning in-house.",
+  "Sweeter": "Indulgent treats for your sweet tooth.",
+  "Add-Ons": "Extras to complete your order.",
+  "Other": "A little something extra.",
 };
 
 const MOST_LIKED_IMAGES = {
@@ -55,14 +70,12 @@ const MOST_LIKED_IMAGES = {
   "spanish latte": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=400&q=80",
 };
 
-// Force image refresh — products now have image_url from DB
-const USE_DB_IMAGE = true;
-
 export default function MenuPage() {
   const [allItems, setAllItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCat, setActiveCat] = useState("most-liked");
   const [search, setSearch] = useState("");
+  const [showFab, setShowFab] = useState(false);
   const sectionRefs = useRef({});
   const navRef = useRef(null);
   const pillRefs = useRef({});
@@ -82,6 +95,13 @@ export default function MenuPage() {
       }
     })();
     return () => { mounted = false; };
+  }, []);
+
+  // FAB visibility
+  useEffect(() => {
+    const onScroll = () => setShowFab(window.scrollY > 500);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Match Most Liked items by name
@@ -106,11 +126,9 @@ export default function MenuPage() {
   });
 
   const categories = CATEGORY_ORDER.filter((c) => grouped[c]?.length);
-  // Include any categories not in our predefined order
   const extraCats = Object.keys(grouped).filter((c) => !CATEGORY_ORDER.includes(c)).sort();
   const allCategories = [...categories, ...extraCats];
 
-  // Build the full section list: Most Liked first, then categories
   const sections = [
     { id: "most-liked", label: "Most Liked", items: mostLikedItems, isMostLiked: true },
     ...allCategories.map((cat) => ({
@@ -154,7 +172,7 @@ export default function MenuPage() {
     if (!el) return;
     setActiveCat(catId);
     pendingScroll.current = true;
-    const top = el.getBoundingClientRect().top + window.scrollY - 120;
+    const top = el.getBoundingClientRect().top + window.scrollY - 150;
     window.scrollTo({ top, behavior: "smooth" });
     setTimeout(() => { pendingScroll.current = false; }, 700);
   }, []);
@@ -165,80 +183,92 @@ export default function MenuPage() {
     ? allItems.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     : [];
 
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
   return (
-    <div className="min-h-screen bg-[#A37960]">
-      {/* ── HERO ── */}
-      <div className="relative bg-gradient-to-br from-[#855F4B] via-[#926A54] to-[#6B4A3A] text-white overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            animate={{ x: [0, 80, 0], y: [0, 40, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-10 -left-10 w-72 h-72 bg-white/10 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{ x: [0, -60, 0], y: [0, -30, 0] }}
-            transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-10 -right-10 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl"
-          />
+    <div className="min-h-screen bg-[#A87555]">
+      {/* ── CREAM HEADER STRIP ── */}
+      <div className="bg-[#E8DEC8]">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link to="/" className="p-1 -ml-1 text-[#7D5A46] active:scale-95 transition-transform">
+            <MenuIcon className="h-6 w-6" />
+          </Link>
+          <div className="text-lg font-bold text-[#7D5A46] tracking-wide">Bean</div>
+          <div className="w-6" />
         </div>
-        <div className="relative max-w-2xl mx-auto px-6 pt-12 pb-8 text-center">
-          <motion.div {...fadeUp(0)} className="flex items-center justify-center gap-2 mb-6">
-            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D4C4B0] to-[#8B7355] flex items-center justify-center shadow-lg">
-              <Coffee className="h-6 w-6 text-[#1a1208]" />
-            </div>
-            <span className="text-xl font-bold tracking-wide">Bean</span>
-          </motion.div>
-          <motion.h1 {...fadeUp(0.1)} className="text-2xl sm:text-3xl font-bold leading-tight mb-2">
-            Your daily dose of coffee happiness
+      </div>
+
+      {/* ── MENU HEADING ── */}
+      <div className="bg-[#A87555]">
+        <div className="max-w-2xl mx-auto px-4 pt-5 pb-4 text-center">
+          <motion.h1 {...fadeUp(0)} className="text-3xl font-bold text-white">
+            Menu
           </motion.h1>
-          <motion.div {...fadeUp(0.2)} className="flex items-center justify-center gap-1.5 text-white/70 text-sm">
-            <Info className="h-4 w-4" />
-            <span>Islamabad's First Coffee Lover's Club</span>
-          </motion.div>
         </div>
       </div>
 
       {/* ── SEARCH + STICKY CATEGORY NAV ── */}
       {sections.length > 0 && (
-        <div className="sticky top-0 z-50 bg-[#855F4B]/95 backdrop-blur-md shadow-md">
-          {/* Search bar */}
-          <div className="max-w-2xl mx-auto px-4 pt-3 pb-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search the menu..."
-                className="w-full bg-white/10 border border-white/20 rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
-              />
-            </div>
-          </div>
-          {/* Category pills */}
-          {!searching && (
-            <div ref={navRef} className="max-w-2xl mx-auto px-3 pb-3 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 min-w-max">
-                {sections.map((s) => {
-                  const isActive = activeCat === s.id;
-                  return (
-                    <button
-                      key={s.id}
-                      ref={(el) => (pillRefs.current[s.id] = el)}
-                      onClick={() => scrollToCat(s.id)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                        isActive
-                          ? "bg-white text-[#6B4A3A] shadow-sm"
-                          : "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-                      }`}
-                    >
-                      {s.isMostLiked && <Heart className="h-3.5 w-3.5 fill-current" />}
-                      {s.label}
-                    </button>
-                  );
-                })}
+        <div className="sticky top-0 z-50 bg-[#A87555]/95 backdrop-blur-md shadow-md">
+          <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
+            {/* Search + filter */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search"
+                  className="w-full bg-white/10 border border-[#C4A484] rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                />
               </div>
+              <button
+                onClick={() => setSearch("")}
+                className="p-2.5 rounded-full bg-white/10 border border-white/20 text-white active:scale-95 transition-transform"
+                aria-label="Clear search"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </button>
             </div>
-          )}
+
+            {/* Category thumbnails */}
+            {!searching && (
+              <div ref={navRef} className="mt-3 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-3 min-w-max">
+                  {sections.map((s) => {
+                    const isActive = activeCat === s.id;
+                    const img = s.isMostLiked ? null : (CATEGORY_IMAGES[s.label] || CATEGORY_IMAGES["Other"]);
+                    return (
+                      <button
+                        key={s.id}
+                        ref={(el) => (pillRefs.current[s.id] = el)}
+                        onClick={() => scrollToCat(s.id)}
+                        className="flex flex-col items-center gap-1 shrink-0 active:scale-95 transition-transform"
+                      >
+                        <div
+                          className={`w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center ${
+                            isActive ? "ring-2 ring-white" : "ring-1 ring-white/20"
+                          }`}
+                        >
+                          {s.isMostLiked ? (
+                            <div className="w-full h-full bg-[#936548] flex items-center justify-center">
+                              <Heart className={`h-6 w-6 ${isActive ? "text-white fill-white" : "text-white/70"}`} />
+                            </div>
+                          ) : (
+                            <img src={img} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
+                          )}
+                        </div>
+                        <span className={`text-[11px] max-w-[64px] truncate ${isActive ? "text-white font-medium" : "text-white/60"}`}>
+                          {s.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -248,17 +278,17 @@ export default function MenuPage() {
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
+                <div className="h-32 w-full bg-[#926A54] rounded-2xl mb-4" />
                 <div className="h-7 w-40 bg-[#926A54] rounded-lg mb-4" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[1, 2, 3, 4].map((j) => (
-                    <div key={j} className="h-32 bg-[#926A54] rounded-2xl" />
+                <div className="grid grid-cols-1 gap-3">
+                  {[1, 2, 3].map((j) => (
+                    <div key={j} className="h-28 bg-[#926A54] rounded-2xl" />
                   ))}
                 </div>
               </div>
             ))}
           </div>
         ) : searching ? (
-          /* Search results */
           <div>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Search className="h-5 w-5" />
@@ -270,7 +300,7 @@ export default function MenuPage() {
                 <p className="text-sm">No items found. Try a different search.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {searchResults.map((item) => (
                   <MenuCard
                     key={item.id}
@@ -287,28 +317,47 @@ export default function MenuPage() {
             <p className="text-sm">Menu is being updated. Please check back soon.</p>
           </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-12">
             {sections.map((section, idx) => (
               <motion.section
                 key={section.id}
                 data-cat-id={section.id}
                 ref={(el) => (sectionRefs.current[section.id] = el)}
                 {...fadeUp(idx * 0.05)}
-                className="scroll-mt-32"
+                className="scroll-mt-40"
               >
-                {/* Section header */}
-                <div className="mb-4">
-                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                    {section.isMostLiked && <Heart className="h-5 w-5 fill-white" />}
-                    {section.label}
-                  </h2>
-                  {section.isMostLiked && (
-                    <p className="text-sm text-white/60 mt-0.5">According to real person likes</p>
-                  )}
-                </div>
+                {section.isMostLiked ? (
+                  /* Most Liked header */
+                  <div className="mb-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <Heart className="h-4 w-4 text-white fill-white" />
+                      <h2 className="text-xl font-bold text-white">Most Liked</h2>
+                      <Heart className="h-4 w-4 text-white fill-white" />
+                    </div>
+                    <p className="text-sm text-white/60 mt-0.5">According to real guest likes</p>
+                  </div>
+                ) : (
+                  /* Category banner with line break: full-width graphic, then title + description */
+                  <div className="mb-5">
+                    <div className="rounded-2xl overflow-hidden h-32 sm:h-40 mb-3 shadow-md">
+                      <img
+                        src={CATEGORY_IMAGES[section.label] || CATEGORY_IMAGES["Other"]}
+                        alt={section.label}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    <h2 className="text-xl font-bold text-white">{section.label}</h2>
+                    {CATEGORY_DESCRIPTIONS[section.label] && (
+                      <p className="text-sm text-white/70 mt-1 leading-relaxed">
+                        {CATEGORY_DESCRIPTIONS[section.label]}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                {/* Cards grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Cards */}
+                <div className="grid grid-cols-1 gap-3">
                   {section.items.map((item) => (
                     <MenuCard
                       key={item.id}
@@ -324,6 +373,17 @@ export default function MenuPage() {
           </div>
         )}
       </div>
+
+      {/* ── SCROLL-TO-TOP FAB ── */}
+      {showFab && (
+        <button
+          onClick={scrollTop}
+          className="fixed bottom-6 right-6 z-40 w-11 h-11 rounded-full bg-[#D9C3B0] flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-5 w-5 text-[#8A6044]" />
+        </button>
+      )}
 
       {/* ── FOOTER ── */}
       <footer className="bg-gradient-to-br from-[#3d2b12] via-[#4a3520] to-[#5C4A3A] text-white mt-8">
