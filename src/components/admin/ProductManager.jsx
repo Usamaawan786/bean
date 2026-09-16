@@ -2,7 +2,7 @@ import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Plus, Edit, Trash2, Package, DollarSign, Image as ImageIcon } from "lucide-react";
+import { Plus, Edit, Trash2, Package, DollarSign, Image as ImageIcon, Images, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import BulkImageUploader from "@/components/admin/BulkImageUploader";
 
 export default function ProductManager({ isStoreProducts = false }) {
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showBulk, setShowBulk] = useState(false);
   const queryClient = useQueryClient();
 
   const defaultFormData = isStoreProducts ? {
@@ -141,16 +143,34 @@ export default function ProductManager({ isStoreProducts = false }) {
             {isStoreProducts ? "Manage physical store menu items" : "Manage e-commerce products"}
           </p>
         </div>
-        <Button
-          onClick={() => openDialog()}
-          className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          {showBulk ? (
+            <Button variant="outline" onClick={() => setShowBulk(false)} className="rounded-xl border-[#E8DED8]">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to products
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => setShowBulk(true)} className="rounded-xl border-[#E8DED8]">
+                <Images className="h-4 w-4 mr-2" />
+                Bulk Upload Images
+              </Button>
+              <Button
+                onClick={() => openDialog()}
+                className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Products Grid */}
+      {/* Products Grid / Bulk Uploader */}
+      {showBulk ? (
+        <BulkImageUploader entityName={entityName} />
+      ) : (
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map(product => (
           <motion.div
@@ -219,6 +239,7 @@ export default function ProductManager({ isStoreProducts = false }) {
           </motion.div>
         ))}
       </div>
+      )}
 
       {/* Add/Edit Product Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
