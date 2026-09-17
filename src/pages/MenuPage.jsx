@@ -68,6 +68,8 @@ export default function MenuPage() {
   const [activeCat, setActiveCat] = useState("most-liked");
   const [search, setSearch] = useState("");
   const [showFab, setShowFab] = useState(false);
+  const [menuSettings, setMenuSettings] = useState(null);
+  const [menuCategories, setMenuCategories] = useState([]);
   const sectionRefs = useRef({});
   const navRef = useRef(null);
   const pillRefs = useRef({});
@@ -77,9 +79,15 @@ export default function MenuPage() {
     let mounted = true;
     (async () => {
       try {
-        const items = await base44.entities.StoreProduct.list("-created_date", 200);
+        const [items, cats, settings] = await Promise.all([
+          base44.entities.StoreProduct.list("-created_date", 200),
+          base44.entities.MenuCategory.list("sort_order", 100),
+          base44.entities.MenuSettings.list(),
+        ]);
         if (!mounted) return;
         setAllItems((items || []).filter((i) => i.is_available !== false));
+        setMenuCategories(cats || []);
+        setMenuSettings(settings?.[0] || null);
       } catch (e) {
         console.error("Menu load error", e);
       } finally {
@@ -105,7 +113,10 @@ export default function MenuPage() {
     });
     return map;
   }, [allItems]);
-  const catImg = (cat) => categoryImages[cat] || CATEGORY_IMAGES[cat] || CATEGORY_IMAGES["Other"];
+  const catMeta = (cat) => menuCategories.find((c) => c.name === cat);
+  const catImg = (cat) =>
+    categoryImages[cat] || catMeta(cat)?.image_url || CATEGORY_IMAGES[cat] || CATEGORY_IMAGES["Other"];
+  const catDesc = (cat) => catMeta(cat)?.description || CATEGORY_DESCRIPTIONS[cat] || "";
 
   // Match Most Liked items by name
   const mostLikedItems = [];
@@ -196,7 +207,11 @@ export default function MenuPage() {
           <Link to="/" className="p-1 -ml-1 text-[#7D5A46] active:scale-95 transition-transform">
             <MenuIcon className="h-6 w-6" />
           </Link>
-          <div className="text-lg font-bold text-[#7D5A46] tracking-wide">Bean</div>
+          {menuSettings?.logo_url ? (
+            <img src={menuSettings.logo_url} alt={menuSettings?.brand_name || "Bean"} className="h-8 w-auto max-w-[140px] object-contain" />
+          ) : (
+            <div className="text-lg font-bold text-[#7D5A46] tracking-wide">{menuSettings?.brand_name || "Bean"}</div>
+          )}
           <div className="w-6" />
         </div>
       </div>
@@ -205,8 +220,11 @@ export default function MenuPage() {
       <div className="bg-[#A87555]">
         <div className="max-w-2xl mx-auto px-4 pt-5 pb-4 text-center">
           <motion.h1 {...fadeUp(0)} className="text-3xl font-bold text-white">
-            Menu
+            {menuSettings?.menu_title || "Menu"}
           </motion.h1>
+          {menuSettings?.tagline && (
+            <motion.p {...fadeUp(0.1)} className="text-sm text-white/70 mt-1">{menuSettings.tagline}</motion.p>
+          )}
         </div>
       </div>
 
@@ -350,10 +368,10 @@ export default function MenuPage() {
                         loading="lazy"
                       />
                     </div>
-                    <h2 className="text-xl font-bold text-white">{section.label}</h2>
-                    {CATEGORY_DESCRIPTIONS[section.label] && (
+                    <h2 className="text-xl font-bold text-white">{catMeta(section.label)?.display_name || section.label}</h2>
+                    {catDesc(section.label) && (
                       <p className="text-sm text-white/70 mt-1 leading-relaxed">
-                        {CATEGORY_DESCRIPTIONS[section.label]}
+                        {catDesc(section.label)}
                       </p>
                     )}
                   </div>

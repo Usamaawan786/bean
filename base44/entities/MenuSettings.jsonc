@@ -1,0 +1,63 @@
+{
+  "name": "MenuSettings",
+  "type": "object",
+  "properties": {
+    "logo_url": {
+      "type": "string",
+      "description": "Logo image URL shown in the menu header. When set, replaces the text logo."
+    },
+    "menu_title": {
+      "type": "string",
+      "default": "Menu",
+      "description": "Heading shown at the top of the menu page"
+    },
+    "tagline": {
+      "type": "string",
+      "description": "Optional sub-heading under the menu title"
+    },
+    "brand_name": {
+      "type": "string",
+      "default": "Bean",
+      "description": "Brand text shown in the cream header strip when no logo image is set"
+    }
+  },
+  "required": [
+    "menu_title"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
