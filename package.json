@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@base44/sdk": "^0.8.48",
-    "@base44/vite-plugin": "^1.0.40",
+    "@base44/vite-plugin": "^1.0.41",
     "@capacitor/android": "^8.0.2",
     "@capacitor/barcode-scanner": "^3.0.2",
     "@capacitor/camera": "^8.0.0",
