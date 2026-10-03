@@ -20,7 +20,7 @@ const RECONNECT_GRACE_MS = 20 * 1000;
 // Temporary per-user exemption: these staff can use the POS without the
 // screen + system-audio recording requirement. Remove an email here to
 // re-enable mandatory surveillance for that user.
-const SURVEILLANCE_EXEMPT_EMAILS = ["zaibs6462@gmail.com"];
+const SURVEILLANCE_EXEMPT_EMAILS = ["zaibs6462@gmail.com", "sardarfaha438@gmail.com"];
 
 export default function useAutoScreenSurveillance(user) {
   const [needsShare, setNeedsShare] = useState(false);
