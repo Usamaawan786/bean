@@ -24,6 +24,7 @@ const ROLE_FEATURES = {
     { icon: Coffee, label: "Bar Display", desc: "Monitor & manage bar orders", link: "/BarDisplay", color: "from-blue-700 to-cyan-700" },
     { icon: Truck, label: "Delivery Orders", desc: "Manage incoming delivery orders", link: "/AdminDeliveryOrders", color: "from-indigo-600 to-indigo-700" },
     { icon: Bike, label: "Riders", desc: "Manage riders & assignments", link: "/AdminRiders", color: "from-teal-600 to-teal-700" },
+    { icon: Package, label: "Inventory", desc: "Manage stock, recipes, batches & ledger", link: "/AdminInventory", color: "from-orange-600 to-orange-700" },
     { icon: ClipboardEdit, label: "Menu Editor", desc: "Edit menu logo, categories & items", link: "/admin-menu-editor", color: "from-rose-600 to-rose-700" },
   ],
   admin: [
