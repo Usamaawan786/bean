@@ -32,10 +32,14 @@ export default function ProfileDetailPanel({ customerEmail, favoriteItem, segmen
     (async () => {
       setLoading(true);
       try {
-        const [salePage, offerPage] = await Promise.all([
-          base44.entities.StoreSale.filter(
-            { scanned_by: customerEmail },
-            { sort: "-scanned_at", limit: 12, fields: ["scanned_at", "items", "total_amount", "bill_number", "order_type"] }
+        // PRIMARY SOURCE: Activity log (points_earned) — the reliable record of
+        // every scan. StoreSale.is_scanned is not always set by processBillScan,
+        // so we use Activity as the source of truth and load StoreSale by
+        // bill_number for item details only.
+        const [actPage, offerPage] = await Promise.all([
+          base44.entities.Activity.filter(
+            { user_email: customerEmail, action_type: "points_earned" },
+            { sort: "-created_date", limit: 50 }
           ),
           base44.entities.PersonalizedOffer.filter(
             { user_email: customerEmail, is_active: true },
@@ -43,16 +47,44 @@ export default function ProfileDetailPanel({ customerEmail, favoriteItem, segmen
           )
         ]);
         if (!active) return;
-        const sales = salePage.items || salePage || [];
-        setOrders(sales);
+        const activities = actPage.items || actPage || [];
+
+        // Load StoreSale records by bill_number (from Activity metadata) for items
+        const billNumbers = [...new Set(activities.map(a => a.metadata?.bill_number).filter(Boolean))];
+        let sales = [];
+        if (billNumbers.length > 0) {
+          const salePage = await base44.entities.StoreSale.filter(
+            { bill_number: { $in: billNumbers } },
+            { sort: "-created_date", limit: 50, fields: ["created_date", "items", "total_amount", "bill_number", "order_type"] }
+          );
+          sales = salePage.items || salePage || [];
+        }
+        const saleMap = {};
+        for (const s of sales) {
+          if (s.bill_number) saleMap[s.bill_number] = s;
+        }
+
+        // Merge: each Activity entry → attach matching StoreSale items
+        const orders = activities.map(a => {
+          const bn = a.metadata?.bill_number;
+          const sale = bn ? saleMap[bn] : null;
+          return {
+            id: a.id,
+            scanned_at: a.created_date,
+            items: sale?.items || [],
+            total_amount: a.metadata?.amount_spent || sale?.total_amount || 0,
+            bill_number: bn,
+            order_type: sale?.order_type
+          };
+        });
+        setOrders(orders);
 
         // aggregate item frequency across loaded history
         const freq = {};
-        for (const s of sales) {
-          for (const it of (s.items || [])) {
+        for (const o of orders) {
+          for (const it of (o.items || [])) {
             if (!it.product_name) continue;
-            const key = it.product_name;
-            freq[key] = (freq[key] || 0) + (it.quantity || 1);
+            freq[it.product_name] = (freq[it.product_name] || 0) + (it.quantity || 1);
           }
         }
         setItemStats(Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 5));
