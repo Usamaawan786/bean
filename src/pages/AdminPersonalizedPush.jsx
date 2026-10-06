@@ -5,7 +5,7 @@ import { ArrowLeft, Bell, Loader2, RefreshCw, Send, Check, Sparkles, Search, Sen
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import PushDraftCard from "@/components/push/PushDraftCard";
+import PushDraftCard, { TACTIC_STYLE } from "@/components/push/PushDraftCard";
 import PushBulkBar from "@/components/push/PushBulkBar";
 import PushStatsBar from "@/components/push/PushStatsBar";
 
@@ -22,6 +22,11 @@ const SEGMENT_FILTERS = [
   { key: "regular", label: "Regular" },
   { key: "lapsed", label: "Lapsed" },
   { key: "high_value", label: "VIP" },
+];
+
+const TACTIC_FILTERS = [
+  { key: "all", label: "All Tactics" },
+  ...Object.entries(TACTIC_STYLE).map(([key, v]) => ({ key, label: `${v.icon} ${v.label}` })),
 ];
 
 const PAGE_SIZE = 25;
@@ -51,6 +56,7 @@ export default function AdminPersonalizedPush() {
   // search + filter + selection
   const [search, setSearch] = useState("");
   const [segmentFilter, setSegmentFilter] = useState("all");
+  const [tacticFilter, setTacticFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -94,6 +100,7 @@ export default function AdminPersonalizedPush() {
     const q = search.trim().toLowerCase();
     return drafts.filter(r => {
       if (segmentFilter !== "all" && r.segment !== segmentFilter) return false;
+      if (tacticFilter !== "all" && r.tactic !== tacticFilter) return false;
       if (!q) return true;
       return (
         (r.customer_name || "").toLowerCase().includes(q) ||
@@ -101,13 +108,13 @@ export default function AdminPersonalizedPush() {
         (r.favorite_item || "").toLowerCase().includes(q)
       );
     });
-  }, [drafts, search, segmentFilter]);
+  }, [drafts, search, segmentFilter, tacticFilter]);
 
   const visibleDrafts = filteredDrafts.slice(0, visibleCount);
   const hasMore = filteredDrafts.length > visibleCount;
 
   // Reset pagination when filter/search changes
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, segmentFilter]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, segmentFilter, tacticFilter]);
 
   // Selection helpers
   const allFilteredSelected = filteredDrafts.length > 0 && filteredDrafts.every(r => selectedIds.has(r.id));
@@ -140,8 +147,8 @@ export default function AdminPersonalizedPush() {
       const data = res.data || res;
       if (data.success) {
         toast.success(`Generated ${data.generated} personalized pushes`, {
-          description: Object.entries(data.bySegment || {})
-            .map(([k, v]) => `${SEGMENT_STYLE[k]?.label || k}: ${v}`)
+          description: Object.entries(data.byTactic || {})
+            .map(([k, v]) => `${TACTIC_STYLE[k]?.label || k}: ${v}`)
             .join(" · ")
         });
         clearSelection();
@@ -441,6 +448,21 @@ export default function AdminPersonalizedPush() {
                     segmentFilter === f.key
                       ? "bg-[#8B7355] text-white border-[#8B7355]"
                       : "bg-white text-[#8B7355] border-[#E8DED8] hover:border-[#8B7355]"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              {TACTIC_FILTERS.map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setTacticFilter(f.key)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                    tacticFilter === f.key
+                      ? "bg-[#5C4A3A] text-white border-[#5C4A3A]"
+                      : "bg-[#F9F6F3] text-[#8B7355] border-[#E8DED8] hover:border-[#8B7355]"
                   }`}
                 >
                   {f.label}

@@ -11,6 +11,24 @@ const SEGMENT_STYLE = {
   high_value: { label: "VIP", color: "bg-purple-100 text-purple-700 border-purple-200" },
 };
 
+export const TACTIC_STYLE = {
+  streak_saver: { label: "Streak Saver", color: "bg-orange-100 text-orange-700 border-orange-200", icon: "🔥" },
+  winback_coupon: { label: "Win-Back Coupon", color: "bg-rose-100 text-rose-700 border-rose-200", icon: "🎁" },
+  tier_vip: { label: "Tier VIP", color: "bg-purple-100 text-purple-700 border-purple-200", icon: "✨" },
+  milestone_reward: { label: "Milestone", color: "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200", icon: "🎉" },
+  bundle_upsell: { label: "Bundle Upsell", color: "bg-amber-100 text-amber-700 border-amber-200", icon: "🥐" },
+  new_welcome: { label: "New Welcome", color: "bg-emerald-100 text-emerald-700 border-emerald-200", icon: "☕" },
+  order_again: { label: "Order Again", color: "bg-blue-100 text-blue-700 border-blue-200", icon: "🔁" },
+  daypart_reminder: { label: "Daypart", color: "bg-sky-100 text-sky-700 border-sky-200", icon: "⏰" },
+};
+
+const WINDOW_LABEL = {
+  morning: "🌅 Morning",
+  afternoon: "☀️ Afternoon",
+  evening: "🌙 Evening",
+  any: "Anytime",
+};
+
 /**
  * One draft row in the review queue.
  * Supports selection (checkbox), inline edit, copy, profile expand,
@@ -55,9 +73,22 @@ export default function PushDraftCard({
           {/* Header row */}
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <p className="font-semibold text-[#5C4A3A] text-sm">{rec.customer_name}</p>
+            {rec.tactic && TACTIC_STYLE[rec.tactic] && (
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${TACTIC_STYLE[rec.tactic].color}`}>
+                {TACTIC_STYLE[rec.tactic].icon} {TACTIC_STYLE[rec.tactic].label}
+              </span>
+            )}
             <span className={`text-xs px-2 py-0.5 rounded-full border ${SEGMENT_STYLE[rec.segment]?.color}`}>
               {SEGMENT_STYLE[rec.segment]?.label}
             </span>
+            {rec.tier && rec.tier !== "Bronze" && (
+              <span className="text-xs bg-[#5C4A3A] text-white px-2 py-0.5 rounded-full font-medium">{rec.tier}</span>
+            )}
+            {rec.streak_days != null && rec.streak_days > 0 && (
+              <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">🔥 {rec.streak_days}d streak</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             {rec.favorite_item && (
               <span className="text-xs bg-[#F5EBE8] text-[#5C4A3A] px-2 py-0.5 rounded-full truncate max-w-[200px]">
                 ☕ {rec.favorite_item}
@@ -66,6 +97,11 @@ export default function PushDraftCard({
             <span className="text-xs text-[#C9B8A6]">{rec.order_count} scan{rec.order_count === 1 ? "" : "s"}</span>
             {rec.days_since_last != null && (
               <span className="text-xs text-[#C9B8A6]">· {rec.days_since_last}d ago</span>
+            )}
+            {rec.best_send_window && (
+              <span className="text-xs text-[#8B7355] bg-white border border-[#E8DED8] px-2 py-0.5 rounded-full">
+                {WINDOW_LABEL[rec.best_send_window] || rec.best_send_window}
+              </span>
             )}
           </div>
           <p className="text-xs text-[#C9B8A6] mb-2 truncate">{rec.customer_email}</p>
@@ -96,6 +132,20 @@ export default function PushDraftCard({
             <div className="mb-3">
               <p className="text-sm font-medium text-[#5C4A3A]">{rec.title}</p>
               <p className="text-sm text-[#8B7355]">{rec.body}</p>
+              {(rec.offer_hook || rec.urgency) && (
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {rec.offer_hook && (
+                    <span className="text-xs bg-[#5C4A3A]/5 border border-[#5C4A3A]/15 text-[#5C4A3A] px-2.5 py-1 rounded-lg font-medium">
+                      🎯 {rec.offer_hook}
+                    </span>
+                  )}
+                  {rec.urgency && (
+                    <span className="text-xs bg-rose-50 border border-rose-200 text-rose-700 px-2.5 py-1 rounded-lg font-medium">
+                      ⏳ {rec.urgency}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

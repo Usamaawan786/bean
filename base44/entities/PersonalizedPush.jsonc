@@ -20,6 +20,52 @@
       ],
       "description": "Behavioral segment assigned from scanned-bill history"
     },
+    "tactic": {
+      "type": "string",
+      "enum": [
+        "daypart_reminder",
+        "streak_saver",
+        "winback_coupon",
+        "tier_vip",
+        "bundle_upsell",
+        "order_again",
+        "new_welcome",
+        "milestone_reward"
+      ],
+      "description": "Personalization tactic applied (Starbucks/Luckin-style): streak_saver, winback_coupon, tier_vip, milestone_reward, bundle_upsell, order_again, new_welcome, daypart_reminder"
+    },
+    "best_send_window": {
+      "type": "string",
+      "enum": [
+        "morning",
+        "afternoon",
+        "evening",
+        "any"
+      ],
+      "description": "Recommended send window based on the customer's most common visit daypart (PKT)"
+    },
+    "offer_hook": {
+      "type": "string",
+      "description": "The incentive / coupon hook embedded in the message (e.g. '20% off', 'Bonus 50 points')"
+    },
+    "urgency": {
+      "type": "string",
+      "description": "Time-limited urgency label (Luckin-style), e.g. 'Valid 48 hours', 'Today only'"
+    },
+    "streak_days": {
+      "type": "number",
+      "description": "Current consecutive-day visit streak (PKT days) at generation time, if active"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum"
+      ],
+      "description": "Customer loyalty tier snapshot at generation time"
+    },
     "favorite_item": {
       "type": "string",
       "description": "Most frequently ordered item across scanned bills"
