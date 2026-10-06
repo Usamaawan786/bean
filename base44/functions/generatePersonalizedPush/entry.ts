@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 /**
  * Personalized Push Engine — profile builder + message generator.
@@ -8,9 +8,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
  * repeat-order flag, recency, spend, segment), then writes a tailored
  * draft push into PersonalizedPush for admin review before anything sends.
  *
- * Admin-only. MVP uses rule-based templates (no LLM cost); the admin can
- * edit any draft before approving, and an AI-polish pass can be layered on
- * later without changing this contract.
+ * Admin-only. Rule-based templates (no LLM cost); the admin can edit any
+ * draft before approving.
+ *
+ * NOTE: this runtime's SDK uses positional args — filter(query, sort, limit)
+ * and list(sort, limit) — and returns plain arrays.
  */
 
 Deno.serve(async (req) => {
@@ -22,44 +24,12 @@ Deno.serve(async (req) => {
     }
 
     // 1. Load scanned bills (customer scanned the QR for points)
-    //    Probe: the Deno SDK has historically returned [] for boolean + fields
-    //    queries that work in Node, so we try several shapes and pick the first
-    //    that returns data.
-    const probes = [];
-    try {
-      const p1 = await base44.asServiceRole.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000, fields: ['scanned_by', 'scanned_at', 'items', 'total_amount'] });
-      probes.push({ name: 'sr+fields', len: (p1.items || p1 || []).length });
-    } catch (e) { probes.push({ name: 'sr+fields', err: e.message }); }
-    try {
-      const p2 = await base44.asServiceRole.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
-      probes.push({ name: 'sr-nofields', len: (p2.items || p2 || []).length });
-    } catch (e) { probes.push({ name: 'sr-nofields', err: e.message }); }
-    try {
-      const p3 = await base44.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
-      probes.push({ name: 'user-nofields', len: (p3.items || p3 || []).length });
-    } catch (e) { probes.push({ name: 'user-nofields', err: e.message }); }
-    try {
-      const p4 = await base44.entities.StoreSale.list({ limit: 3 });
-      probes.push({ name: 'list-all', len: (p4.items || p4 || []).length });
-    } catch (e) { probes.push({ name: 'list-all', err: e.message }); }
-    try {
-      const p5 = await base44.entities.Customer.list({ limit: 3 });
-      probes.push({ name: 'customer-list', len: (p5.items || p5 || []).length });
-    } catch (e) { probes.push({ name: 'customer-list', err: e.message }); }
-    try {
-      const p6 = await base44.asServiceRole.entities.StoreSale.count({ is_scanned: true });
-      probes.push({ name: 'sr-count', val: p6 });
-    } catch (e) { probes.push({ name: 'sr-count', err: e.message }); }
-
-    let scannedRaw = [];
-    const srPage = await base44.asServiceRole.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
-    scannedRaw = srPage.items || srPage || [];
-    if (scannedRaw.length === 0) {
-      const uPage = await base44.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
-      scannedRaw = uPage.items || uPage || [];
-    }
-    const scannedSales = scannedRaw.filter(s => s && s.scanned_by);
-    console.log('generatePersonalizedPush debug:', JSON.stringify({ scannedRawLen: scannedRaw.length, scannedSalesLen: scannedSales.length, probes }));
+    const scannedRaw = await base44.asServiceRole.entities.StoreSale.filter(
+      { is_scanned: true },
+      '-scanned_at',
+      5000
+    );
+    const scannedSales = (scannedRaw || []).filter(s => s && s.scanned_by);
 
     // 2. Build per-customer order profiles from scanned bills
     const profilesMap = {};
@@ -80,9 +50,9 @@ Deno.serve(async (req) => {
     }
 
     // 3. Load customers for display names
-    const customers = await base44.asServiceRole.entities.Customer.list();
+    const customers = await base44.asServiceRole.entities.Customer.list('-created_date', 10000);
     const customerMap = {};
-    for (const c of customers) {
+    for (const c of (customers || [])) {
       if (c.user_email) customerMap[c.user_email.toLowerCase()] = c;
     }
 
@@ -149,50 +119,54 @@ Deno.serve(async (req) => {
     };
 
     // 6. Clear previous un-sent drafts (regenerate = fresh batch)
-    await base44.asServiceRole.entities.PersonalizedPush.deleteMany({
-      status: { $in: ['draft', 'skipped'] }
-    });
-
-    // 7. Create new draft records
-    const records = profiles.map(p => {
-      const msg = buildMessage(p);
-      return {
-        customer_email: p.email,
-        customer_name: p.displayName,
-        segment: p.segment,
-        favorite_item: p.favoriteItem || '',
-        order_count: p.orderCount,
-        total_spend: p.totalSpend,
-        days_since_last: p.daysSinceLast,
-        title: msg.title,
-        body: msg.body,
-        deep_link: msg.deep_link,
-        status: 'draft',
-        generated_at: new Date().toISOString()
-      };
-    });
-
-    let created = [];
-    if (records.length > 0) {
-      created = await base44.asServiceRole.entities.PersonalizedPush.bulkCreate(records);
+    const stale = await base44.asServiceRole.entities.PersonalizedPush.list('-created_date', 5000);
+    const toDelete = (stale || []).filter(r => r.status === 'draft' || r.status === 'skipped');
+    for (let i = 0; i < toDelete.length; i += 25) {
+      await Promise.all(
+        toDelete.slice(i, i + 25).map(r => base44.asServiceRole.entities.PersonalizedPush.delete(r.id))
+      );
     }
 
-    const bySegment = profiles.reduce((acc, p) => {
-      acc[p.segment] = (acc[p.segment] || 0) + 1;
+    // 7. Skip customers who already have an approved (unsent) push
+    const approvedEmails = new Set(
+      (stale || []).filter(r => r.status === 'approved').map(r => r.customer_email)
+    );
+
+    const generatedAt = new Date().toISOString();
+    const records = profiles
+      .filter(p => !approvedEmails.has(p.email))
+      .map(p => {
+        const msg = buildMessage(p);
+        return {
+          customer_email: p.email,
+          customer_name: p.displayName,
+          segment: p.segment,
+          favorite_item: p.favoriteItem || '',
+          order_count: p.orderCount,
+          total_spend: p.totalSpend,
+          days_since_last: p.daysSinceLast,
+          title: msg.title,
+          body: msg.body,
+          deep_link: msg.deep_link,
+          status: 'draft',
+          generated_at: generatedAt
+        };
+      });
+
+    for (let i = 0; i < records.length; i += 100) {
+      await base44.asServiceRole.entities.PersonalizedPush.bulkCreate(records.slice(i, i + 100));
+    }
+
+    const bySegment = records.reduce((acc, r) => {
+      acc[r.segment] = (acc[r.segment] || 0) + 1;
       return acc;
     }, {});
 
     return Response.json({
       success: true,
       generated: records.length,
-      bySegment,
-      debug: {
-        scannedRawLen: scannedRaw.length,
-        scannedSalesLen: scannedSales.length,
-        profilesLen: profiles.length,
-        probes,
-        sample: scannedRaw.slice(0, 1)
-      }
+      scannedBills: scannedSales.length,
+      bySegment
     });
   } catch (error) {
     console.error('generatePersonalizedPush error:', error.message);
