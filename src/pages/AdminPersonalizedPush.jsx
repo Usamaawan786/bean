@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Bell, Loader2, RefreshCw, Send, Check, X, Sparkles, Edit3, Save } from "lucide-react";
+import { ArrowLeft, Bell, Loader2, RefreshCw, Send, Check, X, Sparkles, Edit3, Save, Copy, ChevronDown, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import ProfileDetailPanel from "@/components/push/ProfileDetailPanel";
 
 const SEGMENT_STYLE = {
   new: { label: "New", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
@@ -25,6 +26,8 @@ export default function AdminPersonalizedPush() {
   const [editBody, setEditBody] = useState("");
   const [sendingId, setSendingId] = useState(null);
   const [sendingAll, setSendingAll] = useState(false);
+  const [expandedId, setExpandedId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -119,6 +122,18 @@ export default function AdminPersonalizedPush() {
     }
   };
 
+  const copyMessage = async (rec) => {
+    const text = `${rec.title}\n${rec.body}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(rec.id);
+      setTimeout(() => setCopiedId(null), 1500);
+      toast.success("Copied to clipboard");
+    } catch (e) {
+      toast.error("Copy failed");
+    }
+  };
+
   const sendOne = async (rec) => {
     setSendingId(rec.id);
     try {
@@ -172,6 +187,89 @@ export default function AdminPersonalizedPush() {
 
   if (!user) return null;
 
+  const DraftCard = ({ rec }) => {
+    const isEditing = editingId === rec.id;
+    const isExpanded = expandedId === rec.id;
+    return (
+      <div className="rounded-2xl bg-[#F9F6F3] border border-[#E8DED8] p-4">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <p className="font-semibold text-[#5C4A3A] text-sm">{rec.customer_name}</p>
+          <span className={`text-xs px-2 py-0.5 rounded-full border ${SEGMENT_STYLE[rec.segment]?.color}`}>{SEGMENT_STYLE[rec.segment]?.label}</span>
+          {rec.favorite_item && (
+            <span className="text-xs bg-[#F5EBE8] text-[#5C4A3A] px-2 py-0.5 rounded-full">☕ {rec.favorite_item}</span>
+          )}
+          <span className="text-xs text-[#C9B8A6]">{rec.order_count} scan{rec.order_count === 1 ? "" : "s"}</span>
+          {rec.days_since_last != null && (
+            <span className="text-xs text-[#C9B8A6]">· {rec.days_since_last}d ago</span>
+          )}
+        </div>
+        <p className="text-xs text-[#C9B8A6] mb-2 truncate">{rec.customer_email}</p>
+        {isEditing ? (
+          <div className="space-y-2 mb-3">
+            <Input
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              className="border-[#E8DED8] text-sm"
+            />
+            <Textarea
+              value={editBody}
+              onChange={e => setEditBody(e.target.value)}
+              className="border-[#E8DED8] text-sm min-h-[70px]"
+            />
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => saveEdit(rec)} className="bg-[#8B7355] hover:bg-[#6B5744] text-white rounded-lg gap-1">
+                <Save className="h-3.5 w-3.5" /> Save
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="rounded-lg border-[#E8DED8]">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3">
+            <p className="text-sm font-medium text-[#5C4A3A]">{rec.title}</p>
+            <p className="text-sm text-[#8B7355]">{rec.body}</p>
+          </div>
+        )}
+        {!isEditing && (
+          <>
+            <div className="flex gap-2 flex-wrap">
+              <Button size="sm" onClick={() => approve(rec)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1">
+                <Check className="h-3.5 w-3.5" /> Approve
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => startEdit(rec)} className="rounded-lg border-[#E8DED8] gap-1">
+                <Edit3 className="h-3.5 w-3.5" /> Edit
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => copyMessage(rec)} className="rounded-lg border-[#E8DED8] gap-1">
+                {copiedId === rec.id ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                {copiedId === rec.id ? "Copied" : "Copy"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setExpandedId(isExpanded ? null : rec.id)}
+                className="rounded-lg border-[#E8DED8] gap-1"
+              >
+                <User className="h-3.5 w-3.5" /> {isExpanded ? "Hide" : "Profile"}
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => skip(rec)} className="rounded-lg border-[#E8DED8] text-[#8B7355] gap-1">
+                <X className="h-3.5 w-3.5" /> Skip
+              </Button>
+            </div>
+            {isExpanded && (
+              <ProfileDetailPanel
+                customerEmail={rec.customer_email}
+                favoriteItem={rec.favorite_item}
+                segment={rec.segment}
+              />
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F1ED] pb-20">
       {/* Header */}
@@ -184,7 +282,7 @@ export default function AdminPersonalizedPush() {
             <div className="bg-white/15 rounded-2xl p-3"><Bell className="h-7 w-7" /></div>
             <div>
               <h1 className="text-2xl font-bold">Personalized Push Engine</h1>
-              <p className="text-white/70 text-sm">Auto-personalized pushes from each customer's scanned bills</p>
+              <p className="text-white/70 text-sm">Dynamic per-customer profiles from scanned bills — review, copy & send</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -267,71 +365,13 @@ export default function AdminPersonalizedPush() {
             </div>
           ) : (
             <div className="space-y-3">
-              {drafts.map(rec => {
-                const isEditing = editingId === rec.id;
-                return (
-                  <div key={rec.id} className="rounded-2xl bg-[#F9F6F3] border border-[#E8DED8] p-4">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <p className="font-semibold text-[#5C4A3A] text-sm">{rec.customer_name}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full border ${SEGMENT_STYLE[rec.segment]?.color}`}>{SEGMENT_STYLE[rec.segment]?.label}</span>
-                      {rec.favorite_item && (
-                        <span className="text-xs bg-[#F5EBE8] text-[#5C4A3A] px-2 py-0.5 rounded-full">☕ {rec.favorite_item}</span>
-                      )}
-                      <span className="text-xs text-[#C9B8A6]">{rec.order_count} scan{rec.order_count === 1 ? "" : "s"}</span>
-                      {rec.days_since_last != null && (
-                        <span className="text-xs text-[#C9B8A6]">· {rec.days_since_last}d ago</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-[#C9B8A6] mb-2 truncate">{rec.customer_email}</p>
-                    {isEditing ? (
-                      <div className="space-y-2 mb-3">
-                        <Input
-                          value={editTitle}
-                          onChange={e => setEditTitle(e.target.value)}
-                          className="border-[#E8DED8] text-sm"
-                        />
-                        <Textarea
-                          value={editBody}
-                          onChange={e => setEditBody(e.target.value)}
-                          className="border-[#E8DED8] text-sm min-h-[70px]"
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => saveEdit(rec)} className="bg-[#8B7355] hover:bg-[#6B5744] text-white rounded-lg gap-1">
-                            <Save className="h-3.5 w-3.5" /> Save
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingId(null)} className="rounded-lg border-[#E8DED8]">
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mb-3">
-                        <p className="text-sm font-medium text-[#5C4A3A]">{rec.title}</p>
-                        <p className="text-sm text-[#8B7355]">{rec.body}</p>
-                      </div>
-                    )}
-                    {!isEditing && (
-                      <div className="flex gap-2 flex-wrap">
-                        <Button size="sm" onClick={() => approve(rec)} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1">
-                          <Check className="h-3.5 w-3.5" /> Approve
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => startEdit(rec)} className="rounded-lg border-[#E8DED8] gap-1">
-                          <Edit3 className="h-3.5 w-3.5" /> Edit
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => skip(rec)} className="rounded-lg border-[#E8DED8] text-[#8B7355] gap-1">
-                          <X className="h-3.5 w-3.5" /> Skip
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {drafts.map(rec => <DraftCard key={rec.id} rec={rec} />)}
             </div>
           )}
         </div>
 
         <p className="text-center text-xs text-[#C9B8A6]">
-          Engine profiles each customer from their scanned bills (StoreSale where the QR was scanned for points), tags a segment, and drafts a tailored push. Approve, edit, or skip before sending.
+          Each draft is built from the customer's scanned-bill profile. Tap <strong>Profile</strong> to preview order history & highlighted offer, <strong>Copy</strong> to grab the copy, then <strong>Approve</strong> & send.
         </p>
       </div>
     </div>
