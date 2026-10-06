@@ -317,24 +317,27 @@ Deno.serve(async (req) => {
       p.message = buildMessage(p.tactic, p);
     }
 
-    // 6. Clear previous un-sent drafts
-    const stale = await base44.asServiceRole.entities.PersonalizedPush.list("-created_date", 5000);
-    const toDelete = (stale || []).filter(r => r.status === "draft" || r.status === "skipped");
-    for (let i = 0; i < toDelete.length; i += 25) {
-      await Promise.all(
-        toDelete.slice(i, i + 25).map(r => base44.asServiceRole.entities.PersonalizedPush.delete(r.id))
-      );
-    }
+    // 6. UPSERT drafts by customer_email — update existing records in place so
+    //    their IDs stay stable across regenerations (prevents "not found" errors
+    //    when editing/approving after a refresh). Only create new records for
+    //    customers without an existing draft; delete drafts for customers no
+    //    longer in the eligible set.
+    const existing = await base44.asServiceRole.entities.PersonalizedPush.list("-created_date", 5000);
+    const existingDrafts = (existing || []).filter(r => r.status === "draft" || r.status === "skipped");
+    const draftByEmail = new Map(existingDrafts.map(r => [r.customer_email, r]));
     const approvedEmails = new Set(
-      (stale || []).filter(r => r.status === "approved").map(r => r.customer_email)
+      (existing || []).filter(r => r.status === "approved").map(r => r.customer_email)
     );
 
-    // 7. Create draft records
     const generatedAt = new Date().toISOString();
-    const records = profiles
-      .filter(p => !approvedEmails.has(p.email))
-      .map(p => ({
-        customer_email: p.email,
+    const eligibleProfiles = profiles.filter(p => !approvedEmails.has(p.email));
+
+    const toCreate = [];
+    const toUpdate = [];
+    const newEmails = new Set();
+    for (const p of eligibleProfiles) {
+      newEmails.add(p.email);
+      const data = {
         customer_name: p.displayName,
         segment: p.segment,
         tactic: p.tactic,
@@ -350,19 +353,41 @@ Deno.serve(async (req) => {
         title: p.message.title,
         body: p.message.body,
         deep_link: p.message.deep_link,
-        status: "draft",
+        status: "draft" as const,
         generated_at: generatedAt
-      }));
-
-    for (let i = 0; i < records.length; i += 100) {
-      await base44.asServiceRole.entities.PersonalizedPush.bulkCreate(records.slice(i, i + 100));
+      };
+      const existingRec = draftByEmail.get(p.email);
+      if (existingRec) {
+        toUpdate.push({ id: existingRec.id, ...data });
+      } else {
+        toCreate.push({ customer_email: p.email, ...data });
+      }
     }
 
-    const byTactic = records.reduce((acc, r) => {
+    // Delete drafts for customers no longer eligible
+    const toDelete = existingDrafts.filter(r => !newEmails.has(r.customer_email));
+    for (let i = 0; i < toDelete.length; i += 25) {
+      await Promise.all(
+        toDelete.slice(i, i + 25).map(r => base44.asServiceRole.entities.PersonalizedPush.delete(r.id))
+      );
+    }
+
+    // Update existing drafts in place (preserves IDs)
+    for (let i = 0; i < toUpdate.length; i += 100) {
+      await base44.asServiceRole.entities.PersonalizedPush.bulkUpdate(toUpdate.slice(i, i + 100));
+    }
+
+    // Create new drafts
+    for (let i = 0; i < toCreate.length; i += 100) {
+      await base44.asServiceRole.entities.PersonalizedPush.bulkCreate(toCreate.slice(i, i + 100));
+    }
+
+    const allRecords = [...toCreate, ...toUpdate];
+    const byTactic = allRecords.reduce((acc, r) => {
       acc[r.tactic] = (acc[r.tactic] || 0) + 1;
       return acc;
     }, {});
-    const bySegment = records.reduce((acc, r) => {
+    const bySegment = allRecords.reduce((acc, r) => {
       acc[r.segment] = (acc[r.segment] || 0) + 1;
       return acc;
     }, {});

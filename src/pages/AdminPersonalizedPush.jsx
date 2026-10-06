@@ -175,7 +175,14 @@ export default function AdminPersonalizedPush() {
       setEditingId(null);
       toast.success("Message updated");
     } catch (e) {
-      toast.error(e?.message || "Update failed");
+      const msg = e?.message || "Update failed";
+      if (/not found/i.test(msg)) {
+        toast.error("This draft was refreshed. Reloading…");
+        setEditingId(null);
+        await load();
+      } else {
+        toast.error(msg);
+      }
     }
   };
 
