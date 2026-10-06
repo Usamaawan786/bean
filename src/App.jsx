@@ -53,6 +53,7 @@ const AdminYieldProcessing = lazy(() => import('./pages/AdminYieldProcessing'));
 const AdminEodReconciliation = lazy(() => import('./pages/AdminEodReconciliation'));
 const InventoryHub = lazy(() => import('./pages/InventoryHub'));
 const AdminMenuEditor = lazy(() => import('./pages/AdminMenuEditor'));
+const AdminPersonalizedPush = lazy(() => import('./pages/AdminPersonalizedPush'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -128,6 +129,7 @@ function App() {
               <Route path="/admin-eod" element={<AdminEodReconciliation />} />
               <Route path="/inventory-hub" element={<InventoryHub />} />
               <Route path="/admin-menu-editor" element={<AdminMenuEditor />} />
+              <Route path="/AdminPersonalizedPush" element={<AdminPersonalizedPush />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </Suspense>

@@ -1,0 +1,117 @@
+{
+  "name": "PersonalizedPush",
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string",
+      "description": "Email of the target customer"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Display name of the target customer"
+    },
+    "segment": {
+      "type": "string",
+      "enum": [
+        "new",
+        "regular",
+        "lapsed",
+        "high_value"
+      ],
+      "description": "Behavioral segment assigned from scanned-bill history"
+    },
+    "favorite_item": {
+      "type": "string",
+      "description": "Most frequently ordered item across scanned bills"
+    },
+    "order_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Total scanned bills for this customer"
+    },
+    "total_spend": {
+      "type": "number",
+      "default": 0,
+      "description": "Total PKR spent across scanned bills"
+    },
+    "days_since_last": {
+      "type": "number",
+      "description": "Days since the customer's last scanned bill (null if never)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Push notification title"
+    },
+    "body": {
+      "type": "string",
+      "description": "Push notification body"
+    },
+    "deep_link": {
+      "type": "string",
+      "description": "In-app route to open when the push is tapped"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "approved",
+        "sent",
+        "skipped"
+      ],
+      "default": "draft",
+      "description": "draft = generated awaiting review; approved = admin cleared for send; sent = dispatched; skipped = discarded"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the engine generated this draft"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the push was actually dispatched"
+    }
+  },
+  "required": [
+    "customer_email",
+    "title",
+    "body",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
