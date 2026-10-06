@@ -149,73 +149,124 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Forbidden: admin access required" }, { status: 403 });
     }
 
-    // 1. Load scanned bills
-    const scannedRaw = await base44.asServiceRole.entities.StoreSale.filter(
-      { is_scanned: true },
-      "-scanned_at",
-      5000
-    );
-    const scannedSales = (scannedRaw || []).filter(s => s && s.scanned_by);
-
-    // 1b. Cross-reference: load ALL points_earned Activity logs as a secondary
-    //     source of truth for last engagement. Activity.created_date is the
-    //     moment the scan happened, independent of StoreSale.scanned_at. This
-    //     catches any scan the StoreSale record might have missed or recorded
-    //     with a stale timestamp.
-    let activityLastMap = {};
+    // ──────────────────────────────────────────────────────────────────
+    // 1. PRIMARY SOURCE: Activity log (points_earned + reward_redeemed).
+    //    processBillScan ALWAYS creates an Activity log when awarding points,
+    //    but does NOT always update StoreSale.is_scanned / scanned_by. So the
+    //    Activity log is the reliable record of every scan — StoreSale is not.
+    //    We build the entire customer profile from Activity, then use
+    //    StoreSale only for item-level details (favorite item).
+    // ──────────────────────────────────────────────────────────────────
+    let peActs = [], rrActs = [];
     try {
-      const acts = await base44.asServiceRole.entities.Activity.filter(
+      peActs = await base44.asServiceRole.entities.Activity.filter(
         { action_type: "points_earned" },
         "-created_date",
-        5000
-      );
-      for (const a of (acts || [])) {
-        if (!a.user_email) continue;
-        const t = a.created_date ? new Date(a.created_date).getTime() : 0;
-        if (t > (activityLastMap[a.user_email] || 0)) activityLastMap[a.user_email] = t;
-      }
+        10000
+      ) || [];
+      rrActs = await base44.asServiceRole.entities.Activity.filter(
+        { action_type: "reward_redeemed" },
+        "-created_date",
+        10000
+      ) || [];
     } catch (e) {
-      console.log("Activity cross-reference unavailable:", e.message);
+      console.log("Activity load unavailable:", e.message);
     }
 
-    // 2. Build per-customer order profiles.
-    //    VISIT date = sale.created_date (the actual purchase time), NOT scanned_at
-    //    (scanned_at can lag the purchase by hours or days on older bills whose
-    //    QR didn't expire). This gives the true "days since last visit".
+    // 2. Build per-customer profiles from Activity (primary source).
+    //    points_earned = a purchase visit (counts toward orderCount, spend).
+    //    reward_redeemed = a store visit (updates lastVisit only — they came
+    //    to the counter to redeem, but it's not a new purchase).
     const profilesMap = {};
-    for (const sale of scannedSales) {
-      const email = sale.scanned_by;
+    const allBillNumbers = new Set();
+    for (const a of peActs) {
+      const email = a.user_email;
+      if (!email) continue;
       if (!profilesMap[email]) {
         profilesMap[email] = { email, itemCount: {}, orderCount: 0, totalSpend: 0, lastVisit: 0, visitHours: [], visitDates: [] };
       }
       const p = profilesMap[email];
       p.orderCount++;
-      p.totalSpend += sale.total_amount || 0;
-      // Use created_date (purchase time) as the visit timestamp; fall back to scanned_at
-      const visitIso = sale.created_date || sale.scanned_at;
-      const visitTs = visitIso ? new Date(visitIso).getTime() : 0;
-      if (visitTs > p.lastVisit) p.lastVisit = visitTs;
-      const h = pktHour(visitIso);
+      const ts = a.created_date ? new Date(a.created_date).getTime() : 0;
+      if (ts > p.lastVisit) p.lastVisit = ts;
+      const h = pktHour(a.created_date);
       if (h >= 0) p.visitHours.push(h);
-      const dk = pktDateKey(visitIso);
+      const dk = pktDateKey(a.created_date);
       if (dk) p.visitDates.push(dk);
-      for (const it of (sale.items || [])) {
-        if (!it.product_name) continue;
-        p.itemCount[it.product_name] = (p.itemCount[it.product_name] || 0) + (it.quantity || 1);
+      p.totalSpend += a.metadata?.amount_spent || 0;
+      const bn = a.metadata?.bill_number;
+      if (bn) allBillNumbers.add(bn);
+    }
+    for (const a of rrActs) {
+      const email = a.user_email;
+      if (!email) continue;
+      if (!profilesMap[email]) {
+        profilesMap[email] = { email, itemCount: {}, orderCount: 0, totalSpend: 0, lastVisit: 0, visitHours: [], visitDates: [] };
+      }
+      const p = profilesMap[email];
+      const ts = a.created_date ? new Date(a.created_date).getTime() : 0;
+      if (ts > p.lastVisit) p.lastVisit = ts;
+    }
+
+    // 3. Load StoreSale records for ITEM DETAILS only (favorite item).
+    //    Load scanned StoreSales + any bills from Activity that weren't marked
+    //    scanned (processBillScan didn't update is_scanned on some bills).
+    const scannedRaw = await base44.asServiceRole.entities.StoreSale.filter(
+      { is_scanned: true },
+      "-scanned_at",
+      5000
+    );
+    const scannedSales = (scannedRaw || []);
+    const scannedBillNumbers = new Set(scannedSales.map(s => s.bill_number).filter(Boolean));
+    const missingBillNumbers = [...allBillNumbers].filter(bn => !scannedBillNumbers.has(bn));
+
+    let missingSales = [];
+    for (let i = 0; i < missingBillNumbers.length; i += 500) {
+      const batch = missingBillNumbers.slice(i, i + 500);
+      try {
+        const batchRaw = await base44.asServiceRole.entities.StoreSale.filter(
+          { bill_number: { $in: batch } },
+          "-created_date",
+          1000
+        );
+        missingSales = missingSales.concat(batchRaw || []);
+      } catch (e) {
+        console.log("Missing bills load error:", e.message);
       }
     }
 
-    // 3. Load customers for display names + tier
+    // Map bill_number → items for all sales (scanned + missing)
+    const billItemsMap = {};
+    for (const sale of [...scannedSales, ...missingSales]) {
+      if (sale.bill_number && sale.items) {
+        billItemsMap[sale.bill_number] = sale.items;
+      }
+    }
+
+    // Assign items to profiles using Activity bill_numbers
+    for (const a of peActs) {
+      const email = a.user_email;
+      const bn = a.metadata?.bill_number;
+      if (!email || !bn) continue;
+      const p = profilesMap[email];
+      if (!p) continue;
+      const items = billItemsMap[bn];
+      if (items) {
+        for (const it of items) {
+          if (!it.product_name) continue;
+          p.itemCount[it.product_name] = (p.itemCount[it.product_name] || 0) + (it.quantity || 1);
+        }
+      }
+    }
+
+    // 4. Load customers for display names + tier
     const customers = await base44.asServiceRole.entities.Customer.list("-created_date", 10000);
     const customerMap = {};
     for (const c of (customers || [])) {
       if (c.user_email) customerMap[c.user_email.toLowerCase()] = c;
     }
 
-    // 4. Finalize profiles.
-    //    lastEngagement = max(sale visit date, Activity points_earned date)
-    //    Cross-referencing two independent sources catches any single-source
-    //    data loss and gives the most accurate "days since last visit".
+    // 5. Finalize profiles — Activity is the sole source for timing/recency.
     const now = Date.now();
     const profiles = [];
     for (const email of Object.keys(profilesMap)) {
@@ -226,10 +277,7 @@ Deno.serve(async (req) => {
       }
       const repeatItem = favCount >= 2 ? favItem : null;
 
-      // Cross-reference: take the MOST RECENT of (last visit, last activity log)
-      const activityLast = activityLastMap[email] || 0;
-      const lastEngagement = Math.max(p.lastVisit || 0, activityLast);
-      const daysSince = lastEngagement ? Math.floor((now - lastEngagement) / 86400000) : null;
+      const daysSince = p.lastVisit ? Math.floor((now - p.lastVisit) / 86400000) : null;
 
       let segment;
       if (p.orderCount < 2) segment = "new";
@@ -237,7 +285,7 @@ Deno.serve(async (req) => {
       else if (p.totalSpend >= 5000) segment = "high_value";
       else segment = "regular";
 
-      // Daypart: most common visit hour bucket (from purchase time, not scan time)
+      // Daypart: most common visit hour bucket
       let bestWindow = "any";
       if (p.visitHours.length > 0) {
         const buckets = { morning: 0, afternoon: 0, evening: 0 };
@@ -245,7 +293,6 @@ Deno.serve(async (req) => {
         bestWindow = Object.entries(buckets).sort((a, b) => b[1] - a[1])[0][0];
       }
 
-      // Streak (from visit dates)
       const streak = computeStreak(p.visitDates);
 
       const cust = customerMap[email.toLowerCase()];
@@ -260,9 +307,7 @@ Deno.serve(async (req) => {
         totalSpend: Math.round(p.totalSpend),
         daysSinceLast: daysSince, segment,
         bestWindow, streakDays: streak.days, streakActive: streak.active,
-        tier,
-        // diagnostic: which source won (for audit)
-        lastVisitSource: activityLast > (p.lastVisit || 0) ? "activity" : "sale"
+        tier
       });
     }
 
@@ -325,7 +370,8 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       generated: records.length,
-      scannedBills: scannedSales.length,
+      activityScans: peActs.length,
+      missingBillsRecovered: missingSales.length,
       byTactic,
       bySegment
     });
