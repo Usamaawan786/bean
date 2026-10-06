@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
 /**
  * Personalized Push Engine — profile builder + message generator.
@@ -22,13 +22,44 @@ Deno.serve(async (req) => {
     }
 
     // 1. Load scanned bills (customer scanned the QR for points)
-    const scannedPage = await base44.asServiceRole.entities.StoreSale.filter(
-      { is_scanned: true },
-      { sort: '-scanned_at', limit: 2000, fields: ['scanned_by', 'scanned_at', 'items', 'total_amount'] }
-    );
-    const scannedRaw = scannedPage.items || scannedPage || [];
+    //    Probe: the Deno SDK has historically returned [] for boolean + fields
+    //    queries that work in Node, so we try several shapes and pick the first
+    //    that returns data.
+    const probes = [];
+    try {
+      const p1 = await base44.asServiceRole.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000, fields: ['scanned_by', 'scanned_at', 'items', 'total_amount'] });
+      probes.push({ name: 'sr+fields', len: (p1.items || p1 || []).length });
+    } catch (e) { probes.push({ name: 'sr+fields', err: e.message }); }
+    try {
+      const p2 = await base44.asServiceRole.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
+      probes.push({ name: 'sr-nofields', len: (p2.items || p2 || []).length });
+    } catch (e) { probes.push({ name: 'sr-nofields', err: e.message }); }
+    try {
+      const p3 = await base44.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
+      probes.push({ name: 'user-nofields', len: (p3.items || p3 || []).length });
+    } catch (e) { probes.push({ name: 'user-nofields', err: e.message }); }
+    try {
+      const p4 = await base44.entities.StoreSale.list({ limit: 3 });
+      probes.push({ name: 'list-all', len: (p4.items || p4 || []).length });
+    } catch (e) { probes.push({ name: 'list-all', err: e.message }); }
+    try {
+      const p5 = await base44.entities.Customer.list({ limit: 3 });
+      probes.push({ name: 'customer-list', len: (p5.items || p5 || []).length });
+    } catch (e) { probes.push({ name: 'customer-list', err: e.message }); }
+    try {
+      const p6 = await base44.asServiceRole.entities.StoreSale.count({ is_scanned: true });
+      probes.push({ name: 'sr-count', val: p6 });
+    } catch (e) { probes.push({ name: 'sr-count', err: e.message }); }
+
+    let scannedRaw = [];
+    const srPage = await base44.asServiceRole.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
+    scannedRaw = srPage.items || srPage || [];
+    if (scannedRaw.length === 0) {
+      const uPage = await base44.entities.StoreSale.filter({ is_scanned: true }, { sort: '-scanned_at', limit: 2000 });
+      scannedRaw = uPage.items || uPage || [];
+    }
     const scannedSales = scannedRaw.filter(s => s && s.scanned_by);
-    console.log('generatePersonalizedPush debug:', JSON.stringify({ scannedRawLen: scannedRaw.length, scannedSalesLen: scannedSales.length, pageKeys: Object.keys(scannedPage || {}), isArray: Array.isArray(scannedPage) }));
+    console.log('generatePersonalizedPush debug:', JSON.stringify({ scannedRawLen: scannedRaw.length, scannedSalesLen: scannedSales.length, probes }));
 
     // 2. Build per-customer order profiles from scanned bills
     const profilesMap = {};
@@ -154,7 +185,14 @@ Deno.serve(async (req) => {
     return Response.json({
       success: true,
       generated: records.length,
-      bySegment
+      bySegment,
+      debug: {
+        scannedRawLen: scannedRaw.length,
+        scannedSalesLen: scannedSales.length,
+        profilesLen: profiles.length,
+        probes,
+        sample: scannedRaw.slice(0, 1)
+      }
     });
   } catch (error) {
     console.error('generatePersonalizedPush error:', error.message);
