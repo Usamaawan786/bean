@@ -26,7 +26,9 @@ Deno.serve(async (req) => {
       { is_scanned: true },
       { sort: '-scanned_at', limit: 2000, fields: ['scanned_by', 'scanned_at', 'items', 'total_amount'] }
     );
-    const scannedSales = (scannedPage.items || scannedPage || []).filter(s => s && s.scanned_by);
+    const scannedRaw = scannedPage.items || scannedPage || [];
+    const scannedSales = scannedRaw.filter(s => s && s.scanned_by);
+    console.log('generatePersonalizedPush debug:', JSON.stringify({ scannedRawLen: scannedRaw.length, scannedSalesLen: scannedSales.length, pageKeys: Object.keys(scannedPage || {}), isArray: Array.isArray(scannedPage) }));
 
     // 2. Build per-customer order profiles from scanned bills
     const profilesMap = {};
