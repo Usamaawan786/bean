@@ -394,7 +394,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       success: true,
-      generated: records.length,
+      generated: allRecords.length,
       activityScans: peActs.length,
       missingBillsRecovered: missingSales.length,
       byTactic,
