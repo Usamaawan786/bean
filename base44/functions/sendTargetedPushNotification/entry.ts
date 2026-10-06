@@ -30,11 +30,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'user_email, title, and body are required' }, { status: 400 });
     }
 
-    const targetEmails = Array.isArray(user_email) ? user_email : [user_email];
+    // Build a normalized set of target emails. This is the ONLY allowlist used to
+    // select device tokens — a push can never go to a user whose email is not in
+    // this set. We deliberately reject empty/blank entries so a missing target
+    // can never degrade into a broadcast to all registered users.
+    const rawEmails = Array.isArray(user_email) ? user_email : [user_email];
+    const targetSet = new Set(
+      rawEmails
+        .map(e => (typeof e === 'string' ? e.trim().toLowerCase() : ''))
+        .filter(Boolean)
+    );
+    if (targetSet.size === 0) {
+      return Response.json({ success: true, sent_count: 0, message: 'No target email provided — nothing sent' });
+    }
+    const targetEmails = Array.from(targetSet);
 
-    // Fetch active device tokens for target users
+    // Fetch active device tokens for target users ONLY
     const allTokenRecords = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
-    const tokenRecords = allTokenRecords.filter(t => targetEmails.includes(t.user_email));
+    const tokenRecords = allTokenRecords.filter(t => {
+      const em = (t.user_email || '').trim().toLowerCase();
+      return targetSet.has(em);
+    });
     const tokens = tokenRecords.map(t => t.token).filter(Boolean);
 
     if (tokens.length === 0) {
