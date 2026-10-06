@@ -157,22 +157,48 @@ Deno.serve(async (req) => {
     );
     const scannedSales = (scannedRaw || []).filter(s => s && s.scanned_by);
 
-    // 2. Build per-customer order profiles
+    // 1b. Cross-reference: load ALL points_earned Activity logs as a secondary
+    //     source of truth for last engagement. Activity.created_date is the
+    //     moment the scan happened, independent of StoreSale.scanned_at. This
+    //     catches any scan the StoreSale record might have missed or recorded
+    //     with a stale timestamp.
+    let activityLastMap = {};
+    try {
+      const acts = await base44.asServiceRole.entities.Activity.filter(
+        { action_type: "points_earned" },
+        "-created_date",
+        5000
+      );
+      for (const a of (acts || [])) {
+        if (!a.user_email) continue;
+        const t = a.created_date ? new Date(a.created_date).getTime() : 0;
+        if (t > (activityLastMap[a.user_email] || 0)) activityLastMap[a.user_email] = t;
+      }
+    } catch (e) {
+      console.log("Activity cross-reference unavailable:", e.message);
+    }
+
+    // 2. Build per-customer order profiles.
+    //    VISIT date = sale.created_date (the actual purchase time), NOT scanned_at
+    //    (scanned_at can lag the purchase by hours or days on older bills whose
+    //    QR didn't expire). This gives the true "days since last visit".
     const profilesMap = {};
     for (const sale of scannedSales) {
       const email = sale.scanned_by;
       if (!profilesMap[email]) {
-        profilesMap[email] = { email, itemCount: {}, orderCount: 0, totalSpend: 0, lastScan: 0, scanHours: [], scanDates: [] };
+        profilesMap[email] = { email, itemCount: {}, orderCount: 0, totalSpend: 0, lastVisit: 0, visitHours: [], visitDates: [] };
       }
       const p = profilesMap[email];
       p.orderCount++;
       p.totalSpend += sale.total_amount || 0;
-      const ts = sale.scanned_at ? new Date(sale.scanned_at).getTime() : 0;
-      if (ts > p.lastScan) p.lastScan = ts;
-      const h = pktHour(sale.scanned_at);
-      if (h >= 0) p.scanHours.push(h);
-      const dk = pktDateKey(sale.scanned_at);
-      if (dk) p.scanDates.push(dk);
+      // Use created_date (purchase time) as the visit timestamp; fall back to scanned_at
+      const visitIso = sale.created_date || sale.scanned_at;
+      const visitTs = visitIso ? new Date(visitIso).getTime() : 0;
+      if (visitTs > p.lastVisit) p.lastVisit = visitTs;
+      const h = pktHour(visitIso);
+      if (h >= 0) p.visitHours.push(h);
+      const dk = pktDateKey(visitIso);
+      if (dk) p.visitDates.push(dk);
       for (const it of (sale.items || [])) {
         if (!it.product_name) continue;
         p.itemCount[it.product_name] = (p.itemCount[it.product_name] || 0) + (it.quantity || 1);
@@ -186,7 +212,10 @@ Deno.serve(async (req) => {
       if (c.user_email) customerMap[c.user_email.toLowerCase()] = c;
     }
 
-    // 4. Finalize profiles
+    // 4. Finalize profiles.
+    //    lastEngagement = max(sale visit date, Activity points_earned date)
+    //    Cross-referencing two independent sources catches any single-source
+    //    data loss and gives the most accurate "days since last visit".
     const now = Date.now();
     const profiles = [];
     for (const email of Object.keys(profilesMap)) {
@@ -196,7 +225,11 @@ Deno.serve(async (req) => {
         if (p.itemCount[name] > favCount) { favCount = p.itemCount[name]; favItem = name; }
       }
       const repeatItem = favCount >= 2 ? favItem : null;
-      const daysSince = p.lastScan ? Math.floor((now - p.lastScan) / 86400000) : null;
+
+      // Cross-reference: take the MOST RECENT of (last visit, last activity log)
+      const activityLast = activityLastMap[email] || 0;
+      const lastEngagement = Math.max(p.lastVisit || 0, activityLast);
+      const daysSince = lastEngagement ? Math.floor((now - lastEngagement) / 86400000) : null;
 
       let segment;
       if (p.orderCount < 2) segment = "new";
@@ -204,16 +237,16 @@ Deno.serve(async (req) => {
       else if (p.totalSpend >= 5000) segment = "high_value";
       else segment = "regular";
 
-      // Daypart: most common visit hour bucket
+      // Daypart: most common visit hour bucket (from purchase time, not scan time)
       let bestWindow = "any";
-      if (p.scanHours.length > 0) {
+      if (p.visitHours.length > 0) {
         const buckets = { morning: 0, afternoon: 0, evening: 0 };
-        for (const h of p.scanHours) buckets[daypartFromHour(h)]++;
+        for (const h of p.visitHours) buckets[daypartFromHour(h)]++;
         bestWindow = Object.entries(buckets).sort((a, b) => b[1] - a[1])[0][0];
       }
 
-      // Streak
-      const streak = computeStreak(p.scanDates);
+      // Streak (from visit dates)
+      const streak = computeStreak(p.visitDates);
 
       const cust = customerMap[email.toLowerCase()];
       const displayName = cust?.display_name || email;
@@ -227,7 +260,9 @@ Deno.serve(async (req) => {
         totalSpend: Math.round(p.totalSpend),
         daysSinceLast: daysSince, segment,
         bestWindow, streakDays: streak.days, streakActive: streak.active,
-        tier
+        tier,
+        // diagnostic: which source won (for audit)
+        lastVisitSource: activityLast > (p.lastVisit || 0) ? "activity" : "sale"
       });
     }
 
