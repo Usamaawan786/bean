@@ -79,10 +79,11 @@
         "Cash",
         "Card",
         "Mobile Payment",
-        "Complimentary"
+        "Complimentary",
+        "Foodpanda"
       ],
       "default": "Cash",
-      "description": "Payment method used"
+      "description": "Payment method used. Foodpanda = third-party delivery order, no tax, simple checkout."
     },
     "shift_id": {
       "type": "string",

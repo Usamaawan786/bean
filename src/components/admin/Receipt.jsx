@@ -31,7 +31,7 @@ export default function Receipt({
   const fsGrand = is58 ? 12 : 14;
   const qrLg = is58 ? 110 : 150;
   const qrSm = is58 ? 78 : 100;
-  const gstLabel = bill?.paymentMethod === "Card" ? "8%" : "17%";
+  const gstLabel = bill?.paymentMethod === "Foodpanda" ? "0%" : (bill?.paymentMethod === "Card" ? "8%" : "17%");
   const pts = bill?.pointsToAward ?? Math.floor((bill?.subtotal || 0) / 100);
   const mult = Number(bill?.pointsMultiplier) > 1 ? Number(bill.pointsMultiplier) : null;
 

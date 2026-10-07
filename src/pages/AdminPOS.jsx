@@ -188,7 +188,7 @@ export default function AdminPOS() {
   const subtotal = cart.reduce((sum, item) => sum + effectivePrice(item) * item.quantity, 0);
   const discountAmount = subtotal * (discountPct / 100);
   const discountedSubtotal = subtotal - discountAmount;
-  const taxRate = paymentMethod === "Card" ? 0.08 : 0.17; // 8% for Card, 17% for Cash
+  const taxRate = paymentMethod === "Foodpanda" ? 0 : (paymentMethod === "Card" ? 0.08 : 0.17); // Foodpanda = no tax; 8% Card, 17% Cash
   const tax = discountedSubtotal * taxRate;
   const total = discountedSubtotal + tax;
 
@@ -286,7 +286,11 @@ export default function AdminPOS() {
         } catch (e) { /* kitchen order failure should not block sale */ }
       } else if (ticketKitchenOrder) {
         try {
-          await base44.entities.KitchenOrder.update(ticketKitchenOrder.id, { bill_number: billNumber, payment_method: paymentMethod });
+          const kdsUpdate = { bill_number: billNumber, payment_method: paymentMethod };
+          if (paymentMethod === "Foodpanda") {
+            kdsUpdate.customer_name = customerInfo.name ? `Foodpanda — ${customerInfo.name}` : "Foodpanda";
+          }
+          await base44.entities.KitchenOrder.update(ticketKitchenOrder.id, kdsUpdate);
         } catch (e) { /* kitchen order link failure should not block sale */ }
       }
 
@@ -633,7 +637,7 @@ export default function AdminPOS() {
                 {/* Payment Method */}
                 <div className="mb-4">
                   <label className="text-sm font-medium text-[#5C4A3A] mb-2 block">Payment Method</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("Cash")}
@@ -660,6 +664,18 @@ export default function AdminPOS() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setPaymentMethod("Foodpanda")}
+                      className={`flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-xl border-2 transition-all ${
+                        paymentMethod === "Foodpanda"
+                          ? "border-pink-500 bg-pink-50 text-pink-700"
+                          : "border-[#E8DED8] bg-white text-[#8B7355]"
+                      }`}
+                    >
+                      <span className="text-base leading-none">🐼</span>
+                      <span className="text-xs font-medium">Foodpanda</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => { if (["admin", "manager", "super_admin"].includes(user?.role)) setPaymentMethod("Complimentary"); }}
                       disabled={!["admin", "manager", "super_admin"].includes(user?.role)}
                       title={!["admin", "manager", "super_admin"].includes(user?.role) ? "Manager or admin only" : undefined}
@@ -674,7 +690,7 @@ export default function AdminPOS() {
                     </button>
                   </div>
                   <p className="text-xs text-[#8B7355] mt-1">
-                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : `GST: ${paymentMethod === "Card" ? "8%" : "17%"}`}
+                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : paymentMethod === "Foodpanda" ? "No tax — third-party delivery order" : `GST: ${paymentMethod === "Card" ? "8%" : "17%"}`}
                   </p>
                 </div>
 
@@ -802,15 +818,17 @@ export default function AdminPOS() {
                           <span className="text-red-500 font-medium">- PKR {discountAmount.toFixed(2)}</span>
                         </div>
                       )}
+                      {paymentMethod !== "Foodpanda" && (
                       <div className="flex justify-between text-sm">
                         <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "8%" : "17%"})</span>
                         <span className="text-[#5C4A3A] font-medium">PKR {tax.toFixed(2)}</span>
                       </div>
+                      )}
                       <div className="flex justify-between text-lg font-bold border-t border-[#E8DED8] pt-2">
                         <span className="text-[#5C4A3A]">Total</span>
                         <span className="text-[#5C4A3A]">PKR {total.toFixed(2)}</span>
                       </div>
-                      {paymentMethod !== "Complimentary" && (
+                      {paymentMethod !== "Complimentary" && paymentMethod !== "Foodpanda" && (
                         <div className="flex justify-between items-center text-sm pt-1">
                           <span className="text-[#8B7355] flex items-center gap-1.5">
                             Reward Points
@@ -827,6 +845,9 @@ export default function AdminPOS() {
                       )}
                       {paymentMethod === "Complimentary" && (
                         <p className="text-xs text-indigo-600 font-medium text-center pt-1">Complimentary — Total charged: PKR 0.00</p>
+                      )}
+                      {paymentMethod === "Foodpanda" && (
+                        <p className="text-xs text-pink-600 font-medium text-center pt-1">Foodpanda — No tax applied, prices as-is</p>
                       )}
                     </div>
 

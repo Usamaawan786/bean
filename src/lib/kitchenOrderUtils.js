@@ -37,7 +37,9 @@ export function buildKitchenOrder({ cart, customerInfo, billNumber, orderType, c
     bill_number: billNumber,
     order_type: orderType,
     counter: counter || "counter_1",
-    customer_name: customerInfo?.name || "",
+    customer_name: paymentMethod === "Foodpanda"
+      ? (customerInfo?.name ? `Foodpanda — ${customerInfo.name}` : "Foodpanda")
+      : (customerInfo?.name || ""),
     items,
     kitchen_status: hasKitchenItems ? "pending" : "not_applicable",
     bar_status: hasBarItems ? "pending" : "not_applicable",
