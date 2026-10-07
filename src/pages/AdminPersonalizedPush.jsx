@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import PushDraftCard, { TACTIC_STYLE } from "@/components/push/PushDraftCard";
 import PushBulkBar from "@/components/push/PushBulkBar";
 import PushStatsBar from "@/components/push/PushStatsBar";
+import PushHistoryTab from "@/components/push/PushHistoryTab";
 
 const SEGMENT_STYLE = {
   new: { label: "New", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
@@ -60,6 +61,7 @@ export default function AdminPersonalizedPush() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [activeTab, setActiveTab] = useState("queue"); // queue | history
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -366,6 +368,39 @@ export default function AdminPersonalizedPush() {
         {/* Stats */}
         <PushStatsBar drafts={drafts} approvedCount={approved.length} sentCount={sentCount} />
 
+        {/* Tab toggle */}
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveTab("queue")}
+            className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors ${
+              activeTab === "queue"
+                ? "bg-[#5C4A3A] text-white"
+                : "bg-white text-[#8B7355] border border-[#E8DED8] hover:border-[#8B7355]"
+            }`}
+          >
+            Review Queue
+          </button>
+          <button
+            onClick={() => setActiveTab("history")}
+            className={`text-sm px-4 py-2 rounded-xl font-semibold transition-colors flex items-center gap-2 ${
+              activeTab === "history"
+                ? "bg-[#5C4A3A] text-white"
+                : "bg-white text-[#8B7355] border border-[#E8DED8] hover:border-[#8B7355]"
+            }`}
+          >
+            Sent History
+            {sentCount > 0 && (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full ${activeTab === "history" ? "bg-white/20" : "bg-[#F5EBE8]"}`}>
+                {sentCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeTab === "history" ? (
+          <PushHistoryTab sentCount={sentCount} />
+        ) : (
+          <>
         {/* Approved — ready to send */}
         {approved.length > 0 && (
           <div className="bg-white rounded-3xl border border-emerald-200 p-5 shadow-sm">
@@ -537,6 +572,8 @@ export default function AdminPersonalizedPush() {
         <p className="text-center text-xs text-[#C9B8A6]">
           Search a customer, tap <strong>Test Send</strong> to verify the push on them alone, then <strong>Approve</strong> & bulk-send the rest.
         </p>
+          </>
+        )}
       </div>
 
       {/* Sticky bulk action bar */}
