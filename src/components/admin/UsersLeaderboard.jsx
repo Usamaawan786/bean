@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronDown, ChevronUp, Gift, Share2, ShoppingBag, UserCheck, Activity, AlertTriangle, Users, Pencil, Save, X, RefreshCw } from "lucide-react";
+import { Star, ChevronDown, ChevronUp, Gift, Share2, ShoppingBag, UserCheck, Activity, AlertTriangle, Users, Pencil, Save, X, RefreshCw, Loader2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 const TIER_COLORS = {
@@ -228,9 +228,31 @@ function UserRow({ customer, activities, redemptions, rank, onAdjust }) {
 
 export default function UsersLeaderboard({ customers, activities, redemptions, settings }) {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState("points_balance");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const queryClient = useQueryClient();
+
+  // Debounce the search input so we don't fire a server query on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Server-side search: when the admin types an email, query the Customer entity
+  // directly so users outside the top-300 leaderboard are still findable.
+  const { data: searchResults = [], isLoading: searching } = useQuery({
+    queryKey: ["admin-customer-search", debouncedSearch],
+    queryFn: async () => {
+      if (!debouncedSearch) return [];
+      const res = await base44.entities.Customer.filter(
+        { created_by: { $regex: debouncedSearch, $options: "i" } },
+        { limit: 100, sort: "-total_points_earned" }
+      );
+      return res.items || res;
+    },
+    enabled: debouncedSearch.length > 0,
+  });
 
   const handleAdjust = async (customer, newBalance, reason) => {
     const oldBalance = customer.points_balance || 0;
@@ -257,8 +279,10 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
     }
   };
 
-  const filtered = customers
-    .filter(c => !search || (c.created_by || "").toLowerCase().includes(search.toLowerCase()))
+  // When searching, use server-side results; otherwise use the top-300 leaderboard.
+  const baseList = debouncedSearch ? searchResults : customers;
+
+  const filtered = baseList
     .filter(c => {
       if (!flaggedOnly) return true;
       const userActivities = activities.filter(a => a.user_email === c.created_by);
@@ -276,7 +300,7 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-bold text-[#5C4A3A] text-lg">User Rewards Ledger</h2>
-          <p className="text-xs text-[#8B7355]">{customers.length} users · {totalFlagged > 0 && <span className="text-red-500 font-semibold">{totalFlagged} flagged</span>}</p>
+          <p className="text-xs text-[#8B7355]">{debouncedSearch ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : `${customers.length} of 983 users`} · {totalFlagged > 0 && <span className="text-red-500 font-semibold">{totalFlagged} flagged</span>}</p>
         </div>
         {totalFlagged > 0 && (
           <button
@@ -308,6 +332,9 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
       </div>
 
       <div className="space-y-2">
+        {debouncedSearch && searching && (
+          <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-[#8B7355]" /></div>
+        )}
         {filtered.map((customer, i) => (
           <UserRow
             key={customer.id}
@@ -318,10 +345,10 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
             onAdjust={handleAdjust}
           />
         ))}
-        {filtered.length === 0 && (
+        {filtered.length === 0 && !searching && (
           <div className="text-center py-10 text-[#8B7355]">
             <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">No users found</p>
+            <p className="text-sm">{debouncedSearch ? `No users matching "${debouncedSearch}"` : "No users found"}</p>
           </div>
         )}
       </div>
