@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const now = new Date();
     const pktOffset = 5 * 60 * 60 * 1000;
     const pktNow = new Date(now.getTime() + pktOffset);
-    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()) - pktOffset);
+    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()));
     const weekStartPKT = new Date(todayStartPKT.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStartPKT = new Date(todayStartPKT.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -282,8 +282,7 @@ Deno.serve(async (req) => {
         let cursor = new Date(periodStart);
         const stopAt = new Date(now.getTime() + pktOffset);
         while (cursor <= stopAt) {
-          const cursorPKT = new Date(cursor.getTime() + pktOffset);
-          const d = `${cursorPKT.getUTCFullYear()}-${String(cursorPKT.getUTCMonth() + 1).padStart(2, '0')}-${String(cursorPKT.getUTCDate()).padStart(2, '0')}`;
+          const d = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}-${String(cursor.getUTCDate()).padStart(2, '0')}`;
           if (!dmap[d]) dmap[d] = { date: d, revenue: 0, transactions: 0, itemsSold: 0 };
           cursor.setUTCDate(cursor.getUTCDate() + 1);
         }
@@ -293,9 +292,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Shift breakdown for the selected period
+    // Shift breakdown for the selected period.
+    // The business-day boundary falls at ~05:00 PKT (UTC midnight). The evening
+    // shift opens a few minutes before that boundary, so we expand the lookup
+    // window by 1 hour to avoid excluding it — without affecting sales grouping.
     const shiftBreakdown = allShifts
-      .filter(shift => shift.opened_at && inPeriod(shift.opened_at))
+      .filter(shift => {
+        if (!shift.opened_at) return false;
+        const dt = new Date(shift.opened_at);
+        const expandedStart = new Date(periodStart.getTime() - 60 * 60 * 1000);
+        if (dt < expandedStart) return false;
+        if (periodEnd && dt >= periodEnd) return false;
+        return true;
+      })
       .map(shift => {
         const agg = shiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
         const openedPKT = new Date(new Date(shift.opened_at).getTime() + pktOffset);
