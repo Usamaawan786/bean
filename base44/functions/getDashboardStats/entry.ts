@@ -189,19 +189,6 @@ Deno.serve(async (req) => {
     };
     const periodSales = allSales.filter(s => inPeriod(s.created_date));
     const periodExpenses = allExpenses.filter(e => inPeriod(e.created_date));
-
-    // Period-scoped shift sales map — ensures the shift breakdown only counts
-    // sales within the selected period, matching the summary card totals.
-    const periodShiftSalesMap = {};
-    periodSales.forEach(s => {
-      const sid = s.shift_id;
-      if (!sid) return;
-      if (!periodShiftSalesMap[sid]) periodShiftSalesMap[sid] = { count: 0, revenue: 0, cash: 0, card: 0 };
-      periodShiftSalesMap[sid].count += 1;
-      periodShiftSalesMap[sid].revenue += Number(s.total_amount) || 0;
-      if (s.payment_method === 'Cash') periodShiftSalesMap[sid].cash += Number(s.total_amount) || 0;
-      if (s.payment_method === 'Card') periodShiftSalesMap[sid].card += Number(s.total_amount) || 0;
-    });
     const periodRevenue = sum(periodSales, 'total_amount');
     const periodTransactions = periodSales.length;
     const periodAvgOrder = periodTransactions > 0 ? periodRevenue / periodTransactions : 0;
@@ -305,21 +292,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Shift breakdown for the selected period.
-    // The business-day boundary falls at ~05:00 PKT (UTC midnight). The evening
-    // shift opens a few minutes before that boundary, so we expand the lookup
-    // window by 1 hour to avoid excluding it — without affecting sales grouping.
+    // Shift breakdown for the selected period
     const shiftBreakdown = allShifts
-      .filter(shift => {
-        if (!shift.opened_at) return false;
-        const dt = new Date(shift.opened_at);
-        const expandedStart = new Date(periodStart.getTime() - 60 * 60 * 1000);
-        if (dt < expandedStart) return false;
-        if (periodEnd && dt >= periodEnd) return false;
-        return true;
-      })
+      .filter(shift => shift.opened_at && inPeriod(shift.opened_at))
       .map(shift => {
-        const agg = periodShiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
+        const agg = shiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
         const openedPKT = new Date(new Date(shift.opened_at).getTime() + pktOffset);
         return {
           shift_id: shift.id,
