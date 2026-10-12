@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const now = new Date();
     const pktOffset = 5 * 60 * 60 * 1000;
     const pktNow = new Date(now.getTime() + pktOffset);
-    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()));
+    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()) - pktOffset);
     const weekStartPKT = new Date(todayStartPKT.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStartPKT = new Date(todayStartPKT.getTime() - 30 * 24 * 60 * 60 * 1000);
 
