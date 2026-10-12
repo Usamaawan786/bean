@@ -189,6 +189,19 @@ Deno.serve(async (req) => {
     };
     const periodSales = allSales.filter(s => inPeriod(s.created_date));
     const periodExpenses = allExpenses.filter(e => inPeriod(e.created_date));
+
+    // Period-scoped shift sales map — ensures the shift breakdown only counts
+    // sales within the selected period, matching the summary card totals.
+    const periodShiftSalesMap = {};
+    periodSales.forEach(s => {
+      const sid = s.shift_id;
+      if (!sid) return;
+      if (!periodShiftSalesMap[sid]) periodShiftSalesMap[sid] = { count: 0, revenue: 0, cash: 0, card: 0 };
+      periodShiftSalesMap[sid].count += 1;
+      periodShiftSalesMap[sid].revenue += Number(s.total_amount) || 0;
+      if (s.payment_method === 'Cash') periodShiftSalesMap[sid].cash += Number(s.total_amount) || 0;
+      if (s.payment_method === 'Card') periodShiftSalesMap[sid].card += Number(s.total_amount) || 0;
+    });
     const periodRevenue = sum(periodSales, 'total_amount');
     const periodTransactions = periodSales.length;
     const periodAvgOrder = periodTransactions > 0 ? periodRevenue / periodTransactions : 0;
@@ -306,7 +319,7 @@ Deno.serve(async (req) => {
         return true;
       })
       .map(shift => {
-        const agg = shiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
+        const agg = periodShiftSalesMap[shift.id] || { count: 0, revenue: 0, cash: 0, card: 0 };
         const openedPKT = new Date(new Date(shift.opened_at).getTime() + pktOffset);
         return {
           shift_id: shift.id,
