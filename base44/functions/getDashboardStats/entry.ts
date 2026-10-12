@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     const now = new Date();
     const pktOffset = 5 * 60 * 60 * 1000;
     const pktNow = new Date(now.getTime() + pktOffset);
-    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()));
+    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()) - pktOffset);
     const weekStartPKT = new Date(todayStartPKT.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStartPKT = new Date(todayStartPKT.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -282,7 +282,8 @@ Deno.serve(async (req) => {
         let cursor = new Date(periodStart);
         const stopAt = new Date(now.getTime() + pktOffset);
         while (cursor <= stopAt) {
-          const d = `${cursor.getUTCFullYear()}-${String(cursor.getUTCMonth() + 1).padStart(2, '0')}-${String(cursor.getUTCDate()).padStart(2, '0')}`;
+          const cursorPKT = new Date(cursor.getTime() + pktOffset);
+          const d = `${cursorPKT.getUTCFullYear()}-${String(cursorPKT.getUTCMonth() + 1).padStart(2, '0')}-${String(cursorPKT.getUTCDate()).padStart(2, '0')}`;
           if (!dmap[d]) dmap[d] = { date: d, revenue: 0, transactions: 0, itemsSold: 0 };
           cursor.setUTCDate(cursor.getUTCDate() + 1);
         }
