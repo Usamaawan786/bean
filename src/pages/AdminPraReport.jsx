@@ -44,26 +44,24 @@ export default function AdminPraReport() {
 
   const printPreview = () => {
     if (!report) return;
-    // Group by date, take 10 invoices per day
-    const byDate = {};
-    for (const item of report.lineItems) {
-      if (!byDate[item.date]) byDate[item.date] = [];
-      if (byDate[item.date].length < 10) byDate[item.date].push(item);
+    // Random 50% sample (Fisher-Yates shuffle), then sorted chronologically
+    const shuffled = [...report.lineItems];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    const items = [];
-    Object.keys(byDate)
-      .sort()
-      .forEach((d) => items.push(...byDate[d]));
+    const items = shuffled
+      .slice(0, Math.ceil(shuffled.length / 2))
+      .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+    const sampleSubtotal = items.reduce((s, x) => s + Number(x.subtotal || 0), 0);
+    const sampleTax = items.reduce((s, x) => s + Number(x.tax_amount || 0), 0);
+    const sampleTotal = items.reduce((s, x) => s + Number(x.total || 0), 0);
+    const fmt = (n) => Number(n).toLocaleString("en-PK", { minimumFractionDigits: 2 });
     const win = window.open("", "_blank");
     if (!win) return;
     let rows = "";
     let idx = 0;
-    let prevDate = null;
     for (const item of items) {
-      if (item.date !== prevDate) {
-        rows += `<tr class="day-header"><td colspan="9">${item.date} — ${byDate[item.date].length} invoice${byDate[item.date].length > 1 ? "s" : ""} shown</td></tr>`;
-        prevDate = item.date;
-      }
       idx++;
       rows += `<tr>
           <td style="text-align:center">${idx}</td>
@@ -113,7 +111,7 @@ export default function AdminPraReport() {
         <p>Generated: ${new Date(report.generated_at).toLocaleString("en-PK")}</p>
       </div>
       <button class="no-print" onclick="window.print()" style="background:#5C4A3A;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:20px;">Print / Save as PDF</button>
-      <h2>Tax Summary by Payment Method</h2>
+      <h2>Full-Period Tax Summary (All ${report.grandTotal.count} Invoices)</h2>
       <table>
         <thead><tr><th>Payment Method</th><th style="text-align:center">Transactions</th><th style="text-align:right">Subtotal (PKR)</th><th style="text-align:right">Tax (PKR)</th><th style="text-align:right">Total (PKR)</th></tr></thead>
         <tbody>
@@ -121,12 +119,12 @@ export default function AdminPraReport() {
           <tr class="grand"><td>TOTAL</td><td style="text-align:center">${report.grandTotal.count}</td><td style="text-align:right">${Number(report.grandTotal.subtotal).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td><td style="text-align:right">${Number(report.grandTotal.tax).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td><td style="text-align:right">${Number(report.grandTotal.total).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td></tr>
         </tbody>
       </table>
-      <h2>Invoice Detail — 10 per Day (${items.length} of ${report.lineItems.length})</h2>
+      <h2>Invoice Detail — Random 50% Sample (${items.length} of ${report.lineItems.length})</h2>
       <table>
         <thead><tr><th style="text-align:center;width:40px">#</th><th>Bill #</th><th>Date</th><th>Time</th><th>Method</th><th style="text-align:right">Subtotal</th><th style="text-align:center">Rate</th><th style="text-align:right">Tax</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="note">This document shows 10 invoices per day from ${report.period.start_date} to ${report.period.end_date} (${items.length} shown of ${report.lineItems.length} total). Each day is labeled with its invoice count.</p>
+      <p class="note"><strong>SAMPLE ONLY.</strong> This document lists a randomly selected 50% sample (${items.length} of ${report.lineItems.length} invoices) from ${report.period.start_date} to ${report.period.end_date}. Sample totals: Subtotal PKR ${fmt(sampleSubtotal)} | Tax PKR ${fmt(sampleTax)} | Total PKR ${fmt(sampleTotal)}. Full-period totals are shown in the summary above.</p>
       </body></html>`);
     win.document.close();
   };
@@ -278,7 +276,7 @@ export default function AdminPraReport() {
               </div>
               <div className="flex gap-3">
                 <Button onClick={printPreview} variant="outline" className="border-[#8B7355] text-[#5C4A3A] hover:bg-[#F5F1ED]">
-                  <Printer className="h-4 w-4 mr-2" /> Print 10/Day Preview
+                  <Printer className="h-4 w-4 mr-2" /> Print Random 50% Sample
                 </Button>
                 <Button onClick={downloadCSV} className="bg-[#5C4A3A] hover:bg-[#3a2e22] text-white">
                   <Download className="h-4 w-4 mr-2" /> Download CSV
