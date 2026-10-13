@@ -20,7 +20,7 @@ function fmtPKR(n) {
 
 export default function AdminPraReport() {
   const [startDate, setStartDate] = useState("2026-08-07");
-  const [endDate, setEndDate] = useState("2026-10-13");
+  const [endDate, setEndDate] = useState("2026-09-30");
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
