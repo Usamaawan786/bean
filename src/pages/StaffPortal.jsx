@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell, Truck, Bike, ClipboardEdit, Sparkles } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell, Truck, Bike, ClipboardEdit, Sparkles, Landmark } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
@@ -43,6 +43,7 @@ const ROLE_FEATURES = {
     { icon: MessageSquare, label: "Admin Chat", desc: "Chat with customers & manage support", link: "/AdminChat", color: "from-teal-600 to-teal-700" },
     { icon: Bell, label: "Push Notifications", desc: "Send & schedule push notifications to users", link: "/AdminPushNotifications", color: "from-violet-600 to-violet-700" },
     { icon: Sparkles, label: "Personalized Push", desc: "Auto-tailored pushes from scanned-bill history", link: "/AdminPersonalizedPush", color: "from-fuchsia-600 to-fuchsia-700" },
+    { icon: Landmark, label: "PRA Tax Report", desc: "Generate & download sales tax reports for PRA", link: "/AdminPraReport", color: "from-stone-600 to-stone-800" },
     { icon: ClipboardEdit, label: "Menu Editor", desc: "Edit menu logo, categories & items", link: "/admin-menu-editor", color: "from-rose-600 to-rose-700" },
   ],
   super_admin: [
@@ -59,6 +60,7 @@ const ROLE_FEATURES = {
     { icon: Bike, label: "Riders", desc: "Manage riders & assignments", link: "/AdminRiders", color: "from-teal-600 to-teal-700" },
     { icon: Users, label: "Staff Management", desc: "Invite & manage team access", link: "/StaffManagement", color: "from-purple-600 to-purple-700" },
     { icon: Shield, label: "Staff Scrutiny", desc: "Audit trail, fraud detection & staff performance", link: "/AdminStaffScrutiny", color: "from-red-700 to-red-900" },
+    { icon: Landmark, label: "PRA Tax Report", desc: "Generate & download sales tax reports for PRA", link: "/AdminPraReport", color: "from-stone-600 to-stone-800" },
     { icon: ClipboardEdit, label: "Menu Editor", desc: "Edit menu logo, categories & items", link: "/admin-menu-editor", color: "from-rose-600 to-rose-700" },
   ],
 };
