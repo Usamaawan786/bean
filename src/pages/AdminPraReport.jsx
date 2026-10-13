@@ -20,7 +20,7 @@ function fmtPKR(n) {
 
 export default function AdminPraReport() {
   const [startDate, setStartDate] = useState("2026-08-07");
-  const [endDate, setEndDate] = useState("2026-09-30");
+  const [endDate, setEndDate] = useState("2026-10-13");
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
@@ -44,13 +44,29 @@ export default function AdminPraReport() {
 
   const printPreview = () => {
     if (!report) return;
-    const items = report.lineItems.slice(0, 300);
+    // Group by date, take 10 invoices per day
+    const byDate = {};
+    for (const item of report.lineItems) {
+      if (!byDate[item.date]) byDate[item.date] = [];
+      if (byDate[item.date].length < 10) byDate[item.date].push(item);
+    }
+    const items = [];
+    Object.keys(byDate)
+      .sort()
+      .forEach((d) => items.push(...byDate[d]));
     const win = window.open("", "_blank");
     if (!win) return;
-    const rows = items
-      .map(
-        (item, i) => `<tr>
-          <td style="text-align:center">${i + 1}</td>
+    let rows = "";
+    let idx = 0;
+    let prevDate = null;
+    for (const item of items) {
+      if (item.date !== prevDate) {
+        rows += `<tr class="day-header"><td colspan="9">${item.date} — ${byDate[item.date].length} invoice${byDate[item.date].length > 1 ? "s" : ""} shown</td></tr>`;
+        prevDate = item.date;
+      }
+      idx++;
+      rows += `<tr>
+          <td style="text-align:center">${idx}</td>
           <td style="font-family:monospace">${item.bill_number}</td>
           <td>${item.date}</td>
           <td>${item.time}</td>
@@ -59,9 +75,8 @@ export default function AdminPraReport() {
           <td style="text-align:center">${item.tax_rate}%</td>
           <td style="text-align:right">${Number(item.tax_amount).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
           <td style="text-align:right;font-weight:600">${Number(item.total).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
-        </tr>`
-      )
-      .join("");
+        </tr>`;
+    }
     const summaryRows = report.summary
       .map(
         (s) => `<tr>
@@ -87,6 +102,7 @@ export default function AdminPraReport() {
         tr:nth-child(even) td { background: #FAF7F3; }
         .grand { background: #5C4A3A !important; color: #fff; font-weight: 700; }
         .grand td { background: #5C4A3A !important; color: #fff; border: none; }
+        .day-header td { background: #8B7355 !important; color: #fff; font-weight: 700; font-size: 12px; padding: 6px; }
         .note { font-size: 11px; color: #999; margin-top: 20px; text-align: center; }
         @media print { body { padding: 20px; } .no-print { display: none; } }
       </style></head><body>
@@ -105,12 +121,12 @@ export default function AdminPraReport() {
           <tr class="grand"><td>TOTAL</td><td style="text-align:center">${report.grandTotal.count}</td><td style="text-align:right">${Number(report.grandTotal.subtotal).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td><td style="text-align:right">${Number(report.grandTotal.tax).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td><td style="text-align:right">${Number(report.grandTotal.total).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td></tr>
         </tbody>
       </table>
-      <h2>Invoice Detail — First 300 of ${report.lineItems.length}</h2>
+      <h2>Invoice Detail — 10 per Day (${items.length} of ${report.lineItems.length})</h2>
       <table>
         <thead><tr><th style="text-align:center;width:40px">#</th><th>Bill #</th><th>Date</th><th>Time</th><th>Method</th><th style="text-align:right">Subtotal</th><th style="text-align:center">Rate</th><th style="text-align:right">Tax</th><th style="text-align:right">Total</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <p class="note">This document shows ${items.length} invoices from the period ${report.period.start_date} to ${report.period.end_date}. Total invoices in period: ${report.lineItems.length}.</p>
+      <p class="note">This document shows 10 invoices per day from ${report.period.start_date} to ${report.period.end_date} (${items.length} shown of ${report.lineItems.length} total). Each day is labeled with its invoice count.</p>
       </body></html>`);
     win.document.close();
   };
@@ -262,7 +278,7 @@ export default function AdminPraReport() {
               </div>
               <div className="flex gap-3">
                 <Button onClick={printPreview} variant="outline" className="border-[#8B7355] text-[#5C4A3A] hover:bg-[#F5F1ED]">
-                  <Printer className="h-4 w-4 mr-2" /> Print 300 Invoices
+                  <Printer className="h-4 w-4 mr-2" /> Print 10/Day Preview
                 </Button>
                 <Button onClick={downloadCSV} className="bg-[#5C4A3A] hover:bg-[#3a2e22] text-white">
                   <Download className="h-4 w-4 mr-2" /> Download CSV
