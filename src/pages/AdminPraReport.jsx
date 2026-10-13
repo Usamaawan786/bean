@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download, FileText, ArrowLeft, Loader2, Landmark, AlertTriangle } from "lucide-react";
+import { Download, FileText, ArrowLeft, Loader2, Landmark, AlertTriangle, Printer } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function csvEscape(val) {
@@ -40,6 +40,79 @@ export default function AdminPraReport() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const printPreview = () => {
+    if (!report) return;
+    const items = report.lineItems.slice(0, 300);
+    const win = window.open("", "_blank");
+    if (!win) return;
+    const rows = items
+      .map(
+        (item, i) => `<tr>
+          <td style="text-align:center">${i + 1}</td>
+          <td style="font-family:monospace">${item.bill_number}</td>
+          <td>${item.date}</td>
+          <td>${item.time}</td>
+          <td>${item.payment_method}</td>
+          <td style="text-align:right">${Number(item.subtotal).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
+          <td style="text-align:center">${item.tax_rate}%</td>
+          <td style="text-align:right">${Number(item.tax_amount).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
+          <td style="text-align:right;font-weight:600">${Number(item.total).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
+        </tr>`
+      )
+      .join("");
+    const summaryRows = report.summary
+      .map(
+        (s) => `<tr>
+          <td style="font-weight:600">${s.payment_method}</td>
+          <td style="text-align:center">${s.count}</td>
+          <td style="text-align:right">${Number(s.subtotal).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
+          <td style="text-align:right;font-weight:600">${Number(s.tax).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
+          <td style="text-align:right">${Number(s.total).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td>
+        </tr>`
+      )
+      .join("");
+    win.document.write(`<!DOCTYPE html><html><head><title>Bean Coffee — Invoice Summary (${report.period.start_date} to ${report.period.end_date})</title>
+      <style>
+        * { font-family: Arial, Helvetica, sans-serif; }
+        body { color: #5C4A3A; margin: 0; padding: 40px; }
+        .header { text-align: center; border-bottom: 3px solid #8B7355; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; margin: 0 0 5px; }
+        .header p { color: #8B7355; font-size: 14px; margin: 3px 0; }
+        h2 { font-size: 16px; color: #5C4A3A; border-bottom: 1px solid #E8DED8; padding-bottom: 6px; margin: 30px 0 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #8B7355; color: #fff; padding: 8px 6px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 5px 6px; border-bottom: 1px solid #F0EBE5; }
+        tr:nth-child(even) td { background: #FAF7F3; }
+        .grand { background: #5C4A3A !important; color: #fff; font-weight: 700; }
+        .grand td { background: #5C4A3A !important; color: #fff; border: none; }
+        .note { font-size: 11px; color: #999; margin-top: 20px; text-align: center; }
+        @media print { body { padding: 20px; } .no-print { display: none; } }
+      </style></head><body>
+      <div class="header">
+        <h1>Bean Coffee</h1>
+        <p><strong>Invoice Summary Report</strong></p>
+        <p>Period: ${report.period.start_date} to ${report.period.end_date}</p>
+        <p>Generated: ${new Date(report.generated_at).toLocaleString("en-PK")}</p>
+      </div>
+      <button class="no-print" onclick="window.print()" style="background:#5C4A3A;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:14px;cursor:pointer;margin-bottom:20px;">Print / Save as PDF</button>
+      <h2>Tax Summary by Payment Method</h2>
+      <table>
+        <thead><tr><th>Payment Method</th><th style="text-align:center">Transactions</th><th style="text-align:right">Subtotal (PKR)</th><th style="text-align:right">Tax (PKR)</th><th style="text-align:right">Total (PKR)</th></tr></thead>
+        <tbody>
+          ${summaryRows}
+          <tr class="grand"><td>TOTAL</td><td style="text-align:center">${report.grandTotal.count}</td><td style="text-align:right">${Number(report.grandTotal.subtotal).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td><td style="text-align:right">${Number(report.grandTotal.tax).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td><td style="text-align:right">${Number(report.grandTotal.total).toLocaleString("en-PK", { minimumFractionDigits: 2 })}</td></tr>
+        </tbody>
+      </table>
+      <h2>Invoice Detail — First 300 of ${report.lineItems.length}</h2>
+      <table>
+        <thead><tr><th style="text-align:center;width:40px">#</th><th>Bill #</th><th>Date</th><th>Time</th><th>Method</th><th style="text-align:right">Subtotal</th><th style="text-align:center">Rate</th><th style="text-align:right">Tax</th><th style="text-align:right">Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="note">This document shows ${items.length} invoices from the period ${report.period.start_date} to ${report.period.end_date}. Total invoices in period: ${report.lineItems.length}.</p>
+      </body></html>`);
+    win.document.close();
   };
 
   const downloadCSV = () => {
@@ -187,9 +260,14 @@ export default function AdminPraReport() {
                   {report.lineItems.length} invoices · Generated {new Date(report.generated_at).toLocaleString("en-PK")}
                 </p>
               </div>
-              <Button onClick={downloadCSV} className="bg-[#5C4A3A] hover:bg-[#3a2e22] text-white">
-                <Download className="h-4 w-4 mr-2" /> Download CSV
-              </Button>
+              <div className="flex gap-3">
+                <Button onClick={printPreview} variant="outline" className="border-[#8B7355] text-[#5C4A3A] hover:bg-[#F5F1ED]">
+                  <Printer className="h-4 w-4 mr-2" /> Print 300 Invoices
+                </Button>
+                <Button onClick={downloadCSV} className="bg-[#5C4A3A] hover:bg-[#3a2e22] text-white">
+                  <Download className="h-4 w-4 mr-2" /> Download CSV
+                </Button>
+              </div>
             </div>
 
             {/* Summary by Payment Method */}
