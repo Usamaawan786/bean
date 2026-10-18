@@ -280,7 +280,8 @@ export default function UsersLeaderboard({ customers, activities, redemptions, s
   };
 
   // When searching, use server-side results; otherwise use the top-300 leaderboard.
-  const baseList = debouncedSearch ? searchResults : customers;
+  // Excluded customers are hidden from the default ranked view but remain findable via search.
+  const baseList = debouncedSearch ? searchResults : customers.filter((c) => !c.excluded_from_leaderboard);
 
   const filtered = baseList
     .filter(c => {

@@ -69,9 +69,10 @@ export default function Leaderboard() {
     return u?.display_name || u?.full_name || c.created_by?.split("@")[0] || "Coffee Lover";
   };
 
-  const top3 = customers.slice(0, 3);
-  const rest = customers.slice(3);
-  const myRank = myCustomer ? customers.findIndex((c) => c.created_by === myCustomer.created_by) + 1 : 0;
+  const eligible = customers.filter((c) => !c.excluded_from_leaderboard);
+  const top3 = eligible.slice(0, 3);
+  const rest = eligible.slice(3);
+  const myRank = myCustomer ? eligible.findIndex((c) => c.created_by === myCustomer.created_by) + 1 : 0;
 
   return (
     <div className="min-h-screen bg-[#F5F1ED]">
