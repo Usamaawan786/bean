@@ -19,15 +19,14 @@ export default function ShiftGate({ user, onOpened }) {
     }
     setOpening(true);
     try {
-      await base44.entities.Shift.create({
+      // Server-stamped open time — the device clock must not decide shift times
+      const res = await base44.functions.invoke("stampShift", {
+        action: "open",
         shift_type: shiftType,
-        status: "open",
-        opened_by: user.email,
-        opened_by_name: user.full_name || user.email,
-        opened_at: new Date().toISOString(),
-        opening_float: float,
-        counter
+        counter,
+        opening_float: float
       });
+      if (res?.data?.error) throw new Error(res.data.error);
       toast.success(`${shiftType === "morning" ? "Morning" : "Evening"} shift opened`);
       onOpened();
     } catch (err) {

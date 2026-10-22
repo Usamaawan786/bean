@@ -44,14 +44,15 @@ export default function CloseShiftDialog({ shift, user, onClose, onClosed }) {
     }
     setSaving(true);
     try {
-      await base44.entities.Shift.update(shift.id, {
-        status: "closed",
+      // Server-stamped close time — the device clock must not decide shift times
+      const res = await base44.functions.invoke("stampShift", {
+        action: "close",
+        shift_id: shift.id,
         closing_float: closingNum,
-        cash_variance: variance,
-        closed_by: user.email,
-        closed_by_name: user.full_name || user.email,
-        closed_at: new Date().toISOString()
+        cash_variance: variance
       });
+      if (res?.data?.error) throw new Error(res.data.error);
+      const closedAt = res?.data?.closed_at || res?.data?.shift?.closed_at || new Date().toISOString();
       toast.success("Shift closed");
       onClosed({
         ...shift,
@@ -60,7 +61,7 @@ export default function CloseShiftDialog({ shift, user, onClose, onClosed }) {
         cash_variance: variance,
         closed_by: user.email,
         closed_by_name: user.full_name || user.email,
-        closed_at: new Date().toISOString()
+        closed_at: closedAt
       });
     } catch (err) {
       toast.error("Failed to close shift: " + (err?.message || "Unknown error"));
