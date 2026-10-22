@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Clock, ChefHat, AlertTriangle, Loader2, Wifi, BarChart3, TrendingUp, ShoppingBag } from "lucide-react";
+import { CheckCircle2, Clock, ChefHat, AlertTriangle, Loader2, Wifi, BarChart3, TrendingUp, ShoppingBag, Volume2, VolumeX } from "lucide-react";
 import { format } from "date-fns";
+import { playNewOrderChime, primeAudio, audioReady } from "@/lib/notifySound";
 
 const STATION = "kitchen";
 
@@ -192,7 +193,23 @@ export default function KitchenDisplay() {
   const [historyOrders, setHistoryOrders] = useState([]);
   const [filterType, setFilterType] = useState("all"); // all | dine_in | takeaway
   const [filterDate, setFilterDate] = useState("today"); // today | week | all
-  const audioRef = useRef(null);
+  const [soundOn, setSoundOn] = useState(false);
+  const [muted, setMuted] = useState(false);
+  // Ids this screen already knows about: stops a replayed realtime "create" —
+  // or a ticket that was already on the board at load — from re-firing the chime.
+  const seenIdsRef = useRef(new Set());
+  const seededRef = useRef(false);
+  const mutedRef = useRef(false);
+
+  const toggleMute = () => {
+    const next = !mutedRef.current;
+    mutedRef.current = next;
+    setMuted(next);
+  };
+
+  const alertNewOrder = () => {
+    if (!mutedRef.current) playNewOrderChime();
+  };
 
   const loadOrders = async () => {
     // Use $or (documented) — the SDK does NOT treat { field: [...] } as an IN
@@ -212,6 +229,15 @@ export default function KitchenDisplay() {
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
       return new Date(a.created_date) - new Date(b.created_date);
     });
+    // Alert for tickets that landed while the realtime channel was down (missed
+    // events). seededRef keeps the first load silent, so opening the screen never
+    // chimes for work that is already on the board.
+    if (seededRef.current) {
+      const appeared = active.some(o => !seenIdsRef.current.has(o.id));
+      if (appeared) alertNewOrder();
+    }
+    seededRef.current = true;
+    seenIdsRef.current = new Set(active.map(o => o.id));
     setOrders(active);
   };
 
@@ -248,11 +274,13 @@ export default function KitchenDisplay() {
         // Ignore stale/replayed creates for orders that are already finished
         // or were placed long ago (previous shift/day).
         if (!isOrderActive(o) || !isRecent(o.created_date)) return;
+        if (seenIdsRef.current.has(o.id)) return; // replayed create — already alerted
+        seenIdsRef.current.add(o.id);
         setOrders(prev => {
           if (prev.some(x => x.id === o.id)) return prev; // dedup replayed create
           return sortByPriority([o, ...prev]);
         });
-        try { audioRef.current?.play(); } catch(e) {}
+        alertNewOrder();
       } else if (event.type === "update") {
         if (!isOrderActive(o) || !isRecent(o.created_date)) {
           setOrders(prev => prev.filter(x => x.id !== o.id));
@@ -267,6 +295,21 @@ export default function KitchenDisplay() {
       }
     });
     return () => { clearInterval(reconcile); unsub(); };
+  }, []);
+
+  // Browsers block audio until the page has been touched once. Prime it on the
+  // first tap/keypress and flag the state, so the chime is never swallowed.
+  useEffect(() => {
+    setSoundOn(primeAudio());
+    const unlock = () => setSoundOn(primeAudio());
+    const recheck = setInterval(() => setSoundOn(audioReady()), 3000);
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+      clearInterval(recheck);
+    };
   }, []);
 
   const markItemDone = async (orderId, itemIndex, item) => {
@@ -330,6 +373,19 @@ export default function KitchenDisplay() {
             <Wifi className="h-3.5 w-3.5" />
             <span>Live</span>
           </div>
+          <button
+            onClick={() => (soundOn ? toggleMute() : setSoundOn(primeAudio()))}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl border transition-colors ${
+              !soundOn
+                ? "border-amber-500 text-amber-400 animate-pulse"
+                : muted
+                ? "border-gray-700 text-gray-500"
+                : "border-green-700 text-green-400"
+            }`}
+          >
+            {soundOn && !muted ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
+            {!soundOn ? "Tap for Sound" : muted ? "Muted" : "Sound On"}
+          </button>
           <div className="text-gray-500 text-sm">{format(new Date(), "HH:mm")}</div>
         </div>
       </div>
@@ -519,10 +575,6 @@ export default function KitchenDisplay() {
         )}
       </div>
 
-      {/* Silent audio for new order alert */}
-      <audio ref={audioRef} preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." type="audio/wav" />
-      </audio>
     </div>
   );
 }
