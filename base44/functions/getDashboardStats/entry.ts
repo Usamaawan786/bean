@@ -18,7 +18,11 @@ Deno.serve(async (req) => {
     const now = new Date();
     const pktOffset = 5 * 60 * 60 * 1000;
     const pktNow = new Date(now.getTime() + pktOffset);
-    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()) - pktOffset);
+    // Business day runs 05:00 PKT → 05:00 PKT. UTC midnight of the PKT calendar
+    // date IS 05:00 PKT, so do NOT subtract pktOffset here: that would move the
+    // boundary to 00:00 PKT and split the night shift's sales (which trade past
+    // midnight until ~02:00–03:00 PKT) across two different days.
+    const todayStartPKT = new Date(Date.UTC(pktNow.getUTCFullYear(), pktNow.getUTCMonth(), pktNow.getUTCDate()));
     const weekStartPKT = new Date(todayStartPKT.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthStartPKT = new Date(todayStartPKT.getTime() - 30 * 24 * 60 * 60 * 1000);
 
