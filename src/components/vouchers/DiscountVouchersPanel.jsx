@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { Ticket, Plus, Search, Loader2, Ban } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Ticket, Plus, Search, Loader2, Ban, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -149,9 +150,15 @@ export default function DiscountVouchersPanel() {
           <h3 className="font-bold text-[#5C4A3A] flex items-center gap-2">
             <Ticket className="h-5 w-5 text-[#8B7355]" /> Issued Vouchers
           </h3>
-          <Button onClick={() => setIssuing(true)} className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl text-sm gap-1">
-            <Plus className="h-4 w-4" /> Issue Voucher
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/DiscountVoucherPage"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-[#E8DED8] text-[#8B7355] hover:bg-[#F5EBE8] transition-colors">
+              <Printer className="h-4 w-4" /> Designs & print
+            </Link>
+            <Button onClick={() => setIssuing(true)} className="bg-[#8B7355] hover:bg-[#6B5744] rounded-xl text-sm gap-1">
+              <Plus className="h-4 w-4" /> Issue Voucher
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-3 flex-wrap mb-4">

@@ -15,14 +15,14 @@ const CREAM = "#E8DED8";
 const SAND = "#D4C4B0";
 const ACCENT = "#F4D35E";
 
-export default function VoucherCard({ voucher, qrDataUrl, logoDataUrl }) {
+export default function VoucherCard({ voucher, qrDataUrl, logoDataUrl, id = "voucher" }) {
   const pct = Number(voucher?.discount_pct || 0);
   const validTill = voucher?.expires_at
     ? utcToPktDisplay(voucher.expires_at).split(" ").slice(0, 3).join(" ")
     : "";
 
   return (
-    <div id="voucher" style={{
+    <div id={id} style={{
       position: "relative",
       width: "80mm",
       height: "50mm",
