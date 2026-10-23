@@ -1,0 +1,164 @@
+{
+  "name": "DiscountVoucher",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "description": "Unique single-use voucher code printed on the card (e.g. BEAN-7K4P-Q9MR). Generated server-side only."
+    },
+    "discount_pct": {
+      "type": "number",
+      "description": "Discount percentage the voucher is worth on the next visit"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "issued",
+        "redeemed",
+        "expired",
+        "voided"
+      ],
+      "default": "issued",
+      "description": "issued = handed to the customer, still valid; redeemed = used once; expired = validity lapsed; voided = cancelled as fraudulent, can never be honoured"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Name written on the voucher (optional)"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email when the voucher was issued to a known app user (optional)"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Customer phone number (optional)"
+    },
+    "source_bill_number": {
+      "type": "string",
+      "description": "Bill the voucher was handed out with at the end of the meal (optional)"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the voucher was issued (server time)"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last moment the voucher can be honoured (server time)"
+    },
+    "issued_by": {
+      "type": "string",
+      "description": "Email of the staff member who issued the voucher"
+    },
+    "issued_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who issued the voucher"
+    },
+    "redeemed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the voucher was honoured (once only)"
+    },
+    "redeemed_by": {
+      "type": "string",
+      "description": "Email of the staff member who honoured the voucher"
+    },
+    "redeemed_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who honoured the voucher"
+    },
+    "void_reason": {
+      "type": "string",
+      "description": "Reason recorded when a voucher was voided (fraud, mistake, etc.)"
+    },
+    "voided_by": {
+      "type": "string",
+      "description": "Email of the manager/admin who voided the voucher"
+    },
+    "voided_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the voucher was voided"
+    }
+  },
+  "required": [
+    "code",
+    "discount_pct",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "cashier"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

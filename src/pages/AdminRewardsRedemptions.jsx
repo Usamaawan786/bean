@@ -8,9 +8,10 @@ import {
   DollarSign, RefreshCw, Check, Search, CheckCircle, XCircle,
   Clock, AlertTriangle, Shield, Tag, ChevronDown, ChevronUp,
   Loader2, ToggleLeft, ToggleRight, Filter, Eye, ScanLine, Ban,
-  ShieldAlert
+  ShieldAlert, Ticket
 } from "lucide-react";
 import FlashDropScannerModal from "../components/admin/FlashDropScannerModal";
+import DiscountVouchersPanel from "../components/vouchers/DiscountVouchersPanel";
 import UsersLeaderboard from "../components/admin/UsersLeaderboard";
 import VoidRedemptionDialog from "../components/admin/VoidRedemptionDialog";
 import PointsAuditTab from "../components/admin/rewards/PointsAuditTab";
@@ -474,6 +475,7 @@ export default function AdminRewardsRedemptions() {
     { id: "overview",   label: "Overview",       icon: BarChart3 },
     { id: "rewards",    label: "Rewards",         icon: Gift },
     { id: "verify",     label: "Verify Code",     icon: Search },
+    { id: "vouchers",   label: "Discount Vouchers", icon: Ticket },
     { id: "redemptions",label: "Redemptions",     icon: PackageCheck },
     { id: "audit",      label: "Points Audit",    icon: ShieldAlert },
     { id: "discounts",  label: "FM & EBA",        icon: Shield },
@@ -791,6 +793,11 @@ export default function AdminRewardsRedemptions() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ─── DISCOUNT VOUCHERS ─── */}
+        {activeTab === "vouchers" && (
+          <DiscountVouchersPanel />
         )}
 
         {/* ─── REDEMPTIONS HISTORY ─── */}
