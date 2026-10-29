@@ -516,6 +516,24 @@ export default function Delivery() {
             {/* Cart Items */}
             <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 space-y-3">
               <h2 className="font-semibold text-[#5C4A3A]">Order Summary</h2>
+              <div className="grid grid-cols-2 gap-1 bg-[#F5F1ED] rounded-xl p-1">
+                {[
+                  { id: "cash_on_delivery", icon: "💵", label: "Cash", pct: settings?.cash_gst_percent ?? 17 },
+                  { id: "card_on_delivery", icon: "💳", label: "Card", pct: settings?.card_gst_percent ?? 8 },
+                ].map((opt) => (
+                  <button
+                    type="button"
+                    key={opt.id}
+                    onClick={() => setPayMethod(opt.id)}
+                    className={`rounded-lg py-2 text-sm font-semibold transition-colors ${payMethod === opt.id ? "bg-[#5C4A3A] text-white shadow" : "text-[#8B7355]"}`}
+                  >
+                    {opt.icon} {opt.label} <span className="text-[11px] font-normal opacity-80">· {opt.pct}% GST</span>
+                  </button>
+                ))}
+              </div>
+              <div className="text-[11px] text-[#8B7355] -mt-1">
+                Pay at the door. {payMethod === "card_on_delivery" ? "Our rider brings a card machine." : "Please keep cash ready."}
+              </div>
               {cartItems.map((item) => (
                 <div key={item.product_id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -582,33 +600,6 @@ export default function Delivery() {
                   placeholder="e.g. Ring the doorbell"
                   className="w-full border border-[#D4C4B0] rounded-lg p-2 text-sm text-[#5C4A3A]"
                 />
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 space-y-3">
-              <h2 className="font-semibold text-[#5C4A3A]">How will you pay at the door?</h2>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: "cash_on_delivery", icon: "💵", label: "Cash", pct: settings?.cash_gst_percent ?? 17 },
-                  { id: "card_on_delivery", icon: "💳", label: "Card", pct: settings?.card_gst_percent ?? 8 },
-                ].map((opt) => (
-                  <button
-                    type="button"
-                    key={opt.id}
-                    onClick={() => setPayMethod(opt.id)}
-                    className={`rounded-xl border-2 p-3 text-left transition-colors ${payMethod === opt.id ? "border-[#5C4A3A] bg-[#F5F1ED]" : "border-[#E8DED8] bg-white"}`}
-                  >
-                    <div className="text-xl">{opt.icon}</div>
-                    <div className="font-semibold text-sm text-[#5C4A3A]">{opt.label}</div>
-                    <div className="text-xs text-[#8B7355]">{opt.pct}% GST</div>
-                  </button>
-                ))}
-              </div>
-              <div className="text-xs text-[#8B7355]">
-                {payMethod === "card_on_delivery"
-                  ? "Our rider will bring a card machine with them."
-                  : "Please keep the exact cash ready if you can."}{" "}
-                Delivery fee is a flat Rs. {deliveryFee}.
               </div>
             </div>
 
