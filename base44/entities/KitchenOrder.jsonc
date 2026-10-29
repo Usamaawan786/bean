@@ -72,6 +72,11 @@
               "done"
             ],
             "default": "pending"
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this item was sent to the kitchen (drives the per-item timer)"
           }
         }
       }
@@ -127,6 +132,11 @@
       "type": "string",
       "format": "date-time",
       "description": "When the order was placed"
+    },
+    "items_added_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When items were most recently added to this order (keeps late additions visible on the KDS)"
     },
     "ready_at": {
       "type": "string",
