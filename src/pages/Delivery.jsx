@@ -1,11 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Truck, Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package } from "lucide-react";
+import { Bike, Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package } from "lucide-react";
 import DeliveryProductCard from "@/components/delivery/DeliveryProductCard";
 import { toast } from "sonner";
+
+const CATEGORY_ORDER = [
+  "Breakfast",
+  "Hot Coffee",
+  "Cold Coffee",
+  "Matcha",
+  "Smoothies",
+  "Fresher",
+  "Teas & More",
+  "Pastry",
+  "Sweeter",
+  "Add-Ons",
+  "Other",
+];
+
+const CATEGORY_IMAGES = {
+  "Breakfast": "https://images.unsplash.com/photo-1533089860892-a7c6f0a886de?w=800&q=80",
+  "Hot Coffee": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80",
+  "Cold Coffee": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=800&q=80",
+  "Matcha": "https://images.unsplash.com/photo-1515823668373-6c12b5b0389f?w=800&q=80",
+  "Smoothies": "https://images.unsplash.com/photo-1505252585461-04db1eb5465f?w=800&q=80",
+  "Fresher": "https://images.unsplash.com/photo-1610970881699-46a35a1a6f4f?w=800&q=80",
+  "Teas & More": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=800&q=80",
+  "Pastry": "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?w=800&q=80",
+  "Sweeter": "https://images.unsplash.com/photo-1551024601-bec78aea6be4?w=800&q=80",
+  "Add-Ons": "https://images.unsplash.com/photo-1497935586351-b67f49ee9fee?w=800&q=80",
+  "Other": "https://images.unsplash.com/photo-1495474472287-4d71bcdd6005?w=800&q=80",
+};
+
+const CATEGORY_DESCRIPTIONS = {
+  "Breakfast": "Served with Bean's special sauce and your choice of a side salad or potatoes.",
+  "Hot Coffee": "Single-origin beans, roasted locally and pulled to order.",
+  "Cold Coffee": "Chilled, smooth and refreshing — perfect for Islamabad afternoons.",
+  "Matcha": "Stone-ground ceremonial matcha, whisked the traditional way.",
+  "Smoothies": "Blended fresh with seasonal fruit and no added sugar.",
+  "Fresher": "Light, bright and citrusy — our cold-pressed refreshers.",
+  "Teas & More": "Loose-leaf teas and house specialties.",
+  "Pastry": "Baked fresh every morning in-house.",
+  "Sweeter": "Indulgent treats for your sweet tooth.",
+  "Add-Ons": "Extras to complete your order.",
+  "Other": "A little something extra.",
+};
 
 export default function Delivery() {
   const navigate = useNavigate();
@@ -13,7 +55,11 @@ export default function Delivery() {
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
   const [view, setView] = useState("menu");
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [activeCat, setActiveCat] = useState("");
+  const sectionRefs = useRef({});
+  const pillRefs = useRef({});
+  const navRef = useRef(null);
+  const pendingScroll = useRef(false);
   const [checkout, setCheckout] = useState({ address: "", notes: "", phone: "" });
   const [placing, setPlacing] = useState(false);
 
@@ -27,6 +73,12 @@ export default function Delivery() {
   const { data: products = [] } = useQuery({
     queryKey: ["deliveryProducts"],
     queryFn: () => base44.entities.DeliveryProduct.filter({ is_available: true }, "sort_order", 200),
+  });
+
+  // Pull the same category cover photos / descriptions the Menu page uses
+  const { data: menuCategories = [] } = useQuery({
+    queryKey: ["menuCategories"],
+    queryFn: () => base44.entities.MenuCategory.list("sort_order", 100),
   });
 
   const { data: settings } = useQuery({
@@ -43,8 +95,73 @@ export default function Delivery() {
 
   const myActive = activeOrders.filter((o) => !["delivered", "cancelled"].includes(o.status));
 
-  const categories = ["All", ...new Set(products.map((p) => p.category))];
-  const filtered = selectedCategory === "All" ? products : products.filter((p) => p.category === selectedCategory);
+  const grouped = useMemo(() => {
+    const g = {};
+    products.forEach((p) => {
+      const c = p.category || "Other";
+      (g[c] = g[c] || []).push(p);
+    });
+    return g;
+  }, [products]);
+
+  const sections = useMemo(() => {
+    const ordered = CATEGORY_ORDER.filter((c) => grouped[c]?.length);
+    const extra = Object.keys(grouped).filter((c) => !CATEGORY_ORDER.includes(c)).sort();
+    return [...ordered, ...extra].map((c) => ({ id: c, label: c, items: grouped[c] }));
+  }, [grouped]);
+
+  const categoryImages = useMemo(() => {
+    const map = {};
+    products.forEach((p) => {
+      const c = p.category || "Other";
+      if (!map[c] && p.image_url && !p.image_url.includes("images.unsplash.com")) map[c] = p.image_url;
+    });
+    return map;
+  }, [products]);
+  const catMeta = (cat) => menuCategories.find((c) => c.name === cat);
+  const catImg = (cat) =>
+    categoryImages[cat] || catMeta(cat)?.image_url || CATEGORY_IMAGES[cat] || CATEGORY_IMAGES["Other"];
+  const catDesc = (cat) => catMeta(cat)?.description || CATEGORY_DESCRIPTIONS[cat] || "";
+
+  useEffect(() => {
+    if (!activeCat && sections.length) setActiveCat(sections[0].id);
+  }, [sections, activeCat]);
+
+  useEffect(() => {
+    if (sections.length === 0 || view !== "menu") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (pendingScroll.current) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          const id = visible[0].target.dataset.catId;
+          if (id) setActiveCat(id);
+        }
+      },
+      { rootMargin: "-30% 0px -60% 0px", threshold: 0 }
+    );
+    Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [sections.length, view]);
+
+  useEffect(() => {
+    const pill = pillRefs.current[activeCat];
+    if (pill && navRef.current) {
+      pill.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeCat]);
+
+  const scrollToCat = useCallback((catId) => {
+    const el = sectionRefs.current[catId];
+    if (!el) return;
+    setActiveCat(catId);
+    pendingScroll.current = true;
+    const top = el.getBoundingClientRect().top + window.scrollY - 150;
+    window.scrollTo({ top, behavior: "smooth" });
+    setTimeout(() => { pendingScroll.current = false; }, 700);
+  }, []);
 
   const cartItems = cart
     .map((item) => ({ ...item, product: products.find((p) => p.id === item.product_id) }))
@@ -104,7 +221,7 @@ export default function Delivery() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F1ED] pb-28">
+    <div className={`min-h-screen pb-28 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}>
       {/* Beta banner */}
       <div className="bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-xs font-semibold py-2 px-4 tracking-wide">
         BETA VERSION — Bean Delivery is in early launch. Thanks for helping us test it!
@@ -112,7 +229,7 @@ export default function Delivery() {
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#5C4A3A] text-white px-5 pt-8 pb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Truck className="h-6 w-6" />
+          <Bike className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Delivery</h1>
         </div>
         <p className="text-white/70 text-sm">Order your favorite coffee for delivery</p>
@@ -148,32 +265,68 @@ export default function Delivery() {
 
         {view === "menu" && (
           <>
-            {/* Category Chips */}
-            <div className="flex gap-2 overflow-x-auto py-4 -mx-4 px-4 scrollbar-hide">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    selectedCategory === cat
-                      ? "bg-[#5C4A3A] text-white"
-                      : "bg-white text-[#8B7355] border border-[#E8DED8]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+            {/* Sticky category thumbnails — same as Menu page */}
+            {sections.length > 0 && (
+              <div className="sticky top-0 z-30 -mx-4 px-4 bg-[#A87555]/95 backdrop-blur-md shadow-md py-3">
+                <div ref={navRef} className="overflow-x-auto scrollbar-hide">
+                  <div className="flex gap-3 min-w-max">
+                    {sections.map((s) => {
+                      const isActive = activeCat === s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          ref={(el) => (pillRefs.current[s.id] = el)}
+                          onClick={() => scrollToCat(s.id)}
+                          className="flex flex-col items-center gap-1 shrink-0 active:scale-95 transition-transform"
+                        >
+                          <div className={`w-16 h-16 rounded-xl overflow-hidden ${isActive ? "ring-2 ring-white" : "ring-1 ring-white/20"}`}>
+                            <img src={catImg(s.label)} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                          <span className={`text-[11px] max-w-[64px] truncate ${isActive ? "text-white font-medium" : "text-white/60"}`}>
+                            {s.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
 
-            {/* Products */}
-            <div className="grid grid-cols-2 gap-3">
-              {filtered.map((product) => (
-                <DeliveryProductCard key={product.id} product={product} onAdd={addToCart} />
+            {/* Category sections — same banners and order as Menu page */}
+            <div className="space-y-12 py-6">
+              {sections.map((section) => (
+                <section
+                  key={section.id}
+                  data-cat-id={section.id}
+                  ref={(el) => (sectionRefs.current[section.id] = el)}
+                  className="scroll-mt-40"
+                >
+                  <div className="mb-5">
+                    <div className="rounded-2xl overflow-hidden h-32 sm:h-40 mb-3 shadow-md">
+                      <img src={catImg(section.label)} alt={section.label} className="w-full h-full object-cover" loading="lazy" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white">{catMeta(section.label)?.display_name || section.label}</h2>
+                    {catDesc(section.label) && (
+                      <p className="text-sm text-white/70 mt-1 leading-relaxed">{catDesc(section.label)}</p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {section.items.map((product) => (
+                      <DeliveryProductCard
+                        key={product.id}
+                        product={product}
+                        image={product.image_url || CATEGORY_IMAGES[product.category] || CATEGORY_IMAGES["Other"]}
+                        onAdd={addToCart}
+                      />
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
-            {filtered.length === 0 && (
-              <div className="text-center py-12 text-[#8B7355]">
-                <Truck className="h-12 w-12 mx-auto mb-2 opacity-30" />
+            {sections.length === 0 && (
+              <div className="text-center py-12 text-white/70">
+                <Bike className="h-12 w-12 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No products available</p>
               </div>
             )}
