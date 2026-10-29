@@ -42,6 +42,11 @@ export default function AdminOrderCard({ order, riders, onAction, isNew }) {
         <div className="flex items-start gap-1.5"><MapPin className="h-3.5 w-3.5 text-[#8B7355] mt-0.5" /><span className="flex-1">{order.delivery_address}</span></div>
       </div>
 
+      <div className={`mt-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${order.payment_method === "card_on_delivery" ? "bg-blue-50 text-blue-800 border border-blue-200" : "bg-green-50 text-green-800 border border-green-200"}`}>
+        {order.payment_method === "card_on_delivery" ? "💳 CARD — rider must bring the card machine" : "💵 CASH on delivery"}
+        {order.gst_rate != null && <span className="font-normal"> · GST {order.gst_rate}% = Rs. {order.gst_amount}</span>}
+      </div>
+
       <div className="mt-2 bg-[#F5F1ED] rounded-lg p-2 text-xs text-[#5C4A3A]">
         {order.items?.map((item, i) => (
           <div key={i} className="flex justify-between">
