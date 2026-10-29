@@ -50,7 +50,7 @@ export default function Delivery() {
     .map((item) => ({ ...item, product: products.find((p) => p.id === item.product_id) }))
     .filter((i) => i.product);
   const subtotal = cartItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const deliveryFee = settings?.flat_delivery_fee || 150;
+  const deliveryFee = settings?.flat_delivery_fee || 297;
   const total = subtotal + deliveryFee;
   const isDeliveryOpen = settings?.is_delivery_open !== false;
 
@@ -105,6 +105,10 @@ export default function Delivery() {
 
   return (
     <div className="min-h-screen bg-[#F5F1ED] pb-28">
+      {/* Beta banner */}
+      <div className="bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-xs font-semibold py-2 px-4 tracking-wide">
+        BETA VERSION — Bean Delivery is in early launch. Thanks for helping us test it!
+      </div>
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#5C4A3A] text-white px-5 pt-8 pb-6">
         <div className="flex items-center gap-2 mb-2">
@@ -241,8 +245,9 @@ export default function Delivery() {
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 flex items-center gap-2">
-              <span>💵</span> Cash on Delivery — Pay Rs. {total} when your order arrives
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 space-y-1">
+              <div className="flex items-center gap-2"><span>💵</span> Pay on delivery — cash or card</div>
+              <div className="text-xs text-amber-700">Cash: 17% GST is added to your food total at the door. Card: our rider brings a card machine with them. Delivery fee is a flat Rs. {deliveryFee}.</div>
             </div>
 
             <button
