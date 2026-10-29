@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package, Heart, Search, SlidersHorizontal, Coffee, ArrowUp } from "lucide-react";
 import Motorbike from "@/components/icons/Motorbike";
 import DeliveryProductCard from "@/components/delivery/DeliveryProductCard";
-import DeliveryLocationPicker, { distanceKm } from "@/components/delivery/DeliveryLocationPicker";
+import LocationPicker from "@/components/delivery/LocationPicker";
+import { distanceKm } from "@/components/delivery/DeliveryLocationPicker";
 import { toast } from "sonner";
 
 // "Most Liked" items — matched by name (same list as the Menu page)
@@ -75,6 +76,7 @@ export default function Delivery() {
   const pendingScroll = useRef(false);
   const [checkout, setCheckout] = useState({ address: "", notes: "", phone: "" });
   const [pin, setPin] = useState(null); // { lat, lng } chosen on the map
+  const [payMethod, setPayMethod] = useState("cash_on_delivery"); // or "card_on_delivery"
   const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
@@ -228,7 +230,9 @@ export default function Delivery() {
     .filter((i) => i.product);
   const subtotal = cartItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
   const deliveryFee = settings?.flat_delivery_fee || 297;
-  const total = subtotal + deliveryFee;
+  const gstPercent = payMethod === "card_on_delivery" ? (settings?.card_gst_percent ?? 8) : (settings?.cash_gst_percent ?? 17);
+  const gstAmount = Math.round((subtotal * gstPercent) / 100);
+  const total = subtotal + gstAmount + deliveryFee;
   const isDeliveryOpen = settings?.is_delivery_open !== false;
   const storeLat = settings?.store_lat ?? 33.5306669;
   const storeLng = settings?.store_lng ?? 73.0997785;
@@ -266,6 +270,7 @@ export default function Delivery() {
         delivery_lat: pin.lat,
         delivery_lng: pin.lng,
         delivery_notes: checkout.notes,
+        payment_method: payMethod,
         customer_phone: checkout.phone,
       });
       queryClient.invalidateQueries({ queryKey: ["myDeliveryOrders"] });
@@ -529,6 +534,7 @@ export default function Delivery() {
               ))}
               <div className="border-t border-[#E8DED8] pt-2 space-y-1 text-sm">
                 <div className="flex justify-between text-[#8B7355]"><span>Subtotal</span><span>Rs. {subtotal}</span></div>
+                <div className="flex justify-between text-[#8B7355]"><span>GST ({gstPercent}% — {payMethod === "card_on_delivery" ? "card" : "cash"})</span><span>Rs. {gstAmount}</span></div>
                 <div className="flex justify-between text-[#8B7355]"><span>Delivery Fee</span><span>Rs. {deliveryFee}</span></div>
                 <div className="flex justify-between font-bold text-[#5C4A3A]"><span>Total</span><span>Rs. {total}</span></div>
               </div>
@@ -539,7 +545,8 @@ export default function Delivery() {
               <h2 className="font-semibold text-[#5C4A3A]">Delivery Details</h2>
               <div>
                 <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Delivery location</label>
-                <DeliveryLocationPicker
+                <LocationPicker
+                  apiKey={settings?.google_maps_key}
                   storeLat={storeLat}
                   storeLng={storeLng}
                   radiusKm={radiusKm}
@@ -578,9 +585,31 @@ export default function Delivery() {
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 space-y-1">
-              <div className="flex items-center gap-2"><span>💵</span> Pay on delivery — cash or card</div>
-              <div className="text-xs text-amber-700">Cash: 17% GST is added to your food total at the door. Card: our rider brings a card machine with them. Delivery fee is a flat Rs. {deliveryFee}.</div>
+            <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 space-y-3">
+              <h2 className="font-semibold text-[#5C4A3A]">How will you pay at the door?</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "cash_on_delivery", icon: "💵", label: "Cash", pct: settings?.cash_gst_percent ?? 17 },
+                  { id: "card_on_delivery", icon: "💳", label: "Card", pct: settings?.card_gst_percent ?? 8 },
+                ].map((opt) => (
+                  <button
+                    type="button"
+                    key={opt.id}
+                    onClick={() => setPayMethod(opt.id)}
+                    className={`rounded-xl border-2 p-3 text-left transition-colors ${payMethod === opt.id ? "border-[#5C4A3A] bg-[#F5F1ED]" : "border-[#E8DED8] bg-white"}`}
+                  >
+                    <div className="text-xl">{opt.icon}</div>
+                    <div className="font-semibold text-sm text-[#5C4A3A]">{opt.label}</div>
+                    <div className="text-xs text-[#8B7355]">{opt.pct}% GST</div>
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs text-[#8B7355]">
+                {payMethod === "card_on_delivery"
+                  ? "Our rider will bring a card machine with them."
+                  : "Please keep the exact cash ready if you can."}{" "}
+                Delivery fee is a flat Rs. {deliveryFee}.
+              </div>
             </div>
 
             <button
