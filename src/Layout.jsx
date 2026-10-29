@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Gift, Users, UserCircle, Bike } from "lucide-react";
+import { Home, Gift, Users, UserCircle } from "lucide-react";
+import Motorbike from "@/components/icons/Motorbike";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
@@ -9,14 +10,14 @@ import { base44 } from "@/api/base44Client";
 const guestNavItems = [
   { name: "Home", icon: Home, page: "Home" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
-  { name: "Delivery", icon: Bike, page: "Delivery" },
+  { name: "Delivery", icon: Motorbike, page: "Delivery" },
   { name: "Community", icon: Users, page: "Community" }
 ];
 
 const authNavItems = [
   { name: "Home", icon: Home, page: "Home" },
   { name: "Rewards", icon: Gift, page: "Rewards" },
-  { name: "Delivery", icon: Bike, page: "Delivery" },
+  { name: "Delivery", icon: Motorbike, page: "Delivery" },
   { name: "Community", icon: Users, page: "Community" },
   { name: "Profile", icon: UserCircle, page: "Profile" }
 ];
