@@ -23,6 +23,24 @@ export default async function(req) {
       return Response.json({ error: 'Delivery is currently unavailable' }, { status: 400 });
     }
 
+    // Delivery area check: the pin must be within the allowed radius of the store (server-side, can't be bypassed)
+    const storeLat = Number(settings.store_lat ?? 33.5306669);
+    const storeLng = Number(settings.store_lng ?? 73.0997785);
+    const radiusKm = Number(settings.delivery_radius_km ?? 4);
+    const lat = Number(delivery_lat);
+    const lng = Number(delivery_lng);
+    if (delivery_lat == null || delivery_lng == null || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      return Response.json({ error: 'Please pin your delivery location on the map' }, { status: 400 });
+    }
+    const toRad = (d) => (d * Math.PI) / 180;
+    const dLat = toRad(lat - storeLat);
+    const dLng = toRad(lng - storeLng);
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(storeLat)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+    const distanceKm = 2 * 6371 * Math.asin(Math.sqrt(h));
+    if (distanceKm > radiusKm) {
+      return Response.json({ error: 'Sorry, your location is outside our delivery area. We deliver within ' + radiusKm + ' km of Bean.' }, { status: 400 });
+    }
+
     // Fetch all available products to validate and get current prices
     const allProducts = await base44.entities.DeliveryProduct.filter({ is_available: true });
     const productMap = {};
@@ -46,7 +64,7 @@ export default async function(req) {
       return Response.json({ error: 'Minimum order is Rs. ' + settings.min_order_amount }, { status: 400 });
     }
 
-    const deliveryFee = settings.flat_delivery_fee || 150;
+    const deliveryFee = settings.flat_delivery_fee ?? 297;
     const totalAmount = subtotal + deliveryFee;
 
     // Generate order number using service role (user can't read others' orders)
@@ -66,8 +84,8 @@ export default async function(req) {
       customer_name: user.full_name || user.email,
       customer_phone: customer_phone || '',
       delivery_address: delivery_address.trim(),
-      delivery_lat: delivery_lat || null,
-      delivery_lng: delivery_lng || null,
+      delivery_lat: lat,
+      delivery_lng: lng,
       delivery_notes: (delivery_notes || '').trim(),
       items: orderItems,
       subtotal,
