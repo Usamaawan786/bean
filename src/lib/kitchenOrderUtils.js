@@ -72,17 +72,37 @@ export async function syncTicketKitchenOrder({ base44, ticketNumber, deltaItems,
   });
 
   if (existingOrder) {
-    const updatedItems = [...(existingOrder.items || []), ...entries];
+    // Re-read the freshest copy right before appending, so anything the kitchen
+    // marked done since the ticket was resumed is never overwritten.
+    let latest = existingOrder;
+    try {
+      const fresh = await base44.entities.KitchenOrder.filter({ id: existingOrder.id });
+      if (fresh && fresh[0]) latest = fresh[0];
+    } catch (e) { /* fall back to the in-memory copy */ }
+
+    const addedAt = new Date().toISOString();
+    const stamped = entries.map(e => ({ ...e, added_at: addedAt }));
+    const updatedItems = [...(latest.items || []), ...stamped];
     const hasKitchen = updatedItems.some(i => i.station === "kitchen");
     const hasBar = updatedItems.some(i => i.station === "bar");
-    await base44.entities.KitchenOrder.update(existingOrder.id, {
+    // Only reopen a station if it actually has unfinished work.
+    const kitchenPending = updatedItems.some(i => i.station === "kitchen" && i.status !== "done");
+    const barPending = updatedItems.some(i => i.station === "bar" && i.status !== "done");
+    const patch = {
       items: updatedItems,
-      kitchen_status: hasKitchen ? "pending" : "not_applicable",
-      bar_status: hasBar ? "pending" : "not_applicable",
+      kitchen_status: !hasKitchen ? "not_applicable" : kitchenPending ? "pending" : "done",
+      bar_status: !hasBar ? "not_applicable" : barPending ? "pending" : "done",
       overall_status: "queued",
+      items_added_at: addedAt,
       total_amount: updatedItems.reduce((s, i) => s + i.price * i.quantity, 0)
-    });
-    return { ...existingOrder, items: updatedItems };
+    };
+    try {
+      await base44.entities.KitchenOrder.update(latest.id, patch);
+    } catch (err) {
+      // One automatic retry before surfacing the failure to the caller.
+      await base44.entities.KitchenOrder.update(latest.id, patch);
+    }
+    return { ...latest, ...patch };
   }
 
   const seq = getNextOrderNumber();
@@ -96,12 +116,13 @@ export async function syncTicketKitchenOrder({ base44, ticketNumber, deltaItems,
     order_type: orderType,
     counter: counter || "counter_1",
     customer_name: customerName || "",
-    items: entries,
+    items: entries.map(e => ({ ...e, added_at: new Date().toISOString() })),
     kitchen_status: hasKitchen ? "pending" : "not_applicable",
     bar_status: hasBar ? "pending" : "not_applicable",
     overall_status: "queued",
     priority: orderType === "takeaway" ? 10 : 0,
     total_amount: entries.reduce((s, i) => s + i.price * i.quantity, 0),
     placed_at: new Date().toISOString(),
+    items_added_at: new Date().toISOString(),
   });
 }
