@@ -1,46 +1,61 @@
 {
   "name": "DeliverySettings",
-  "type": "object",
   "properties": {
-    "flat_delivery_fee": {
-      "type": "number",
-      "default": 150,
-      "description": "Flat delivery fee in PKR (used when no fee tiers are defined)"
-    },
-    "fee_tiers": {
-      "type": "array",
-      "description": "Distance-based fee tiers. If empty, flat_delivery_fee is used.",
-      "items": {
-        "type": "object",
-        "properties": {
-          "max_km": {
-            "type": "number"
-          },
-          "fee": {
-            "type": "number"
-          }
-        }
-      }
-    },
-    "min_order_amount": {
-      "type": "number",
-      "default": 0,
-      "description": "Minimum order subtotal in PKR required for delivery"
+    "delivery_radius_km": {
+      "default": 4,
+      "description": "Maximum delivery distance in km, measured in a straight line from the store",
+      "type": "number"
     },
     "estimated_prep_minutes": {
-      "type": "number",
       "default": 15,
-      "description": "Estimated preparation time in minutes"
+      "description": "Estimated preparation time in minutes",
+      "type": "number"
+    },
+    "fee_tiers": {
+      "description": "Distance-based fee tiers. If empty, flat_delivery_fee is used.",
+      "items": {
+        "properties": {
+          "fee": {
+            "type": "number"
+          },
+          "max_km": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "flat_delivery_fee": {
+      "default": 150,
+      "description": "Flat delivery fee in PKR (used when no fee tiers are defined)",
+      "type": "number"
     },
     "is_delivery_open": {
-      "type": "boolean",
       "default": true,
-      "description": "Whether delivery is currently accepting orders"
+      "description": "Whether delivery is currently accepting orders",
+      "type": "boolean"
+    },
+    "min_order_amount": {
+      "default": 0,
+      "description": "Minimum order subtotal in PKR required for delivery",
+      "type": "number"
+    },
+    "store_lat": {
+      "default": 33.5306669,
+      "description": "Bean store latitude (delivery radius center)",
+      "type": "number"
+    },
+    "store_lng": {
+      "default": 73.0997785,
+      "description": "Bean store longitude (delivery radius center)",
+      "type": "number"
     }
   },
   "required": [
     "flat_delivery_fee"
   ],
+  "type": "object",
   "rls": {
     "create": {
       "$or": [
