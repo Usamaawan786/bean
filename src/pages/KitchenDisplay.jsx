@@ -5,16 +5,33 @@ import { CheckCircle2, Clock, ChefHat, AlertTriangle, Loader2, Wifi, BarChart3, 
 import { format } from "date-fns";
 import { playNewOrderChime, primeAudio, audioReady } from "@/lib/notifySound";
 
-const STATION = "kitchen";
-
 function durationMins(start, end) {
   if (!start || !end) return null;
   return Math.round((new Date(end) - new Date(start)) / 60000);
 }
 
-function elapsed(placedAt) {
-  const mins = Math.floor((Date.now() - new Date(placedAt).getTime()) / 60000);
-  return mins;
+// Elapsed seconds since a timestamp (never negative, safe for missing values).
+function elapsedSeconds(from) {
+  if (!from) return 0;
+  const t = new Date(from).getTime();
+  if (Number.isNaN(t)) return 0;
+  return Math.max(0, Math.floor((Date.now() - t) / 1000));
+}
+
+function formatClock(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+// The newest moment this ticket received work. Late additions bump items_added_at,
+// so a ticket never silently expires while it still has fresh items on it.
+function lastActivityAt(o) {
+  const candidates = [o.items_added_at, o.created_date]
+    .filter(Boolean)
+    .map(d => new Date(d).getTime())
+    .filter(n => !Number.isNaN(n));
+  return candidates.length ? Math.max(...candidates) : null;
 }
 
 // A KitchenOrder counts as "active" for the kitchen station only when the
@@ -48,6 +65,13 @@ function isRecent(placedAt) {
   return new Date(placedAt).getTime() >= activeCutoff();
 }
 
+// Uses the latest activity on the ticket (not just its creation time), so a ticket
+// that had items added later stays on the board.
+function isOrderRecent(o) {
+  const t = lastActivityAt(o);
+  return t !== null && t >= activeCutoff();
+}
+
 function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-4">
@@ -62,23 +86,33 @@ function StatCard({ icon: Icon, label, value, color }) {
   );
 }
 
-function ElapsedTimer({ placedAt }) {
-  const [mins, setMins] = useState(elapsed(placedAt));
+// Live count-up timer (minutes:seconds), ticking every second. Turns yellow at 5 min
+// and pulses red at 8 min so late tickets stand out.
+function ElapsedTimer({ since, stopped = false, size = "md" }) {
+  const [secs, setSecs] = useState(elapsedSeconds(since));
   useEffect(() => {
-    const t = setInterval(() => setMins(elapsed(placedAt)), 30000);
+    setSecs(elapsedSeconds(since));
+    if (stopped) return undefined;
+    const t = setInterval(() => setSecs(elapsedSeconds(since)), 1000);
     return () => clearInterval(t);
-  }, [placedAt]);
+  }, [since, stopped]);
+  const mins = Math.floor(secs / 60);
   const urgent = mins >= 8;
   const warning = mins >= 5;
+  const tone = stopped
+    ? "text-green-400"
+    : urgent ? "text-red-400 animate-pulse" : warning ? "text-yellow-400" : "text-gray-300";
+  const sizeCls = size === "sm" ? "text-xs" : "text-lg";
   return (
-    <span className={`text-sm font-bold tabular-nums ${urgent ? "text-red-400 animate-pulse" : warning ? "text-yellow-400" : "text-gray-400"}`}>
-      {mins}m
+    <span className={`${sizeCls} font-black tabular-nums ${tone}`}>
+      {formatClock(secs)}
     </span>
   );
 }
 
 function OrderCard({ order, onMarkItemDone, onMarkStationDone }) {
-  const myItems = order.items.filter(i => i.station === STATION);
+  // One screen handles everything now: show every item, food and drinks alike.
+  const myItems = order.items || [];
   if (myItems.length === 0) return null;
 
   const allDone = myItems.every(i => i.status === "done");
@@ -124,7 +158,7 @@ function OrderCard({ order, onMarkItemDone, onMarkStationDone }) {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <ElapsedTimer placedAt={order.created_date} />
+          <ElapsedTimer since={order.created_date} stopped={allDone} />
           {allDone && (
             <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
               DONE ✓
@@ -136,10 +170,10 @@ function OrderCard({ order, onMarkItemDone, onMarkStationDone }) {
       {/* Items */}
       <div className="p-4 space-y-3">
         {myItems.map((item, idx) => {
-          const realIdx = order.items.findIndex(
-            i => i.product_id === item.product_id && i.station === item.station && order.items.indexOf(i) >= idx
-          );
           const isDone = item.status === "done";
+          // Items added after the order was first sent get their own timer and a LATE ADD tag.
+          const isLateAdd = !!item.added_at && !!order.created_date &&
+            new Date(item.added_at).getTime() - new Date(order.created_date).getTime() > 60000;
           return (
             <div
               key={idx}
@@ -148,7 +182,7 @@ function OrderCard({ order, onMarkItemDone, onMarkStationDone }) {
               }`}
             >
               <button
-                onClick={() => !isDone && onMarkItemDone(order.id, order.items.indexOf(item), item)}
+                onClick={() => !isDone && onMarkItemDone(order.id, idx, item)}
                 className={`flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                   isDone
                     ? "border-green-500 bg-green-500"
@@ -166,6 +200,12 @@ function OrderCard({ order, onMarkItemDone, onMarkStationDone }) {
                   <p className="text-yellow-400 text-sm mt-1 font-medium">⚠ {item.notes}</p>
                 )}
               </div>
+              {isLateAdd && (
+                <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                  <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">LATE ADD</span>
+                  <ElapsedTimer since={item.added_at} stopped={isDone} size="sm" />
+                </div>
+              )}
             </div>
           );
         })}
