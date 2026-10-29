@@ -3,10 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package } from "lucide-react";
+import { Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package, Heart, Search, SlidersHorizontal, Coffee, ArrowUp } from "lucide-react";
 import Motorbike from "@/components/icons/Motorbike";
 import DeliveryProductCard from "@/components/delivery/DeliveryProductCard";
 import { toast } from "sonner";
+
+// "Most Liked" items — matched by name (same list as the Menu page)
+const MOST_LIKED_QUERIES = [
+  { query: "eggs bruschetta", likes: 12 },
+  { query: "club sandwich", likes: 11 },
+  { query: "mushroom cheese omelette", likes: 10 },
+  { query: "lotus french toast", likes: 8 },
+  { query: "spanish latte", likes: 6 },
+];
 
 const CATEGORY_ORDER = [
   "Breakfast",
@@ -56,7 +65,9 @@ export default function Delivery() {
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
   const [view, setView] = useState("menu");
-  const [activeCat, setActiveCat] = useState("");
+  const [activeCat, setActiveCat] = useState("most-liked");
+  const [search, setSearch] = useState("");
+  const [showFab, setShowFab] = useState(false);
   const sectionRefs = useRef({});
   const pillRefs = useRef({});
   const navRef = useRef(null);
@@ -82,6 +93,11 @@ export default function Delivery() {
     queryFn: () => base44.entities.MenuCategory.list("sort_order", 100),
   });
 
+  const { data: menuSettings } = useQuery({
+    queryKey: ["menuSettings"],
+    queryFn: async () => (await base44.entities.MenuSettings.list())[0] || null,
+  });
+
   const { data: settings } = useQuery({
     queryKey: ["deliverySettings"],
     queryFn: async () => (await base44.entities.DeliverySettings.list())[0],
@@ -96,20 +112,45 @@ export default function Delivery() {
 
   const myActive = activeOrders.filter((o) => !["delivered", "cancelled"].includes(o.status));
 
-  const grouped = useMemo(() => {
+  useEffect(() => {
+    const onScroll = () => setShowFab(window.scrollY > 500);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Most Liked: matched by name, then removed from the category lists (same as Menu page)
+  const { mostLikedItems, grouped } = useMemo(() => {
+    const liked = [];
+    const used = new Set();
+    MOST_LIKED_QUERIES.forEach(({ query, likes }) => {
+      const match = products.find((p) => !used.has(p.id) && p.name.toLowerCase().includes(query));
+      if (match) {
+        liked.push({ ...match, _likes: likes });
+        used.add(match.id);
+      }
+    });
     const g = {};
-    products.forEach((p) => {
+    products.filter((p) => !used.has(p.id)).forEach((p) => {
       const c = p.category || "Other";
       (g[c] = g[c] || []).push(p);
     });
-    return g;
+    return { mostLikedItems: liked, grouped: g };
   }, [products]);
 
   const sections = useMemo(() => {
     const ordered = CATEGORY_ORDER.filter((c) => grouped[c]?.length);
     const extra = Object.keys(grouped).filter((c) => !CATEGORY_ORDER.includes(c)).sort();
-    return [...ordered, ...extra].map((c) => ({ id: c, label: c, items: grouped[c] }));
-  }, [grouped]);
+    return [
+      { id: "most-liked", label: "Most Liked", items: mostLikedItems, isMostLiked: true },
+      ...[...ordered, ...extra].map((c) => ({ id: c, label: c, items: grouped[c] || [], isMostLiked: false })),
+    ].filter((s) => s.items.length > 0);
+  }, [grouped, mostLikedItems]);
+
+  const searching = search.trim().length > 0;
+  const searchResults = searching
+    ? products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    : [];
+  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const categoryImages = useMemo(() => {
     const map = {};
@@ -125,7 +166,7 @@ export default function Delivery() {
   const catDesc = (cat) => catMeta(cat)?.description || CATEGORY_DESCRIPTIONS[cat] || "";
 
   useEffect(() => {
-    if (!activeCat && sections.length) setActiveCat(sections[0].id);
+    if (sections.length && !sections.find((s) => s.id === activeCat)) setActiveCat(sections[0].id);
   }, [sections, activeCat]);
 
   useEffect(() => {
@@ -145,7 +186,7 @@ export default function Delivery() {
     );
     Object.values(sectionRefs.current).forEach((el) => el && observer.observe(el));
     return () => observer.disconnect();
-  }, [sections.length, view]);
+  }, [sections.length, view, searching]);
 
   useEffect(() => {
     const pill = pillRefs.current[activeCat];
@@ -227,20 +268,32 @@ export default function Delivery() {
       <div className="bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-xs font-semibold py-2 px-4 tracking-wide">
         BETA VERSION — Bean Delivery is in early launch. Thanks for helping us test it!
       </div>
-      {/* Header */}
-      <div className="bg-gradient-to-br from-[#8B7355] to-[#5C4A3A] text-white px-5 pt-8 pb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <Motorbike className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">Delivery</h1>
-        </div>
-        <p className="text-white/70 text-sm">Order your favorite coffee for delivery</p>
-        <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-200" : "bg-red-500/20 text-red-200"}`}>
-          <span className={`w-2 h-2 rounded-full ${isDeliveryOpen ? "bg-green-400" : "bg-red-400"}`} />
-          {isDeliveryOpen ? "Open for orders" : "Currently closed"}
+      {/* Cream header strip — same as Menu page */}
+      <div className="bg-[#E8DEC8]">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Motorbike className="h-6 w-6 text-[#7D5A46]" />
+          {menuSettings?.logo_url ? (
+            <img src={menuSettings.logo_url} alt={menuSettings?.brand_name || "Bean"} className="h-8 w-auto max-w-[140px] object-contain" />
+          ) : (
+            <div className="text-lg font-bold text-[#7D5A46] tracking-wide">{menuSettings?.brand_name || "Bean"}</div>
+          )}
+          <div className="w-6" />
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4">
+      {/* Heading */}
+      <div className="bg-[#A87555]">
+        <div className="max-w-2xl mx-auto px-4 pt-5 pb-4 text-center">
+          <h1 className="text-3xl font-bold text-white">Delivery Menu</h1>
+          <p className="text-sm text-white/70 mt-1">Order your favorite coffee for delivery</p>
+          <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-100"}`}>
+            <span className={`w-2 h-2 rounded-full ${isDeliveryOpen ? "bg-green-400" : "bg-red-400"}`} />
+            {isDeliveryOpen ? "Open for orders" : "Currently closed"}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4">
         {/* Active Orders */}
         {myActive.length > 0 && view === "menu" && (
           <div className="mt-4 space-y-2">
@@ -266,70 +319,151 @@ export default function Delivery() {
 
         {view === "menu" && (
           <>
-            {/* Sticky category thumbnails — same as Menu page */}
+            {/* Search + sticky category nav — identical to Menu page */}
             {sections.length > 0 && (
-              <div className="sticky top-0 z-30 -mx-4 px-4 bg-[#A87555]/95 backdrop-blur-md shadow-md py-3">
-                <div ref={navRef} className="overflow-x-auto scrollbar-hide">
-                  <div className="flex gap-3 min-w-max">
-                    {sections.map((s) => {
-                      const isActive = activeCat === s.id;
-                      return (
-                        <button
-                          key={s.id}
-                          ref={(el) => (pillRefs.current[s.id] = el)}
-                          onClick={() => scrollToCat(s.id)}
-                          className="flex flex-col items-center gap-1 shrink-0 active:scale-95 transition-transform"
-                        >
-                          <div className={`w-16 h-16 rounded-xl overflow-hidden ${isActive ? "ring-2 ring-white" : "ring-1 ring-white/20"}`}>
-                            <img src={catImg(s.label)} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
-                          </div>
-                          <span className={`text-[11px] max-w-[64px] truncate ${isActive ? "text-white font-medium" : "text-white/60"}`}>
-                            {s.label}
-                          </span>
-                        </button>
-                      );
-                    })}
+              <div className="sticky top-0 z-30 -mx-4 px-4 bg-[#A87555]/95 backdrop-blur-md shadow-md">
+                <div className="pt-3 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
+                      <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search"
+                        className="w-full bg-white/10 border border-[#C4A484] rounded-full pl-10 pr-4 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/30"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setSearch("")}
+                      className="p-2.5 rounded-full bg-white/10 border border-white/20 text-white active:scale-95 transition-transform"
+                      aria-label="Clear search"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </button>
                   </div>
+
+                  {!searching && (
+                    <div ref={navRef} className="mt-3 overflow-x-auto scrollbar-hide">
+                      <div className="flex gap-3 min-w-max">
+                        {sections.map((s) => {
+                          const isActive = activeCat === s.id;
+                          const img = s.isMostLiked ? null : catImg(s.label);
+                          return (
+                            <button
+                              key={s.id}
+                              ref={(el) => (pillRefs.current[s.id] = el)}
+                              onClick={() => scrollToCat(s.id)}
+                              className="flex flex-col items-center gap-1 shrink-0 active:scale-95 transition-transform"
+                            >
+                              <div className={`w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center ${isActive ? "ring-2 ring-white" : "ring-1 ring-white/20"}`}>
+                                {s.isMostLiked ? (
+                                  <div className="w-full h-full bg-[#936548] flex items-center justify-center">
+                                    <Heart className={`h-6 w-6 ${isActive ? "text-white fill-white" : "text-white/70"}`} />
+                                  </div>
+                                ) : (
+                                  <img src={img} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
+                                )}
+                              </div>
+                              <span className={`text-[11px] max-w-[64px] truncate ${isActive ? "text-white font-medium" : "text-white/60"}`}>
+                                {s.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Category sections — same banners and order as Menu page */}
-            <div className="space-y-12 py-6">
-              {sections.map((section) => (
-                <section
-                  key={section.id}
-                  data-cat-id={section.id}
-                  ref={(el) => (sectionRefs.current[section.id] = el)}
-                  className="scroll-mt-40"
-                >
-                  <div className="mb-5">
-                    <div className="rounded-2xl overflow-hidden h-32 sm:h-40 mb-3 shadow-md">
-                      <img src={catImg(section.label)} alt={section.label} className="w-full h-full object-cover" loading="lazy" />
+            {/* Content */}
+            <div className="py-6">
+              {searching ? (
+                <div>
+                  <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for "{search}"
+                  </h2>
+                  {searchResults.length === 0 ? (
+                    <div className="text-center py-20 text-white/60">
+                      <Coffee className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                      <p className="text-sm">No items found. Try a different search.</p>
                     </div>
-                    <h2 className="text-xl font-bold text-white">{catMeta(section.label)?.display_name || section.label}</h2>
-                    {catDesc(section.label) && (
-                      <p className="text-sm text-white/70 mt-1 leading-relaxed">{catDesc(section.label)}</p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-1 gap-3">
-                    {section.items.map((product) => (
-                      <DeliveryProductCard
-                        key={product.id}
-                        product={product}
-                        image={product.image_url || CATEGORY_IMAGES[product.category] || CATEGORY_IMAGES["Other"]}
-                        onAdd={addToCart}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))}
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3">
+                      {searchResults.map((item) => (
+                        <DeliveryProductCard
+                          key={item.id}
+                          product={item}
+                          image={item.image_url || CATEGORY_IMAGES[item.category] || CATEGORY_IMAGES["Other"]}
+                          onAdd={addToCart}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : sections.length === 0 ? (
+                <div className="text-center py-20 text-white/60">
+                  <Coffee className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">Menu is being updated. Please check back soon.</p>
+                </div>
+              ) : (
+                <div className="space-y-12">
+                  {sections.map((section) => (
+                    <section
+                      key={section.id}
+                      data-cat-id={section.id}
+                      ref={(el) => (sectionRefs.current[section.id] = el)}
+                      className="scroll-mt-40"
+                    >
+                      {section.isMostLiked ? (
+                        <div className="mb-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <Heart className="h-4 w-4 text-white fill-white" />
+                            <h2 className="text-xl font-bold text-white">Most Liked</h2>
+                            <Heart className="h-4 w-4 text-white fill-white" />
+                          </div>
+                          <p className="text-sm text-white/60 mt-0.5">According to real guest likes</p>
+                        </div>
+                      ) : (
+                        <div className="mb-5">
+                          <div className="rounded-2xl overflow-hidden h-32 sm:h-40 mb-3 shadow-md">
+                            <img src={catImg(section.label)} alt={section.label} className="w-full h-full object-cover" loading="lazy" />
+                          </div>
+                          <h2 className="text-xl font-bold text-white">{catMeta(section.label)?.display_name || section.label}</h2>
+                          {catDesc(section.label) && (
+                            <p className="text-sm text-white/70 mt-1 leading-relaxed">{catDesc(section.label)}</p>
+                          )}
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 gap-3">
+                        {section.items.map((product) => (
+                          <DeliveryProductCard
+                            key={product.id}
+                            product={product}
+                            isMostLiked={section.isMostLiked}
+                            likes={product._likes}
+                            image={product.image_url || CATEGORY_IMAGES[product.category] || CATEGORY_IMAGES["Other"]}
+                            onAdd={addToCart}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              )}
             </div>
-            {sections.length === 0 && (
-              <div className="text-center py-12 text-white/70">
-                <Motorbike className="h-12 w-12 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No products available</p>
-              </div>
+
+            {showFab && (
+              <button
+                onClick={scrollTop}
+                className="fixed bottom-24 right-6 z-40 w-11 h-11 rounded-full bg-[#D9C3B0] flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                aria-label="Scroll to top"
+              >
+                <ArrowUp className="h-5 w-5 text-[#8A6044]" />
+              </button>
             )}
           </>
         )}
