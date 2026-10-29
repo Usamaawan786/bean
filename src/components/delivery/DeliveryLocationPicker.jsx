@@ -50,7 +50,7 @@ function FlyTo({ target }) {
  * Lets the customer search an address, use GPS, or drop/drag a pin.
  * Reports { lat, lng } (or null) via onChange, and { inRange, distance } via onStatus.
  */
-export default function DeliveryLocationPicker({
+export function LeafletLocationPicker({
   storeLat,
   storeLng,
   radiusKm,
