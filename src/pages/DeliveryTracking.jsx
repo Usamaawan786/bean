@@ -72,7 +72,7 @@ export default function DeliveryTracking() {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold">Rs. {order.total_amount}</div>
-            <div className="text-white/70 text-xs">Cash on Delivery</div>
+            <div className="text-white/70 text-xs">{order.payment_method === "card_on_delivery" ? "Card on Delivery" : "Cash on Delivery"}</div>
           </div>
         </div>
       </div>
@@ -153,6 +153,7 @@ export default function DeliveryTracking() {
           </div>
           <div className="border-t border-[#E8DED8] mt-2 pt-2 space-y-1 text-sm">
             <div className="flex justify-between text-[#8B7355]"><span>Subtotal</span><span>Rs. {order.subtotal}</span></div>
+            {order.gst_amount != null && <div className="flex justify-between text-[#8B7355]"><span>GST ({order.gst_rate}%)</span><span>Rs. {order.gst_amount}</span></div>}
             <div className="flex justify-between text-[#8B7355]"><span>Delivery Fee</span><span>Rs. {order.delivery_fee}</span></div>
             <div className="flex justify-between font-bold text-[#5C4A3A]"><span>Total</span><span>Rs. {order.total_amount}</span></div>
           </div>
