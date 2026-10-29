@@ -39,11 +39,14 @@ function lastActivityAt(o) {
 // terminal overall state. Shared by the fetch and the realtime handlers so a
 // lagging kitchen_status can never resurrect a ready/completed/cancelled order.
 function isOrderActive(o) {
-  return !!o &&
-    (o.kitchen_status === "pending" || o.kitchen_status === "in_progress") &&
-    o.overall_status !== "ready" &&
-    o.overall_status !== "completed" &&
-    o.overall_status !== "cancelled";
+  if (!o) return false;
+  if (o.overall_status === "completed" || o.overall_status === "cancelled") return false;
+  const items = Array.isArray(o.items) ? o.items : [];
+  if (items.length === 0) return false;
+  // One screen handles food and drinks, so an order is active whenever any item
+  // on it is still not done - regardless of station or a lagging status field.
+  // This also brings an already-ready order back when new items are added to it.
+  return items.some(i => i.status !== "done");
 }
 
 // PKT = UTC+5. An order is only shown if it was placed within the current PKT
@@ -256,14 +259,16 @@ export default function KitchenDisplay() {
     // query, so the old array filter was returning every order. Sort by the
     // server-set created_date, not the client-set placed_at (which was 12h off
     // because the POS device clock had drifted).
+    // Fetch recent orders that are not completed/cancelled, then decide on the client
+    // which still have unfinished items (covers ready orders that got new items).
     const data = await base44.entities.KitchenOrder.filter(
-      { $or: [{ kitchen_status: "pending" }, { kitchen_status: "in_progress" }] },
+      { $or: [{ overall_status: "queued" }, { overall_status: "in_progress" }, { overall_status: "ready" }] },
       "-created_date",
-      50
+      100
     );
-    // Drop terminal-state orders and anything older than the recency cutoff.
-    // created_date is server time, so it's always correct even if placed_at isn't.
-    const active = data.filter(o => isOrderActive(o) && isRecent(o.created_date));
+    // Drop finished orders and anything with no recent activity. created_date is server
+    // time; items_added_at keeps a ticket alive while it is still receiving new items.
+    const active = data.filter(o => isOrderActive(o) && isOrderRecent(o));
     active.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
       if (b.order_type === "takeaway" && a.order_type !== "takeaway") return 1;
@@ -313,7 +318,7 @@ export default function KitchenDisplay() {
       if (event.type === "create") {
         // Ignore stale/replayed creates for orders that are already finished
         // or were placed long ago (previous shift/day).
-        if (!isOrderActive(o) || !isRecent(o.created_date)) return;
+        if (!isOrderActive(o) || !isOrderRecent(o)) return;
         if (seenIdsRef.current.has(o.id)) return; // replayed create — already alerted
         seenIdsRef.current.add(o.id);
         setOrders(prev => {
@@ -322,11 +327,15 @@ export default function KitchenDisplay() {
         });
         alertNewOrder();
       } else if (event.type === "update") {
-        if (!isOrderActive(o) || !isRecent(o.created_date)) {
+        if (!isOrderActive(o) || !isOrderRecent(o)) {
           setOrders(prev => prev.filter(x => x.id !== o.id));
         } else {
           setOrders(prev => {
-            if (!prev.some(x => x.id === o.id)) return sortByPriority([o, ...prev]); // re-opened
+            if (!prev.some(x => x.id === o.id)) {
+              // Re-opened (e.g. items added to a ready order): chime so the kitchen notices.
+              if (!seenIdsRef.current.has(o.id)) { seenIdsRef.current.add(o.id); alertNewOrder(); }
+              return sortByPriority([o, ...prev]);
+            }
             return sortByPriority(prev.map(x => x.id === o.id ? o : x));
           });
         }
@@ -355,43 +364,65 @@ export default function KitchenDisplay() {
   const markItemDone = async (orderId, itemIndex, item) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
-    const updatedItems = order.items.map((it, idx) => {
+    // Work from the freshest saved copy so we never overwrite items added from the POS
+    // a moment ago.
+    let baseItems = order.items;
+    try {
+      const fresh = await base44.entities.KitchenOrder.filter({ id: orderId });
+      if (fresh && fresh[0] && Array.isArray(fresh[0].items)) baseItems = fresh[0].items;
+    } catch (e) { /* use the on-screen copy */ }
+    const updatedItems = baseItems.map((it, idx) => {
       if (idx === itemIndex) return { ...it, status: "done" };
       return it;
     });
-    const kitchenItems = updatedItems.filter(i => i.station === "kitchen");
-    const allKitchenDone = kitchenItems.every(i => i.status === "done");
+    const allDone = updatedItems.every(i => i.status === "done");
+    const hasKitchen = updatedItems.some(i => i.station === "kitchen");
+    const hasBar = updatedItems.some(i => i.station === "bar");
+    const allKitchenDone = updatedItems.filter(i => i.station === "kitchen").every(i => i.status === "done");
+    const allBarDone = updatedItems.filter(i => i.station === "bar").every(i => i.status === "done");
     const updates = {
       items: updatedItems,
-      kitchen_status: allKitchenDone ? "done" : "in_progress"
+      kitchen_status: !hasKitchen ? "not_applicable" : allKitchenDone ? "done" : "in_progress",
+      bar_status: !hasBar ? "not_applicable" : allBarDone ? "done" : "in_progress",
+      overall_status: allDone ? "ready" : "in_progress",
+      ...(allDone && { ready_at: new Date().toISOString() })
     };
-    if (allKitchenDone) {
-      const barItems = updatedItems.filter(i => i.station === "bar");
-      const allBarDone = barItems.length === 0 || barItems.every(i => i.status === "done");
-      if (allBarDone) updates.overall_status = "ready";
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updates, items: updatedItems } : o));
+    try {
+      await base44.entities.KitchenOrder.update(orderId, updates);
+    } catch (err) {
+      loadOrders(); // roll the screen back to what is really saved
     }
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...updates } : o));
-    await base44.entities.KitchenOrder.update(orderId, updates);
   };
 
   const markStationDone = async (orderId) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
-    const updatedItems = order.items.map(it =>
-      it.station === "kitchen" ? { ...it, status: "done" } : it
-    );
-    const barItems = updatedItems.filter(i => i.station === "bar");
-    const allBarDone = barItems.length === 0 || barItems.every(i => i.status === "done");
+    let baseItems = order.items;
+    try {
+      const fresh = await base44.entities.KitchenOrder.filter({ id: orderId });
+      if (fresh && fresh[0] && Array.isArray(fresh[0].items)) baseItems = fresh[0].items;
+    } catch (e) { /* use the on-screen copy */ }
+    // One screen handles everything: "All Done" completes every item, food and drinks.
+    const updatedItems = baseItems.map(it => ({ ...it, status: "done" }));
+    const hasKitchen = updatedItems.some(i => i.station === "kitchen");
+    const hasBar = updatedItems.some(i => i.station === "bar");
     const updates = {
       items: updatedItems,
-      kitchen_status: "done",
-      ...(allBarDone && { overall_status: "ready", ready_at: new Date().toISOString() })
+      kitchen_status: hasKitchen ? "done" : "not_applicable",
+      bar_status: hasBar ? "done" : "not_applicable",
+      overall_status: "ready",
+      ready_at: new Date().toISOString()
     };
     setOrders(prev => prev.filter(o => o.id !== orderId));
-    await base44.entities.KitchenOrder.update(orderId, updates);
+    try {
+      await base44.entities.KitchenOrder.update(orderId, updates);
+    } catch (err) {
+      loadOrders(); // the save failed, so bring the ticket back instead of hiding it
+    }
   };
 
-  const activeOrders = orders.filter(o => o.kitchen_status !== "not_applicable");
+  const activeOrders = orders;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
