@@ -171,6 +171,10 @@ export default function RiderPortal() {
               <span className="text-sm font-medium text-purple-600">Rs. {order.total_amount}</span>
             </div>
 
+            <div className={`mb-3 rounded-xl px-3 py-2 text-sm font-bold ${order.payment_method === "card_on_delivery" ? "bg-blue-600 text-white" : "bg-green-100 text-green-800"}`}>
+              {order.payment_method === "card_on_delivery" ? "💳 CARD PAYMENT — take the card machine" : "💵 CASH PAYMENT — collect Rs. " + order.total_amount}
+            </div>
+
             <div className="space-y-2 text-sm text-[#5C4A3A]">
               <div className="flex items-center gap-2"><Package className="h-4 w-4 text-[#8B7355]" />{order.customer_name}</div>
               <div className="flex items-start gap-2"><MapPin className="h-4 w-4 text-[#8B7355] mt-0.5" /><div><div>{order.delivery_address}</div>{order.delivery_notes && <div className="text-xs text-[#8B7355] mt-0.5">📝 {order.delivery_notes}</div>}</div></div>
