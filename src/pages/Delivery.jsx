@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package, Heart, Search, SlidersHorizontal, Coffee, ArrowUp } from "lucide-react";
 import Motorbike from "@/components/icons/Motorbike";
 import DeliveryProductCard from "@/components/delivery/DeliveryProductCard";
+import DeliveryLocationPicker, { distanceKm } from "@/components/delivery/DeliveryLocationPicker";
 import { toast } from "sonner";
 
 // "Most Liked" items — matched by name (same list as the Menu page)
@@ -73,6 +74,7 @@ export default function Delivery() {
   const navRef = useRef(null);
   const pendingScroll = useRef(false);
   const [checkout, setCheckout] = useState({ address: "", notes: "", phone: "" });
+  const [pin, setPin] = useState(null); // { lat, lng } chosen on the map
   const [placing, setPlacing] = useState(false);
 
   useEffect(() => {
@@ -228,6 +230,10 @@ export default function Delivery() {
   const deliveryFee = settings?.flat_delivery_fee || 297;
   const total = subtotal + deliveryFee;
   const isDeliveryOpen = settings?.is_delivery_open !== false;
+  const storeLat = settings?.store_lat ?? 33.5306669;
+  const storeLng = settings?.store_lng ?? 73.0997785;
+  const radiusKm = settings?.delivery_radius_km ?? 4;
+  const pinInRange = !!pin && distanceKm(storeLat, storeLng, pin.lat, pin.lng) <= radiusKm;
 
   const addToCart = (product) => {
     setCart((prev) => {
@@ -247,6 +253,8 @@ export default function Delivery() {
 
   const handlePlaceOrder = async () => {
     if (!user) { toast.error("Please log in to place an order"); return; }
+    if (!pin) { toast.error("Please pin your delivery location on the map"); return; }
+    if (!pinInRange) { toast.error(`Sorry, we only deliver within ${radiusKm} km of Bean`); return; }
     if (!checkout.address.trim()) { toast.error("Please enter your delivery address"); return; }
     if (!checkout.phone.trim()) { toast.error("Please enter your phone number"); return; }
     if (!isDeliveryOpen) { toast.error("Delivery is currently closed"); return; }
@@ -255,6 +263,8 @@ export default function Delivery() {
       const res = await base44.functions.invoke("createDeliveryOrder", {
         items: cart,
         delivery_address: checkout.address,
+        delivery_lat: pin.lat,
+        delivery_lng: pin.lng,
         delivery_notes: checkout.notes,
         customer_phone: checkout.phone,
       });
@@ -528,7 +538,18 @@ export default function Delivery() {
             <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 space-y-3">
               <h2 className="font-semibold text-[#5C4A3A]">Delivery Details</h2>
               <div>
-                <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Address</label>
+                <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Delivery location</label>
+                <DeliveryLocationPicker
+                  storeLat={storeLat}
+                  storeLng={storeLng}
+                  radiusKm={radiusKm}
+                  value={pin}
+                  onChange={setPin}
+                  onAddressFound={(addr) => setCheckout((c) => (c.address.trim() ? c : { ...c, address: addr }))}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Full address (house / street / area)</label>
                 <textarea
                   value={checkout.address}
                   onChange={(e) => setCheckout({ ...checkout, address: e.target.value })}
@@ -564,7 +585,7 @@ export default function Delivery() {
 
             <button
               onClick={handlePlaceOrder}
-              disabled={placing || !isDeliveryOpen}
+              disabled={placing || !isDeliveryOpen || !pinInRange}
               className="w-full bg-[#5C4A3A] text-white font-semibold py-3.5 rounded-xl hover:bg-[#6B5744] disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {placing ? <><Loader2 className="h-4 w-4 animate-spin" /> Placing Order...</> : <><Check className="h-4 w-4" /> Place Order — Rs. {total}</>}
