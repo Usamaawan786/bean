@@ -25,7 +25,6 @@ const AdminPushNotifications = lazy(() => import('./pages/AdminPushNotifications
 const AdminAppUsers = lazy(() => import('./pages/AdminAppUsers'));
 const KitchenDisplay = lazy(() => import('./pages/KitchenDisplay'));
 const OrderHistory = lazy(() => import('./pages/OrderHistory'));
-const BarDisplay = lazy(() => import('./pages/BarDisplay'));
 const OrderManager = lazy(() => import('./pages/OrderManager'));
 const AdminReferrals = lazy(() => import('./pages/AdminReferrals'));
 const AdminRedemptions = lazy(() => import('./pages/AdminRedemptions'));
@@ -108,7 +107,7 @@ function App() {
               <Route path="/AdminCommunity" element={<AdminCommunity />} />
               <Route path="/CashierTools" element={<CashierTools />} />
               <Route path="/KitchenDisplay" element={<KitchenDisplay />} />
-              <Route path="/BarDisplay" element={<BarDisplay />} />
+              <Route path="/BarDisplay" element={<KitchenDisplay />} />
               <Route path="/OrderManager" element={<OrderManager />} />
               <Route path="/OrderHistory" element={<OrderHistory />} />
               <Route path="/AdminStaffScrutiny" element={<AdminStaffScrutiny />} />
