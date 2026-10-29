@@ -93,6 +93,13 @@ export default function Delivery() {
     queryFn: () => base44.entities.MenuCategory.list("sort_order", 100),
   });
 
+  // Menu page's own items, sorted exactly like the Menu page, so category photos
+  // (e.g. Breakfast = Lotus French Toast) and Most Liked photos come out identical.
+  const { data: menuItems = [] } = useQuery({
+    queryKey: ["menuItemsForDelivery"],
+    queryFn: async () => ((await base44.entities.StoreProduct.list("-created_date", 200)) || []).filter((i) => i.is_available !== false),
+  });
+
   const { data: menuSettings } = useQuery({
     queryKey: ["menuSettings"],
     queryFn: async () => (await base44.entities.MenuSettings.list())[0] || null,
@@ -118,24 +125,33 @@ export default function Delivery() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Order the delivery items exactly like the Menu page orders its items
+  // (newest first, by matching name against the Menu list), so grouping,
+  // Most Liked and first-photo-per-category are identical.
+  const orderedProducts = useMemo(() => {
+    if (!menuItems.length) return products;
+    const rank = new Map(menuItems.map((m, i) => [m.name, i]));
+    return [...products].sort((a, b) => (rank.get(a.name) ?? 9999) - (rank.get(b.name) ?? 9999));
+  }, [products, menuItems]);
+
   // Most Liked: matched by name, then removed from the category lists (same as Menu page)
   const { mostLikedItems, grouped } = useMemo(() => {
     const liked = [];
     const used = new Set();
     MOST_LIKED_QUERIES.forEach(({ query, likes }) => {
-      const match = products.find((p) => !used.has(p.id) && p.name.toLowerCase().includes(query));
+      const match = orderedProducts.find((p) => !used.has(p.id) && p.name.toLowerCase().includes(query));
       if (match) {
         liked.push({ ...match, _likes: likes });
         used.add(match.id);
       }
     });
     const g = {};
-    products.filter((p) => !used.has(p.id)).forEach((p) => {
+    orderedProducts.filter((p) => !used.has(p.id)).forEach((p) => {
       const c = p.category || "Other";
       (g[c] = g[c] || []).push(p);
     });
     return { mostLikedItems: liked, grouped: g };
-  }, [products]);
+  }, [orderedProducts]);
 
   const sections = useMemo(() => {
     const ordered = CATEGORY_ORDER.filter((c) => grouped[c]?.length);
@@ -148,18 +164,18 @@ export default function Delivery() {
 
   const searching = search.trim().length > 0;
   const searchResults = searching
-    ? products.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    ? orderedProducts.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     : [];
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   const categoryImages = useMemo(() => {
     const map = {};
-    products.forEach((p) => {
+    (menuItems.length ? menuItems : orderedProducts).forEach((p) => {
       const c = p.category || "Other";
       if (!map[c] && p.image_url && !p.image_url.includes("images.unsplash.com")) map[c] = p.image_url;
     });
     return map;
-  }, [products]);
+  }, [menuItems, orderedProducts]);
   const catMeta = (cat) => menuCategories.find((c) => c.name === cat);
   const catImg = (cat) =>
     categoryImages[cat] || catMeta(cat)?.image_url || CATEGORY_IMAGES[cat] || CATEGORY_IMAGES["Other"];
@@ -264,10 +280,6 @@ export default function Delivery() {
 
   return (
     <div className={`min-h-screen pb-28 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}>
-      {/* Beta banner */}
-      <div className="bg-amber-100 border-b border-amber-300 text-amber-900 text-center text-xs font-semibold py-2 px-4 tracking-wide">
-        BETA VERSION — Bean Delivery is in early launch. Thanks for helping us test it!
-      </div>
       {/* Cream header strip — same as Menu page */}
       <div className="bg-[#E8DEC8]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -293,10 +305,15 @@ export default function Delivery() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4">
+      <div className={view === "menu" ? "" : "max-w-2xl mx-auto px-4"}>
+        {view === "checkout" && (
+          <div className="bg-amber-100 border border-amber-300 text-amber-900 text-center text-xs font-semibold py-2 px-4 rounded-xl mt-4 tracking-wide">
+            BETA VERSION — Bean Delivery is in early launch. Thanks for helping us test it!
+          </div>
+        )}
         {/* Active Orders */}
         {myActive.length > 0 && view === "menu" && (
-          <div className="mt-4 space-y-2">
+          <div className="max-w-2xl mx-auto px-4 pt-4 space-y-2">
             <h2 className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide">Your Active Orders</h2>
             {myActive.map((order) => (
               <button
@@ -321,8 +338,8 @@ export default function Delivery() {
           <>
             {/* Search + sticky category nav — identical to Menu page */}
             {sections.length > 0 && (
-              <div className="sticky top-0 z-30 -mx-4 px-4 bg-[#A87555]/95 backdrop-blur-md shadow-md">
-                <div className="pt-3 pb-3">
+              <div className="sticky top-0 z-50 bg-[#A87555]/95 backdrop-blur-md shadow-md">
+                <div className="max-w-2xl mx-auto px-4 pt-3 pb-3">
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60" />
@@ -379,7 +396,7 @@ export default function Delivery() {
             )}
 
             {/* Content */}
-            <div className="py-6">
+            <div className="max-w-2xl mx-auto px-4 py-6">
               {searching ? (
                 <div>
                   <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
