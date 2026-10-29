@@ -365,7 +365,7 @@ export default function Delivery() {
                       <div className="flex gap-3 min-w-max">
                         {sections.map((s) => {
                           const isActive = activeCat === s.id;
-                          const img = s.isMostLiked ? null : catImg(s.label);
+                          const img = s.isMostLiked ? (s.items[0]?.image_url || null) : catImg(s.label);
                           return (
                             <button
                               key={s.id}
@@ -374,12 +374,19 @@ export default function Delivery() {
                               className="flex flex-col items-center gap-1 shrink-0 active:scale-95 transition-transform"
                             >
                               <div className={`w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center ${isActive ? "ring-2 ring-white" : "ring-1 ring-white/20"}`}>
-                                {s.isMostLiked ? (
+                                {s.isMostLiked && !img ? (
                                   <div className="w-full h-full bg-[#936548] flex items-center justify-center">
                                     <Heart className={`h-6 w-6 ${isActive ? "text-white fill-white" : "text-white/70"}`} />
                                   </div>
                                 ) : (
-                                  <img src={img} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
+                                  <div className="relative w-full h-full">
+                                    <img src={img} alt={s.label} className="w-full h-full object-cover" loading="lazy" />
+                                    {s.isMostLiked && (
+                                      <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                                        <Heart className="h-6 w-6 text-white fill-white drop-shadow" />
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                               <span className={`text-[11px] max-w-[64px] truncate ${isActive ? "text-white font-medium" : "text-white/60"}`}>
