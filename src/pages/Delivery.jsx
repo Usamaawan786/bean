@@ -294,7 +294,7 @@ export default function Delivery() {
   }
 
   return (
-    <div className={`min-h-screen pb-28 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}>
+    <div className={`min-h-screen pb-44 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}>
       {/* Cream header strip — same as Menu page */}
       <div className="bg-[#E8DEC8]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -630,11 +630,12 @@ export default function Delivery() {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-16 left-0 right-0 z-40 px-4"
+            className="fixed left-0 right-0 z-[60] px-4"
+            style={{ bottom: "calc(max(env(safe-area-inset-bottom), 16px) + 80px)" }}
           >
             <button
               onClick={() => setView("checkout")}
-              className="w-full max-w-lg mx-auto bg-[#5C4A3A] text-white rounded-2xl py-3 px-5 flex items-center justify-between shadow-lg"
+              className="w-full max-w-2xl mx-auto bg-[#5C4A3A] text-white rounded-2xl py-3 px-5 flex items-center justify-between shadow-xl"
             >
               <div className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5" />
