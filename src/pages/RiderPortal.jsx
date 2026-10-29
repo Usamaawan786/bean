@@ -74,6 +74,8 @@ export default function RiderPortal() {
   const handleMarkDelivered = async (orderId) => {
     try {
       await base44.entities.DeliveryOrder.update(orderId, { status: "delivered", delivered_at: new Date().toISOString() });
+      // Push to the order's customer only. Failure never blocks the delivery update.
+      base44.functions.invoke("notifyDeliveryStatus", { order_id: orderId, status: "delivered" }).catch((e) => console.error("notifyDeliveryStatus failed:", e));
       toast.success("Order marked delivered");
       queryClient.invalidateQueries({ queryKey: ["riderOrders"] });
     } catch (e) {
