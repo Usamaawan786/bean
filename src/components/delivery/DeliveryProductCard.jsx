@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Plus, Clock, Coffee } from "lucide-react";
+import { Plus, Clock, Coffee, Heart } from "lucide-react";
 
 const fmtPKR = (n) => `Rs. ${Number(n || 0).toLocaleString("en-PK")}`;
 
 // Delivery menu card — identical layout to the Menu page card (text left,
 // square white-bordered photo right), plus an add-to-cart button.
-export default function DeliveryProductCard({ product, image, onAdd }) {
+export default function DeliveryProductCard({ product, image, onAdd, isMostLiked, likes }) {
   const [imgError, setImgError] = useState(false);
   useEffect(() => { setImgError(false); }, [image]);
 
@@ -42,6 +42,12 @@ export default function DeliveryProductCard({ product, image, onAdd }) {
             loading="lazy"
             onError={() => setImgError(true)}
           />
+        )}
+        {isMostLiked && (
+          <div className="absolute bottom-1 left-1 bg-black/55 backdrop-blur-sm rounded-full px-1.5 py-0.5 flex items-center gap-0.5">
+            <Heart className="h-2.5 w-2.5 text-white fill-white" />
+            <span className="text-[10px] text-white font-medium">{likes}</span>
+          </div>
         )}
         <button
           onClick={() => onAdd(product)}
