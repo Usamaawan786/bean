@@ -53,6 +53,7 @@ export default function RiderPortal() {
                 await base44.entities.RiderLocation.create({
                   rider_email: user.email,
                   rider_name: user.full_name || user.email,
+                  customer_email: order.customer_email,
                   order_id: order.id,
                   latitude, longitude, heading: heading || 0, updated_at: now,
                 });
