@@ -10,6 +10,10 @@
       "type": "string",
       "description": "Display name of the rider"
     },
+    "customer_email": {
+      "type": "string",
+      "description": "Email of the customer who owns the order being tracked"
+    },
     "order_id": {
       "type": "string",
       "description": "DeliveryOrder ID this location track belongs to"
@@ -61,7 +65,31 @@
         }
       ]
     },
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "data.customer_email": "{{user.email}}"
+        },
+        {
+          "data.rider_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
     "update": {
       "$or": [
         {
