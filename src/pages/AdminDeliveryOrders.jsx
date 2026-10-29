@@ -84,17 +84,29 @@ export default function AdminDeliveryOrders() {
     } catch (e) {}
   };
 
+  // Fire-and-forget customer push for ONE order. Never blocks or fails the admin action.
+  const notifyCustomer = async (orderId, status) => {
+    try {
+      await base44.functions.invoke("notifyDeliveryStatus", { order_id: orderId, status });
+    } catch (e) {
+      console.error("notifyDeliveryStatus failed:", e);
+    }
+  };
+
   const handleAction = async (orderId, action, payload) => {
     try {
       const now = new Date().toISOString();
       if (action === "accept") {
         await base44.entities.DeliveryOrder.update(orderId, { status: "accepted", accepted_at: now });
+        notifyCustomer(orderId, "accepted");
         toast.success("Order accepted");
       } else if (action === "reject") {
         await base44.entities.DeliveryOrder.update(orderId, { status: "cancelled", rejection_reason: payload });
+        notifyCustomer(orderId, "rejected");
         toast.success("Order rejected");
       } else if (action === "prepare") {
         await base44.entities.DeliveryOrder.update(orderId, { status: "preparing" });
+        notifyCustomer(orderId, "preparing");
         toast.success("Order moved to preparing");
       } else if (action === "assign") {
         await base44.entities.DeliveryOrder.update(orderId, {
@@ -103,9 +115,11 @@ export default function AdminDeliveryOrders() {
           rider_name: payload.full_name || payload.email,
           rider_phone: payload.phone || "",
         });
-        toast.success(`Assigned to ${payload.full_name || payload.email}`);
+        notifyCustomer(orderId, "rider_picked_up");
+        toast.success(`Picked up by ${payload.full_name || payload.email}`);
       } else if (action === "deliver") {
         await base44.entities.DeliveryOrder.update(orderId, { status: "delivered", delivered_at: now });
+        notifyCustomer(orderId, "delivered");
         toast.success("Order marked delivered");
       }
       setNewPendingIds((prev) => { const n = new Set(prev); n.delete(orderId); return n; });
