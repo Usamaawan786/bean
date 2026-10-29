@@ -53,11 +53,13 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
 
   const reverseGeocode = async (lat, lng) => {
     try {
+      // Loaded lazily: if the Geocoding API isn't enabled on the key, only this lookup fails — never the map or search
+      if (!libsRef.current.geocoding) libsRef.current.geocoding = await window.google.maps.importLibrary("geocoding");
       const { Geocoder } = libsRef.current.geocoding;
       const res = await new Geocoder().geocode({ location: { lat, lng } });
       return res?.results?.[0]?.formatted_address || "";
     } catch {
-      return ""; // Geocoding API may not be enabled — customer just types the address
+      return ""; // customer just types the house address
     }
   };
 
@@ -84,14 +86,13 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
     (async () => {
       try {
         await loadGoogleMaps(apiKey);
-        const [maps, places, marker, geocoding] = await Promise.all([
+        const [maps, places, marker] = await Promise.all([
           window.google.maps.importLibrary("maps"),
           window.google.maps.importLibrary("places"),
           window.google.maps.importLibrary("marker"),
-          window.google.maps.importLibrary("geocoding"),
         ]);
         if (cancelled || !mapDivRef.current) return;
-        libsRef.current = { maps, places, marker, geocoding };
+        libsRef.current = { maps, places, marker };
 
         const center = value ? { lat: value.lat, lng: value.lng } : { lat: storeLat, lng: storeLng };
         const map = new maps.Map(mapDivRef.current, {
@@ -212,8 +213,11 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         setLocating(false);
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
         setPin(latitude, longitude);
+        if (accuracy && accuracy > 150) {
+          setError(`Your phone's location is only accurate to about ${Math.round(accuracy)} m. Please drag the pin to your exact door.`);
+        }
         const addr = await reverseGeocode(latitude, longitude);
         if (addr && onAddrRef.current) onAddrRef.current(addr);
       },
@@ -221,7 +225,7 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
         setLocating(false);
         setError("We couldn't get your location. Please allow location access, or drop the pin on the map.");
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
   };
 
