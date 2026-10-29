@@ -28,7 +28,7 @@ const TEMPLATES: Record<string, { title: string; body: string }> = {
 };
 
 const STAFF_ROLES = ['admin', 'super_admin', 'manager'];
-const RIDER_ALLOWED = ['rider_picked_up', 'rider_nearby'];
+const RIDER_ALLOWED = ['rider_picked_up', 'rider_nearby', 'delivered'];
 
 async function getAccessToken(serviceAccount: any) {
   const now = Math.floor(Date.now() / 1000);
