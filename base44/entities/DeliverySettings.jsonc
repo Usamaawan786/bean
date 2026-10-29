@@ -1,6 +1,16 @@
 {
   "name": "DeliverySettings",
   "properties": {
+    "card_gst_percent": {
+      "default": 8,
+      "description": "GST percent added to food subtotal when paying by card",
+      "type": "number"
+    },
+    "cash_gst_percent": {
+      "default": 17,
+      "description": "GST percent added to food subtotal when paying cash",
+      "type": "number"
+    },
     "delivery_radius_km": {
       "default": 4,
       "description": "Maximum delivery distance in km, measured in a straight line from the store",
@@ -30,6 +40,10 @@
       "default": 150,
       "description": "Flat delivery fee in PKR (used when no fee tiers are defined)",
       "type": "number"
+    },
+    "google_maps_key": {
+      "description": "Browser Google Maps API key (restricted to Bean's websites and Maps JavaScript + Places APIs). Public by design; safe only because of the referrer restriction.",
+      "type": "string"
     },
     "is_delivery_open": {
       "default": true,
