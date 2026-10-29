@@ -282,8 +282,16 @@ export default function AdminPOS() {
             total,
             paymentMethod
           });
-          await base44.entities.KitchenOrder.create(kitchenOrder);
-        } catch (e) { /* kitchen order failure should not block sale */ }
+          try {
+            await base44.entities.KitchenOrder.create({ ...kitchenOrder, items_added_at: new Date().toISOString() });
+          } catch (firstErr) {
+            // One automatic retry before warning the cashier.
+            await base44.entities.KitchenOrder.create({ ...kitchenOrder, items_added_at: new Date().toISOString() });
+          }
+        } catch (e) {
+          // The sale itself is saved, but the kitchen never received it. Tell the cashier loudly.
+          toast.error(`Sale ${billNumber} saved, but it did NOT reach the kitchen screen. Tell the kitchen about this order manually.`, { duration: 15000 });
+        }
       } else if (ticketKitchenOrder) {
         try {
           const kdsUpdate = { bill_number: billNumber, payment_method: paymentMethod };
@@ -291,7 +299,9 @@ export default function AdminPOS() {
             kdsUpdate.customer_name = customerInfo.name ? `Foodpanda — ${customerInfo.name}` : "Foodpanda";
           }
           await base44.entities.KitchenOrder.update(ticketKitchenOrder.id, kdsUpdate);
-        } catch (e) { /* kitchen order link failure should not block sale */ }
+        } catch (e) {
+          toast.error(`Sale ${billNumber} saved, but the kitchen ticket could not be linked to the bill. The kitchen order itself is unaffected.`, { duration: 10000 });
+        }
       }
 
       // Resolve the open ticket into this sale
@@ -401,7 +411,9 @@ export default function AdminPOS() {
             base44, ticketNumber, deltaItems: cart, products,
             orderType, counter, customerName: customerInfo.name, existingOrder: null
           });
-        } catch (e) { /* KDS failure should not block ticket save */ }
+        } catch (e) {
+          toast.error(`Ticket ${ticketNumber} saved, but it did NOT reach the kitchen screen. Tell the kitchen manually.`, { duration: 15000 });
+        }
         toast.success(`Ticket ${ticketNumber} saved`);
       } else {
         const { increases, decreases } = diffCartAgainstBaseline(cart, ticketBaseline);
@@ -441,7 +453,9 @@ export default function AdminPOS() {
               orderType, counter, customerName: customerInfo.name, existingOrder: ticketKitchenOrder
             });
             setTicketKitchenOrder(updated);
-          } catch (e) { /* KDS failure should not block ticket save */ }
+          } catch (e) {
+            toast.error(`Ticket ${activeTicket.ticket_number} updated, but the new items did NOT reach the kitchen screen. Tell the kitchen manually.`, { duration: 15000 });
+          }
         }
         toast.success(`Ticket ${activeTicket.ticket_number} updated`);
       }
