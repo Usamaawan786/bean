@@ -60,7 +60,7 @@ export default async function(req) {
 
     const now = new Date().toISOString();
 
-    const order = await base44.entities.DeliveryOrder.create({
+    const order = await base44.asServiceRole.entities.DeliveryOrder.create({
       order_number: orderNumber,
       customer_email: user.email,
       customer_name: user.full_name || user.email,
