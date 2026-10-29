@@ -7,7 +7,7 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { items, delivery_address, delivery_notes, customer_phone, delivery_lat, delivery_lng } = body;
+    const { items, delivery_address, delivery_notes, customer_phone, delivery_lat, delivery_lng, payment_method } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return Response.json({ error: 'Your cart is empty' }, { status: 400 });
@@ -64,8 +64,14 @@ export default async function(req) {
       return Response.json({ error: 'Minimum order is Rs. ' + settings.min_order_amount }, { status: 400 });
     }
 
+    // Payment type and GST are decided here on the server (cash 17%, card 8% by default), never trusted from the browser
+    const paymentMethod = payment_method === 'card_on_delivery' ? 'card_on_delivery' : 'cash_on_delivery';
+    const gstRate = paymentMethod === 'card_on_delivery'
+      ? Number(settings.card_gst_percent ?? 8)
+      : Number(settings.cash_gst_percent ?? 17);
+    const gstAmount = Math.round(subtotal * gstRate / 100);
     const deliveryFee = settings.flat_delivery_fee ?? 297;
-    const totalAmount = subtotal + deliveryFee;
+    const totalAmount = subtotal + gstAmount + deliveryFee;
 
     // Generate order number using service role (user can't read others' orders)
     const latest = await base44.asServiceRole.entities.DeliveryOrder.list('-created_date', 1);
@@ -89,9 +95,11 @@ export default async function(req) {
       delivery_notes: (delivery_notes || '').trim(),
       items: orderItems,
       subtotal,
+      gst_rate: gstRate,
+      gst_amount: gstAmount,
       delivery_fee: deliveryFee,
       total_amount: totalAmount,
-      payment_method: 'cash_on_delivery',
+      payment_method: paymentMethod,
       status: 'pending',
       placed_at: now
     });
