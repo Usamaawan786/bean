@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bike, Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package } from "lucide-react";
+import { Plus, Minus, ShoppingCart, X, MapPin, Phone, ArrowLeft, Check, Loader2, Package } from "lucide-react";
+import Motorbike from "@/components/icons/Motorbike";
 import DeliveryProductCard from "@/components/delivery/DeliveryProductCard";
 import { toast } from "sonner";
 
@@ -229,7 +230,7 @@ export default function Delivery() {
       {/* Header */}
       <div className="bg-gradient-to-br from-[#8B7355] to-[#5C4A3A] text-white px-5 pt-8 pb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Bike className="h-6 w-6" />
+          <Motorbike className="h-6 w-6" />
           <h1 className="text-2xl font-bold">Delivery</h1>
         </div>
         <p className="text-white/70 text-sm">Order your favorite coffee for delivery</p>
@@ -326,7 +327,7 @@ export default function Delivery() {
             </div>
             {sections.length === 0 && (
               <div className="text-center py-12 text-white/70">
-                <Bike className="h-12 w-12 mx-auto mb-2 opacity-40" />
+                <Motorbike className="h-12 w-12 mx-auto mb-2 opacity-40" />
                 <p className="text-sm">No products available</p>
               </div>
             )}
