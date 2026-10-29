@@ -1,44 +1,59 @@
 {
   "name": "DeliveryOrder",
-  "type": "object",
   "properties": {
-    "order_number": {
-      "type": "string",
-      "description": "Auto-generated delivery order number, e.g. DO-000001"
+    "accepted_at": {
+      "description": "When the order was accepted by admin",
+      "format": "date-time",
+      "type": "string"
     },
     "customer_email": {
-      "type": "string",
-      "description": "Email of the customer who placed the order"
+      "description": "Email of the customer who placed the order",
+      "type": "string"
     },
     "customer_name": {
-      "type": "string",
-      "description": "Customer display name"
+      "description": "Customer display name",
+      "type": "string"
     },
     "customer_phone": {
-      "type": "string",
-      "description": "Customer phone number for delivery contact"
+      "description": "Customer phone number for delivery contact",
+      "type": "string"
+    },
+    "delivered_at": {
+      "description": "When the order was marked delivered",
+      "format": "date-time",
+      "type": "string"
     },
     "delivery_address": {
-      "type": "string",
-      "description": "Free-text delivery address"
+      "description": "Free-text delivery address",
+      "type": "string"
+    },
+    "delivery_fee": {
+      "description": "Delivery fee charged",
+      "type": "number"
     },
     "delivery_lat": {
-      "type": "number",
-      "description": "Optional map pin latitude for delivery address"
+      "description": "Map pin latitude for delivery address",
+      "type": "number"
     },
     "delivery_lng": {
-      "type": "number",
-      "description": "Optional map pin longitude for delivery address"
+      "description": "Map pin longitude for delivery address",
+      "type": "number"
     },
     "delivery_notes": {
-      "type": "string",
-      "description": "Optional delivery instructions from customer"
+      "description": "Optional delivery instructions from customer",
+      "type": "string"
+    },
+    "gst_amount": {
+      "description": "GST amount in PKR",
+      "type": "number"
+    },
+    "gst_rate": {
+      "description": "GST percent applied to the food subtotal (17 for cash, 8 for card)",
+      "type": "number"
     },
     "items": {
-      "type": "array",
       "description": "Ordered items",
       "items": {
-        "type": "object",
         "properties": {
           "product_id": {
             "type": "string"
@@ -52,31 +67,48 @@
           "unit_price": {
             "type": "number"
           }
-        }
-      }
+        },
+        "type": "object"
+      },
+      "type": "array"
     },
-    "subtotal": {
-      "type": "number",
-      "description": "Sum of item prices before delivery fee"
-    },
-    "delivery_fee": {
-      "type": "number",
-      "description": "Delivery fee charged"
-    },
-    "total_amount": {
-      "type": "number",
-      "description": "Final total including delivery fee"
+    "order_number": {
+      "description": "Auto-generated delivery order number, e.g. DO-000001",
+      "type": "string"
     },
     "payment_method": {
-      "type": "string",
-      "enum": [
-        "cash_on_delivery"
-      ],
       "default": "cash_on_delivery",
-      "description": "Payment method"
+      "description": "How the customer will pay at the door. card_on_delivery means the rider must bring a card machine.",
+      "enum": [
+        "cash_on_delivery",
+        "card_on_delivery"
+      ],
+      "type": "string"
+    },
+    "placed_at": {
+      "description": "When the order was placed",
+      "format": "date-time",
+      "type": "string"
+    },
+    "rejection_reason": {
+      "description": "Reason if order was rejected/cancelled",
+      "type": "string"
+    },
+    "rider_email": {
+      "description": "Email of the assigned rider",
+      "type": "string"
+    },
+    "rider_name": {
+      "description": "Display name of the assigned rider",
+      "type": "string"
+    },
+    "rider_phone": {
+      "description": "Phone number of the assigned rider for customer call button",
+      "type": "string"
     },
     "status": {
-      "type": "string",
+      "default": "pending",
+      "description": "Current order status",
       "enum": [
         "pending",
         "accepted",
@@ -85,39 +117,15 @@
         "delivered",
         "cancelled"
       ],
-      "default": "pending",
-      "description": "Current order status"
+      "type": "string"
     },
-    "rejection_reason": {
-      "type": "string",
-      "description": "Reason if order was rejected/cancelled"
+    "subtotal": {
+      "description": "Sum of item prices before GST and delivery fee",
+      "type": "number"
     },
-    "rider_email": {
-      "type": "string",
-      "description": "Email of the assigned rider"
-    },
-    "rider_name": {
-      "type": "string",
-      "description": "Display name of the assigned rider"
-    },
-    "rider_phone": {
-      "type": "string",
-      "description": "Phone number of the assigned rider for customer call button"
-    },
-    "placed_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "When the order was placed"
-    },
-    "accepted_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "When the order was accepted by admin"
-    },
-    "delivered_at": {
-      "type": "string",
-      "format": "date-time",
-      "description": "When the order was marked delivered"
+    "total_amount": {
+      "description": "Final total: subtotal + GST + delivery fee",
+      "type": "number"
     }
   },
   "required": [
@@ -126,6 +134,7 @@
     "items",
     "total_amount"
   ],
+  "type": "object",
   "rls": {
     "create": {
       "$or": [
