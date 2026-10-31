@@ -240,6 +240,7 @@ export default function Delivery() {
   const pinInRange = !!pin && distanceKm(storeLat, storeLng, pin.lat, pin.lng) <= radiusKm;
 
   const addToCart = (product) => {
+    if (!isDeliveryOpen) { toast.info("Delivery is coming soon — we're not taking orders yet"); return; }
     setCart((prev) => {
       const existing = prev.find((i) => i.product_id === product.id);
       if (existing) return prev.map((i) => (i.product_id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
@@ -295,6 +296,14 @@ export default function Delivery() {
 
   return (
     <div className={`min-h-screen pb-44 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}>
+      {/* Coming soon notice — shown whenever delivery is switched off in admin settings */}
+      {!isDeliveryOpen && (
+        <div className="bg-[#5C4A3A] text-white text-center px-4 py-3">
+          <div className="text-sm font-bold tracking-widest">🛵 DELIVERY — COMING SOON</div>
+          <div className="text-xs text-white/80 mt-0.5">We're not taking delivery orders just yet. Have a look at the menu — we'll let you know when we launch!</div>
+        </div>
+      )}
+
       {/* Cream header strip — same as Menu page */}
       <div className="bg-[#E8DEC8]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -312,10 +321,10 @@ export default function Delivery() {
       <div className="bg-[#A87555]">
         <div className="max-w-2xl mx-auto px-4 pt-5 pb-4 text-center">
           <h1 className="text-3xl font-bold text-white">Delivery Menu</h1>
-          <p className="text-sm text-white/70 mt-1">Order your favorite coffee for delivery</p>
+          <p className="text-sm text-white/70 mt-1">{isDeliveryOpen ? "Order your favorite coffee for delivery" : "Our delivery menu — launching soon"}</p>
           <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-100"}`}>
             <span className={`w-2 h-2 rounded-full ${isDeliveryOpen ? "bg-green-400" : "bg-red-400"}`} />
-            {isDeliveryOpen ? "Open for orders" : "Currently closed"}
+            {isDeliveryOpen ? "Open for orders" : "Coming soon — not taking orders yet"}
           </div>
         </div>
       </div>
