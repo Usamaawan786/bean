@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import NotificationBell from "@/components/community/NotificationBell";
 import PointsHistoryList from "@/components/dashboard/PointsHistoryList";
 import SoftLaunchBanner from "@/components/shared/SoftLaunchBanner";
+import DoublePointsBanner from "@/components/shared/DoublePointsBanner";
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -215,6 +216,7 @@ export default function Home() {
         </div>
 
         <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-5">
+          <DoublePointsBanner />
           <SoftLaunchBanner />
           <Link to={createPageUrl("Shop")}>
             <div className="bg-white rounded-3xl border border-[#E8DED8] p-6 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
@@ -422,6 +424,8 @@ export default function Home() {
 
         {/* Main Content */}
         <div className="max-w-lg mx-auto px-5 pt-6 pb-24 space-y-6">
+
+          <DoublePointsBanner />
 
           <SoftLaunchBanner />
 
