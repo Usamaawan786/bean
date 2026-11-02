@@ -330,7 +330,7 @@ export default function AdminPraReport() {
               <div className="text-sm text-amber-800">
                 <p className="font-semibold mb-1">Tax Rate Notice</p>
                 <p>
-                  This report uses the <strong>actual tax collected</strong> on each invoice. Your system charges 17% on Cash and 8% on Card.
+                  This report uses the <strong>actual tax collected</strong> on each invoice. Your system charges 16% on Cash and 8% on Card.
                   A small number of early Card sales (Aug 7) were charged at 5% before the rate was updated — these are reflected at their actual
                   collected amount. Foodpanda orders are 0% tax. Verify the rates match your PRA registration before submitting.
                 </p>

@@ -64,11 +64,11 @@ export default async function(req) {
       return Response.json({ error: 'Minimum order is Rs. ' + settings.min_order_amount }, { status: 400 });
     }
 
-    // Payment type and GST are decided here on the server (cash 17%, card 8% by default), never trusted from the browser
+    // Payment type and GST are decided here on the server (cash 16%, card 8% by default), never trusted from the browser
     const paymentMethod = payment_method === 'card_on_delivery' ? 'card_on_delivery' : 'cash_on_delivery';
     const gstRate = paymentMethod === 'card_on_delivery'
       ? Number(settings.card_gst_percent ?? 8)
-      : Number(settings.cash_gst_percent ?? 17);
+      : Number(settings.cash_gst_percent ?? 16);
     const gstAmount = Math.round(subtotal * gstRate / 100);
     const deliveryFee = settings.flat_delivery_fee ?? 297;
     const totalAmount = subtotal + gstAmount + deliveryFee;

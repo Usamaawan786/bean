@@ -262,7 +262,7 @@ export default function Delivery() {
     .filter((i) => i.product);
   const subtotal = cartItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
   const deliveryFee = settings?.flat_delivery_fee || 297;
-  const gstPercent = payMethod === "card_on_delivery" ? (settings?.card_gst_percent ?? 8) : (settings?.cash_gst_percent ?? 17);
+  const gstPercent = payMethod === "card_on_delivery" ? (settings?.card_gst_percent ?? 8) : (settings?.cash_gst_percent ?? 16);
   const gstAmount = Math.round((subtotal * gstPercent) / 100);
   const total = subtotal + gstAmount + deliveryFee;
   const isDeliveryOpen = settings?.is_delivery_open !== false;
@@ -559,7 +559,7 @@ export default function Delivery() {
               <h2 className="font-semibold text-[#5C4A3A]">Order Summary</h2>
               <div className="grid grid-cols-2 gap-1 bg-[#F5F1ED] rounded-xl p-1">
                 {[
-                  { id: "cash_on_delivery", icon: "💵", label: "Cash", pct: settings?.cash_gst_percent ?? 17 },
+                  { id: "cash_on_delivery", icon: "💵", label: "Cash", pct: settings?.cash_gst_percent ?? 16 },
                   { id: "card_on_delivery", icon: "💳", label: "Card", pct: settings?.card_gst_percent ?? 8 },
                 ].map((opt) => (
                   <button

@@ -7,7 +7,7 @@
       "type": "number"
     },
     "cash_gst_percent": {
-      "default": 17,
+      "default": 16,
       "description": "GST percent added to food subtotal when paying cash",
       "type": "number"
     },

@@ -188,7 +188,7 @@ export default function AdminPOS() {
   const subtotal = cart.reduce((sum, item) => sum + effectivePrice(item) * item.quantity, 0);
   const discountAmount = subtotal * (discountPct / 100);
   const discountedSubtotal = subtotal - discountAmount;
-  const taxRate = paymentMethod === "Foodpanda" ? 0 : (paymentMethod === "Card" ? 0.08 : 0.17); // Foodpanda = no tax; 8% Card, 17% Cash
+  const taxRate = paymentMethod === "Foodpanda" ? 0 : (paymentMethod === "Card" ? 0.08 : 0.16); // Foodpanda = no tax; 8% Card, 16% Cash
   const tax = discountedSubtotal * taxRate;
   const total = discountedSubtotal + tax;
 
@@ -704,7 +704,7 @@ export default function AdminPOS() {
                     </button>
                   </div>
                   <p className="text-xs text-[#8B7355] mt-1">
-                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : paymentMethod === "Foodpanda" ? "No tax — third-party delivery order" : `GST: ${paymentMethod === "Card" ? "8%" : "17%"}`}
+                    {paymentMethod === "Complimentary" ? "No charge — item value recorded for reporting" : paymentMethod === "Foodpanda" ? "No tax — third-party delivery order" : `GST: ${paymentMethod === "Card" ? "8%" : "16%"}`}
                   </p>
                 </div>
 
@@ -834,7 +834,7 @@ export default function AdminPOS() {
                       )}
                       {paymentMethod !== "Foodpanda" && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "8%" : "17%"})</span>
+                        <span className="text-[#8B7355]">GST ({paymentMethod === "Card" ? "8%" : "16%"})</span>
                         <span className="text-[#5C4A3A] font-medium">PKR {tax.toFixed(2)}</span>
                       </div>
                       )}
