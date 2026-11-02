@@ -27,7 +27,7 @@ const TEMPLATES: Record<string, { title: string; body: string }> = {
   rejected: { title: 'Order could not be accepted', body: "Sorry, we couldn't accept your order this time. Please check the app for details." },
 };
 
-const STAFF_ROLES = ['admin', 'super_admin', 'manager'];
+const STAFF_ROLES = ['admin', 'super_admin', 'manager', 'cashier'];
 const RIDER_ALLOWED = ['rider_picked_up', 'rider_nearby', 'delivered'];
 
 async function getAccessToken(serviceAccount: any) {
