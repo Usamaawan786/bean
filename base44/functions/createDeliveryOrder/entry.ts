@@ -1,5 +1,45 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
+// ---- Cashier push: ONE fixed message, ONLY to users whose role is exactly 'cashier'. Runs server-side only, never blocks the order. ----
+async function getFcmAccessToken(sa) {
+  const now = Math.floor(Date.now() / 1000);
+  const enc = (o) => btoa(JSON.stringify(o)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const input = enc({ alg: 'RS256', typ: 'JWT' }) + '.' + enc({ iss: sa.client_email, scope: 'https://www.googleapis.com/auth/firebase.messaging', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 });
+  const pem = sa.private_key.replace(/\\n/g, '\n').replace('-----BEGIN PRIVATE KEY-----', '').replace('-----END PRIVATE KEY-----', '').replace(/\n/g, '');
+  const key = await crypto.subtle.importKey('pkcs8', Uint8Array.from(atob(pem), (c) => c.charCodeAt(0)).buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(input));
+  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const res = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=' + input + '.' + sigB64 });
+  return (await res.json()).access_token;
+}
+
+async function notifyCashiers(base44, order) {
+  try {
+    const cashiers = await base44.asServiceRole.entities.User.filter({ role: 'cashier' });
+    const emails = new Set((cashiers || []).filter((u) => u.role === 'cashier' && u.email).map((u) => String(u.email).trim().toLowerCase()));
+    if (emails.size === 0 || emails.size > 5) return;
+    const allTokens = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
+    const records = allTokens.filter((t) => emails.has(String(t.user_email || '').trim().toLowerCase()) && t.token);
+    if (records.length === 0 || records.length > 10) return;
+    const saStr = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
+    if (!saStr) return;
+    const sa = JSON.parse(saStr);
+    const accessToken = await getFcmAccessToken(sa);
+    if (!accessToken) return;
+    const title = 'New delivery order';
+    const body = 'Order ' + order.order_number + ' just came in. Open Delivery to accept or reject.';
+    for (const rec of records) {
+      const message = { message: { token: rec.token, notification: { title, body }, data: { deep_link: '/AdminPOS', order_id: String(order.id), status: 'new_delivery_order' },
+        apns: { headers: { 'apns-push-type': 'alert', 'apns-priority': '10', 'apns-topic': 'co.beancoffee.app' }, payload: { aps: { alert: { title, body }, sound: 'default', badge: 1 } } },
+        android: { priority: 'high', notification: { sound: 'default', channel_id: 'default', default_sound: true, notification_priority: 'PRIORITY_HIGH', visibility: 'PUBLIC' } } } };
+      const r = await fetch('https://fcm.googleapis.com/v1/projects/' + sa.project_id + '/messages:send', { method: 'POST', headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' }, body: JSON.stringify(message) });
+      if (!r.ok) console.error('cashier push failed', r.status);
+    }
+  } catch (e) {
+    console.error('notifyCashiers error:', e.message);
+  }
+}
+
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -103,6 +143,8 @@ export default async function(req) {
       status: 'pending',
       placed_at: now
     });
+
+    await notifyCashiers(base44, order);
 
     return Response.json({ order });
   } catch (error) {
