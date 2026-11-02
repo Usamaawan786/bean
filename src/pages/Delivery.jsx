@@ -208,7 +208,7 @@ export default function Delivery() {
       }
     });
     const g = {};
-    orderedProducts.filter((p) => !used.has(p.id)).forEach((p) => {
+    orderedProducts.filter((p) => !used.has(p.id) && p.category !== "Add-Ons").forEach((p) => {
       const c = p.category || "Other";
       (g[c] = g[c] || []).push(p);
     });
@@ -226,7 +226,7 @@ export default function Delivery() {
 
   const searching = search.trim().length > 0;
   const searchResults = searching
-    ? orderedProducts.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    ? orderedProducts.filter((p) => p.category !== "Add-Ons" && p.name.toLowerCase().includes(search.toLowerCase()))
     : [];
   const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -296,6 +296,38 @@ export default function Delivery() {
   const storeLng = settings?.store_lng ?? 73.0997785;
   const radiusKm = settings?.delivery_radius_km ?? 4;
   const pinInRange = !!pin && distanceKm(storeLat, storeLng, pin.lat, pin.lng) <= radiusKm;
+
+  // ── Upsell helpers (flavour add-ons per coffee + "complete your order" suggestions) ──
+  const FLAVOUR_ELIGIBLE = ["Hot Coffee", "Cold Coffee"];
+  const DRINK_CATS = ["Hot Coffee", "Cold Coffee", "Ice Blended Coffee", "Hot Chocolate", "Matcha", "Fresher", "Smoothies", "Teas & More"];
+  const FOOD_CATS = ["Breakfast", "Omelettes", "Sweet", "Sandwich & Wraps", "All Day Bites"];
+  const flavourProducts = products.filter((p) => p.category === "Add-Ons" && /flavour/i.test(p.name) && p.is_available !== false);
+  const flavourQty = cartItems.filter((i) => i.product.category === "Add-Ons").reduce((s, i) => s + i.quantity, 0);
+  const flavourCoffees = cartItems.filter((i) => FLAVOUR_ELIGIBLE.includes(i.product.category));
+  const flavourSlots = flavourCoffees.reduce((s, i) => s + i.quantity, 0);
+  const cartCats = new Set(cartItems.map((i) => i.product.category));
+  const inCartIds = new Set(cartItems.map((i) => i.product_id));
+  const upsells = (() => {
+    if (!cartItems.length) return [];
+    const hasDrink = DRINK_CATS.some((c) => cartCats.has(c));
+    const hasFood = FOOD_CATS.some((c) => cartCats.has(c));
+    const hasSweet = ["Pastry", "Sweeter"].some((c) => cartCats.has(c));
+    const order = [];
+    if (!hasSweet) order.push("Pastry", "Sweeter");
+    if (hasFood && !hasDrink) order.push("Hot Coffee", "Cold Coffee", "Fresher", "Teas & More");
+    if (hasDrink && !hasFood) order.push("Sandwich & Wraps", "All Day Bites", "Breakfast");
+    order.push("All Day Bites", "Sandwich & Wraps", "Pastry");
+    const seen = new Set();
+    const out = [];
+    [...new Set(order)].forEach((c) => {
+      products
+        .filter((p) => p.category === c && !inCartIds.has(p.id) && p.is_available !== false)
+        .sort((a, b) => a.price - b.price)
+        .slice(0, 3)
+        .forEach((p) => { if (!seen.has(p.id)) { seen.add(p.id); out.push(p); } });
+    });
+    return out.slice(0, 10);
+  })();
 
   const addToCart = (product) => {
     if (!isDeliveryOpen) { toast.info("Delivery is coming soon — we're not taking orders yet"); return; }
@@ -637,6 +669,58 @@ export default function Delivery() {
                   </div>
                 </div>
               ))}
+              {flavourProducts.length > 0 && flavourCoffees.length > 0 && (
+                <div className="rounded-xl bg-[#FBF7F2] border border-[#E8DED8] p-3">
+                  <div className="text-sm font-semibold text-[#5C4A3A]">☕ Make it yours</div>
+                  <div className="text-[11px] text-[#8B7355] mb-2">Add a flavour shot to your coffee — one per cup ({flavourQty}/{flavourSlots} used)</div>
+                  <div className="flex flex-wrap gap-2">
+                    {flavourProducts.map((fp) => {
+                      const qty = cartItems.find((i) => i.product_id === fp.id)?.quantity || 0;
+                      return (
+                        <div key={fp.id} className={`flex items-center rounded-full border text-xs ${qty ? "border-[#5C4A3A] bg-[#5C4A3A] text-white" : "border-[#D4C4B0] bg-white text-[#5C4A3A]"}`}>
+                          {qty > 0 && (
+                            <button onClick={() => updateQty(fp.id, -1)} className="pl-2 pr-1 py-1.5"><Minus className="h-3 w-3" /></button>
+                          )}
+                          <button
+                            onClick={() => {
+                              if (flavourQty >= flavourSlots) { toast.info("One flavour per coffee — add another coffee for more"); return; }
+                              addToCart(fp);
+                            }}
+                            className={`${qty ? "px-1" : "px-3"} py-1.5 font-medium`}
+                          >
+                            {qty > 0 ? `${qty} × ` : "+ "}{fp.name.replace(/^Flavour Add-On:\s*/i, "")} <span className="opacity-70">Rs. {fp.price}</span>
+                          </button>
+                          {qty > 0 && (
+                            <button onClick={() => addToCart(fp) } disabled={flavourQty >= flavourSlots} className="pr-2 pl-1 py-1.5 disabled:opacity-40"><Plus className="h-3 w-3" /></button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {upsells.length > 0 && (
+                <div>
+                  <div className="text-sm font-semibold text-[#5C4A3A]">Complete your order</div>
+                  <div className="text-[11px] text-[#8B7355] mb-2">Popular with what you picked</div>
+                  <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x" style={{ scrollbarWidth: "none" }}>
+                    {upsells.map((p) => (
+                      <div key={p.id} className="snap-start shrink-0 w-[132px] rounded-xl border border-[#E8DED8] bg-white overflow-hidden">
+                        <div className="relative">
+                          <img src={p.image_url || CATEGORY_IMAGES[p.category] || CATEGORY_IMAGES["Other"]} alt="" className="w-full h-[88px] object-cover bg-[#F5EBE8]" />
+                          <button onClick={() => addToCart(p)} aria-label={`Add ${p.name}`} className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center text-[#5C4A3A]"><Plus className="h-4 w-4" /></button>
+                        </div>
+                        <div className="p-2">
+                          <div className="text-xs font-medium text-[#5C4A3A] leading-tight line-clamp-2 min-h-[30px]">{p.name}</div>
+                          <div className="text-xs text-[#8B7355] mt-0.5">Rs. {p.price}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="border-t border-[#E8DED8] pt-2 space-y-1 text-sm">
                 <div className="flex justify-between text-[#8B7355]"><span>Subtotal</span><span>Rs. {subtotal}</span></div>
                 <div className="flex justify-between text-[#8B7355]"><span>GST ({gstPercent}% — {payMethod === "card_on_delivery" ? "card" : "cash"})</span><span>Rs. {gstAmount}</span></div>
