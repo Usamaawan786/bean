@@ -179,7 +179,7 @@ export default function AdminImageStyle() {
           </Button>
         </div>
 
-        {(missing.length > 0 || Object.values(results).some((r) => r.applied && !r.url === false && false)) && (
+        {missing.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#E8DED8] p-4">
             <div className="flex flex-wrap items-center gap-3 justify-between">
               <div>
