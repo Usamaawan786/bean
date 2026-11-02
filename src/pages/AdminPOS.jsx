@@ -83,7 +83,7 @@ export default function AdminPOS() {
   }, [user, activeTab]);
 
   // Delivery orders waiting for the cashier (drives the tab badge; same cache as the Delivery tab)
-  const { data: deliveryBoard } = useDeliveryBoard(!!user && !!activeShiftOpen);
+  const { data: deliveryBoard } = useDeliveryBoard(!!user);
   const deliveryPending = (deliveryBoard?.orders || []).filter((o) => o.status === "pending").length;
 
   const { data: products = [] } = useQuery({
