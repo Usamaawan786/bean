@@ -21,11 +21,17 @@ const MOST_LIKED_QUERIES = [
 
 const CATEGORY_ORDER = [
   "Breakfast",
+  "Omelettes",
+  "Sweet",
+  "Sandwich & Wraps",
+  "All Day Bites",
   "Hot Coffee",
   "Cold Coffee",
+  "Ice Blended Coffee",
+  "Hot Chocolate",
   "Matcha",
-  "Smoothies",
   "Fresher",
+  "Smoothies",
   "Teas & More",
   "Pastry",
   "Sweeter",
@@ -35,6 +41,12 @@ const CATEGORY_ORDER = [
 
 const CATEGORY_IMAGES = {
   "Breakfast": "https://images.unsplash.com/photo-1533089860892-a7c6f0a886de?w=800&q=80",
+  "Omelettes": "https://images.unsplash.com/photo-1510693206972-df098062cb71?w=800&q=80",
+  "Sweet": "https://images.unsplash.com/photo-1528207776546-365bb710ee93?w=800&q=80",
+  "Sandwich & Wraps": "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&q=80",
+  "All Day Bites": "https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=800&q=80",
+  "Ice Blended Coffee": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=800&q=80",
+  "Hot Chocolate": "https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=800&q=80",
   "Hot Coffee": "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80",
   "Cold Coffee": "https://images.unsplash.com/photo-1461023058943-07fcbe342818?w=800&q=80",
   "Matcha": "https://images.unsplash.com/photo-1515823668373-6c12b5b0389f?w=800&q=80",
@@ -48,7 +60,13 @@ const CATEGORY_IMAGES = {
 };
 
 const CATEGORY_DESCRIPTIONS = {
-  "Breakfast": "Served with Bean's special sauce and your choice of a side salad or potatoes.",
+  "Breakfast": "All egg dishes served with French bread, side salad, sausage and roasted potatoes.",
+  "Omelettes": "All egg dishes served with French bread, side salad, sausage and roasted potatoes.",
+  "Sweet": "Pancakes, waffles and French toast.",
+  "Sandwich & Wraps": "Toasted sandwiches and tortilla chicken wraps.",
+  "All Day Bites": "Wings, fries, fish and crispy bites — all day.",
+  "Ice Blended Coffee": "Frappes and shakes, blended with ice.",
+  "Hot Chocolate": "Thick, rich and topped with marshmallows.",
   "Hot Coffee": "Single-origin beans, roasted locally and pulled to order.",
   "Cold Coffee": "Chilled, smooth and refreshing — perfect for Islamabad afternoons.",
   "Matcha": "Stone-ground ceremonial matcha, whisked the traditional way.",
