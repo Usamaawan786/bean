@@ -6,8 +6,9 @@ import { useMemo, useState } from "react";
 import ImageUploadField from "./ImageUploadField";
 
 const CATEGORIES = [
-  "Breakfast", "Hot Coffee", "Cold Coffee", "Matcha", "Smoothies",
-  "Fresher", "Teas & More", "Pastry", "Sweeter", "Add-Ons", "Other",
+  "Breakfast", "Omelettes", "Sweet", "Sandwich & Wraps", "All Day Bites",
+  "Hot Coffee", "Cold Coffee", "Ice Blended Coffee", "Hot Chocolate", "Matcha",
+  "Fresher", "Smoothies", "Teas & More", "Pastry", "Sweeter", "Add-Ons", "Other",
 ];
 
 // Items tab — inline-edit every menu item: name, description, price, prep time,
