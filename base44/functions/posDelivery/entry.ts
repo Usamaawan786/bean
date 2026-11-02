@@ -21,7 +21,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const STAFF_ROLES = ['admin', 'super_admin', 'manager', 'cashier'];
 // Mirrors src/lib/kitchenOrderUtils.js so the KDS routes items to the same station as POS tickets
-const BAR_CATEGORIES = ['Hot Coffee', 'Cold Coffee', 'Tea', 'Juices', 'Smoothies'];
+const BAR_CATEGORIES = ['Hot Coffee', 'Cold Coffee', 'Ice Blended Coffee', 'Hot Chocolate', 'Matcha', 'Fresher', 'Teas & More', 'Tea', 'Juices', 'Smoothies'];
 
 const norm = (s: any) => String(s || '').trim().toLowerCase();
 
