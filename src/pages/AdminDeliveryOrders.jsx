@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Search, Filter, Truck, Loader2, Bell } from "lucide-react";
 import AdminOrderCard, { STATUS_CONFIG } from "@/components/delivery/AdminOrderCard";
+import { runDeliveryAction } from "@/components/admin/pos/DeliveryOrdersPanel";
 import { toast } from "sonner";
 
 const STATUS_FILTERS = ["all", "pending", "accepted", "preparing", "out_for_delivery", "delivered", "cancelled"];
@@ -95,39 +96,12 @@ export default function AdminDeliveryOrders() {
 
   const handleAction = async (orderId, action, payload) => {
     try {
-      const now = new Date().toISOString();
-      if (action === "accept") {
-        await base44.entities.DeliveryOrder.update(orderId, { status: "accepted", accepted_at: now });
-        notifyCustomer(orderId, "accepted");
-        toast.success("Order accepted");
-      } else if (action === "reject") {
-        await base44.entities.DeliveryOrder.update(orderId, { status: "cancelled", rejection_reason: payload });
-        notifyCustomer(orderId, "rejected");
-        toast.success("Order rejected");
-      } else if (action === "prepare") {
-        await base44.entities.DeliveryOrder.update(orderId, { status: "preparing" });
-        notifyCustomer(orderId, "preparing");
-        toast.success("Order moved to preparing");
-      } else if (action === "assign") {
-        await base44.entities.DeliveryOrder.update(orderId, {
-          status: "out_for_delivery",
-          rider_email: payload.email,
-          rider_name: payload.full_name || payload.email,
-          rider_phone: payload.phone || "",
-        });
-        notifyCustomer(orderId, "rider_picked_up");
-        // Rider-only push (the assigned rider of THIS order, nobody else)
-        base44.functions.invoke("notifyRiderAssigned", { order_id: orderId }).catch((e) => console.error("notifyRiderAssigned failed:", e));
-        toast.success(`Picked up by ${payload.full_name || payload.email}`);
-      } else if (action === "deliver") {
-        await base44.entities.DeliveryOrder.update(orderId, { status: "delivered", delivered_at: now });
-        notifyCustomer(orderId, "delivered");
-        toast.success("Order marked delivered");
-      }
+      // Same server-validated path as the POS Delivery tab (accept also creates the POS ticket + kitchen order)
+      await runDeliveryAction(orderId, action, payload);
       setNewPendingIds((prev) => { const n = new Set(prev); n.delete(orderId); return n; });
       queryClient.invalidateQueries({ queryKey: ["adminDeliveryOrders"] });
     } catch (e) {
-      toast.error("Action failed: " + (e.response?.data?.error || e.message));
+      toast.error("Action failed: " + (e.response?.data?.error || e.message), { duration: 8000 });
     }
   };
 
