@@ -116,6 +116,8 @@ export default function AdminDeliveryOrders() {
           rider_phone: payload.phone || "",
         });
         notifyCustomer(orderId, "rider_picked_up");
+        // Rider-only push (the assigned rider of THIS order, nobody else)
+        base44.functions.invoke("notifyRiderAssigned", { order_id: orderId }).catch((e) => console.error("notifyRiderAssigned failed:", e));
         toast.success(`Picked up by ${payload.full_name || payload.email}`);
       } else if (action === "deliver") {
         await base44.entities.DeliveryOrder.update(orderId, { status: "delivered", delivered_at: now });
