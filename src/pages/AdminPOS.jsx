@@ -14,6 +14,7 @@ import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
 import DeliveryOrdersPanel, { useDeliveryBoard } from "@/components/admin/pos/DeliveryOrdersPanel";
+import { startDeliveryChimeLoop, unlockDeliveryChime } from "@/lib/deliveryChime";
 import ReceiptLookup from "@/components/admin/pos/ReceiptLookup";
 import SalesHistoryTab from "@/components/admin/pos/SalesHistoryTab";
 import RedemptionVerifier from "@/components/admin/pos/RedemptionVerifier";
@@ -85,6 +86,17 @@ export default function AdminPOS() {
   // Delivery orders waiting for the cashier (drives the tab badge; same cache as the Delivery tab)
   const { data: deliveryBoard } = useDeliveryBoard(!!user);
   const deliveryPending = (deliveryBoard?.orders || []).filter((o) => o.status === "pending").length;
+
+  // Slow chime on every POS screen while any delivery order is waiting; stops once accepted or rejected
+  useEffect(() => {
+    const unlock = () => unlockDeliveryChime();
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); };
+  }, []);
+  useEffect(() => {
+    if (deliveryPending > 0) return startDeliveryChimeLoop(4500);
+  }, [deliveryPending > 0]);
 
   const { data: products = [] } = useQuery({
     queryKey: ["store-products-admin"],
