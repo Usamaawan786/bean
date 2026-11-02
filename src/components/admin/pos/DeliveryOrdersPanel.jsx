@@ -77,7 +77,7 @@ export default function DeliveryOrdersPanel() {
   useEffect(() => {
     const ids = new Set(pending.map((o) => o.id));
     if (knownPending.current) {
-      for (const id of ids) if (!knownPending.current.has(id)) { beep(); toast.info("🔔 New delivery order!"); break; }
+      for (const id of ids) if (!knownPending.current.has(id)) { toast.info("🔔 New delivery order!"); break; }
     }
     knownPending.current = ids;
   }, [pendingKey]);
