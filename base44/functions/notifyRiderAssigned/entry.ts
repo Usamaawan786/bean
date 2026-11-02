@@ -13,7 +13,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
  *  - Message text is fixed below. Does not share code paths with marketing pushes.
  */
 
-const STAFF_ROLES = ['admin', 'super_admin', 'manager'];
+const STAFF_ROLES = ['admin', 'super_admin', 'manager', 'cashier'];
 
 async function getAccessToken(serviceAccount: any) {
   const now = Math.floor(Date.now() / 1000);
