@@ -5,8 +5,9 @@ import { Plus, Trash2 } from "lucide-react";
 import ImageUploadField from "./ImageUploadField";
 
 const CATEGORY_ORDER = [
-  "Breakfast", "Hot Coffee", "Cold Coffee", "Matcha", "Smoothies",
-  "Fresher", "Teas & More", "Pastry", "Sweeter", "Add-Ons", "Other",
+  "Breakfast", "Omelettes", "Sweet", "Sandwich & Wraps", "All Day Bites",
+  "Hot Coffee", "Cold Coffee", "Ice Blended Coffee", "Hot Chocolate", "Matcha",
+  "Fresher", "Smoothies", "Teas & More", "Pastry", "Sweeter", "Add-Ons", "Other",
 ];
 
 // Categories tab — edit each category's display name, description and banner image.
