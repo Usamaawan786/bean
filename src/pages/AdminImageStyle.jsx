@@ -11,6 +11,12 @@ const STYLE_PROMPT =
   "pale lilac-grey seamless studio background, soft even daylight, gentle shadow, no table, no cafe scene, no people, no hands, no text, no logo. " +
   "Square 1:1 framing with the dish centred.";
 
+const newItemPrompt = (p) =>
+  `Professional food photograph of: ${p.name}${p.description ? ` (${p.description})` : ""}. ` +
+  "Match the reference image's style exactly: shot from directly above, served on a plain ceramic plate or bowl (drinks in a clear cup or glass on a simple saucer or coaster), " +
+  "pale lilac-grey seamless studio background, soft even daylight, gentle shadow, no table, no cafe scene, no people, no hands, no text, no logo. " +
+  "Square 1:1 framing with the item centred. Make the food look appetising and realistic.";
+
 const isAI = (p) => (p.image_url || "").includes("generated_image");
 const BACKUP_KEY = "bean_image_style_backup";
 const readBackup = () => { try { return JSON.parse(localStorage.getItem(BACKUP_KEY) || "{}"); } catch { return {}; } };
@@ -104,6 +110,32 @@ export default function AdminImageStyle() {
     }
   };
 
+  const missing = products.filter((p) => !p.image_url && p.is_available !== false);
+  const [newRunning, setNewRunning] = useState(false);
+  const generateNew = async (p) => {
+    if (!reference?.image_url) { toast.error("Pick a reference photo first"); return; }
+    patch(p.id, { busy: true, error: null });
+    try {
+      const res = await base44.integrations.Core.GenerateImage({ prompt: newItemPrompt(p), existing_image_urls: [reference.image_url] });
+      if (!res?.url) throw new Error("No image returned");
+      await setImageEverywhere(p, res.url); // no previous photo, so nothing to lose — publish straight away
+      patch(p.id, { busy: false, url: res.url, applied: true });
+    } catch (e) {
+      patch(p.id, { busy: false, error: e?.message || "Generation failed" });
+    }
+  };
+  const generateAllNew = async () => {
+    setNewRunning(true);
+    const todo = missing.filter((p) => !results[p.id]?.applied);
+    for (let i = 0; i < todo.length; i += 2) {
+      await Promise.all(todo.slice(i, i + 2).map(generateNew));
+    }
+    setNewRunning(false);
+    queryClient.invalidateQueries({ queryKey: ["style-products"] });
+    queryClient.invalidateQueries({ queryKey: ["style-delivery-products"] });
+    toast.success("New-item photos are live on Menu, Delivery and POS");
+  };
+
   const targets = products.filter((p) => isAI(p) || backup[p.id]);
   const generateAll = async () => {
     setRunningAll(true);
@@ -146,6 +178,35 @@ export default function AdminImageStyle() {
             Generate all ({targets.filter((p) => isAI(p)).length})
           </Button>
         </div>
+
+        {(missing.length > 0 || Object.values(results).some((r) => r.applied && !r.url === false && false)) && (
+          <div className="bg-white rounded-2xl border border-[#E8DED8] p-4">
+            <div className="flex flex-wrap items-center gap-3 justify-between">
+              <div>
+                <div className="font-semibold text-[#5C4A3A]">New menu items without a photo ({missing.length})</div>
+                <div className="text-xs text-[#8B7355]">Creates a photo in your reference style and publishes it straight away (these items have no photo to replace).</div>
+              </div>
+              <Button onClick={generateAllNew} disabled={newRunning || !reference} className="bg-[#5C4A3A] hover:bg-[#6B5744]">
+                {newRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+                Create all photos
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+              {missing.map((p) => {
+                const r = results[p.id] || {};
+                return (
+                  <div key={p.id} className="text-center">
+                    <div className="aspect-square rounded-xl border border-dashed border-[#D4C4B0] bg-[#F5F1ED] flex items-center justify-center overflow-hidden">
+                      {r.busy ? <Loader2 className="h-5 w-5 animate-spin text-[#8B7355]" /> : r.url ? <img src={r.url} alt="" className="w-full h-full object-cover" /> : <span className="text-[10px] text-[#8B7355]">No photo</span>}
+                    </div>
+                    <div className="text-[11px] text-[#5C4A3A] mt-1 leading-tight">{p.name}</div>
+                    {r.error && <div className="text-[10px] text-red-600">{r.error}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {targets.map((p) => {
