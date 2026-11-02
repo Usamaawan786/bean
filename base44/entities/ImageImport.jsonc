@@ -1,0 +1,97 @@
+{
+  "name": "ImageImport",
+  "properties": {
+    "error": {
+      "type": "string"
+    },
+    "final_url": {
+      "description": "Permanent stored photo URL",
+      "type": "string"
+    },
+    "product_name": {
+      "description": "Exact menu item name",
+      "type": "string"
+    },
+    "source_url": {
+      "description": "Temporary URL of the generated photo",
+      "type": "string"
+    },
+    "status": {
+      "default": "pending",
+      "enum": [
+        "pending",
+        "done",
+        "failed"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "product_name",
+    "source_url"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    }
+  },
+  "type": "object"
+}
