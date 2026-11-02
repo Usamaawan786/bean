@@ -13,6 +13,7 @@ import ProductManager from "@/components/admin/ProductManager";
 import BillGenerator from "@/components/admin/BillGenerator";
 import LaunchDiscountPanel from "@/components/shared/LaunchDiscountPanel";
 import OpenTicketsPanel from "@/components/admin/pos/OpenTicketsPanel";
+import DeliveryOrdersPanel, { useDeliveryBoard } from "@/components/admin/pos/DeliveryOrdersPanel";
 import ReceiptLookup from "@/components/admin/pos/ReceiptLookup";
 import SalesHistoryTab from "@/components/admin/pos/SalesHistoryTab";
 import RedemptionVerifier from "@/components/admin/pos/RedemptionVerifier";
@@ -80,6 +81,10 @@ export default function AdminPOS() {
       setActiveTab("pos");
     }
   }, [user, activeTab]);
+
+  // Delivery orders waiting for the cashier (drives the tab badge; same cache as the Delivery tab)
+  const { data: deliveryBoard } = useDeliveryBoard(!!user && !!activeShiftOpen);
+  const deliveryPending = (deliveryBoard?.orders || []).filter((o) => o.status === "pending").length;
 
   const { data: products = [] } = useQuery({
     queryKey: ["store-products-admin"],
@@ -550,6 +555,12 @@ export default function AdminPOS() {
           <TabsList className="bg-white border border-[#E8DED8]">
             <TabsTrigger value="pos">POS</TabsTrigger>
             <TabsTrigger value="shift">Shift</TabsTrigger>
+            <TabsTrigger value="delivery">
+              🛵 Delivery
+              {deliveryPending > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold animate-pulse">{deliveryPending}</span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="open-tickets">Open Tickets</TabsTrigger>
             <TabsTrigger value="customers">Customers</TabsTrigger>
             <TabsTrigger value="receipts">Receipt Lookup</TabsTrigger>
@@ -912,6 +923,14 @@ export default function AdminPOS() {
                 setViewingClosedShift(closedShift);
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="delivery">
+            {activeShift ? (
+              <DeliveryOrdersPanel />
+            ) : (
+              <ShiftGate user={user} onOpened={() => queryClient.invalidateQueries({ queryKey: ["active-shift"] })} />
+            )}
           </TabsContent>
 
           <TabsContent value="open-tickets">
