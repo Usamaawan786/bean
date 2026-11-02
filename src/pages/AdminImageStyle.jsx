@@ -38,6 +38,21 @@ export default function AdminImageStyle() {
     }).catch(() => window.location.replace("/StaffPortal"));
   }, []);
 
+  // Photos prepared outside the app (ImageImport rows) are stored + attached automatically when an admin opens this page
+  useEffect(() => {
+    if (!user) return;
+    base44.functions.invoke("importPendingPhotos", {})
+      .then((res) => {
+        const n = res?.data?.results?.filter((r) => r.ok).length || 0;
+        if (n > 0) {
+          toast.success(`${n} new menu photos are now live`);
+          queryClient.invalidateQueries({ queryKey: ["style-products"] });
+          queryClient.invalidateQueries({ queryKey: ["style-delivery-products"] });
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["style-products"],
     queryFn: () => base44.entities.StoreProduct.list("name", 300),
