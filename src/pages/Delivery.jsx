@@ -123,6 +123,38 @@ export default function Delivery() {
 
   const myActive = activeOrders.filter((o) => !["delivered", "cancelled"].includes(o.status));
 
+  // Saved addresses = distinct places the customer has previously ordered to (newest first)
+  const savedAddresses = useMemo(() => {
+    const seen = new Set();
+    const list = [];
+    [...activeOrders]
+      .filter((o) => o.status !== "cancelled" && o.delivery_address && o.delivery_lat && o.delivery_lng)
+      .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+      .forEach((o) => {
+        const key = `${Number(o.delivery_lat).toFixed(4)},${Number(o.delivery_lng).toFixed(4)}|${o.delivery_address.trim().toLowerCase()}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        list.push({ key, address: o.delivery_address, lat: o.delivery_lat, lng: o.delivery_lng, phone: o.customer_phone, notes: o.delivery_notes });
+      });
+    return list.slice(0, 5);
+  }, [activeOrders]);
+  const [selectedSaved, setSelectedSaved] = useState(null);
+  const autoPicked = useRef(false);
+
+  const applySaved = (a) => {
+    setSelectedSaved(a.key);
+    setPin({ lat: a.lat, lng: a.lng });
+    setCheckout((c) => ({ ...c, address: a.address, phone: a.phone || c.phone, notes: a.notes || c.notes }));
+  };
+
+  // Pre-select the most recent address the first time checkout opens
+  useEffect(() => {
+    if (view !== "checkout" || autoPicked.current || savedAddresses.length === 0) return;
+    autoPicked.current = true;
+    if (!pin && !checkout.address.trim()) applySaved(savedAddresses[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, savedAddresses]);
+
   useEffect(() => {
     const onScroll = () => setShowFab(window.scrollY > 500);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -570,6 +602,26 @@ export default function Delivery() {
             {/* Delivery Details */}
             <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 space-y-3">
               <h2 className="font-semibold text-[#5C4A3A]">Delivery Details</h2>
+              {savedAddresses.length > 0 && (
+                <div>
+                  <label className="text-xs text-[#8B7355] mb-1 block">Your saved addresses</label>
+                  <div className="space-y-2">
+                    {savedAddresses.map((a) => (
+                      <button
+                        type="button"
+                        key={a.key}
+                        onClick={() => applySaved(a)}
+                        className={`w-full text-left flex items-start gap-2 rounded-xl border p-2.5 text-sm transition-colors ${selectedSaved === a.key ? "border-[#5C4A3A] bg-[#F5F1ED]" : "border-[#E8DED8] bg-white"}`}
+                      >
+                        <MapPin className={`h-4 w-4 mt-0.5 shrink-0 ${selectedSaved === a.key ? "text-[#5C4A3A]" : "text-[#8B7355]"}`} />
+                        <span className="text-[#5C4A3A] line-clamp-2">{a.address}</span>
+                        {selectedSaved === a.key && <Check className="h-4 w-4 ml-auto shrink-0 text-[#5C4A3A]" />}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="text-[11px] text-[#8B7355] mt-1">Or pick a new spot on the map below.</div>
+                </div>
+              )}
               <div>
                 <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Delivery location</label>
                 <LocationPicker
