@@ -29,6 +29,7 @@ export default function AdminImageStyle() {
   const [backup, setBackup] = useState(readBackup());
   const [refId, setRefId] = useState("");
   const [runningAll, setRunningAll] = useState(false);
+  const [applyingAll, setApplyingAll] = useState(false);
 
   useEffect(() => {
     base44.auth.me().then((u) => {
@@ -80,7 +81,7 @@ export default function AdminImageStyle() {
     if (!r?.url) return;
     patch(p.id, { busy: true });
     try {
-      const b = { ...backup };
+      const b = readBackup();
       if (!b[p.id]) b[p.id] = p.image_url; // keep the ORIGINAL so it can always be restored
       setBackup(b); writeBackup(b);
       await setImageEverywhere(p, r.url);
@@ -99,7 +100,7 @@ export default function AdminImageStyle() {
     patch(p.id, { busy: true });
     try {
       await setImageEverywhere(p, orig);
-      const b = { ...backup }; delete b[p.id];
+      const b = readBackup(); delete b[p.id];
       setBackup(b); writeBackup(b);
       patch(p.id, { busy: false, applied: false, url: null });
       queryClient.invalidateQueries({ queryKey: ["style-products"] });
@@ -147,6 +148,16 @@ export default function AdminImageStyle() {
     toast.success("Done generating — review each photo, then tap Use this photo");
   };
 
+  const readyToApply = targets.filter((p) => results[p.id]?.url && !results[p.id]?.applied && !results[p.id]?.busy);
+  const applyAll = async () => {
+    if (!readyToApply.length) { toast.error("No generated photos to publish yet"); return; }
+    setApplyingAll(true);
+    for (const p of readyToApply) {
+      await apply(p);
+    }
+    setApplyingAll(false);
+  };
+
   if (!user || isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#F5F1ED]"><Loader2 className="h-8 w-8 animate-spin text-[#8B7355]" /></div>;
   }
@@ -176,6 +187,10 @@ export default function AdminImageStyle() {
           <Button onClick={generateAll} disabled={runningAll || !reference} className="bg-[#5C4A3A] hover:bg-[#6B5744]">
             {runningAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
             Generate all ({targets.filter((p) => isAI(p)).length})
+          </Button>
+          <Button onClick={applyAll} disabled={applyingAll || !readyToApply.length} className="bg-green-600 hover:bg-green-700">
+            {applyingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+            Use all photos ({readyToApply.length})
           </Button>
         </div>
 
