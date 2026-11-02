@@ -1,5 +1,5 @@
 // Categories that go to bar (drinks)
-const BAR_CATEGORIES = ["Hot Coffee", "Cold Coffee", "Tea", "Juices", "Smoothies"];
+const BAR_CATEGORIES = ["Hot Coffee", "Cold Coffee", "Ice Blended Coffee", "Hot Chocolate", "Matcha", "Fresher", "Teas & More", "Tea", "Juices", "Smoothies"];
 
 // Counter increments stored in localStorage per session
 function getNextOrderNumber() {
