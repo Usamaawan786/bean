@@ -15,12 +15,19 @@ function loadGoogleMaps(key) {
   if (window.google?.maps?.importLibrary) return Promise.resolve();
   if (loaderPromise) return loaderPromise;
   loaderPromise = new Promise((resolve, reject) => {
+    // With loading=async the script's onload fires BEFORE google.maps.importLibrary exists,
+    // so wait for Google's own callback (and poll as a safety net) instead of using onload.
+    window.__beanGmReady = () => resolve();
     const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&language=en&region=PK`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&loading=async&language=en&region=PK&callback=__beanGmReady`;
     s.async = true;
-    s.onload = () => resolve();
     s.onerror = () => { loaderPromise = null; reject(new Error("Google Maps failed to load")); };
     document.head.appendChild(s);
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      if (window.google?.maps?.importLibrary) { clearInterval(iv); resolve(); }
+      else if (Date.now() - t0 > 12000) { clearInterval(iv); loaderPromise = null; reject(new Error("Google Maps load timed out")); }
+    }, 100);
   });
   return loaderPromise;
 }
@@ -52,6 +59,7 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
   const inRange = distance !== null && distance <= radiusKm;
 
   const reverseGeocode = async (lat, lng) => {
+    if (libsRef.current.geoDisabled) return "";
     try {
       // Loaded lazily: if the Geocoding API isn't enabled on the key, only this lookup fails — never the map or search
       if (!libsRef.current.geocoding) libsRef.current.geocoding = await window.google.maps.importLibrary("geocoding");
@@ -59,7 +67,8 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
       const res = await new Geocoder().geocode({ location: { lat, lng } });
       return res?.results?.[0]?.formatted_address || "";
     } catch {
-      return ""; // customer just types the house address
+      libsRef.current.geoDisabled = true; // stop retrying; customer just types the house address
+      return "";
     }
   };
 
@@ -105,7 +114,7 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
         });
         mapRef.current = map;
 
-        new maps.Circle({
+        const areaCircle = new maps.Circle({
           map,
           center: { lat: storeLat, lng: storeLng },
           radius: radiusKm * 1000,
@@ -115,6 +124,9 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
           fillOpacity: 0.1,
           clickable: false,
         });
+
+        // Show the whole delivery circle when no pin has been placed yet
+        if (!value) map.fitBounds(areaCircle.getBounds(), 12);
 
         new maps.Marker({
           map,
