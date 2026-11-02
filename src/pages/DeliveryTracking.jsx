@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Phone, MapPin, Loader2, ArrowLeft, Package } from "lucide-react";
 import OrderProgressBar from "@/components/delivery/OrderProgressBar";
 import TrackingMap from "@/components/delivery/TrackingMap";
+import GoogleTrackingMap from "@/components/delivery/GoogleTrackingMap";
 import { Link } from "react-router-dom";
 
 function haversine(lat1, lng1, lat2, lng2) {
@@ -18,6 +19,13 @@ function haversine(lat1, lng1, lat2, lng2) {
 export default function DeliveryTracking() {
   const orderId = new URLSearchParams(window.location.search).get("order");
   const [showMap, setShowMap] = useState(false);
+  const [googleFailed, setGoogleFailed] = useState(false);
+  const [roadRoute, setRoadRoute] = useState(null); // { minutes, km } from Google Routes when available
+
+  const { data: settings } = useQuery({
+    queryKey: ["deliverySettings"],
+    queryFn: async () => (await base44.entities.DeliverySettings.list())[0],
+  });
 
   const { data: order, isLoading } = useQuery({
     queryKey: ["deliveryOrder", orderId],
@@ -55,8 +63,13 @@ export default function DeliveryTracking() {
 
   const customerPos = order.delivery_lat && order.delivery_lng ? [order.delivery_lat, order.delivery_lng] : null;
   const riderPos = riderLoc ? [riderLoc.latitude, riderLoc.longitude] : null;
-  const distance = customerPos && riderPos ? haversine(...customerPos, ...riderPos) : null;
-  const eta = distance != null ? Math.max(1, Math.round((distance / 20) * 60)) : null;
+  // Real road distance + traffic-aware time from Google when available; otherwise a road-factor estimate
+  // (straight line x 1.4 for road winding, at an average city-bike speed of 18 km/h).
+  const straightKm = customerPos && riderPos ? haversine(...customerPos, ...riderPos) : null;
+  const distance = roadRoute ? roadRoute.km : straightKm != null ? straightKm * 1.4 : null;
+  const eta = roadRoute ? roadRoute.minutes : distance != null ? Math.max(1, Math.round((distance / 18) * 60)) : null;
+  const arrivingNow = distance != null && distance < 0.08;
+  const useGoogle = !!settings?.google_maps_key && !googleFailed;
 
   return (
     <div className="min-h-screen bg-[#F5F1ED] pb-28">
@@ -90,8 +103,8 @@ export default function DeliveryTracking() {
           >
             <div className="text-3xl">🛵</div>
             <div>
-              <div className="font-bold text-lg">{eta} min away</div>
-              <div className="text-purple-100 text-sm">{distance.toFixed(1)} km remaining</div>
+              <div className="font-bold text-lg">{arrivingNow ? "Your rider has arrived" : `${roadRoute ? "" : "~"}${eta} min away`}</div>
+              <div className="text-purple-100 text-sm">{arrivingNow ? "At your delivery location" : `${distance.toFixed(1)} km by road${roadRoute ? " · live traffic" : " (estimate)"}`}</div>
             </div>
           </motion.div>
         )}
@@ -100,7 +113,17 @@ export default function DeliveryTracking() {
         {isTracking && (customerPos || riderPos) ? (
           <div className="bg-white rounded-2xl border border-[#E8DED8] overflow-hidden">
             <div className="h-64 w-full">
-              <TrackingMap customerPos={customerPos} riderPos={riderPos} />
+              {useGoogle ? (
+                <GoogleTrackingMap
+                  apiKey={settings.google_maps_key}
+                  customerPos={customerPos}
+                  riderPos={riderPos}
+                  onRoute={setRoadRoute}
+                  onFail={() => setGoogleFailed(true)}
+                />
+              ) : (
+                <TrackingMap customerPos={customerPos} riderPos={riderPos} />
+              )}
             </div>
           </div>
         ) : isTracking ? (
