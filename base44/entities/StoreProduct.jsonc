@@ -1,31 +1,20 @@
 {
   "name": "StoreProduct",
-  "type": "object",
   "properties": {
-    "name": {
-      "type": "string",
-      "description": "Product name"
-    },
-    "description": {
-      "type": "string",
-      "description": "Product description"
-    },
-    "price": {
-      "type": "number",
-      "description": "Product price in PKR"
-    },
-    "image_url": {
-      "type": "string",
-      "description": "Product image"
-    },
     "category": {
-      "type": "string",
+      "description": "In-store product category",
       "enum": [
         "Breakfast",
+        "Omelettes",
+        "Sweet",
+        "Sandwich & Wraps",
+        "All Day Bites",
         "Pastry",
         "Sweeter",
         "Hot Coffee",
         "Cold Coffee",
+        "Ice Blended Coffee",
+        "Hot Chocolate",
         "Matcha",
         "Add-Ons",
         "Fresher",
@@ -33,23 +22,39 @@
         "Teas & More",
         "Other"
       ],
-      "description": "In-store product category"
+      "type": "string"
+    },
+    "description": {
+      "description": "Product description",
+      "type": "string"
+    },
+    "image_url": {
+      "description": "Product image",
+      "type": "string"
+    },
+    "is_available": {
+      "default": true,
+      "description": "Currently available for sale",
+      "type": "boolean"
+    },
+    "name": {
+      "description": "Product name",
+      "type": "string"
+    },
+    "preparation_time": {
+      "description": "Estimated prep time in minutes",
+      "type": "number"
+    },
+    "price": {
+      "description": "Product price in PKR",
+      "type": "number"
     },
     "size_options": {
-      "type": "array",
+      "description": "Available sizes (e.g., Small, Medium, Large)",
       "items": {
         "type": "string"
       },
-      "description": "Available sizes (e.g., Small, Medium, Large)"
-    },
-    "is_available": {
-      "type": "boolean",
-      "default": true,
-      "description": "Currently available for sale"
-    },
-    "preparation_time": {
-      "type": "number",
-      "description": "Estimated prep time in minutes"
+      "type": "array"
     }
   },
   "required": [
@@ -63,16 +68,17 @@
         "role": "admin"
       }
     },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "read": {},
     "update": {
       "user_condition": {
         "role": "admin"
       }
-    },
-    "delete": {
-      "user_condition": {
-        "role": "admin"
-      }
     }
-  }
+  },
+  "type": "object"
 }
