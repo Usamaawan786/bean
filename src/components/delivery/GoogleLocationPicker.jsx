@@ -128,7 +128,7 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
         // Show the whole delivery circle when no pin has been placed yet
         if (!value) map.fitBounds(areaCircle.getBounds(), 12);
 
-        new maps.Marker({
+        new marker.Marker({
           map,
           position: { lat: storeLat, lng: storeLng },
           label: { text: "☕", fontSize: "20px" },
@@ -136,7 +136,7 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
           clickable: false,
         });
 
-        const pin = new maps.Marker({
+        const pin = new marker.Marker({
           map: value ? map : null,
           position: center,
           draggable: true,
