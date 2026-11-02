@@ -61,6 +61,14 @@ const CATEGORY_DESCRIPTIONS = {
   "Other": "A little something extra.",
 };
 
+// Friendly label + progress for an order card
+const ORDER_STAGE = {
+  pending: { label: "Waiting for Bean to accept", icon: "⏳", pct: 12 },
+  accepted: { label: "Order accepted", icon: "✅", pct: 35 },
+  preparing: { label: "Preparing your order", icon: "☕", pct: 60 },
+  out_for_delivery: { label: "On the way to you", icon: "🛵", pct: 85 },
+};
+
 export default function Delivery() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -345,16 +353,27 @@ export default function Delivery() {
           ) : (
             <div className="text-lg font-bold text-[#7D5A46] tracking-wide">{menuSettings?.brand_name || "Bean"}</div>
           )}
-          <div className="w-6" />
+          <button
+            onClick={() => cart.length > 0 && setView("checkout")}
+            aria-label="View cart"
+            className="relative w-6 h-6 flex items-center justify-center text-[#7D5A46]"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {cart.length > 0 && (
+              <span className="absolute -top-1.5 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-[#5C4A3A] text-white text-[10px] font-bold flex items-center justify-center">
+                {cart.reduce((s, i) => s + i.quantity, 0)}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
       {/* Heading */}
       <div className="bg-[#A87555]">
-        <div className="max-w-2xl mx-auto px-4 pt-5 pb-4 text-center">
-          <h1 className="text-3xl font-bold text-white">Delivery Menu</h1>
+        <div className="max-w-2xl mx-auto px-4 pt-4 pb-3 text-center">
+          <h1 className="text-2xl font-bold text-white">Delivery Menu</h1>
           <p className="text-sm text-white/70 mt-1">{isDeliveryOpen ? "Order your favorite coffee for delivery" : "Our delivery menu — launching soon"}</p>
-          <div className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-100"}`}>
+          <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-100"}`}>
             <span className={`w-2 h-2 rounded-full ${isDeliveryOpen ? "bg-green-400" : "bg-red-400"}`} />
             {isDeliveryOpen ? "Open for orders" : "Coming soon — not taking orders yet"}
           </div>
@@ -370,23 +389,32 @@ export default function Delivery() {
         {/* Active Orders */}
         {myActive.length > 0 && view === "menu" && (
           <div className="max-w-2xl mx-auto px-4 pt-4 space-y-2">
-            <h2 className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide">Your Active Orders</h2>
-            {myActive.map((order) => (
-              <button
-                key={order.id}
-                onClick={() => navigate(`/DeliveryTracking?order=${order.id}`)}
-                className="w-full bg-white rounded-xl border border-[#E8DED8] p-3 flex items-center justify-between hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-center gap-3">
-                  <Package className="h-5 w-5 text-[#8B7355]" />
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-[#5C4A3A]">{order.order_number}</div>
-                    <div className="text-xs text-[#8B7355] capitalize">{order.status.replace(/_/g, " ")}</div>
+            <h2 className="text-xs font-semibold text-white/70 uppercase tracking-wider">Your active order{myActive.length > 1 ? "s" : ""}</h2>
+            {myActive.map((order) => {
+              const stage = ORDER_STAGE[order.status] || ORDER_STAGE.pending;
+              return (
+                <button
+                  key={order.id}
+                  onClick={() => navigate(`/DeliveryTracking?order=${order.id}`)}
+                  className="w-full text-left bg-[#936548] rounded-2xl shadow-md p-3.5 active:scale-[0.99] transition-transform"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center text-xl shrink-0">{stage.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{order.order_number}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse" />
+                      </div>
+                      <div className="text-xs text-white/80 truncate">{stage.label}</div>
+                    </div>
+                    <span className="shrink-0 bg-white text-[#936548] text-xs font-bold rounded-full px-3.5 py-1.5">Track</span>
                   </div>
-                </div>
-                <span className="text-xs text-[#8B7355] font-medium">Track →</span>
-              </button>
-            ))}
+                  <div className="mt-3 h-1.5 rounded-full bg-white/20 overflow-hidden">
+                    <div className="h-full rounded-full bg-white transition-all duration-700" style={{ width: `${stage.pct}%` }} />
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
 
@@ -429,7 +457,7 @@ export default function Delivery() {
                               onClick={() => scrollToCat(s.id)}
                               className="flex flex-col items-center gap-1 shrink-0 active:scale-95 transition-transform"
                             >
-                              <div className={`w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center ${isActive ? "ring-2 ring-white" : "ring-1 ring-white/20"}`}>
+                              <div className={`w-[88px] h-[66px] rounded-xl overflow-hidden flex items-center justify-center transition-all ${isActive ? "ring-2 ring-white" : "ring-1 ring-white/20 opacity-90"}`}>
                                 {s.isMostLiked && !img ? (
                                   <div className="w-full h-full bg-[#936548] flex items-center justify-center">
                                     <Heart className={`h-6 w-6 ${isActive ? "text-white fill-white" : "text-white/70"}`} />
@@ -445,7 +473,7 @@ export default function Delivery() {
                                   </div>
                                 )}
                               </div>
-                              <span className={`text-[11px] max-w-[64px] truncate ${isActive ? "text-white font-medium" : "text-white/60"}`}>
+                              <span className={`text-xs max-w-[88px] truncate ${isActive ? "text-white font-semibold" : "text-white/65"}`}>
                                 {s.label}
                               </span>
                             </button>
