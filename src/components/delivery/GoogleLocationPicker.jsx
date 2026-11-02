@@ -154,6 +154,7 @@ export default function GoogleLocationPicker({ apiKey, storeLat, storeLng, radiu
 
         setReady(true);
       } catch (e) {
+        console.error("[GoogleLocationPicker] falling back to free map:", e);
         if (!cancelled && onFail) onFail();
       }
     })();
