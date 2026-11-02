@@ -45,6 +45,7 @@ const DeliveryTracking = lazy(() => import('./pages/DeliveryTracking'));
 const AdminDeliveryOrders = lazy(() => import('./pages/AdminDeliveryOrders'));
 const AdminDeliveryMenu = lazy(() => import('./pages/AdminDeliveryMenu'));
 const AdminRiders = lazy(() => import('./pages/AdminRiders'));
+const AdminImageStyle = lazy(() => import('./pages/AdminImageStyle'));
 const RiderPortal = lazy(() => import('./pages/RiderPortal'));
 const RewardsSurveillance = lazy(() => import('./pages/RewardsSurveillance'));
 const AdminInvoices = lazy(() => import('./pages/AdminInvoices'));
@@ -124,6 +125,7 @@ function App() {
               <Route path="/AdminDeliveryOrders" element={<AdminDeliveryOrders />} />
               <Route path="/AdminDeliveryMenu" element={<AdminDeliveryMenu />} />
               <Route path="/AdminRiders" element={<AdminRiders />} />
+              <Route path="/AdminImageStyle" element={<AdminImageStyle />} />
               <Route path="/RiderPortal" element={<RiderPortal />} />
               <Route path="/RewardsSurveillance" element={<RewardsSurveillance />} />
               <Route path="/admin-invoices" element={<AdminInvoices />} />
