@@ -14,6 +14,7 @@ const ROLE_CONFIG = {
   admin:       { label: "Admin",       color: "bg-red-100 text-red-700 border-red-200",         icon: "🔴", description: "Full access to all app features & functionality management." },
   manager:     { label: "Manager",     color: "bg-blue-100 text-blue-700 border-blue-200",      icon: "📊", description: "POS + Analytics + Redemptions." },
   cashier:     { label: "Cashier",     color: "bg-green-100 text-green-700 border-green-200",   icon: "🧾", description: "POS terminal access only." },
+  rider:       { label: "Rider",       color: "bg-orange-100 text-orange-700 border-orange-200", icon: "🛵", description: "Delivery rider — sees assigned deliveries and shares live location." },
   user:        { label: "Customer",    color: "bg-gray-100 text-gray-600 border-gray-200",      icon: "👤", description: "Regular app user." },
 };
 
@@ -70,7 +71,7 @@ export default function StaffManagement() {
     refetchInterval: 10000,
   });
 
-  const staffUsers = allUsers.filter(u => ["cashier", "manager", "super_admin", "admin"].includes(u.role));
+  const staffUsers = allUsers.filter(u => ["cashier", "manager", "rider", "super_admin", "admin"].includes(u.role));
   // Also show regular users who were recently invited (so admin can assign their role)
   const pendingUsers = allUsers.filter(u => u.role === "user");
   const roleCounts = staffUsers.reduce((acc, u) => { acc[u.role] = (acc[u.role] || 0) + 1; return acc; }, {});
@@ -181,7 +182,7 @@ export default function StaffManagement() {
             </div>
           </div>
           <div className="flex gap-3 flex-wrap">
-            {["cashier", "manager", "admin", "super_admin"].map(role => (
+            {["cashier", "manager", "rider", "admin", "super_admin"].map(role => (
               <div key={role} className="bg-white/10 rounded-xl px-3 py-2 text-center">
                 <div className="text-lg font-bold">{roleCounts[role] || 0}</div>
                 <div className="text-xs text-white/70">{ROLE_CONFIG[role].label}s</div>
@@ -216,6 +217,7 @@ export default function StaffManagement() {
             >
               <option value="cashier">🧾 Cashier</option>
               <option value="manager">📊 Manager</option>
+              <option value="rider">🛵 Rider</option>
               <option value="admin">🔴 Admin</option>
               {user.role === "super_admin" && <option value="super_admin">👑 Super Admin</option>}
             </select>
@@ -302,6 +304,7 @@ export default function StaffManagement() {
                         >
                           <option value="cashier">🧾 Cashier</option>
                           <option value="manager">📊 Manager</option>
+                          <option value="rider">🛵 Rider</option>
                           <option value="admin">🔴 Admin</option>
                           {user.role === "super_admin" && <option value="super_admin">👑 Super Admin</option>}
                           <option value="user">👤 Remove Staff Access</option>
@@ -337,6 +340,7 @@ export default function StaffManagement() {
                         <option value="" disabled>Assign role…</option>
                         <option value="cashier">🧾 Cashier</option>
                         <option value="manager">📊 Manager</option>
+                        <option value="rider">🛵 Rider</option>
                         <option value="admin">🔴 Admin</option>
                         {user.role === "super_admin" && <option value="super_admin">👑 Super Admin</option>}
                       </select>
@@ -415,7 +419,7 @@ export default function StaffManagement() {
 
         {/* Role descriptions */}
         <div className="grid md:grid-cols-2 gap-3">
-          {["super_admin", "admin", "manager", "cashier"].map(role => {
+          {["super_admin", "admin", "manager", "cashier", "rider"].map(role => {
             const cfg = ROLE_CONFIG[role];
             return (
               <div key={role} className="bg-white rounded-2xl border border-[#E8DED8] p-4">
