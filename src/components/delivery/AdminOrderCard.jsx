@@ -6,6 +6,7 @@ export const STATUS_CONFIG = {
   accepted: { label: "Accepted", cls: "bg-blue-100 text-blue-700 border-blue-300" },
   preparing: { label: "Preparing", cls: "bg-orange-100 text-orange-700 border-orange-300" },
   out_for_delivery: { label: "Out for Delivery", cls: "bg-purple-100 text-purple-700 border-purple-300" },
+  ready_for_pickup: { label: "Ready for Pickup", cls: "bg-teal-100 text-teal-700 border-teal-300" },
   delivered: { label: "Delivered", cls: "bg-green-100 text-green-700 border-green-300" },
   cancelled: { label: "Cancelled", cls: "bg-red-100 text-red-700 border-red-300" },
 };
@@ -15,6 +16,8 @@ export default function AdminOrderCard({ order, riders, onAction, isNew }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+  const isPickup = order.order_type === "pickup";
+  const arriveAt = order.pickup_time ? new Date(order.pickup_time).toLocaleTimeString("en-GB", { timeZone: "Asia/Karachi", hour: "2-digit", minute: "2-digit" }) : null;
   const elapsed = order.placed_at ? Math.round((Date.now() - new Date(order.placed_at).getTime()) / 60000) : 0;
 
   const handleReject = () => {
@@ -30,6 +33,7 @@ export default function AdminOrderCard({ order, riders, onAction, isNew }) {
         <div>
           <span className="font-bold text-sm text-[#5C4A3A]">{order.order_number}</span>
           <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium border ${status.cls}`}>{status.label}</span>
+          <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-semibold ${isPickup ? "bg-teal-600 text-white" : "bg-[#5C4A3A] text-white"}`}>{isPickup ? "🛍 PICKUP" : "🛵 DELIVERY"}</span>
         </div>
         <div className="flex items-center gap-1 text-xs text-[#8B7355]">
           <Clock className="h-3 w-3" />{elapsed}m ago
@@ -39,11 +43,18 @@ export default function AdminOrderCard({ order, riders, onAction, isNew }) {
       <div className="space-y-1 text-sm text-[#5C4A3A]">
         <div className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-[#8B7355]" />{order.customer_name}</div>
         <div className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-[#8B7355]" />{order.customer_phone || "N/A"}</div>
-        <div className="flex items-start gap-1.5"><MapPin className="h-3.5 w-3.5 text-[#8B7355] mt-0.5" /><span className="flex-1">{order.delivery_address}</span></div>
+        {isPickup ? (
+          <div className="flex items-start gap-1.5"><Clock className="h-3.5 w-3.5 text-teal-700 mt-0.5" /><span className="flex-1 font-semibold text-teal-800">Customer arrives ~{arriveAt || "—"}{order.pickup_eta_minutes ? ` (in ${order.pickup_eta_minutes} min)` : ""}</span></div>
+        ) : (
+          <div className="flex items-start gap-1.5"><MapPin className="h-3.5 w-3.5 text-[#8B7355] mt-0.5" /><span className="flex-1">{order.delivery_address}</span></div>
+        )}
+        {order.delivery_notes && <div className="text-xs text-[#8B7355] pl-5">📝 {order.delivery_notes}</div>}
       </div>
 
       <div className={`mt-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold ${order.payment_method === "card_on_delivery" ? "bg-blue-50 text-blue-800 border border-blue-200" : "bg-green-50 text-green-800 border border-green-200"}`}>
-        {order.payment_method === "card_on_delivery" ? "💳 CARD — rider must bring the card machine" : "💵 CASH on delivery"}
+        {isPickup
+          ? (order.payment_method === "card_on_delivery" ? "💳 CARD at the counter" : "💵 CASH at the counter")
+          : (order.payment_method === "card_on_delivery" ? "💳 CARD — rider must bring the card machine" : "💵 CASH on delivery")}
         {order.gst_rate != null && <span className="font-normal"> · GST {order.gst_rate}% = Rs. {order.gst_amount}</span>}
       </div>
 
@@ -54,8 +65,11 @@ export default function AdminOrderCard({ order, riders, onAction, isNew }) {
             <span>Rs. {item.unit_price * item.quantity}</span>
           </div>
         ))}
+        {order.discount_amount > 0 && (
+          <div className="flex justify-between text-green-700"><span>App offer ({order.discount_percent}% off)</span><span>− Rs. {order.discount_amount}</span></div>
+        )}
         <div className="flex justify-between font-bold mt-1 pt-1 border-t border-[#E8DED8]">
-          <span>Total</span>
+          <span>Total {isPickup ? "to collect" : ""}</span>
           <span>Rs. {order.total_amount}</span>
         </div>
       </div>
@@ -107,7 +121,13 @@ export default function AdminOrderCard({ order, riders, onAction, isNew }) {
           {order.status === "accepted" && (
             <button onClick={() => onAction(order.id, "prepare")} className="flex-1 bg-orange-600 text-white text-xs font-medium rounded-lg py-2 hover:bg-orange-700">Start Preparing</button>
           )}
-          {order.status === "preparing" && (
+          {order.status === "preparing" && isPickup && (
+            <button onClick={() => onAction(order.id, "ready")} className="flex-1 bg-teal-600 text-white text-xs font-medium rounded-lg py-2 hover:bg-teal-700">Mark Ready for Pickup</button>
+          )}
+          {order.status === "ready_for_pickup" && (
+            <button onClick={() => onAction(order.id, "pickup_done")} className="flex-1 bg-green-600 text-white text-xs font-medium rounded-lg py-2 hover:bg-green-700">Mark Picked Up</button>
+          )}
+          {order.status === "preparing" && !isPickup && (
             <button onClick={() => setShowRiders(true)} className="flex-1 bg-purple-600 text-white text-xs font-medium rounded-lg py-2 hover:bg-purple-700 flex items-center justify-center gap-1">
               Assign Rider <ChevronDown className="h-3 w-3" />
             </button>
