@@ -1,4 +1,4 @@
-const STEPS = [
+const DELIVERY_STEPS = [
   { key: "pending", label: "Placed", icon: "📝" },
   { key: "accepted", label: "Accepted", icon: "✅" },
   { key: "preparing", label: "Preparing", icon: "☕" },
@@ -6,7 +6,16 @@ const STEPS = [
   { key: "delivered", label: "Delivered", icon: "📦" },
 ];
 
-export default function OrderProgressBar({ status }) {
+const PICKUP_STEPS = [
+  { key: "pending", label: "Placed", icon: "📝" },
+  { key: "accepted", label: "Accepted", icon: "✅" },
+  { key: "preparing", label: "Preparing", icon: "☕" },
+  { key: "ready_for_pickup", label: "Ready", icon: "🛍" },
+  { key: "delivered", label: "Picked up", icon: "📦" },
+];
+
+export default function OrderProgressBar({ status, orderType }) {
+  const STEPS = orderType === "pickup" ? PICKUP_STEPS : DELIVERY_STEPS;
   if (status === "cancelled") {
     return (
       <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-4 text-center font-semibold text-sm">
