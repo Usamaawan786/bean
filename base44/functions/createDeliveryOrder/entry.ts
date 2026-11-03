@@ -63,6 +63,12 @@ export default async function(req) {
       return Response.json({ error: 'Delivery is currently unavailable' }, { status: 400 });
     }
 
+    // Service hours: 8:00 AM to 2:00 AM Pakistan time, enforced here so it can't be bypassed
+    const pkHour = Number(new Intl.DateTimeFormat('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Karachi' }).format(new Date())) % 24;
+    if (!(pkHour >= 8 || pkHour < 2)) {
+      return Response.json({ error: 'Delivery is closed right now. We deliver every day from 8:00 AM to 2:00 AM.' }, { status: 400 });
+    }
+
     // Delivery area check: the pin must be within the allowed radius of the store (server-side, can't be bypassed)
     const storeLat = Number(settings.store_lat ?? 33.5306669);
     const storeLng = Number(settings.store_lng ?? 73.0997785);
