@@ -86,7 +86,9 @@ Deno.serve(async (req) => {
       }
 
       const ticketNumber = `D-${String(order.order_number || order.id).replace(/^DO-/, '')}`;
-      const label = `🛵 ${order.customer_name || 'Delivery'}`;
+      const isPickup = order.order_type === 'pickup';
+      const arriveAt = order.pickup_time ? new Date(order.pickup_time).toLocaleTimeString('en-GB', { timeZone: 'Asia/Karachi', hour: '2-digit', minute: '2-digit' }) : '';
+      const label = `${isPickup ? '🛍' : '🛵'} ${order.customer_name || (isPickup ? 'Pickup' : 'Delivery')}`;
       const payLabel = order.payment_method === 'card_on_delivery' ? 'Card' : 'Cash';
       const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
 
@@ -148,7 +150,7 @@ Deno.serve(async (req) => {
           payment_method: payLabel,
           placed_at: now,
           items_added_at: now,
-          notes: `DELIVERY ${order.order_number}${order.delivery_notes ? ' · ' + order.delivery_notes : ''}`,
+          notes: `${isPickup ? 'PICKUP' + (arriveAt ? ' ~' + arriveAt : '') : 'DELIVERY'} ${order.order_number}${order.delivery_notes ? ' · ' + order.delivery_notes : ''}`,
         });
       }
 
@@ -170,7 +172,15 @@ Deno.serve(async (req) => {
       return Response.json({ success: true });
     }
 
+    if (action === 'ready') {
+      if (order.order_type !== 'pickup') return Response.json({ error: 'Only pickup orders can be marked ready for pickup' }, { status: 400 });
+      const bad = needStatus('preparing'); if (bad) return bad;
+      await sr.DeliveryOrder.update(order.id, { status: 'ready_for_pickup' });
+      return Response.json({ success: true });
+    }
+
     if (action === 'assign') {
+      if (order.order_type === 'pickup') return Response.json({ error: 'Pickup orders do not need a rider' }, { status: 400 });
       const bad = needStatus('preparing'); if (bad) return bad;
       const email = String(rider_email || '').trim().toLowerCase();
       if (!email) return Response.json({ error: 'rider_email is required' }, { status: 400 });
@@ -187,7 +197,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'deliver') {
-      const bad = needStatus('out_for_delivery'); if (bad) return bad;
+      const bad = needStatus(order.order_type === 'pickup' ? 'ready_for_pickup' : 'out_for_delivery'); if (bad) return bad;
       await sr.DeliveryOrder.update(order.id, { status: 'delivered', delivered_at: now });
       return Response.json({ success: true });
     }
