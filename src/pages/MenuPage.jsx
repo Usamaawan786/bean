@@ -116,10 +116,17 @@ export default function MenuPage() {
   }, []);
 
   // FAB visibility
+  // The page scrolls inside its own container (not the window) so nothing is ever visible above the sticky header
+  const pageRef = useRef(null);
   useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 500);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const prevHtml = document.documentElement.style.backgroundColor;
+    const prevBody = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = "#A87555";
+    document.body.style.backgroundColor = "#A87555";
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtml;
+      document.body.style.backgroundColor = prevBody;
+    };
   }, []);
 
   // Build a category thumbnail from the first uploaded product photo in each category
@@ -204,8 +211,10 @@ export default function MenuPage() {
     if (!el) return;
     setActiveCat(catId);
     pendingScroll.current = true;
-    const top = el.getBoundingClientRect().top + window.scrollY - 150;
-    window.scrollTo({ top, behavior: "smooth" });
+    const box = pageRef.current;
+    if (!box) return;
+    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 150;
+    box.scrollTo({ top, behavior: "smooth" });
     setTimeout(() => { pendingScroll.current = false; }, 700);
   }, []);
 
@@ -215,10 +224,15 @@ export default function MenuPage() {
     ? allItems.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     : [];
 
-  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollTop = () => pageRef.current?.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <div className="min-h-screen bg-[#A87555]">
+    <div
+      ref={pageRef}
+      onScroll={(e) => setShowFab(e.currentTarget.scrollTop > 500)}
+      style={{ height: "100dvh" }}
+      className="overflow-y-auto overscroll-y-contain bg-[#A87555]"
+    >
       {/* ── CREAM HEADER STRIP ── */}
       <div className="bg-[#E8DEC8]">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
