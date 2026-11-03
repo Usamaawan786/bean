@@ -55,6 +55,26 @@
       "description": "Minimum order subtotal in PKR required for delivery",
       "type": "number"
     },
+    "offer_discount_percent": {
+      "default": 15,
+      "description": "App offer: percent taken off the food subtotal",
+      "type": "number"
+    },
+    "offer_enabled": {
+      "default": true,
+      "description": "App offer on/off: discount on every order placed through the app",
+      "type": "boolean"
+    },
+    "offer_free_delivery": {
+      "default": true,
+      "description": "App offer: delivery fee waived on delivery orders",
+      "type": "boolean"
+    },
+    "pickup_enabled": {
+      "default": true,
+      "description": "Whether pickup orders are accepted",
+      "type": "boolean"
+    },
     "store_lat": {
       "default": 33.5306669,
       "description": "Bean store latitude (delivery radius center)",
@@ -69,9 +89,22 @@
   "required": [
     "flat_delivery_fee"
   ],
-  "type": "object",
   "rls": {
     "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
       "$or": [
         {
           "user_condition": {
@@ -99,20 +132,7 @@
           }
         }
       ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "super_admin"
-          }
-        }
-      ]
     }
-  }
+  },
+  "type": "object"
 }
