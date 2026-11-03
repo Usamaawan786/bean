@@ -497,11 +497,40 @@ export default function Delivery() {
       {/* Heading */}
       <div className="bg-[#A87555]">
         <div className="max-w-2xl mx-auto px-4 pt-4 pb-3 text-center">
-          <h1 className="text-2xl font-bold text-white">Delivery Menu</h1>
-          <p className="text-sm text-white/70 mt-1">{isDeliveryOpen ? "Order your favorite coffee for delivery" : "Our delivery menu — launching soon"}</p>
-          <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-100"}`}>
-            <span className={`w-2 h-2 rounded-full ${isDeliveryOpen ? "bg-green-400" : "bg-red-400"}`} />
-            {isDeliveryOpen ? "Open for orders" : outOfHours ? "Closed — back at 8:00 AM" : "Coming soon — not taking orders yet"}
+          <h1 className="text-2xl font-bold text-white">{isPickup ? "Order for Pickup" : "Order Delivery"}</h1>
+          <p className="text-sm text-white/70 mt-1">{isPickup ? "Ready when you arrive" : "Fresh from Bean to your door"}</p>
+
+          {pickupAvailable && (
+            <div className="mt-3 inline-flex p-1 rounded-full bg-black/15">
+              {[
+                { id: "delivery", label: "Delivery" },
+                { id: "pickup", label: "Pickup" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setOrderMode(t.id)}
+                  className={`px-6 py-1.5 rounded-full text-sm font-semibold transition-colors ${orderMode === t.id ? "bg-white text-[#7D5A46] shadow" : "text-white/80"}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-3">
+            {isDeliveryOpen ? (
+              offerOn && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/15 text-white">
+                  🎁 {offerPct}% off{!isPickup && freeDelivery ? " + free delivery" : ""} in the app
+                </div>
+              )
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-100">
+                <span className="w-2 h-2 rounded-full bg-red-400" />
+                {outOfHours ? "Closed — back at 8:00 AM" : "Coming soon — not taking orders yet"}
+              </div>
+            )}
           </div>
         </div>
       </div>
