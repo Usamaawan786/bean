@@ -24,6 +24,8 @@ const TEMPLATES: Record<string, { title: string; body: string }> = {
   rider_picked_up: { title: 'Rider on the way', body: 'Your rider has picked up your order and is heading to you.' },
   rider_nearby: { title: 'Rider is almost there', body: 'Your rider is around the corner. Get ready!' },
   delivered: { title: 'Order delivered', body: 'Your order has been delivered. Enjoy your Bean!' },
+  ready_for_pickup: { title: 'Ready for pickup', body: 'Your Bean order is ready. Come and grab it!' },
+  picked_up: { title: 'Order collected', body: 'Thanks for picking up your order. Enjoy your Bean!' },
   rejected: { title: 'Order could not be accepted', body: "Sorry, we couldn't accept your order this time. Please check the app for details." },
 };
 
