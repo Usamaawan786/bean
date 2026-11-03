@@ -182,6 +182,23 @@ export default function DeliveryTracking() {
           </div>
         </div>
 
+        {/* Support */}
+        <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-[#F5EFE6] flex items-center justify-center shrink-0">
+            <Phone className="h-5 w-5 text-[#7D5A46]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide">Need help with your order?</div>
+            <a href="tel:+923035078247" className="block text-lg font-bold text-[#5C4A3A] underline-offset-2 hover:underline">0303 5078247</a>
+          </div>
+          <a
+            href="tel:+923035078247"
+            className="shrink-0 bg-[#5C4A3A] text-white text-sm font-semibold rounded-full px-4 py-2 active:scale-95 transition-transform"
+          >
+            Call
+          </a>
+        </div>
+
         {order.status === "cancelled" && order.rejection_reason && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600">
             <strong>Order cancelled:</strong> {order.rejection_reason}
