@@ -19,12 +19,12 @@
       "type": "string"
     },
     "delivered_at": {
-      "description": "When the order was marked delivered",
+      "description": "When the order was marked delivered / picked up",
       "format": "date-time",
       "type": "string"
     },
     "delivery_address": {
-      "description": "Free-text delivery address",
+      "description": "Free-text delivery address (for pickup orders: the store)",
       "type": "string"
     },
     "delivery_fee": {
@@ -43,12 +43,20 @@
       "description": "Optional delivery instructions from customer",
       "type": "string"
     },
+    "discount_amount": {
+      "description": "App offer discount in PKR",
+      "type": "number"
+    },
+    "discount_percent": {
+      "description": "App offer percent applied (0 if none)",
+      "type": "number"
+    },
     "gst_amount": {
       "description": "GST amount in PKR",
       "type": "number"
     },
     "gst_rate": {
-      "description": "GST percent applied to the food subtotal (17 for cash, 8 for card)",
+      "description": "GST percent applied to the food subtotal after discount",
       "type": "number"
     },
     "items": {
@@ -76,13 +84,31 @@
       "description": "Auto-generated delivery order number, e.g. DO-000001",
       "type": "string"
     },
+    "order_type": {
+      "default": "delivery",
+      "description": "delivery or pickup",
+      "enum": [
+        "delivery",
+        "pickup"
+      ],
+      "type": "string"
+    },
     "payment_method": {
       "default": "cash_on_delivery",
-      "description": "How the customer will pay at the door. card_on_delivery means the rider must bring a card machine.",
+      "description": "How the customer will pay at the door / counter. card_on_delivery means a card machine is needed.",
       "enum": [
         "cash_on_delivery",
         "card_on_delivery"
       ],
+      "type": "string"
+    },
+    "pickup_eta_minutes": {
+      "description": "Pickup only: minutes from order time the customer expects to arrive",
+      "type": "number"
+    },
+    "pickup_time": {
+      "description": "Pickup only: estimated arrival time chosen by the customer",
+      "format": "date-time",
       "type": "string"
     },
     "placed_at": {
@@ -114,17 +140,18 @@
         "accepted",
         "preparing",
         "out_for_delivery",
+        "ready_for_pickup",
         "delivered",
         "cancelled"
       ],
       "type": "string"
     },
     "subtotal": {
-      "description": "Sum of item prices before GST and delivery fee",
+      "description": "Sum of item prices before discount, GST and delivery fee",
       "type": "number"
     },
     "total_amount": {
-      "description": "Final total: subtotal + GST + delivery fee",
+      "description": "Final total: subtotal - discount + GST + delivery fee",
       "type": "number"
     }
   },
@@ -134,7 +161,6 @@
     "items",
     "total_amount"
   ],
-  "type": "object",
   "rls": {
     "create": {
       "$or": [
@@ -151,6 +177,20 @@
         {
           "user_condition": {
             "role": "manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "super_admin"
           }
         }
       ]
@@ -201,20 +241,7 @@
           "data.rider_email": "{{user.email}}"
         }
       ]
-    },
-    "delete": {
-      "$or": [
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        },
-        {
-          "user_condition": {
-            "role": "super_admin"
-          }
-        }
-      ]
     }
-  }
+  },
+  "type": "object"
 }
