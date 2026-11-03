@@ -301,7 +301,19 @@ export default function Delivery() {
   const gstPercent = payMethod === "card_on_delivery" ? (settings?.card_gst_percent ?? 8) : (settings?.cash_gst_percent ?? 16);
   const gstAmount = Math.round((subtotal * gstPercent) / 100);
   const total = subtotal + gstAmount + deliveryFee;
-  const isDeliveryOpen = settings?.is_delivery_open !== false;
+  // Orders are only taken 8:00 AM to 2:00 AM Pakistan time (same rule is enforced on the server)
+  const [clockTick, setClockTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setClockTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+  const inServiceHours = (() => {
+    const h = Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hour12: false, timeZone: "Asia/Karachi" }).format(new Date())) % 24;
+    return h >= 8 || h < 2;
+  })();
+  const switchedOn = settings?.is_delivery_open !== false;
+  const isDeliveryOpen = switchedOn && inServiceHours;
+  const outOfHours = switchedOn && !inServiceHours;
   const storeLat = settings?.store_lat ?? 33.5306669;
   const storeLng = settings?.store_lng ?? 73.0997785;
   const radiusKm = settings?.delivery_radius_km ?? 4;
@@ -402,7 +414,13 @@ export default function Delivery() {
       className={`overflow-y-auto overscroll-y-contain pb-44 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}
     >
       {/* Coming soon notice — shown whenever delivery is switched off in admin settings */}
-      {!isDeliveryOpen && (
+      {outOfHours && (
+        <div className="bg-[#5C4A3A] text-white text-center px-4 py-3">
+          <div className="text-sm font-bold tracking-widest">🌙 DELIVERY IS CLOSED RIGHT NOW</div>
+          <div className="text-xs text-white/80 mt-0.5">We deliver every day from 8:00 AM to 2:00 AM. Have a look at the menu and come back soon!</div>
+        </div>
+      )}
+      {!switchedOn && (
         <div className="bg-[#5C4A3A] text-white text-center px-4 py-3">
           <div className="text-sm font-bold tracking-widest">🛵 DELIVERY — COMING SOON</div>
           <div className="text-xs text-white/80 mt-0.5">We're not taking delivery orders just yet. Have a look at the menu — we'll let you know when we launch!</div>
@@ -440,7 +458,7 @@ export default function Delivery() {
           <p className="text-sm text-white/70 mt-1">{isDeliveryOpen ? "Order your favorite coffee for delivery" : "Our delivery menu — launching soon"}</p>
           <div className={`mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${isDeliveryOpen ? "bg-green-500/20 text-green-100" : "bg-red-500/20 text-red-100"}`}>
             <span className={`w-2 h-2 rounded-full ${isDeliveryOpen ? "bg-green-400" : "bg-red-400"}`} />
-            {isDeliveryOpen ? "Open for orders" : "Coming soon — not taking orders yet"}
+            {isDeliveryOpen ? "Open for orders" : outOfHours ? "Closed — back at 8:00 AM" : "Coming soon — not taking orders yet"}
           </div>
         </div>
       </div>
