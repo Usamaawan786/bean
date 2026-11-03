@@ -5,7 +5,7 @@ import { Truck, Loader2, Bell } from "lucide-react";
 import { toast } from "sonner";
 import AdminOrderCard, { STATUS_CONFIG } from "@/components/delivery/AdminOrderCard";
 
-const FILTERS = ["active", "pending", "accepted", "preparing", "out_for_delivery", "delivered", "cancelled"];
+const FILTERS = ["active", "pending", "accepted", "preparing", "ready_for_pickup", "out_for_delivery", "delivered", "cancelled"];
 
 // Shared by the POS tab badge and the panel (same cache key)
 export function useDeliveryBoard(enabled = true) {
@@ -31,7 +31,7 @@ export async function runDeliveryAction(orderId, action, payload) {
   const body = { order_id: orderId };
   if (action === "reject") { body.action = "reject"; body.reason = payload; }
   else if (action === "assign") { body.action = "assign"; body.rider_email = payload.email; }
-  else body.action = action === "prepare" ? "prepare" : action === "deliver" ? "deliver" : "accept";
+  else body.action = action === "prepare" ? "prepare" : action === "ready" ? "ready" : (action === "deliver" || action === "pickup_done") ? "deliver" : "accept";
   const res = await base44.functions.invoke("posDelivery", body);
   if (res.data?.error) throw new Error(res.data.error);
 
@@ -43,6 +43,8 @@ export async function runDeliveryAction(orderId, action, payload) {
     base44.functions.invoke("notifyRiderAssigned", { order_id: orderId }).catch((e) => console.error("notifyRiderAssigned failed:", e));
     toast.success(`Picked up by ${res.data.rider_name || payload.full_name || payload.email}`);
   } else if (action === "deliver") { notifyCustomer(orderId, "delivered"); toast.success("Order marked delivered"); }
+  else if (action === "ready") { notifyCustomer(orderId, "ready_for_pickup"); toast.success("Marked ready for pickup"); }
+  else if (action === "pickup_done") { notifyCustomer(orderId, "picked_up"); toast.success("Order marked picked up"); }
   return res.data;
 }
 
