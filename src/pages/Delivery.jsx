@@ -85,7 +85,10 @@ const ORDER_STAGE = {
   accepted: { label: "Order accepted", icon: "✅", pct: 35 },
   preparing: { label: "Preparing your order", icon: "☕", pct: 60 },
   out_for_delivery: { label: "On the way to you", icon: "🛵", pct: 85 },
+  ready_for_pickup: { label: "Ready for pickup", icon: "🛍", pct: 90 },
 };
+
+const PICKUP_ETAS = [15, 30, 45, 60];
 
 export default function Delivery() {
   const navigate = useNavigate();
@@ -104,6 +107,9 @@ export default function Delivery() {
   const [pin, setPin] = useState(null); // { lat, lng } chosen on the map
   const [payMethod, setPayMethod] = useState("cash_on_delivery"); // or "card_on_delivery"
   const [placing, setPlacing] = useState(false);
+  const [orderMode, setOrderMode] = useState("delivery"); // "delivery" or "pickup"
+  const [pickupEta, setPickupEta] = useState(30); // minutes until the customer arrives
+  const [pickupName, setPickupName] = useState("");
 
   useEffect(() => {
     base44.auth.me().then(u => {
@@ -297,10 +303,19 @@ export default function Delivery() {
     .map((item) => ({ ...item, product: products.find((p) => p.id === item.product_id) }))
     .filter((i) => i.product);
   const subtotal = cartItems.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const deliveryFee = settings?.flat_delivery_fee || 297;
+  const isPickup = orderMode === "pickup";
+  // App offer: percent off the food subtotal + free delivery (GST is charged on the discounted amount). Server re-calculates everything.
+  const offerOn = settings?.offer_enabled !== false;
+  const offerPct = offerOn ? Number(settings?.offer_discount_percent ?? 15) : 0;
+  const freeDelivery = offerOn && settings?.offer_free_delivery !== false;
+  const discount = Math.round((subtotal * offerPct) / 100);
+  const baseFee = settings?.flat_delivery_fee || 297;
+  const deliveryFee = isPickup || freeDelivery ? 0 : baseFee;
   const gstPercent = payMethod === "card_on_delivery" ? (settings?.card_gst_percent ?? 8) : (settings?.cash_gst_percent ?? 16);
-  const gstAmount = Math.round((subtotal * gstPercent) / 100);
-  const total = subtotal + gstAmount + deliveryFee;
+  const gstAmount = Math.round(((subtotal - discount) * gstPercent) / 100);
+  const total = subtotal - discount + gstAmount + deliveryFee;
+  const pickupAtLabel = new Date(Date.now() + pickupEta * 60000).toLocaleTimeString("en-US", { timeZone: "Asia/Karachi", hour: "numeric", minute: "2-digit" });
+  const pickupAvailable = settings?.pickup_enabled !== false;
   // Orders are only taken 8:00 AM to 2:00 AM Pakistan time (same rule is enforced on the server)
   const [clockTick, setClockTick] = useState(0);
   useEffect(() => {
@@ -370,6 +385,34 @@ export default function Delivery() {
 
   const handlePlaceOrder = async () => {
     if (!user) { toast.error("Please log in to place an order"); return; }
+    if (isPickup) {
+      const nm = (pickupName || user.full_name || "").trim();
+      if (!nm) { toast.error("Please enter your name"); return; }
+      if (!checkout.phone.trim()) { toast.error("Please enter your phone number"); return; }
+      if (!isDeliveryOpen) { toast.error("We're closed right now"); return; }
+      setPlacing(true);
+      try {
+        const res = await base44.functions.invoke("createDeliveryOrder", {
+          order_type: "pickup",
+          items: cart,
+          customer_name: nm,
+          customer_phone: checkout.phone,
+          pickup_eta_minutes: pickupEta,
+          delivery_notes: checkout.notes,
+          payment_method: payMethod,
+        });
+        queryClient.invalidateQueries({ queryKey: ["myDeliveryOrders"] });
+        toast.success("Pickup order placed!");
+        setCart([]);
+        setView("menu");
+        navigate(`/DeliveryTracking?order=${res.data.order.id}`);
+      } catch (e) {
+        toast.error(e.response?.data?.error || "Failed to place order");
+      } finally {
+        setPlacing(false);
+      }
+      return;
+    }
     if (!pin) { toast.error("Please pin your delivery location on the map"); return; }
     if (!pinInRange) { toast.error(`Sorry, we only deliver within ${radiusKm} km of Bean`); return; }
     if (!checkout.address.trim()) { toast.error("Please enter your delivery address"); return; }
