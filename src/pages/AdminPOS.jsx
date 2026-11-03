@@ -95,7 +95,7 @@ export default function AdminPOS() {
     return () => { window.removeEventListener("pointerdown", unlock); window.removeEventListener("keydown", unlock); };
   }, []);
   useEffect(() => {
-    if (deliveryPending > 0) return startDeliveryChimeLoop(4500);
+    if (deliveryPending > 0) return startDeliveryChimeLoop(3200);
   }, [deliveryPending > 0]);
 
   const { data: products = [] } = useQuery({
