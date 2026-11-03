@@ -26,7 +26,8 @@ async function notifyCashiers(base44, order) {
     const sa = JSON.parse(saStr);
     const accessToken = await getFcmAccessToken(sa);
     if (!accessToken) return;
-    const title = 'New delivery order';
+    const isPickupOrder = order.order_type === 'pickup';
+    const title = isPickupOrder ? 'New pickup order' : 'New delivery order';
     const body = 'Order ' + order.order_number + ' just came in. Open Delivery to accept or reject.';
     for (const rec of records) {
       const message = { message: { token: rec.token, notification: { title, body }, data: { deep_link: '/AdminPOS', order_id: String(order.id), status: 'new_delivery_order' },
@@ -47,13 +48,30 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { items, delivery_address, delivery_notes, customer_phone, delivery_lat, delivery_lng, payment_method } = body;
+    const { items, delivery_address, delivery_notes, customer_phone, delivery_lat, delivery_lng, payment_method, customer_name, pickup_eta_minutes } = body;
+    const isPickup = body.order_type === 'pickup';
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return Response.json({ error: 'Your cart is empty' }, { status: 400 });
     }
-    if (!delivery_address || !delivery_address.trim()) {
+    if (items.some((i) => !Number.isInteger(Number(i.quantity)) || Number(i.quantity) < 1 || Number(i.quantity) > 50)) {
+      return Response.json({ error: 'Invalid item quantity' }, { status: 400 });
+    }
+    if (!isPickup && (!delivery_address || !delivery_address.trim())) {
       return Response.json({ error: 'Delivery address is required' }, { status: 400 });
+    }
+    let pickupEta = 0;
+    if (isPickup) {
+      pickupEta = Number(pickup_eta_minutes);
+      if (!Number.isFinite(pickupEta) || pickupEta < 10 || pickupEta > 180) {
+        return Response.json({ error: 'Please choose when you will arrive to pick up' }, { status: 400 });
+      }
+      if (!String(customer_phone || '').trim()) {
+        return Response.json({ error: 'Please enter your phone number' }, { status: 400 });
+      }
+      if (!String(customer_name || '').trim()) {
+        return Response.json({ error: 'Please enter your name' }, { status: 400 });
+      }
     }
 
     // Fetch settings
@@ -61,6 +79,9 @@ export default async function(req) {
     const settings = settingsList[0];
     if (!settings || settings.is_delivery_open === false) {
       return Response.json({ error: 'Delivery is currently unavailable' }, { status: 400 });
+    }
+    if (isPickup && settings.pickup_enabled === false) {
+      return Response.json({ error: 'Pickup is currently unavailable' }, { status: 400 });
     }
 
     // Service hours: 8:00 AM to 2:00 AM Pakistan time, enforced here so it can't be bypassed
@@ -75,6 +96,7 @@ export default async function(req) {
     const radiusKm = Number(settings.delivery_radius_km ?? 4);
     const lat = Number(delivery_lat);
     const lng = Number(delivery_lng);
+    if (!isPickup) {
     if (delivery_lat == null || delivery_lng == null || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
       return Response.json({ error: 'Please pin your delivery location on the map' }, { status: 400 });
     }
@@ -85,6 +107,7 @@ export default async function(req) {
     const distanceKm = 2 * 6371 * Math.asin(Math.sqrt(h));
     if (distanceKm > radiusKm) {
       return Response.json({ error: 'Sorry, your location is outside our delivery area. We deliver within ' + radiusKm + ' km of Bean.' }, { status: 400 });
+    }
     }
 
     // Fetch all available products to validate and get current prices
@@ -115,9 +138,15 @@ export default async function(req) {
     const gstRate = paymentMethod === 'card_on_delivery'
       ? Number(settings.card_gst_percent ?? 8)
       : Number(settings.cash_gst_percent ?? 16);
-    const gstAmount = Math.round(subtotal * gstRate / 100);
-    const deliveryFee = settings.flat_delivery_fee ?? 297;
-    const totalAmount = subtotal + gstAmount + deliveryFee;
+    // App offer: percent off the food subtotal + free delivery. GST is charged on the discounted amount.
+    const offerOn = settings.offer_enabled !== false;
+    const discountPercent = offerOn ? Number(settings.offer_discount_percent ?? 15) : 0;
+    const discountAmount = Math.round(subtotal * discountPercent / 100);
+    const taxable = subtotal - discountAmount;
+    const gstAmount = Math.round(taxable * gstRate / 100);
+    const baseFee = Number(settings.flat_delivery_fee ?? 297);
+    const deliveryFee = isPickup ? 0 : (offerOn && settings.offer_free_delivery !== false ? 0 : baseFee);
+    const totalAmount = taxable + gstAmount + deliveryFee;
 
     // Generate order number using service role (user can't read others' orders)
     const latest = await base44.asServiceRole.entities.DeliveryOrder.list('-created_date', 1);
@@ -133,11 +162,13 @@ export default async function(req) {
     const order = await base44.asServiceRole.entities.DeliveryOrder.create({
       order_number: orderNumber,
       customer_email: user.email,
-      customer_name: user.full_name || user.email,
+      customer_name: String(customer_name || '').trim() || user.full_name || user.email,
       customer_phone: customer_phone || '',
-      delivery_address: delivery_address.trim(),
-      delivery_lat: lat,
-      delivery_lng: lng,
+      order_type: isPickup ? 'pickup' : 'delivery',
+      delivery_address: isPickup ? 'Pickup at Bean, Bahria Town Phase 7, Rawalpindi' : delivery_address.trim(),
+      ...(isPickup ? { pickup_eta_minutes: pickupEta, pickup_time: new Date(Date.now() + pickupEta * 60000).toISOString() } : { delivery_lat: lat, delivery_lng: lng }),
+      discount_percent: discountPercent,
+      discount_amount: discountAmount,
       delivery_notes: (delivery_notes || '').trim(),
       items: orderItems,
       subtotal,
