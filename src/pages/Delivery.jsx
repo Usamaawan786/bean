@@ -181,11 +181,19 @@ export default function Delivery() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, savedAddresses]);
 
+  // The page scrolls inside its own container (not the window) so nothing is ever visible above the sticky header
+  const pageRef = useRef(null);
   useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 500);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const color = view === "menu" ? "#A87555" : "#F5F1ED";
+    const prevHtml = document.documentElement.style.backgroundColor;
+    const prevBody = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = color;
+    document.body.style.backgroundColor = color;
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtml;
+      document.body.style.backgroundColor = prevBody;
+    };
+  }, [view]);
 
   // Order the delivery items exactly like the Menu page orders its items
   // (newest first, by matching name against the Menu list), so grouping,
@@ -228,7 +236,7 @@ export default function Delivery() {
   const searchResults = searching
     ? orderedProducts.filter((p) => p.category !== "Add-Ons" && p.name.toLowerCase().includes(search.toLowerCase()))
     : [];
-  const scrollTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollTop = () => pageRef.current?.scrollTo({ top: 0, behavior: "smooth" });
 
   const categoryImages = useMemo(() => {
     const map = {};
@@ -278,8 +286,10 @@ export default function Delivery() {
     if (!el) return;
     setActiveCat(catId);
     pendingScroll.current = true;
-    const top = el.getBoundingClientRect().top + window.scrollY - 150;
-    window.scrollTo({ top, behavior: "smooth" });
+    const box = pageRef.current;
+    if (!box) return;
+    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 150;
+    box.scrollTo({ top, behavior: "smooth" });
     setTimeout(() => { pendingScroll.current = false; }, 700);
   }, []);
 
@@ -385,7 +395,12 @@ export default function Delivery() {
   }
 
   return (
-    <div className={`min-h-screen pb-44 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}>
+    <div
+      ref={pageRef}
+      onScroll={(e) => setShowFab(e.currentTarget.scrollTop > 500)}
+      style={{ height: "100dvh" }}
+      className={`overflow-y-auto overscroll-y-contain pb-44 ${view === "menu" ? "bg-[#A87555]" : "bg-[#F5F1ED]"}`}
+    >
       {/* Coming soon notice — shown whenever delivery is switched off in admin settings */}
       {!isDeliveryOpen && (
         <div className="bg-[#5C4A3A] text-white text-center px-4 py-3">
