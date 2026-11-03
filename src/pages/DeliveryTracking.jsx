@@ -70,6 +70,8 @@ export default function DeliveryTracking() {
   const eta = roadRoute ? roadRoute.minutes : distance != null ? Math.max(1, Math.round((distance / 18) * 60)) : null;
   const arrivingNow = distance != null && distance < 0.08;
   const useGoogle = !!settings?.google_maps_key && !googleFailed;
+  const isPickup = order.order_type === "pickup";
+  const arriveAt = order.pickup_time ? new Date(order.pickup_time).toLocaleTimeString("en-US", { timeZone: "Asia/Karachi", hour: "numeric", minute: "2-digit" }) : null;
 
   return (
     <div className="min-h-screen bg-[#F5F1ED] pb-28">
@@ -85,14 +87,24 @@ export default function DeliveryTracking() {
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold">Rs. {order.total_amount}</div>
-            <div className="text-white/70 text-xs">{order.payment_method === "card_on_delivery" ? "Card on Delivery" : "Cash on Delivery"}</div>
+            <div className="text-white/70 text-xs">{isPickup ? (order.payment_method === "card_on_delivery" ? "Card at counter" : "Cash at counter") : (order.payment_method === "card_on_delivery" ? "Card on Delivery" : "Cash on Delivery")}</div>
           </div>
         </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
         {/* Progress Bar */}
-        <OrderProgressBar status={order.status} />
+        <OrderProgressBar status={order.status} orderType={order.order_type} />
+
+        {isPickup && order.status !== "cancelled" && order.status !== "delivered" && (
+          <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-2xl p-4 flex items-center gap-3">
+            <div className="text-3xl">🛍</div>
+            <div>
+              <div className="font-bold text-lg">{order.status === "ready_for_pickup" ? "Your order is ready!" : `Pickup around ${arriveAt || "your chosen time"}`}</div>
+              <div className="text-teal-100 text-sm">{order.status === "ready_for_pickup" ? "Come to the counter and give your order number" : "We'll have it ready for you"}</div>
+            </div>
+          </div>
+        )}
 
         {/* ETA Banner */}
         {isTracking && eta != null && (
@@ -151,12 +163,12 @@ export default function DeliveryTracking() {
           </div>
         )}
 
-        {/* Delivery Address */}
+        {/* Delivery Address / Pickup location */}
         <div className="bg-white rounded-2xl border border-[#E8DED8] p-4">
           <div className="flex items-start gap-2">
             <MapPin className="h-4 w-4 text-[#8B7355] mt-0.5" />
             <div>
-              <div className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1">Delivery Address</div>
+              <div className="text-xs font-semibold text-[#8B7355] uppercase tracking-wide mb-1">{isPickup ? "Pickup Location" : "Delivery Address"}</div>
               <p className="text-sm text-[#5C4A3A]">{order.delivery_address}</p>
               {order.delivery_notes && <p className="text-xs text-[#8B7355] mt-1">📝 {order.delivery_notes}</p>}
             </div>
@@ -177,7 +189,8 @@ export default function DeliveryTracking() {
           <div className="border-t border-[#E8DED8] mt-2 pt-2 space-y-1 text-sm">
             <div className="flex justify-between text-[#8B7355]"><span>Subtotal</span><span>Rs. {order.subtotal}</span></div>
             {order.gst_amount != null && <div className="flex justify-between text-[#8B7355]"><span>GST ({order.gst_rate}%)</span><span>Rs. {order.gst_amount}</span></div>}
-            <div className="flex justify-between text-[#8B7355]"><span>Delivery Fee</span><span>Rs. {order.delivery_fee}</span></div>
+            {order.discount_amount > 0 && <div className="flex justify-between text-green-700"><span>App offer ({order.discount_percent}% off)</span><span>− Rs. {order.discount_amount}</span></div>}
+            {!isPickup && <div className="flex justify-between text-[#8B7355]"><span>Delivery Fee</span><span>{order.delivery_fee > 0 ? `Rs. ${order.delivery_fee}` : "FREE"}</span></div>}
             <div className="flex justify-between font-bold text-[#5C4A3A]"><span>Total</span><span>Rs. {order.total_amount}</span></div>
           </div>
         </div>
