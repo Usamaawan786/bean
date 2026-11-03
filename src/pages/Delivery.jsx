@@ -756,7 +756,7 @@ export default function Delivery() {
                 ))}
               </div>
               <div className="text-[11px] text-[#8B7355] -mt-1">
-                Pay at the door. {payMethod === "card_on_delivery" ? "Our rider brings a card machine." : "Please keep cash ready."}
+                {isPickup ? "Pay at the counter when you collect." : `Pay at the door. ${payMethod === "card_on_delivery" ? "Our rider brings a card machine." : "Please keep cash ready."}`}
               </div>
               {cartItems.map((item) => (
                 <div key={item.product_id} className="flex items-center justify-between">
@@ -828,16 +828,52 @@ export default function Delivery() {
 
               <div className="border-t border-[#E8DED8] pt-2 space-y-1 text-sm">
                 <div className="flex justify-between text-[#8B7355]"><span>Subtotal</span><span>Rs. {subtotal}</span></div>
+                {discount > 0 && <div className="flex justify-between text-green-700 font-medium"><span>App offer ({offerPct}% off)</span><span>− Rs. {discount}</span></div>}
                 <div className="flex justify-between text-[#8B7355]"><span>GST ({gstPercent}% — {payMethod === "card_on_delivery" ? "card" : "cash"})</span><span>Rs. {gstAmount}</span></div>
-                <div className="flex justify-between text-[#8B7355]"><span>Delivery Fee</span><span>Rs. {deliveryFee}</span></div>
+                {!isPickup && (
+                  <div className="flex justify-between text-[#8B7355]"><span>Delivery Fee</span><span>{deliveryFee > 0 ? `Rs. ${deliveryFee}` : <span className="text-green-700 font-semibold">FREE</span>}</span></div>
+                )}
                 <div className="flex justify-between font-bold text-[#5C4A3A]"><span>Total</span><span>Rs. {total}</span></div>
               </div>
             </div>
 
             {/* Delivery Details */}
             <div className="bg-white rounded-2xl border border-[#E8DED8] p-4 space-y-3">
-              <h2 className="font-semibold text-[#5C4A3A]">Delivery Details</h2>
-              {savedAddresses.length > 0 && (
+              <h2 className="font-semibold text-[#5C4A3A]">{isPickup ? "Pickup Details" : "Delivery Details"}</h2>
+              {isPickup && (
+                <>
+                  <div className="flex items-start gap-2 rounded-xl bg-[#F5F1ED] p-3 text-sm text-[#5C4A3A]">
+                    <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-[#8B7355]" />
+                    <span>Pick up at <strong>Bean</strong>, Bahria Town Phase 7, Rawalpindi</span>
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#8B7355] mb-1 block">Your name</label>
+                    <input
+                      value={pickupName || user?.full_name || ""}
+                      onChange={(e) => setPickupName(e.target.value)}
+                      placeholder="Name for the order"
+                      className="w-full border border-[#D4C4B0] rounded-lg p-2 text-sm text-[#5C4A3A]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-[#8B7355] mb-1 block">When will you arrive?</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {PICKUP_ETAS.map((m) => (
+                        <button
+                          type="button"
+                          key={m}
+                          onClick={() => setPickupEta(m)}
+                          className={`rounded-xl border py-2 text-sm font-semibold transition-colors ${pickupEta === m ? "border-[#5C4A3A] bg-[#5C4A3A] text-white" : "border-[#D4C4B0] bg-white text-[#5C4A3A]"}`}
+                        >
+                          {m} min
+                        </button>
+                      ))}
+                    </div>
+                    <div className="text-[11px] text-[#8B7355] mt-1.5">Estimated arrival around <strong>{pickupAtLabel}</strong>. We'll have it ready.</div>
+                  </div>
+                </>
+              )}
+              {!isPickup && savedAddresses.length > 0 && (
                 <div>
                   <label className="text-xs text-[#8B7355] mb-1 block">Your saved addresses</label>
                   <div className="space-y-2">
@@ -857,6 +893,7 @@ export default function Delivery() {
                   <div className="text-[11px] text-[#8B7355] mt-1">Or pick a new spot on the map below.</div>
                 </div>
               )}
+              {!isPickup && (<>
               <div>
                 <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><MapPin className="h-3 w-3" /> Delivery location</label>
                 <LocationPicker
@@ -879,6 +916,7 @@ export default function Delivery() {
                   className="w-full border border-[#D4C4B0] rounded-lg p-2 text-sm text-[#5C4A3A]"
                 />
               </div>
+              </>)}
               <div>
                 <label className="text-xs text-[#8B7355] flex items-center gap-1 mb-1"><Phone className="h-3 w-3" /> Phone Number</label>
                 <input
@@ -889,7 +927,7 @@ export default function Delivery() {
                 />
               </div>
               <div>
-                <label className="text-xs text-[#8B7355] mb-1 block">Delivery Notes (optional)</label>
+                <label className="text-xs text-[#8B7355] mb-1 block">{isPickup ? "Notes (optional)" : "Delivery Notes (optional)"}</label>
                 <input
                   value={checkout.notes}
                   onChange={(e) => setCheckout({ ...checkout, notes: e.target.value })}
@@ -901,7 +939,7 @@ export default function Delivery() {
 
             <button
               onClick={handlePlaceOrder}
-              disabled={placing || !isDeliveryOpen || !pinInRange}
+              disabled={placing || !isDeliveryOpen || (!isPickup && !pinInRange)}
               className="w-full bg-[#5C4A3A] text-white font-semibold py-3.5 rounded-xl hover:bg-[#6B5744] disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {placing ? <><Loader2 className="h-4 w-4 animate-spin" /> Placing Order...</> : <><Check className="h-4 w-4" /> Place Order — Rs. {total}</>}
