@@ -7,7 +7,7 @@ import AdminOrderCard, { STATUS_CONFIG } from "@/components/delivery/AdminOrderC
 import { runDeliveryAction } from "@/components/admin/pos/DeliveryOrdersPanel";
 import { toast } from "sonner";
 
-const STATUS_FILTERS = ["all", "pending", "accepted", "preparing", "out_for_delivery", "delivered", "cancelled"];
+const STATUS_FILTERS = ["all", "pending", "accepted", "preparing", "ready_for_pickup", "out_for_delivery", "delivered", "cancelled"];
 
 export default function AdminDeliveryOrders() {
   const queryClient = useQueryClient();
