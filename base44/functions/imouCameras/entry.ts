@@ -16,7 +16,14 @@ const CAMERAS = [
   { id: '74FD1BFPBV6E19F', name: 'Outdoor Lawn', zone: 'Outdoor' },
 ];
 
-const BASES = ['https://openapi-sg.easy4ip.com', 'https://openapi-fk.easy4ip.com', 'https://openapi-or.easy4ip.com'];
+// Regional gateways (data center comes from Console → My information) plus the
+// legacy global gateway used by apps created on the old easy4ip developer portal.
+const BASES = [
+  'https://openapi-sg.easy4ip.com',
+  'https://openapi-fk.easy4ip.com',
+  'https://openapi-or.easy4ip.com',
+  'https://openapi.easy4ip.com',
+];
 
 function hex(buf: ArrayBuffer) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -44,18 +51,17 @@ async function call(base: string, path: string, params: Record<string, unknown>,
 }
 
 async function getSession(appId: string, appSecret: string) {
-  const bases = BASES;
-  let last: any = null;
-  for (const base of bases) {
+  const failures: string[] = [];
+  for (const base of BASES) {
     try {
       const r = await call(base, 'accessToken', {}, appId, appSecret);
       if (r.code === '0' && r.data?.accessToken) return { base, token: r.data.accessToken as string };
-      last = r;
+      failures.push(`${base.replace('https://', '').replace('.easy4ip.com', '')}: ${r.code} ${r.msg ?? ''}`.trim());
     } catch (e) {
-      last = { code: 'NETWORK', msg: String(e) };
+      failures.push(`${base.replace('https://', '')}: NETWORK ${String(e).slice(0, 60)}`);
     }
   }
-  throw new Error(`Imou sign-in failed: ${last?.code} ${last?.msg}`);
+  throw new Error(`Imou sign-in failed on every gateway → ${failures.join(' | ')}`);
 }
 
 Deno.serve(async (req) => {
@@ -71,6 +77,15 @@ Deno.serve(async (req) => {
     const appSecret = Deno.env.get('IMOU_APP_SECRET');
     if (!appId || !appSecret) {
       return Response.json({ error: 'not_configured', message: 'Imou secrets are not set yet (IMOU_APP_ID, IMOU_APP_SECRET).' }, { status: 200 });
+    }
+
+    // Guard against the usual paste mistakes (spaces / line breaks / values swapped).
+    const looksValid = (v: string) => v.length >= 16 && v.length <= 64 && !/\s/.test(v) && !v.includes('@');
+    if (!looksValid(appId) || !looksValid(appSecret) || appId === appSecret) {
+      return Response.json({
+        error: 'invalid_credential_format',
+        message: 'The saved Imou credentials do not look like an AppId + AppSecret pair. Re-copy them from Console → My Apps → App Info (no spaces, no line breaks, each value in its own field).',
+      }, { status: 200 });
     }
 
     const body = await req.json().catch(() => ({}));
