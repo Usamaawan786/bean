@@ -61,6 +61,7 @@ const ROLE_FEATURES = {
     { icon: Bike, label: "Riders", desc: "Manage riders & assignments", link: "/AdminRiders", color: "from-teal-600 to-teal-700" },
     { icon: Users, label: "Staff Management", desc: "Invite & manage team access", link: "/StaffManagement", color: "from-purple-600 to-purple-700" },
     { icon: Shield, label: "Staff Scrutiny", desc: "Audit trail, fraud detection & staff performance", link: "/AdminStaffScrutiny", color: "from-red-700 to-red-900" },
+    { icon: Shield, label: "Cameras", desc: "Cafe camera status & snapshots", link: "/AdminCameras", color: "from-slate-700 to-slate-900" },
     { icon: Ticket, label: "Discount Vouchers", desc: "Issue & verify single-use vouchers", link: "/DiscountVouchers", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: Ticket, label: "Discount Voucher Page", desc: "Download & print the card designs", link: "/DiscountVoucherPage", color: "from-[#A08868] to-[#6B5744]" },
     { icon: Landmark, label: "PRA Tax Report", desc: "Generate & download sales tax reports for PRA", link: "/AdminPraReport", color: "from-stone-600 to-stone-800" },
