@@ -79,12 +79,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'not_configured', message: 'Imou secrets are not set yet (IMOU_APP_ID, IMOU_APP_SECRET).' }, { status: 200 });
     }
 
-    // Guard against the usual paste mistakes (spaces / line breaks / values swapped).
-    const looksValid = (v: string) => v.length >= 16 && v.length <= 64 && !/\s/.test(v) && !v.includes('@');
-    if (!looksValid(appId) || !looksValid(appSecret) || appId === appSecret) {
+    // Guard against the usual paste mistakes (spaces / line breaks / swapped fields).
+    // Only shape is reported back (length + flags), never the credential values.
+    const broken = (v: string) => /\s/.test(v) || v.includes('@') || v.length < 8 || v.length > 200;
+    if (broken(appId) || broken(appSecret) || appId === appSecret) {
+      const shape = (v: string) => `${v.length} chars${/\s/.test(v) ? ', contains spaces/line breaks' : ''}${v.includes('@') ? ', looks like an email' : ''}`;
       return Response.json({
         error: 'invalid_credential_format',
         message: 'The saved Imou credentials do not look like an AppId + AppSecret pair. Re-copy them from Console → My Apps → App Info (no spaces, no line breaks, each value in its own field).',
+        shape: { app_id: shape(appId), app_secret: shape(appSecret), identical: appId === appSecret },
       }, { status: 200 });
     }
 
