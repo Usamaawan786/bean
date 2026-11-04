@@ -43,6 +43,7 @@ const MenuPage = lazy(() => import('./pages/MenuPage'));
 const Delivery = lazy(() => import('./pages/Delivery'));
 const DeliveryTracking = lazy(() => import('./pages/DeliveryTracking'));
 const AdminDeliveryOrders = lazy(() => import('./pages/AdminDeliveryOrders'));
+const AdminCameras = lazy(() => import('./pages/AdminCameras'));
 const AdminDeliveryMenu = lazy(() => import('./pages/AdminDeliveryMenu'));
 const AdminRiders = lazy(() => import('./pages/AdminRiders'));
 const AdminImageStyle = lazy(() => import('./pages/AdminImageStyle'));
@@ -123,6 +124,7 @@ function App() {
               <Route path="/Delivery" element={<LayoutWrapper currentPageName="Delivery"><Delivery /></LayoutWrapper>} />
               <Route path="/DeliveryTracking" element={<LayoutWrapper currentPageName="DeliveryTracking"><DeliveryTracking /></LayoutWrapper>} />
               <Route path="/AdminDeliveryOrders" element={<AdminDeliveryOrders />} />
+              <Route path="/AdminCameras" element={<AdminCameras />} />
               <Route path="/AdminDeliveryMenu" element={<AdminDeliveryMenu />} />
               <Route path="/AdminRiders" element={<AdminRiders />} />
               <Route path="/AdminImageStyle" element={<AdminImageStyle />} />
