@@ -18,19 +18,26 @@ const CAMERAS = [
 
 const BASES = ['https://openapi-sg.easy4ip.com', 'https://openapi-fk.easy4ip.com', 'https://openapi-or.easy4ip.com'];
 
-async function md5(s: string) {
-  const buf = await crypto.subtle.digest('MD5', new TextEncoder().encode(s));
+function hex(buf: ArrayBuffer) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// password = lowercase hex SHA-256(appSecret); sign = Base64(HMAC-SHA256(source, password))
+async function makeSign(time: number, nonce: string, appSecret: string) {
+  const password = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(appSecret)));
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`time:${time},nonce:${nonce},appSecret:${appSecret}`));
+  return btoa(String.fromCharCode(...new Uint8Array(sig)));
 }
 
 async function call(base: string, path: string, params: Record<string, unknown>, appId: string, appSecret: string) {
   const time = Math.round(Date.now() / 1000);
   const nonce = crypto.randomUUID().replace(/-/g, '');
-  const sign = await md5(`time:${time},nonce:${nonce},appSecret:${appSecret}`);
+  const sign = await makeSign(time, nonce, appSecret);
   const res = await fetch(`${base}/openapi/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ system: { ver: '1.0', appId, sign, time, nonce }, id: String(Math.floor(Math.random() * 1e6)), params }),
+    body: JSON.stringify({ system: { ver: '1.0', appId, sign, time, nonce }, id: crypto.randomUUID(), params }),
   });
   const json = await res.json();
   return json?.result ?? { code: 'HTTP_' + res.status, msg: 'bad response' };
