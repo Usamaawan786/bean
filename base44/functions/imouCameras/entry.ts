@@ -1,0 +1,99 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+
+// Read-only Imou Life integration. Credentials come from app secrets
+// IMOU_APP_ID / IMOU_APP_SECRET (optionally IMOU_BASE_URL). Never hard-code them.
+
+// Only the 9 cafe cameras. The personal "Home" camera (B9715BEPCG75BBB) is deliberately excluded.
+const CAMERAS = [
+  { id: '128FFBKPSFA261A', name: 'Till', zone: 'Counter' },
+  { id: '236BCCAPSF95A37', name: 'Indoor Entry', zone: 'Indoor' },
+  { id: '236BCCAPSFCDA87', name: 'Indoor Takeaway', zone: 'Indoor' },
+  { id: '236BCCAPSF820A1', name: 'Coffee & Bar Station', zone: 'Service' },
+  { id: '236BCCAPSF8DC17', name: 'Kitchen 1', zone: 'Kitchen' },
+  { id: '236BCCAPSF87FDB', name: 'Kitchen 2', zone: 'Kitchen' },
+  { id: '236BCCAPSF593AC', name: 'Small Kitchen', zone: 'Kitchen' },
+  { id: '74FD1BFPBVC0ABA', name: 'Outer Takeaway', zone: 'Outdoor' },
+  { id: '74FD1BFPBV6E19F', name: 'Outdoor Lawn', zone: 'Outdoor' },
+];
+
+const BASES = ['https://openapi-sg.easy4ip.com', 'https://openapi-fk.easy4ip.com', 'https://openapi-or.easy4ip.com'];
+
+async function md5(s: string) {
+  const buf = await crypto.subtle.digest('MD5', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function call(base: string, path: string, params: Record<string, unknown>, appId: string, appSecret: string) {
+  const time = Math.round(Date.now() / 1000);
+  const nonce = crypto.randomUUID().replace(/-/g, '');
+  const sign = await md5(`time:${time},nonce:${nonce},appSecret:${appSecret}`);
+  const res = await fetch(`${base}/openapi/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: { ver: '1.0', appId, sign, time, nonce }, id: String(Math.floor(Math.random() * 1e6)), params }),
+  });
+  const json = await res.json();
+  return json?.result ?? { code: 'HTTP_' + res.status, msg: 'bad response' };
+}
+
+async function getSession(appId: string, appSecret: string) {
+  const custom = Deno.env.get('IMOU_BASE_URL');
+  const bases = custom ? [custom.replace(/\/$/, '')] : BASES;
+  let last: any = null;
+  for (const base of bases) {
+    try {
+      const r = await call(base, 'accessToken', {}, appId, appSecret);
+      if (r.code === '0' && r.data?.accessToken) return { base, token: r.data.accessToken as string };
+      last = r;
+    } catch (e) {
+      last = { code: 'NETWORK', msg: String(e) };
+    }
+  }
+  throw new Error(`Imou sign-in failed: ${last?.code} ${last?.msg}`);
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!['admin', 'super_admin', 'manager'].includes(user.role)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const appId = Deno.env.get('IMOU_APP_ID');
+    const appSecret = Deno.env.get('IMOU_APP_SECRET');
+    if (!appId || !appSecret) {
+      return Response.json({ error: 'not_configured', message: 'Imou secrets are not set yet (IMOU_APP_ID, IMOU_APP_SECRET).' }, { status: 200 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const action = body.action || 'list';
+    const { base, token } = await getSession(appId, appSecret);
+
+    if (action === 'list') {
+      const cameras = await Promise.all(CAMERAS.map(async (c) => {
+        try {
+          const r = await call(base, 'deviceOnline', { token, deviceId: c.id }, appId, appSecret);
+          const online = r.code === '0' && (String(r.data?.onLine) === '1' || r.data?.onLine === true);
+          return { ...c, online, error: r.code === '0' ? null : `${r.code} ${r.msg}` };
+        } catch (e) {
+          return { ...c, online: false, error: String(e) };
+        }
+      }));
+      return Response.json({ cameras });
+    }
+
+    if (action === 'snapshot') {
+      const cam = CAMERAS.find((c) => c.id === body.deviceId);
+      if (!cam) return Response.json({ error: 'Unknown camera' }, { status: 400 });
+      const r = await call(base, 'setDeviceSnapEnhanced', { token, deviceId: cam.id, channelId: '0' }, appId, appSecret);
+      if (r.code !== '0') return Response.json({ error: `${r.code} ${r.msg}` }, { status: 200 });
+      return Response.json({ url: r.data?.url, camera: cam.name });
+    }
+
+    return Response.json({ error: 'Unknown action' }, { status: 400 });
+  } catch (e) {
+    return Response.json({ error: String(e?.message || e) }, { status: 500 });
+  }
+});
