@@ -37,8 +37,7 @@ async function call(base: string, path: string, params: Record<string, unknown>,
 }
 
 async function getSession(appId: string, appSecret: string) {
-  const custom = Deno.env.get('IMOU_BASE_URL');
-  const bases = custom ? [custom.replace(/\/$/, '')] : BASES;
+  const bases = BASES;
   let last: any = null;
   for (const base of bases) {
     try {
