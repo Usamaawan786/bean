@@ -73,15 +73,16 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const appId = Deno.env.get('IMOU_APP_ID');
-    const appSecret = Deno.env.get('IMOU_APP_SECRET');
+    // Trim stray whitespace / line breaks picked up when the values were pasted.
+    const appId = (Deno.env.get('IMOU_APP_ID') || '').trim();
+    const appSecret = (Deno.env.get('IMOU_APP_SECRET') || '').trim();
     if (!appId || !appSecret) {
       return Response.json({ error: 'not_configured', message: 'Imou secrets are not set yet (IMOU_APP_ID, IMOU_APP_SECRET).' }, { status: 200 });
     }
 
     // Guard against the usual paste mistakes (spaces / line breaks / swapped fields).
     // Only shape is reported back (length + flags), never the credential values.
-    const broken = (v: string) => /\s/.test(v) || v.includes('@') || v.length < 8 || v.length > 200;
+    const broken = (v: string) => v.includes('@') || v.length < 8 || v.length > 200;
     if (broken(appId) || broken(appSecret) || appId === appSecret) {
       const shape = (v: string) => `${v.length} chars${/\s/.test(v) ? ', contains spaces/line breaks' : ''}${v.includes('@') ? ', looks like an email' : ''}`;
       return Response.json({
