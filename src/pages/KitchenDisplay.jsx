@@ -303,7 +303,7 @@ export default function KitchenDisplay() {
     // reconnect (network blip / tab refocus), which re-adds already-completed
     // orders as "active". Re-fetching the authoritative pending/in_progress
     // set every 30s clears any ghost orders and recovers from missed events.
-    const reconcile = setInterval(loadOrders, 30000);
+    const reconcile = setInterval(loadOrders, 5000);
 
     const sortByPriority = (arr) => arr.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
