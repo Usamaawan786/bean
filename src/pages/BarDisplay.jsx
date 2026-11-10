@@ -156,9 +156,9 @@ export default function BarDisplay() {
 
   const loadOrders = async () => {
     const data = await base44.entities.KitchenOrder.filter(
-      { bar_status: ["pending", "in_progress"] }, "-placed_at", 50
+      { $or: [{ bar_status: "pending" }, { bar_status: "in_progress" }] }, "-created_date", 50
     );
-    setOrders(sortOrders(data));
+    setOrders(sortOrders(data.filter(o => (o.bar_status === "pending" || o.bar_status === "in_progress") && o.overall_status !== "completed" && o.overall_status !== "cancelled")));
   };
 
   const loadHistory = async () => {
@@ -174,6 +174,8 @@ export default function BarDisplay() {
     if (authState !== "ready") return;
     loadOrders();
     if (showHistory) loadHistory();
+    // Safety net so backend-created orders (delivery accept) always appear within seconds
+    const reconcile = setInterval(loadOrders, 5000);
     const unsub = base44.entities.KitchenOrder.subscribe((event) => {
       if (event.type === "create") {
         const o = event.data;
@@ -189,7 +191,7 @@ export default function BarDisplay() {
         }
       }
     });
-    return () => unsub();
+    return () => { unsub(); clearInterval(reconcile); };
   }, [authState]);
 
   const markItemDone = async (orderId, itemIndex) => {
