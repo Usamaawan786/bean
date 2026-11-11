@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-// ---- Cashier push: ONE fixed message, ONLY to users whose role is exactly 'cashier'. Runs server-side only, never blocks the order. ----
+// ---- Team push: ONE fixed message, ONLY to staff (admin, super_admin, manager, cashier). Runs server-side only, never blocks the order. ----
 async function getFcmAccessToken(sa) {
   const now = Math.floor(Date.now() / 1000);
   const enc = (o) => btoa(JSON.stringify(o)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -15,12 +15,24 @@ async function getFcmAccessToken(sa) {
 
 async function notifyCashiers(base44, order) {
   try {
-    const cashiers = await base44.asServiceRole.entities.User.filter({ role: 'cashier' });
-    const emails = new Set((cashiers || []).filter((u) => u.role === 'cashier' && u.email).map((u) => String(u.email).trim().toLowerCase()));
-    if (emails.size === 0 || emails.size > 5) return;
-    const allTokens = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true });
-    const records = allTokens.filter((t) => emails.has(String(t.user_email || '').trim().toLowerCase()) && t.token);
-    if (records.length === 0 || records.length > 10) return;
+    // Team only: staff roles (never customers, never riders, never Base44 platform accounts)
+    const TEAM_ROLES = ['admin', 'super_admin', 'manager', 'cashier'];
+    const staff = await base44.asServiceRole.entities.User.list('-created_date', 200);
+    const emails = new Set((staff || []).filter((u) => TEAM_ROLES.includes(u.role) && u.email && !String(u.email).toLowerCase().endsWith('@base44.com')).map((u) => String(u.email).trim().toLowerCase()));
+    if (emails.size === 0 || emails.size > 12) return;
+    const allTokens = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true }, '-created_date', 500);
+    // Only the newest device per person per platform, so old registrations never cause duplicate alerts
+    const seen = new Set();
+    const records = [];
+    for (const t of allTokens) {
+      const em = String(t.user_email || '').trim().toLowerCase();
+      if (!t.token || !emails.has(em)) continue;
+      const k = em + '|' + (t.platform || '');
+      if (seen.has(k)) continue;
+      seen.add(k);
+      records.push(t);
+    }
+    if (records.length === 0 || records.length > 20) return;
     const saStr = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
     if (!saStr) return;
     const sa = JSON.parse(saStr);
