@@ -140,7 +140,10 @@ export default async function(req) {
       : Number(settings.cash_gst_percent ?? 16);
     // App offer: percent off the food subtotal + free delivery. GST is charged on the discounted amount.
     const offerOn = settings.offer_enabled !== false;
-    const discountPercent = offerOn ? Number(settings.offer_discount_percent ?? 15) : 0;
+    // The percent-off applies to a customer's FIRST order only. Cancelled/rejected orders don't count. Free delivery is unchanged.
+    const priorOrders = await base44.asServiceRole.entities.DeliveryOrder.filter({ customer_email: user.email });
+    const hasPriorOrder = (priorOrders || []).some((o) => o.status !== 'cancelled');
+    const discountPercent = offerOn && !hasPriorOrder ? Number(settings.offer_discount_percent ?? 15) : 0;
     const discountAmount = Math.round(subtotal * discountPercent / 100);
     const taxable = subtotal - discountAmount;
     const gstAmount = Math.round(taxable * gstRate / 100);
