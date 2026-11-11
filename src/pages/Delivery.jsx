@@ -146,7 +146,7 @@ export default function Delivery() {
     queryFn: async () => (await base44.entities.DeliverySettings.list())[0],
   });
 
-  const { data: activeOrders = [] } = useQuery({
+  const { data: activeOrders = [], isFetched: ordersFetched } = useQuery({
     queryKey: ["myDeliveryOrders", user?.email],
     queryFn: () => base44.entities.DeliveryOrder.filter({ customer_email: user.email }),
     enabled: !!user?.email,
@@ -306,7 +306,9 @@ export default function Delivery() {
   const isPickup = orderMode === "pickup";
   // App offer: percent off the food subtotal + free delivery (GST is charged on the discounted amount). Server re-calculates everything.
   const offerOn = settings?.offer_enabled !== false;
-  const offerPct = offerOn ? Number(settings?.offer_discount_percent ?? 15) : 0;
+  // Percent-off is for a customer's first (non-cancelled) order only; the server enforces this too.
+  const isFirstOrder = ordersFetched && !(activeOrders || []).some((o) => o.status !== "cancelled");
+  const offerPct = offerOn && isFirstOrder ? Number(settings?.offer_discount_percent ?? 15) : 0;
   const freeDelivery = offerOn && settings?.offer_free_delivery !== false;
   const discount = Math.round((subtotal * offerPct) / 100);
   const baseFee = settings?.flat_delivery_fee || 297;
@@ -520,9 +522,9 @@ export default function Delivery() {
 
           <div className="mt-3">
             {isDeliveryOpen ? (
-              offerOn && (
+              offerOn && (offerPct > 0 || (!isPickup && freeDelivery)) && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white/15 text-white">
-                  🎁 {offerPct}% off{!isPickup && freeDelivery ? " + free delivery" : ""} in the app
+                  🎁 {offerPct > 0 ? `${offerPct}% off` : ""}{offerPct > 0 && !isPickup && freeDelivery ? " + " : ""}{!isPickup && freeDelivery ? "free delivery" : ""} in the app
                 </div>
               )
             ) : (
