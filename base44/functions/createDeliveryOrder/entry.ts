@@ -17,7 +17,7 @@ async function notifyCashiers(base44, order) {
   try {
     // Team only: staff roles (never customers, never riders, never Base44 platform accounts)
     const TEAM_ROLES = ['admin', 'super_admin', 'manager', 'cashier'];
-    const staff = await base44.asServiceRole.entities.User.list('-created_date', 200);
+    const staff = await base44.asServiceRole.entities.User.filter({ $or: TEAM_ROLES.map((r) => ({ role: r })) });
     const emails = new Set((staff || []).filter((u) => TEAM_ROLES.includes(u.role) && u.email && !String(u.email).toLowerCase().endsWith('@base44.com')).map((u) => String(u.email).trim().toLowerCase()));
     if (emails.size === 0 || emails.size > 12) return;
     const allTokens = await base44.asServiceRole.entities.DeviceToken.filter({ is_active: true }, '-created_date', 500);
