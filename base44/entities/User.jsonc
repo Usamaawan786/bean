@@ -24,6 +24,11 @@
       ],
       "description": "For cashiers: which counter they are assigned to (counter_1=Takeaway, counter_2=Dine In)"
     },
+    "is_rider": {
+      "type": "boolean",
+      "default": false,
+      "description": "Staff member who can ALSO be assigned deliveries as a rider (in addition to their main role)"
+    },
     "phone": {
       "type": "string",
       "description": "Phone number (used for riders to be callable by customers)"
