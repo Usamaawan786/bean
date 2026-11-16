@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
     // The assigned person must really be a rider.
     const riderUsers = await base44.asServiceRole.entities.User.filter({ email: order.rider_email });
     const riderUser = riderUsers && riderUsers[0];
-    if (!riderUser || riderUser.role !== 'rider') {
+    if (!riderUser || !(riderUser.role === 'rider' || riderUser.is_rider === true)) {
       return Response.json({ success: true, sent_count: 0, message: 'Assigned user is not a rider, nothing sent' });
     }
 
