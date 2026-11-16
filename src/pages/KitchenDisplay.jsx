@@ -13,10 +13,46 @@ function durationMins(start, end) {
 // Elapsed seconds since a timestamp (never negative, safe for missing values).
 function elapsedSeconds(from) {
   if (!from) return 0;
-  const t = new Date(from).getTime();
+  const t = parseServerDate(from);
   if (Number.isNaN(t)) return 0;
-  return Math.max(0, Math.floor((Date.now() - t) / 1000));
+  return Math.max(0, Math.floor((serverNow() - t) / 1000));
 }
+
+// Server timestamps (created_date / updated_date) come without a timezone and are UTC.
+// Parsing them as-is would read them as this tablet's local time, so add the Z.
+function parseServerDate(d) {
+  if (!d) return NaN;
+  const s = String(d);
+  const hasTz = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(s);
+  return new Date(hasTz ? s : s + "Z").getTime();
+}
+
+// This tablet's clock can be wrong (the POS device clock has been ~13h off), so the KDS
+// never trusts it on its own: it measures the gap to the server clock when it can.
+let serverOffsetMs = 0;
+let clockSynced = false;
+async function syncServerClock() {
+  try {
+    if (!/^https?:$/.test(window.location.protocol) || window.location.hostname === "localhost") return;
+    const r = await fetch(window.location.origin + "/?_kds=" + Date.now(), { method: "HEAD", cache: "no-store" });
+    const d = r.headers.get("date");
+    const t = d ? new Date(d).getTime() : NaN;
+    if (!Number.isNaN(t)) { serverOffsetMs = t - Date.now(); clockSynced = true; }
+  } catch (e) { /* keep the last known offset */ }
+}
+const serverNow = () => Date.now() + serverOffsetMs;
+
+// Newest server-side activity seen on any ticket: the fallback "now" when the clock can't be synced.
+let latestServerTs = 0;
+function serverActivityAt(o) {
+  const c = [o.updated_date, o.created_date].map(parseServerDate).filter(n => !Number.isNaN(n));
+  return c.length ? Math.max(...c) : null;
+}
+function noteServerTs(o) {
+  const t = o ? serverActivityAt(o) : null;
+  if (t && t > latestServerTs) latestServerTs = t;
+}
+const ACTIVE_WINDOW_MS = 6 * 60 * 60 * 1000;
 
 function formatClock(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -70,9 +106,14 @@ function isRecent(placedAt) {
 
 // Uses the latest activity on the ticket (not just its creation time), so a ticket
 // that had items added later stays on the board.
+// Decided ONLY from server timestamps (never the POS or tablet clock, and no midnight
+// cut-off, since the cafe runs past midnight): shown if it had activity in the last 6 hours.
 function isOrderRecent(o) {
-  const t = lastActivityAt(o);
-  return t !== null && t >= activeCutoff();
+  const t = serverActivityAt(o);
+  if (t === null) return true;
+  noteServerTs(o);
+  if (clockSynced) return serverNow() - t <= ACTIVE_WINDOW_MS;
+  return latestServerTs - t <= ACTIVE_WINDOW_MS;
 }
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -238,6 +279,7 @@ export default function KitchenDisplay() {
   const [filterDate, setFilterDate] = useState("today"); // today | week | all
   const [soundOn, setSoundOn] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   // Ids this screen already knows about: stops a replayed realtime "create" —
   // or a ticket that was already on the board at load — from re-firing the chime.
   const seenIdsRef = useRef(new Set());
@@ -255,6 +297,16 @@ export default function KitchenDisplay() {
   };
 
   const loadOrders = async () => {
+    try {
+      await loadOrdersInner();
+      setLoadError(false);
+    } catch (e) {
+      console.error("KDS load failed:", e?.message || e);
+      setLoadError(true);
+    }
+  };
+
+  const loadOrdersInner = async () => {
     // Use $or (documented) — the SDK does NOT treat { field: [...] } as an IN
     // query, so the old array filter was returning every order. Sort by the
     // server-set created_date, not the client-set placed_at (which was 12h off
@@ -268,6 +320,7 @@ export default function KitchenDisplay() {
     );
     // Drop finished orders and anything with no recent activity. created_date is server
     // time; items_added_at keeps a ticket alive while it is still receiving new items.
+    data.forEach(noteServerTs);
     const active = data.filter(o => isOrderActive(o) && isOrderRecent(o));
     active.sort((a, b) => {
       if (a.order_type === "takeaway" && b.order_type !== "takeaway") return -1;
@@ -296,7 +349,8 @@ export default function KitchenDisplay() {
   };
 
   useEffect(() => {
-    loadOrders();
+    syncServerClock().then(loadOrders);
+    const clockSync = setInterval(syncServerClock, 10 * 60 * 1000);
     if (showHistory) loadHistory();
 
     // Safety net: the realtime channel can replay stale `create` events on
@@ -315,6 +369,7 @@ export default function KitchenDisplay() {
     const unsub = base44.entities.KitchenOrder.subscribe((event) => {
       const o = event.data;
       if (!o || !o.id) return;
+      noteServerTs(o);
       if (event.type === "create") {
         // Ignore stale/replayed creates for orders that are already finished
         // or were placed long ago (previous shift/day).
@@ -343,7 +398,7 @@ export default function KitchenDisplay() {
         setOrders(prev => prev.filter(x => x.id !== o.id));
       }
     });
-    return () => { clearInterval(reconcile); unsub(); };
+    return () => { clearInterval(reconcile); clearInterval(clockSync); unsub(); };
   }, []);
 
   // Browsers block audio until the page has been touched once. Prime it on the
@@ -500,6 +555,12 @@ export default function KitchenDisplay() {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {loadError && (
+        <div className="bg-red-700 text-white text-center font-bold px-4 py-3">
+          ⚠ Can't load orders. Check the internet and that this screen is logged in with a staff account. Retrying...
         </div>
       )}
 
