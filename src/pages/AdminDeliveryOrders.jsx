@@ -26,7 +26,7 @@ export default function AdminDeliveryOrders() {
 
   const { data: riders = [] } = useQuery({
     queryKey: ["riders"],
-    queryFn: () => base44.entities.User.filter({ role: "rider" }),
+    queryFn: () => base44.entities.User.filter({ $or: [{ role: "rider" }, { is_rider: true }] }),
   });
 
   // New pending order detection: beep + title flash
