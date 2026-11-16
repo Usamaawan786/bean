@@ -160,6 +160,10 @@ export default function StaffPortal() {
   if (user?.email?.toLowerCase() === BEAN_OFFICIAL_EMAIL && !features.find(f => f.link === "/AdminChat")) {
     features = [...features, { icon: MessageSquare, label: "Admin Chat", desc: "Chat with customers & manage support", link: "/AdminChat", color: "from-teal-600 to-teal-700" }];
   }
+  // Staff who are also riders get a shortcut to their deliveries
+  if (user?.is_rider === true && !features.find(f => f.link === "/RiderPortal")) {
+    features = [...features, { icon: Bike, label: "My Deliveries", desc: "Orders assigned to you as a rider", link: "/RiderPortal", color: "from-teal-600 to-teal-700" }];
+  }
   const roleInfo = ROLE_LABELS[user?.role] || { label: "Staff", icon: "👤" };
 
   return (
