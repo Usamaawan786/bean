@@ -6,7 +6,7 @@ import { Bike, Phone, MapPin, Package, Loader2 } from "lucide-react";
 export default function AdminRiders() {
   const { data: riders = [], isLoading } = useQuery({
     queryKey: ["riders"],
-    queryFn: () => base44.entities.User.filter({ role: "rider" }),
+    queryFn: () => base44.entities.User.filter({ $or: [{ role: "rider" }, { is_rider: true }] }),
   });
 
   const { data: riderLocations = [] } = useQuery({
