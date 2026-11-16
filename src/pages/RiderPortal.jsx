@@ -18,7 +18,7 @@ export default function RiderPortal() {
   useEffect(() => {
     base44.auth.me().then((u) => {
       if (!u) { base44.auth.redirectToLogin("/RiderPortal"); return; }
-      if (u.role !== "rider") { window.location.replace("/Home"); return; }
+      if (u.role !== "rider" && u.is_rider !== true) { window.location.replace("/Home"); return; }
       setUser(u);
       setPhoneInput(u.phone || "");
       setLoading(false);
