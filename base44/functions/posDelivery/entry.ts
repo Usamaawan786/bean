@@ -46,8 +46,8 @@ Deno.serve(async (req) => {
 
     if (action === 'list') {
       const orders = await sr.DeliveryOrder.list('-placed_at', 100);
-      const riderUsers = await sr.User.filter({ role: 'rider' });
-      const riders = (riderUsers || []).map((r: any) => ({ id: r.id, email: r.email, full_name: r.full_name, phone: r.phone }));
+      const riderUsers = await sr.User.filter({ $or: [{ role: 'rider' }, { is_rider: true }] });
+      const riders = (riderUsers || []).filter((r: any) => r.role === 'rider' || r.is_rider === true).map((r: any) => ({ id: r.id, email: r.email, full_name: r.full_name, phone: r.phone }));
       return Response.json({ success: true, orders, riders });
     }
 
@@ -184,8 +184,8 @@ Deno.serve(async (req) => {
       const bad = needStatus('preparing'); if (bad) return bad;
       const email = String(rider_email || '').trim().toLowerCase();
       if (!email) return Response.json({ error: 'rider_email is required' }, { status: 400 });
-      const riders = await sr.User.filter({ role: 'rider' });
-      const rider = (riders || []).find((r: any) => String(r.email || '').trim().toLowerCase() === email);
+      const riders = await sr.User.filter({ $or: [{ role: 'rider' }, { is_rider: true }] });
+      const rider = (riders || []).find((r: any) => (r.role === 'rider' || r.is_rider === true) && String(r.email || '').trim().toLowerCase() === email);
       if (!rider) return Response.json({ error: 'That person is not a rider' }, { status: 400 });
       await sr.DeliveryOrder.update(order.id, {
         status: 'out_for_delivery',
