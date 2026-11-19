@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell, Truck, Bike, ClipboardEdit, Sparkles, Landmark, Ticket } from "lucide-react";
+import { ShoppingCart, BarChart3, Gift, Package, Coffee, LogOut, Users, Wrench, ClipboardList, ChefHat, Flame, Shield, MessageSquare, Bell, Truck, Bike, ClipboardEdit, Sparkles, Landmark, Ticket, FileSpreadsheet } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ROLE_FEATURES = {
@@ -21,6 +21,7 @@ const ROLE_FEATURES = {
     { icon: Gift, label: "Redemptions & Discounts", desc: "Verify FM/EBA discounts & reward codes", link: "/AdminRedemptions", color: "from-amber-600 to-amber-700" },
     { icon: Ticket, label: "Discount Vouchers", desc: "Issue & verify single-use vouchers", link: "/DiscountVouchers", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: Ticket, label: "Discount Voucher Page", desc: "Download & print the card designs", link: "/DiscountVoucherPage", color: "from-[#A08868] to-[#6B5744]" },
+    { icon: FileSpreadsheet, label: "Daily Sales Report", desc: "Every bill, item & price — export CSV or print", link: "/DailySalesReport", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: BarChart3, label: "Analytics", desc: "View sales & revenue reports", link: "/AdminDashboard", color: "from-blue-600 to-blue-700" },
     { icon: ChefHat, label: "Kitchen Display", desc: "Monitor & manage kitchen orders", link: "/KitchenDisplay", color: "from-orange-700 to-red-700" },
     { icon: Truck, label: "Delivery Orders", desc: "Manage incoming delivery orders", link: "/AdminDeliveryOrders", color: "from-indigo-600 to-indigo-700" },
@@ -42,6 +43,7 @@ const ROLE_FEATURES = {
     { icon: Users, label: "Referrals", desc: "View referral activity", link: "/AdminReferrals", color: "from-purple-600 to-purple-700" },
     { icon: Ticket, label: "Discount Vouchers", desc: "Issue & verify single-use vouchers", link: "/DiscountVouchers", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: Ticket, label: "Discount Voucher Page", desc: "Download & print the card designs", link: "/DiscountVoucherPage", color: "from-[#A08868] to-[#6B5744]" },
+    { icon: FileSpreadsheet, label: "Daily Sales Report", desc: "Every bill, item & price — export CSV or print", link: "/DailySalesReport", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: MessageSquare, label: "Admin Chat", desc: "Chat with customers & manage support", link: "/AdminChat", color: "from-teal-600 to-teal-700" },
     { icon: Bell, label: "Push Notifications", desc: "Send & schedule push notifications to users", link: "/AdminPushNotifications", color: "from-violet-600 to-violet-700" },
     { icon: Sparkles, label: "Personalized Push", desc: "Auto-tailored pushes from scanned-bill history", link: "/AdminPersonalizedPush", color: "from-fuchsia-600 to-fuchsia-700" },
@@ -64,6 +66,7 @@ const ROLE_FEATURES = {
     { icon: Shield, label: "Cameras", desc: "Cafe camera status & snapshots", link: "/AdminCameras", color: "from-slate-700 to-slate-900" },
     { icon: Ticket, label: "Discount Vouchers", desc: "Issue & verify single-use vouchers", link: "/DiscountVouchers", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: Ticket, label: "Discount Voucher Page", desc: "Download & print the card designs", link: "/DiscountVoucherPage", color: "from-[#A08868] to-[#6B5744]" },
+    { icon: FileSpreadsheet, label: "Daily Sales Report", desc: "Every bill, item & price — export CSV or print", link: "/DailySalesReport", color: "from-[#8B7355] to-[#5C4A3A]" },
     { icon: Landmark, label: "PRA Tax Report", desc: "Generate & download sales tax reports for PRA", link: "/AdminPraReport", color: "from-stone-600 to-stone-800" },
     { icon: ClipboardEdit, label: "Menu Editor", desc: "Edit menu logo, categories & items", link: "/admin-menu-editor", color: "from-rose-600 to-rose-700" },
   ],

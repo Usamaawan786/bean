@@ -58,6 +58,7 @@ const AdminPersonalizedPush = lazy(() => import('./pages/AdminPersonalizedPush')
 const AdminPraReport = lazy(() => import('./pages/AdminPraReport'));
 const DiscountVouchers = lazy(() => import('./pages/DiscountVouchers'));
 const DiscountVoucherPage = lazy(() => import('./pages/DiscountVoucherPage'));
+const DailySalesReport = lazy(() => import('./pages/DailySalesReport'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const LayoutWrapper = ({ children, currentPageName }) => Layout ?
@@ -139,6 +140,7 @@ function App() {
               <Route path="/AdminPraReport" element={<AdminPraReport />} />
               <Route path="/DiscountVouchers" element={<DiscountVouchers />} />
               <Route path="/DiscountVoucherPage" element={<DiscountVoucherPage />} />
+              <Route path="/DailySalesReport" element={<DailySalesReport />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </Suspense>
