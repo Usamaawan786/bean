@@ -111,6 +111,11 @@
       "type": "boolean",
       "default": false,
       "description": "When true, this customer is hidden from all leaderboard rankings (public Bean Leaderboard and admin User Rewards Ledger default view). Their records and audit trail are preserved. Admins can still find them via email search."
+    },
+    "last_post_reward_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the customer last earned the community post reward. Only ever set by the rewardCommunityPost backend function \u2014 one reward per 24 hours."
     }
   },
   "required": [],

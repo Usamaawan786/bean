@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import PostCard from "@/components/community/PostCard";
 import PostComposer from "@/components/community/PostComposer";
+import PostRewardCelebration from "@/components/community/PostRewardCelebration";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/shared/PullToRefresh";
@@ -21,6 +22,7 @@ export default function Community() {
   const [headerVisible, setHeaderVisible] = useState(true);
   const [headerHeight, setHeaderHeight] = useState(0);
   const [highlightedPostId, setHighlightedPostId] = useState(null);
+  const [postReward, setPostReward] = useState(null);
   const lastScrollY = useRef(0);
   const scrollRef = useRef(null);
   const headerRef = useRef(null);
@@ -233,6 +235,17 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
     onSuccess: async (newPost, postData) => {
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
 
+      // First post in a rolling 24 hours earns 5 points (server-enforced)
+      base44.functions
+        .invoke("rewardCommunityPost", { postId: newPost?.id })
+        .then((res) => {
+          if (res?.data?.awarded) {
+            setPostReward({ points: res.data.points, balance: res.data.balance });
+            queryClient.invalidateQueries({ queryKey: ["community-customers"] });
+          }
+        })
+        .catch(() => {});
+
       // _mentionMap is { nameKey: email } built by MentionTextarea — no name parsing needed
       const mentionMap = postData._mentionMap || {};
       const mentionedEmails = Object.values(mentionMap);
@@ -383,6 +396,7 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
 
 
   return (
+    <>
     <PullToRefresh onRefresh={handleRefresh}>
       <div ref={scrollRef} className="h-screen overflow-y-auto overflow-x-hidden bg-gradient-to-b from-[var(--bg-primary)] to-[var(--bg-secondary)] w-screen">
         {/* Header */}
@@ -520,5 +534,16 @@ Respond with JSON indicating if the content is safe or should be flagged.`,
         </div>
       </div>
     </PullToRefresh>
+
+    <AnimatePresence>
+      {postReward && (
+        <PostRewardCelebration
+          points={postReward.points}
+          balance={postReward.balance}
+          onClose={() => setPostReward(null)}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }
