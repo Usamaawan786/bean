@@ -139,6 +139,14 @@ export default function StaffManagement() {
     toast.success(`Counter assigned: ${newCounter === "counter_1" ? "Counter 1 (Takeaway)" : newCounter === "counter_2" ? "Counter 2 (Dine In)" : "Unassigned"}`);
   };
 
+  const handleRiderToggle = async (targetUser) => {
+    const next = !targetUser.is_rider;
+    await base44.entities.User.update(targetUser.id, { is_rider: next });
+    queryClient.invalidateQueries({ queryKey: ["all-staff-users"] });
+    const who = targetUser.full_name || targetUser.email;
+    toast.success(next ? `${who} can now take deliveries as a rider` : `${who} removed from the rider list`);
+  };
+
   const toggleMatrixCell = (featureKey, role) => {
     // super_admin column is always true and locked
     if (role === "super_admin") return;
@@ -184,7 +192,11 @@ export default function StaffManagement() {
           <div className="flex gap-3 flex-wrap">
             {["cashier", "manager", "rider", "admin", "super_admin"].map(role => (
               <div key={role} className="bg-white/10 rounded-xl px-3 py-2 text-center">
-                <div className="text-lg font-bold">{roleCounts[role] || 0}</div>
+                <div className="text-lg font-bold">
+                  {role === "rider"
+                    ? allUsers.filter(u => u.role === "rider" || u.is_rider === true).length
+                    : (roleCounts[role] || 0)}
+                </div>
                 <div className="text-xs text-white/70">{ROLE_CONFIG[role].label}s</div>
               </div>
             ))}
@@ -293,6 +305,18 @@ export default function StaffManagement() {
                           <Monitor className="h-3 w-3 inline mr-0.5" />
                           {u.counter === "counter_1" ? "C1" : "C2"}
                         </span>
+                      )}
+                      {/* Any staff member can also be a rider — toggle any time */}
+                      {u.role !== "rider" && !locked && (
+                        <button
+                          onClick={() => handleRiderToggle(u)}
+                          title={u.is_rider ? "Remove rider access" : "Allow this staff member to take deliveries as a rider"}
+                          className={`text-xs rounded-lg px-2 py-1 border transition-colors ${u.is_rider
+                            ? "bg-orange-100 border-orange-200 text-orange-700 font-medium"
+                            : "bg-white border-[#E8DED8] text-[#8B7355] hover:bg-[#F9F6F3]"}`}
+                        >
+                          🛵 {u.is_rider ? "Rider" : "Make rider"}
+                        </button>
                       )}
                       {locked ? (
                         <Badge className={`${cfg.color} border text-xs`}>{cfg.icon} {cfg.label}</Badge>
